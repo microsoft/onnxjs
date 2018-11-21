@@ -96,28 +96,9 @@ Refer to [node/Add](./examples/node/add) for a detailed example.
 ## Documents
 
 ### Developers
-For information on development using ONNX.js and for the API please see [Development](./docs/development.md)
-For API reference, please check [here](./docs/api.md).
+For information on development ONNX.js, please check [Development](./docs/development.md)
 
-## Benchmark
-Benchmarks have been run against the most prominent open source solutions in the same market. Below are the results collected for Chrome and Edge browsers on one sample machine (computations run on both CPU and GPU):
-
-### CPU:
-![alt text](./docs/CPU-Perf.png "Resnet50 Perf numbers on CPU")
-
-### GPU:
-![alt text](./docs/GPU-Perf.png "Resnet50 Perf numbers on GPU")
-
-*NOTE: 1. Keras.js doesn't support WebGL usage on Edge
-       2. Keras.js and TensorFlow.js doesn't support WebAssembly usage on any browser*
-
-The specs of the machine that was used to perform the benchmarking is listed below:
-* OS:	Microsoft Windows 10 Enterprise Insider Preview
-* Model: HP Z240 Tower Workstation
-* Processor:	Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz, 3401 Mhz, 4 Core(s), 8 Logical Processor(s)
-* Installed Physical Memory (RAM): 32.0 GB
-* GPU make / Chip type: AMD FirePro W2100 / AMD FirePro SDI (0x6608)
-* GPU Memory (approx.): 18.0 GB
+For API reference, please check [API](./docs/api.md).
 
 ### Getting ONNX models
 You could get ONNX models easily in multiple ways:
@@ -132,6 +113,22 @@ Learn more about ONNX
 
 ### Operators supported
 The [list](./docs/operators.md) of ONNX operators supported by each of the 3 available builtin backends (cpu, wasm, and webgl).
+
+## Benchmark
+Benchmarks have been run against the most prominent open source solutions in the same market. Below are the results collected for Chrome and Edge browsers on one sample machine (computations run on both CPU and GPU):
+
+![alt text](./docs/perf-resnet50.png "Resnet50 Perf numbers")
+
+*NOTE: 1. Keras.js doesn't support WebGL usage on Edge
+       2. Keras.js and TensorFlow.js doesn't support WebAssembly usage on any browser*
+
+The specs of the machine that was used to perform the benchmarking is listed below:
+* OS:	Microsoft Windows 10 Enterprise Insider Preview
+* Model: HP Z240 Tower Workstation
+* Processor:	Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz, 3401 Mhz, 4 Core(s), 8 Logical Processor(s)
+* Installed Physical Memory (RAM): 32.0 GB
+* GPU make / Chip type: AMD FirePro W2100 / AMD FirePro SDI (0x6608)
+* GPU Memory (approx.): 18.0 GB
 
 ## Contribute
 We’d love to embrace your contribution to ONNX.js. Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).

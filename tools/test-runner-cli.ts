@@ -3,6 +3,7 @@
 
 import {execSync, spawnSync} from 'child_process';
 import * as fs from 'fs';
+import * as globby from 'globby';
 import minimist from 'minimist';
 import logger from 'npmlog';
 import * as path from 'path';
@@ -10,7 +11,6 @@ import stripJsonComments from 'strip-json-comments';
 import {inspect} from 'util';
 
 import {Logger} from '../lib/instrument';
-
 import {Test} from '../test/test-types';
 
 const args = minimist(process.argv.slice(2));
@@ -64,20 +64,21 @@ Examples:
  > test-runner-cli suite0
 
  Run single model test (test_relu) on CPU backend and show verbose log
- > test-runner-cli model test/test-data/node/test_relu --verbose --backend=cpu
+ > test-runner-cli model test_relu --verbose --backend=cpu
 
  Debug unittest
  > test-runner-cli unittest --debug
 
  Debug operator matmul, highlight verbose log from BaseGlContext and WebGLBackend
- > test-runner-cli op test/test-data/ops/matmul.jsonc --debug --info --verbose=BaseGlContext,WebGLBackend
+ > test-runner-cli op matmul --debug --info --verbose=BaseGlContext,WebGLBackend
 
  Profile the model ResNet50 on WebGL backend
- > test-runner-cli model test/test-data/onnx/v7/resnet50 --profile --backend=webgl
+ > test-runner-cli model resnet50 --profile --backend=webgl
  `);
   process.exit();
 }
 
+logger.stream = process.stdout;
 logger.info('TestRunnerCli', 'Initializing...');
 
 if (typeof (args.verbose || args.v) === 'boolean' || (args.debug || args.d)) {
@@ -210,9 +211,10 @@ switch (mode) {
     if (args._.length < 2) {
       throw new Error(`the test folder should be specified in mode 'node'`);
     }
-    const modelFolder = args._[1];
+    const testFolderSearchPattern = args._[1];
+    const testFolder = tryLocateModelTestFolder(testFolderSearchPattern);
     for (const b of backend) {
-      modelTestGroups.push({name: modelFolder, tests: [modelTestFromFolder(modelFolder, b)]});
+      modelTestGroups.push({name: testFolder, tests: [modelTestFromFolder(testFolder, b)]});
     }
     break;
 
@@ -224,7 +226,8 @@ switch (mode) {
     if (args._.length < 2) {
       throw new Error(`the test manifest should be specified in mode 'op'`);
     }
-    const manifestFile = args._[1];
+    const manifestFileSearchPattern = args._[1];
+    const manifestFile = tryLocateOpTestManifest(manifestFileSearchPattern);
     for (const b of backend) {
       opTestGroups.push(opTestFromManifest(manifestFile, b));
     }
@@ -442,6 +445,18 @@ function modelTestFromFolder(testDataRootFolder: string, backend: string, skip =
   return {name: path.basename(testDataRootFolder), modelUrl, backend, cases};
 }
 
+function tryLocateModelTestFolder(searchPattern: string): string {
+  for (const folderCandidate of globby.sync(
+           [searchPattern, path.join(TEST_DATA_ROOT, '**', searchPattern)], {onlyDirectories: true, absolute: true})) {
+    const modelCandidates = globby.sync('*.onnx', {onlyFiles: true, cwd: folderCandidate});
+    if (modelCandidates && modelCandidates.length === 1) {
+      return folderCandidate;
+    }
+  }
+
+  throw new Error(`no model folder found: ${searchPattern}`);
+}
+
 function opTests(backend: string): Test.OperatorTestGroup[] {
   const groups: Test.OperatorTestGroup[] = [];
   for (const thisPath of fs.readdirSync(TEST_DATA_OP_ROOT)) {
@@ -479,6 +494,20 @@ function opTestFromManifest(manifestFile: string, backend: string, skip = false)
     logger.verbose('TestRunnerCli.Init.Op', `===============================================================`);
   }
   return {name: path.relative(TEST_DATA_OP_ROOT, filePath), tests};
+}
+
+function tryLocateOpTestManifest(searchPattern: string): string {
+  for (const manifestCandidate of globby.sync(
+           [
+             searchPattern, path.join(TEST_DATA_ROOT, '**', searchPattern),
+             path.join(TEST_DATA_ROOT, '**', searchPattern + '.json'),
+             path.join(TEST_DATA_ROOT, '**', searchPattern + '.jsonc')
+           ],
+           {onlyFiles: true, absolute: true})) {
+    return manifestCandidate;
+  }
+
+  throw new Error(`no OP test manifest found: ${searchPattern}`);
 }
 
 function run(config: Test.Config) {

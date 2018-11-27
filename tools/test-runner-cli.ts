@@ -132,7 +132,7 @@ logger.verbose('TestRunnerCli.Init', ` Backend:           ${backend}`);
 logger.verbose('TestRunnerCli.Init', `Parsing commandline arguments... DONE`);
 
 const TEST_ROOT = path.join(__dirname, '..', 'test');
-const TEST_DATA_ROOT = path.join(TEST_ROOT, 'test-data');
+const TEST_DATA_ROOT = path.join(__dirname, '..', 'deps', 'data', 'data', 'test');
 const TEST_DATA_NODE_ROOT = path.join(TEST_DATA_ROOT, 'node');
 const TEST_DATA_ONNX_ROOT = path.join(TEST_DATA_ROOT, 'onnx', 'v7');
 const TEST_DATA_OP_ROOT = path.join(TEST_DATA_ROOT, 'ops');

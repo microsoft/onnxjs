@@ -1,1 +1,0 @@
-2Sgreat white shark, white shark, man-eater, man-eating shark, Carcharodon carcharias

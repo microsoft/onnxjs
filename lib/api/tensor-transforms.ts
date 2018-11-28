@@ -44,7 +44,7 @@ export interface ShapeTensorTransforms {
 
 export interface LogicalTensorTransforms {
   greaterEqual(t1: Tensor, t2: Tensor): Tensor;
-  where(condition: ReadonlyArray<boolean>, t1: Tensor, t2: Tensor): Tensor;
+  where(condition: Tensor, t1: Tensor, t2: Tensor): Tensor;
 }
 
 export interface CastTensorTransforms {

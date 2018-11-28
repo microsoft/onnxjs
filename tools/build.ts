@@ -8,7 +8,6 @@ import logger from 'npmlog';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
 
-logger.stream = process.stdout;
 logger.info('Build', 'Initializing...');
 
 // Flags

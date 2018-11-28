@@ -78,7 +78,6 @@ Examples:
   process.exit();
 }
 
-logger.stream = process.stdout;
 logger.info('TestRunnerCli', 'Initializing...');
 
 if (typeof (args.verbose || args.v) === 'boolean' || (args.debug || args.d)) {

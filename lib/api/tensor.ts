@@ -76,6 +76,13 @@ export declare namespace Tensor {
    * represent the data type of a tensor
    */
   export type Type = keyof DataTypeMap;
+
+  /**
+   * represent subsets of supported data types for a tensor
+   */
+  export type NumberType = 'int32'|'float32';
+  export type NumberOrBoolType = NumberType|'bool';
+  export type StringType = 'string';
 }
 
 export interface TensorConstructor {

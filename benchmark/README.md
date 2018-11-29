@@ -23,16 +23,18 @@ Please download all the sub-folders (containing the model files and correspondin
 https://github.com/Microsoft/onnxjs-demo/tree/data/data/benchmark and place them in ./benchmark/data prior to running the benchmark tests
 
 1. Ensure that the ONNX.js project (the parent) is already installed and built:
-```JS
-npm ci && npm run build
+```bash
+npm ci
+npm run build
 ```
 2. Change to `benchmark` subfolder and run npm ci and build in the benchmark folder
-```JS
+```bash
 cd benchmark
-npm ci && npm run build
+npm install
+npm run build
 ```
 3. Run tests (Chrome)
-```JS
+```bash
 npm run test
 ```
 4. Run tests (Edge)
@@ -40,6 +42,6 @@ npm run test
 Note that the Edge tests are likely to crash the broswer. A recommended way would be to comment out
 all Frameworks and backends except one and repeat this for all others. Look in the definition for
 `BenchmarkImageNetData` in src/index.js
-```JS
+```bash
 npm run test-edge
 ```

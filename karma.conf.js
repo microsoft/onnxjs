@@ -4,7 +4,7 @@ module.exports = function(config) {
     files: [
       {pattern: 'test/onnx.dev.js'},
       {pattern: 'test/onnx-worker.js', included: false},
-      {pattern: 'test/test-data/**/*', included: false},
+      {pattern: 'deps/data/data/test/**/*', included: false},
       {pattern: 'dist/onnx-wasm.wasm', included: false},
     ],
     proxies: {

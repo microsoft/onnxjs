@@ -6,3 +6,7 @@
 	path = deps/eigen
 	url = https://github.com/eigenteam/eigen-git-mirror.git
 	ignore = dirty
+[submodule "deps/data"]
+	path = deps/data
+	url = https://github.com/Microsoft/onnxjs-demo.git
+	branch = data

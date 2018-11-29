@@ -1,1 +1,0 @@
-2Ogrey whale, gray whale, devilfish, Eschrichtius gibbosus, Eschrichtius robustus

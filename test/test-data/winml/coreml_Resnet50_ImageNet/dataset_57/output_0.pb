@@ -1,1 +1,0 @@
-2*electric ray, crampfish, numbfish, torpedo

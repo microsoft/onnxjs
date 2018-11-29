@@ -1,0 +1,14 @@
+dist/
+node_modules/
+types/
+
+lib/**/*.js
+lib/**/*.js.map
+test/**/*.js
+test/**/*.js.map
+tools/**/*.js
+tools/**/*.js.map
+
+npm-debug.log
+.DS_Store
+yarn-error.log

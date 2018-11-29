@@ -30,11 +30,11 @@ import * as unaryOps from './ops/unary-op';
 import {ProgramManager} from './program-manager';
 import {TextureData} from './texture-data';
 import {AlwaysKeepOriginalSizeStrategy, TextureLayoutStrategy} from './texture-layout-strategy';
-import {TextureManager} from './texture-manager';
+import {TextureHelper} from './texture-manager';
 
 export class WebGLSessionHandler implements SessionHandler {
   programManager: ProgramManager;
-  textureManager: TextureManager;
+  textureHelper: TextureHelper;
   layoutStrategy: TextureLayoutStrategy;
   textureDataCache: Map<Tensor, TextureData>;
   initializers: Set<Tensor>;
@@ -42,7 +42,7 @@ export class WebGLSessionHandler implements SessionHandler {
   constructor(public readonly backend: WebGLBackend, public readonly context: Session.Context) {
     this.programManager = new ProgramManager(this.context.profiler, backend.glContext);
     this.layoutStrategy = new AlwaysKeepOriginalSizeStrategy(backend.glContext.maxTextureSize);
-    this.textureManager = new TextureManager(backend.glContext, this.layoutStrategy, this.context.profiler);
+    this.textureHelper = new TextureHelper(backend.glContext, this.layoutStrategy, this.context.profiler);
     this.textureDataCache = new Map();
   }
 
@@ -65,8 +65,8 @@ export class WebGLSessionHandler implements SessionHandler {
   }
   dispose(): void {
     this.programManager.dispose();
-    this.textureManager.dispose();
-    this.textureDataCache.forEach(td => this.textureManager.saveTexture(td.texture, [td.width, td.height]));
+    this.textureHelper.dispose();
+    this.textureDataCache.forEach(td => this.textureHelper.saveTexture(td.texture, [td.width, td.height]));
   }
   resolve(node: Graph.Node, domain: string, version: number): Operator {
     const op = this.createOperator(node, domain, version);

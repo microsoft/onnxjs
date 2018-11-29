@@ -17,10 +17,10 @@ import {WebGLContext} from './webgl-context';
  *    Caching these is crucial to performance. These are In-use Textures
  *   2. textures which are not in use by any current ProgramInfo/Tensor
  *     These are called Free Textures
- * TextureManager is also used to help creating textures. For this it
+ * TextureHelper is also used to help creating textures. For this it
  * uses WebGLContext and TextureLayoutStrategy
  */
-export class TextureManager {
+export class TextureHelper {
   glContext: WebGLContext;
   free: Map<string, WebGLTexture[]>;
   gl: WebGLRenderingContext;
@@ -40,11 +40,11 @@ export class TextureManager {
     const size = `${layout.width}-${layout.height}`;
     const textureList = this.free.get(size);
     if (!textureList || textureList.length === 0) {
-      Logger.verbose('TextureManager', `No cached texture; Creating new of size ${size}`);
+      Logger.verbose('TextureHelper', `No cached texture; Creating new of size ${size}`);
       texture = this.glContext.allocateTexture(
           layout.width, layout.height, textureDataType, layout.channels, this.toTextureData(dataType, data));
     } else {
-      Logger.verbose('TextureManager', `Found a texture in cache of size ${size}`);
+      Logger.verbose('TextureHelper', `Found a texture in cache of size ${size}`);
       texture = textureList.shift()!;
       if (data) {
         this.glContext.updateTexture(
@@ -57,7 +57,7 @@ export class TextureManager {
   createTexture(
       dataType: Tensor.DataType, shape: number[], strides?: number[], data?: Tensor.NumberType, channels?: number,
       width?: number, height?: number, unpackedShape?: number[]): TextureData {
-    return this.profiler.event('backend', 'TextureManager.createTexture', () => {
+    return this.profiler.event('backend', 'TextureHelper.createTexture', () => {
       if (!width || !height) {
         [width, height] = this.layoutStrategy.computeTextureWH(shape);
       }
@@ -79,7 +79,7 @@ export class TextureManager {
     if (!channels) {
       channels = 1;
     }
-    return this.profiler.event('backend', 'TextureManager.readTexture', () => {
+    return this.profiler.event('backend', 'TextureHelper.readTexture', () => {
       const dataSize = td.shape.reduce((a, b) => a * b) * channels!;
       const data = this.glContext.readTexture(
           td.texture, td.width, td.height, dataSize, this.toEncoderType(dataType), channels!);
@@ -87,9 +87,9 @@ export class TextureManager {
     });
   }
   saveTexture(texture: WebGLTexture, dims: number[]): void {
-    return this.profiler.event('backend', 'TextureManager.saveTexture', () => {
+    return this.profiler.event('backend', 'TextureHelper.saveTexture', () => {
       const size = `${dims[0]}-${dims[1]}`;
-      Logger.verbose('TextureManager', `caching texture of size ${size}`);
+      Logger.verbose('TextureHelper', `caching texture of size ${size}`);
       let textureList = this.free.get(size);
       if (!textureList) {
         textureList = [];

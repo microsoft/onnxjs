@@ -20,7 +20,7 @@ This sub project is to benchmark and compare ONNX.js peformance vs other leading
 
 ## Instructions
 Please download all the sub-folders (containing the model files and corresponding test data) under
-https://github.com/Microsoft/onnxjs-demo/tree/master/data/benchmark and place them in ./benchmark/data prior to running the benchmark tests
+https://github.com/Microsoft/onnxjs-demo/tree/data/data/benchmark and place them in ./benchmark/data prior to running the benchmark tests
 
 1. Ensure that the ONNX.js project (the parent) is already installed and built:
 ```JS

@@ -29,8 +29,8 @@ import {WebGLTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
 import {ProgramManager} from './program-manager';
 import {TextureData} from './texture-data';
+import {TextureHelper} from './texture-helper';
 import {AlwaysKeepOriginalSizeStrategy, TextureLayoutStrategy} from './texture-layout-strategy';
-import {TextureHelper} from './texture-manager';
 
 export class WebGLSessionHandler implements SessionHandler {
   programManager: ProgramManager;
@@ -65,8 +65,8 @@ export class WebGLSessionHandler implements SessionHandler {
   }
   dispose(): void {
     this.programManager.dispose();
-    this.textureHelper.dispose();
-    this.textureDataCache.forEach(td => this.textureHelper.saveTexture(td.texture, [td.width, td.height]));
+    this.textureDataCache.forEach(td => this.textureHelper.releaseTexture(td.texture));
+    this.textureDataCache = new Map();
   }
   resolve(node: Graph.Node, domain: string, version: number): Operator {
     const op = this.createOperator(node, domain, version);

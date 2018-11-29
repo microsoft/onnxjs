@@ -10,8 +10,8 @@ import {WebGLBackend} from '../backend-webgl';
 import {ProgramManager} from './program-manager';
 import {WebGLSessionHandler} from './session-handler';
 import {TextureData, TextureLayout} from './texture-data';
+import {TextureHelper} from './texture-helper';
 import {WidthHeightPrefs} from './texture-layout-strategy';
-import {TextureHelper} from './texture-manager';
 import {getPackedShape} from './utils';
 
 /**
@@ -82,7 +82,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
         channels === 1 ? tensor.dims.slice() : getPackedShape(tensor.dims.slice()), channels, unpackedShape);
   }
   dispose(): void {
-    this.tensorToTexture.forEach(td => this.textureHelper.saveTexture(td.texture, [td.width, td.height]));
+    this.tensorToTexture.forEach(td => this.textureHelper.releaseTexture(td.texture));
     this.tensorToTexture = new Map();
     this.textureToTensor = new Map();
   }

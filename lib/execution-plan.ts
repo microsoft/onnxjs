@@ -148,7 +148,7 @@ export class ExecutionPlan {
         thisValue.data;
         output.push(thisValue);
       });
-
+      inferenceHandler.dispose();
       return output;
     });
   }

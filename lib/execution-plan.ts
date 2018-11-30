@@ -149,6 +149,7 @@ export class ExecutionPlan {
         thisValue.data;
         output.push(thisValue);
       });
+      Logger.verbose('ExecPlan', 'disposing of inferenceHandler');
       inferenceHandler.dispose();
       return output;
     });

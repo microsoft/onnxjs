@@ -65,6 +65,7 @@ export class WebGLSessionHandler implements SessionHandler {
   }
   dispose(): void {
     this.programManager.dispose();
+    this.textureHelper.clearActiveTextures();
     this.textureDataCache.forEach(td => this.textureHelper.releaseTexture(td.texture));
     this.textureDataCache = new Map();
   }

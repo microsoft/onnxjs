@@ -37,7 +37,7 @@ export class TextureHelper {
     const textureDataType = this.toEncoderType(dataType);
     const size = `${layout.width}-${layout.height}`;
 
-    Logger.verbose('TextureHelper', `No cached texture; Creating new of size ${size}`);
+    Logger.verbose('TextureHelper', `Creating new texture of size ${size}`);
     texture = this.glContext.allocateTexture(
         layout.width, layout.height, textureDataType, layout.channels, this.toTextureData(dataType, data));
 

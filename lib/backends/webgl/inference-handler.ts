@@ -31,7 +31,9 @@ export class WebGLInferenceHandler implements InferenceHandler {
     this.textureToTensor = new Map();
   }
   protected lookupTextureData(tensor: Tensor): TextureData|undefined {
-    return this.session.isInitializer(tensor) ? this.session.getTextureData(tensor) : this.tensorToTexture.get(tensor);
+    const isInitializer = this.session.isInitializer(tensor);
+    Logger.verbose('InferenceHandler', `tensor was an initializer; returning TextureData from session cache`);
+    return isInitializer ? this.session.getTextureData(tensor) : this.tensorToTexture.get(tensor);
   }
   getOrCreate(tensor: Tensor, layout?: TextureLayout): TextureData {
     let td = this.lookupTextureData(tensor);
@@ -82,6 +84,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
         channels === 1 ? tensor.dims.slice() : getPackedShape(tensor.dims.slice()), channels, unpackedShape);
   }
   dispose(): void {
+    this.textureHelper.clearActiveTextures();
     this.tensorToTexture.forEach(td => this.textureHelper.releaseTexture(td.texture));
     this.tensorToTexture = new Map();
     this.textureToTensor = new Map();

@@ -143,7 +143,6 @@ export class ProgramManager {
       runData.draw(this.glContext, artifact);
     } else {
       this.glContext.draw();
-      this.glContext.gl.flush();
     }
   }
   protected doBlockDraw(artifact: Artifact, runData: RunData): void {

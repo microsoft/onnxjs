@@ -97,7 +97,3 @@ export interface TensorConstructor {
 export interface Tensor {
   // Tensor utilities
 }
-
-import {Tensor as TensorImpl} from './tensor-impl';
-// tslint:disable-next-line:variable-name
-export const Tensor: TensorConstructor = TensorImpl;

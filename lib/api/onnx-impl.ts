@@ -3,21 +3,13 @@
 
 import {InferenceSessionConstructor} from './inference-session';
 import {InferenceSession} from './inference-session-impl';
-import {Backend, Onnx} from './onnx';
+import {Backend, Environment, Onnx} from './onnx';
 import {TensorConstructor} from './tensor';
 import {Tensor} from './tensor-impl';
 
 interface OnnxGlobal {
-  onnx?: {
-    Tensor?: TensorConstructor;
-    InferenceSession?: InferenceSessionConstructor;
-    backend?: Partial<Backend>;
-    debug?: boolean;
-  };
-}
-
-function getGlobal(): OnnxGlobal {
-  return ((typeof window !== 'undefined') ? window : global) as OnnxGlobal;
+  onnx?: {Tensor?: TensorConstructor; InferenceSession?: InferenceSessionConstructor; backend?: Partial<Backend>;}&
+      Partial<Environment>;
 }
 
 /**
@@ -30,15 +22,22 @@ export function getOnnxObject(): Onnx {
   const onnx = global.onnx;
 
   // initialize onnx object
-  if (typeof onnx.Tensor === 'undefined') {
-    onnx.Tensor = Tensor;
-  }
-  if (typeof onnx.InferenceSession === 'undefined') {
-    onnx.InferenceSession = InferenceSession;
-  }
+  onnx.Tensor = onnx.Tensor || Tensor;
+  onnx.InferenceSession = onnx.InferenceSession || InferenceSession;
 
   // set backend object
   onnx.backend = onnx.backend || {};
 
-  return global.onnx as Onnx;
+  // set environment properties
+  setEnvironment(onnx);
+
+  return onnx as Onnx;
+}
+
+function getGlobal(): OnnxGlobal {
+  return ((typeof window !== 'undefined') ? window : global) as OnnxGlobal;
+}
+
+function setEnvironment(env: Partial<Environment>) {
+  // placeholder to implement environment
 }

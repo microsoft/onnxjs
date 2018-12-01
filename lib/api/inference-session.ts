@@ -115,7 +115,3 @@ export interface InferenceSessionConstructor {
    */
   new(config?: InferenceSession.Config): InferenceSession;
 }
-
-import {InferenceSession as InferenceSessionImpl} from './inference-session-impl';
-// tslint:disable-next-line:variable-name
-export const InferenceSession: InferenceSessionConstructor = InferenceSessionImpl;

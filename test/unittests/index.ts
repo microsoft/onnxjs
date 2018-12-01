@@ -6,5 +6,6 @@ if (typeof window !== 'undefined') {
   require('./backends/webgl/test_glsl_function_inliner');
   require('./backends/webgl/test_conv_new');
 }
-require('./api/tensor');
 require('./api/inference-session');
+require('./api/onnx');
+require('./api/tensor');

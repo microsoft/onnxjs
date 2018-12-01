@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as platform from 'platform';
+
 import {Logger} from '../../instrument';
 
 import {WebGLContext} from './webgl-context';
@@ -28,29 +30,32 @@ export class WebGLContextFactory {
       };
     }
     let gl: WebGLRenderingContext|null;
-    const ca = contextAttributes;
-    gl = canvas.getContext('webgl2', ca) as WebGLRenderingContext | null;
-    if (gl) {
-      try {
-        return new WebGL2Context(canvas, gl, ca);
-      } catch (err) {
-        Logger.warning('GlContextFactory', `failed to create WebGL2Context. Error: ${err}`);
+
+    // workaround: disable WebGL2 on non-windows platform temporarily
+    if (platform.os && platform.os.family && platform.os.family.indexOf('Windows') !== -1) {
+      gl = canvas.getContext('webgl2', contextAttributes) as WebGLRenderingContext | null;
+      if (gl) {
+        try {
+          return new WebGL2Context(canvas, gl, contextAttributes);
+        } catch (err) {
+          Logger.warning('GlContextFactory', `failed to create WebGL2Context. Error: ${err}`);
+        }
       }
     }
 
-    gl = canvas.getContext('webgl', ca);
+    gl = canvas.getContext('webgl', contextAttributes);
     if (gl) {
       try {
-        return new WebGL1Context(canvas, gl, ca);
+        return new WebGL1Context(canvas, gl, contextAttributes);
       } catch (err) {
         Logger.warning('GlContextFactory', `failed to create WebGL1Context. Error: ${err}`);
       }
     }
 
-    gl = canvas.getContext('experimental-webgl', ca);
+    gl = canvas.getContext('experimental-webgl', contextAttributes);
     if (gl) {
       try {
-        return new WebGLExperimentalContext(canvas, gl, ca);
+        return new WebGLExperimentalContext(canvas, gl, contextAttributes);
       } catch (err) {
         Logger.warning('GlContextFactory', `failed to create WebGLExperimentalContext. Error: ${err}`);
       }

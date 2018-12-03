@@ -3,8 +3,8 @@
 
 #include "gemm.h"
 #include "common.h"
-#include <Eigen\Core>
-#include <Eigen\Dense>
+#include <Eigen/Core>
+#include <Eigen/Dense>
 
 // Wasm interop method
 void gemm_f32(void *data) {

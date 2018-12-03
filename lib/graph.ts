@@ -237,30 +237,6 @@ class GraphImpl implements Graph, Graph.Transformer {
       throw new Error('missing information in graph: node');
     }
     for (const nodeProto of graph.node) {
-      // for the 'Constant' operator, just create a new edge in the graph corresponding to the 'output' of the operator
-      // and ignore the node from the graph
-      if (nodeProto.opType === 'Constant') {
-        if (!nodeProto.attribute || nodeProto.attribute.length !== 1 || !nodeProto.attribute[0].t) {
-          throw new Error(`missing attributes or missing tensor value in attributes for this Constant operator`);
-        }
-        if (!nodeProto.output || nodeProto.output.length !== 1) {
-          throw new Error(`missing output or incorrect number of outputs for this Constant operator`);
-        }
-        const tensor = Tensor.fromProto(nodeProto.attribute[0].t);
-        const index = dataIndices.get(nodeProto.output[0]);
-        // if we have seen this output already
-        if (index !== undefined) {
-          this._allData[index]._from = -1;
-          this._allData[index].tensor = tensor;
-        } else {
-          const currentIndex = this._allData.push(new Value()) - 1;
-          this._allData[currentIndex]._from = -1;
-          this._allData[currentIndex].tensor = tensor;
-          dataIndices.set(nodeProto.output[0], currentIndex);
-        }
-        continue;
-      }
-
       if (!nodeProto.name) {
         // assign a name to the node if it doesn't have one
         for (let pick = 0;; pick++) {
@@ -298,6 +274,22 @@ class GraphImpl implements Graph, Graph.Transformer {
           throw new Error(`multiple nodes output to one data value: ${dataIndex}`);
         }
         this._allData[dataIndex]._from = i;
+
+        // for the 'Constant' operator, just create a new edge in the graph corresponding to the 'output' of the
+        // operator and ignore the node from the graph
+        if (nodeProto.opType === 'Constant') {
+          if (!nodeProto.attribute || nodeProto.attribute.length !== 1 || !nodeProto.attribute[0].t) {
+            throw new Error(`missing attributes or missing tensor value in attributes for this Constant operator`);
+          }
+          if (!nodeProto.output || nodeProto.output.length !== 1) {
+            throw new Error(`missing output or incorrect number of outputs for this Constant operator`);
+          }
+          node.outputs.pop();
+          node.executeNode = false;
+
+          this._allData[dataIndex]._from = -1;
+          this._allData[dataIndex].tensor = Tensor.fromProto(nodeProto.attribute[0].t);
+        }
       }
     }
 

@@ -49,8 +49,8 @@ export declare namespace Graph {
    * a Transformer is an instance that allows all possible transformation operations that applied to a graph
    */
   export interface Transformer {
-    removeAllIdentityNode(): void;
-
+    removeAllIdentityNodes(): void;
+    removeAllDropoutNodes(): void;
     // TODO: add generic functions to manipulate the graph
   }
 
@@ -366,7 +366,7 @@ class GraphImpl implements Graph, Graph.Transformer {
 
   private transformGraph(graphInitializer?: Graph.Initializer): void {
     // apply common transform
-    this.removeAllIdentityNode();
+    this.removeAllIdentityNodes();
     this.removeAllDropoutNodes();
 
     // apply initializer specific transform
@@ -535,7 +535,7 @@ class GraphImpl implements Graph, Graph.Transformer {
     }
   }
 
-  removeAllIdentityNode() {
+  removeAllIdentityNodes() {
     let nodeIndex = 0;
     for (const node of this._nodes) {
       // weed out 'Identity' nodes so that no time is wasted in execution

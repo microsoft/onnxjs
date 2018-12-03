@@ -24,6 +24,7 @@ const DEPS = path.join(ROOT, 'deps');
 const DEPS_EIGEN = path.join(DEPS, 'eigen');
 const DEPS_EMSDK = path.join(DEPS, 'emsdk');
 const DEPS_EMSDK_EMSCRIPTEN = path.join(DEPS_EMSDK, 'emscripten');
+const EMSDK_BIN = path.join(DEPS_EMSDK, 'emsdk');
 const SRC = path.join(ROOT, 'src');
 const SRC_WASM_BUILD_CONFIG = path.join(SRC, 'wasm-build-config.json');
 const OUT = path.join(ROOT, 'dist');
@@ -91,7 +92,7 @@ if (!buildWasm) {
   logger.info('Build.Wasm', '(1/4) Setting up emsdk...');
   if (!fs.existsSync(DEPS_EMSDK_EMSCRIPTEN)) {
     logger.info('Build.Wasm', 'Installing emsdk...');
-    const install = spawnSync('emsdk install latest', {shell: true, stdio: 'inherit', cwd: DEPS_EMSDK});
+    const install = spawnSync(`${EMSDK_BIN} install latest`, {shell: true, stdio: 'inherit', cwd: DEPS_EMSDK});
     if (install.status !== 0) {
       if (install.error) {
         console.error(install.error);
@@ -101,7 +102,7 @@ if (!buildWasm) {
     logger.info('Build.Wasm', 'Installing emsdk... DONE');
 
     logger.info('Build.Wasm', 'Activating emsdk...');
-    const activate = spawnSync('emsdk activate latest', {shell: true, stdio: 'inherit', cwd: DEPS_EMSDK});
+    const activate = spawnSync(`${EMSDK_BIN} activate latest`, {shell: true, stdio: 'inherit', cwd: DEPS_EMSDK});
     if (activate.status !== 0) {
       if (activate.error) {
         console.error(activate.error);

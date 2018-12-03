@@ -36,6 +36,7 @@ export class ExecutionPlan {
               && this.graph.getInputIndices().indexOf(input) === -1  // not model input
           ) {
             resolved = false;
+            break;
           }
         }
         if (resolved) {

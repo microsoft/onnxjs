@@ -39,7 +39,9 @@ export class WebGLSessionHandler implements SessionHandler {
   textureDataCache: Map<Tensor, TextureData>;
   initializers: Set<Tensor>;
 
-  constructor(public readonly backend: WebGLBackend, public readonly context: Session.Context) {
+  constructor(
+      public readonly backend: WebGLBackend, public readonly context: Session.Context,
+      public readonly forceRgbaReads?: boolean) {
     this.programManager = new ProgramManager(this.context.profiler, backend.glContext);
     this.layoutStrategy = new AlwaysKeepOriginalSizeStrategy(backend.glContext.maxTextureSize);
     this.textureManager = new TextureManager(backend.glContext, this.layoutStrategy, this.context.profiler);

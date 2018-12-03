@@ -126,12 +126,12 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
   }
   readTexture(
       texture: WebGLTexture, width: number, height: number, dataSize: number, dataType: Encoder.DataType,
-      channels: number): Encoder.DataArrayType {
+      channels: number, forceRgbaReads?: boolean): Encoder.DataArrayType {
     const gl = this.gl;
     if (!channels) {
       channels = 1;
     }
-    const encoder = this.getEncoder(dataType, channels);
+    const encoder = this.getEncoder(dataType, channels, forceRgbaReads);
     const buffer = encoder.allocate(width * height);
     // bind texture to framebuffer
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -217,7 +217,7 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
   deleteProgram(program: WebGLProgram): void {
     this.gl.deleteProgram(program);
   }
-  getEncoder(dataType: Encoder.DataType, channels: number): DataEncoder {
+  getEncoder(dataType: Encoder.DataType, channels: number, forceRgbaReads?: boolean): DataEncoder {
     switch (dataType) {
       case 'float':
         return new RGBAFloat32DataEncoder(channels);

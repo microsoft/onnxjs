@@ -25,7 +25,7 @@ export interface WebGLContext {
   attachFramebuffer(texture: WebGLTexture, width: number, height: number): void;
   readTexture(
       texture: WebGLTexture, width: number, height: number, dataSize: number, dataType: Encoder.DataType,
-      channels: number): Encoder.DataArrayType;
+      channels: number, forceRgbaReads?: boolean): Encoder.DataArrayType;
   isFramebufferReady(): boolean;
   getActiveTexture(): string;
   getTextureBinding(): WebGLTexture;

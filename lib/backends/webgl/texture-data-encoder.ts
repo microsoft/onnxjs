@@ -36,10 +36,14 @@ export class RedFloat32DataEncoder implements DataEncoder {
   format: number;
   channelType: number;
   channelSize: number;
-  constructor(channels = 1) {
+  constructor(channels = 1, forceRgbaReads = false) {
     if (channels === 1) {
       this.internalFormat = WebGL2RenderingContext.R32F;
-      this.format = WebGL2RenderingContext.RED;
+      if (forceRgbaReads) {
+        this.format = WebGL2RenderingContext.RGBA;
+      } else {
+        this.format = WebGL2RenderingContext.RED;
+      }
       this.channelType = WebGL2RenderingContext.FLOAT;
       this.channelSize = channels;
     } else if (channels === 4) {
@@ -70,9 +74,18 @@ export class RedFloat32DataEncoder implements DataEncoder {
     return result;
   }
   allocate(size: number): Encoder.DataArrayType {
-    return new Float32Array(size * this.channelSize);
+    const channelSize = this.format === WebGL2RenderingContext.RED ? 1 : 4;
+    return new Float32Array(size * channelSize);
   }
   decode(buffer: Encoder.DataArrayType, dataSize: number): Float32Array {
+    if (this.channelSize === 1 && this.format === WebGL2RenderingContext.RGBA) {
+      Logger.verbose('Encoder', 'Decoding RGBA onto array of single floats');
+      const result = new Float32Array(dataSize);
+      for (let i = 0; i < dataSize; i++) {
+        result[i] = buffer[i * 4];
+      }
+      return result;
+    }
     if (dataSize < buffer.length) {
       return buffer.slice(0, dataSize) as Float32Array;
     }

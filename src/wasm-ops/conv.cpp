@@ -4,8 +4,8 @@
 #include "conv.h"
 #include "common.h"
 #include "gemm.h"
-#include <Eigen\Core>
-#include <Eigen\Dense>
+#include <Eigen/Core>
+#include <Eigen/Dense>
 #include <vector>
 
 // Wasm interop method

@@ -287,9 +287,8 @@ class GraphImpl implements Graph, Graph.Transformer {
           node.outputs.pop();
           node.executeNode = false;
 
-          const tensor = Tensor.fromProto(nodeProto.attribute[0].t);
           this._allData[dataIndex]._from = -1;
-          this._allData[dataIndex].tensor = tensor;
+          this._allData[dataIndex].tensor = Tensor.fromProto(nodeProto.attribute[0].t);
         }
       }
     }

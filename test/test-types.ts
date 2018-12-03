@@ -3,7 +3,7 @@
 
 import {Attribute} from '../lib/attribute';
 import {Logger} from '../lib/instrument';
-import {Tensor} from '../lib/Tensor';
+import {Tensor} from '../lib/tensor';
 
 export declare namespace Test {
   export interface NamedTensor extends Tensor {

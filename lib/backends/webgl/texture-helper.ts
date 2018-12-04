@@ -17,12 +17,11 @@ import {WebGLContext} from './webgl-context';
  *    Caching these is crucial to performance. These are In-use Textures
  *   2. textures which are not in use by any current ProgramInfo/Tensor
  *     These are called Free Textures
- * TextureManager is also used to help creating textures. For this it
+ * TextureHelper is also used to help creating textures. For this it
  * uses WebGLContext and TextureLayoutStrategy
  */
-export class TextureManager {
+export class TextureHelper {
   glContext: WebGLContext;
-  free: Map<string, WebGLTexture[]>;
   gl: WebGLRenderingContext;
   layoutStrategy: TextureLayoutStrategy;
   profiler: Readonly<Profiler>;
@@ -30,7 +29,6 @@ export class TextureManager {
   constructor(context: WebGLContext, layoutStrategy: TextureLayoutStrategy, profiler: Readonly<Profiler>) {
     this.glContext = context;
     this.gl = context.gl;
-    this.free = new Map();
     this.layoutStrategy = layoutStrategy;
     this.profiler = profiler;
   }
@@ -38,26 +36,17 @@ export class TextureManager {
     let texture: WebGLTexture;
     const textureDataType = this.toEncoderType(dataType);
     const size = `${layout.width}-${layout.height}`;
-    const textureList = this.free.get(size);
-    if (!textureList || textureList.length === 0) {
-      Logger.verbose('TextureManager', `No cached texture; Creating new of size ${size}`);
-      texture = this.glContext.allocateTexture(
-          layout.width, layout.height, textureDataType, layout.channels, this.toTextureData(dataType, data));
-    } else {
-      Logger.verbose('TextureManager', `Found a texture in cache of size ${size}`);
-      texture = textureList.shift()!;
-      if (data) {
-        this.glContext.updateTexture(
-            texture, layout.width, layout.height, 'float' /*this.toEncoderType(dataType)*/, layout.channels,
-            this.toTextureData(dataType, data)!);
-      }
-    }
+
+    Logger.verbose('TextureHelper', `Creating new texture of size ${size}`);
+    texture = this.glContext.allocateTexture(
+        layout.width, layout.height, textureDataType, layout.channels, this.toTextureData(dataType, data));
+
     return {...layout, dataType, texture, arrayType: textureDataType};
   }
   createTexture(
       dataType: Tensor.DataType, shape: number[], strides?: number[], data?: Tensor.NumberType, channels?: number,
       width?: number, height?: number, unpackedShape?: number[]): TextureData {
-    return this.profiler.event('backend', 'TextureManager.createTexture', () => {
+    return this.profiler.event('backend', 'TextureHelper.createTexture', () => {
       if (!width || !height) {
         [width, height] = this.layoutStrategy.computeTextureWH(shape);
       }
@@ -79,23 +68,16 @@ export class TextureManager {
     if (!channels) {
       channels = 1;
     }
-    return this.profiler.event('backend', 'TextureManager.readTexture', () => {
+    return this.profiler.event('backend', 'TextureHelper.readTexture', () => {
       const dataSize = td.shape.reduce((a, b) => a * b) * channels!;
       const data = this.glContext.readTexture(
           td.texture, td.width, td.height, dataSize, this.toEncoderType(dataType), channels!);
       return this.toTensorData(dataType, data);
     });
   }
-  saveTexture(texture: WebGLTexture, dims: number[]): void {
-    return this.profiler.event('backend', 'TextureManager.saveTexture', () => {
-      const size = `${dims[0]}-${dims[1]}`;
-      Logger.verbose('TextureManager', `caching texture of size ${size}`);
-      let textureList = this.free.get(size);
-      if (!textureList) {
-        textureList = [];
-      }
-      textureList.push(texture);
-      this.free.set(size, textureList);
+  releaseTexture(texture: WebGLTexture): void {
+    return this.profiler.event('backend', 'TextureHelper.releaseTexture', () => {
+      this.glContext.deleteTexture(texture);
     });
   }
   createPaddedTexture(inputTextureData: TextureData, outputLayout: TextureLayout): TextureData {
@@ -178,7 +160,7 @@ export class TextureManager {
     //     throw new Error(`TensorData type ${dataType} is not supported`);
     // }
   }
-  dispose(): void {
-    this.free.forEach(value => value.forEach(t => this.glContext.deleteTexture(t)));
+  clearActiveTextures(): void {
+    this.glContext.clearActiveTextures();
   }
 }

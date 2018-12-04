@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import {Backend as BackendInterface} from '../api/onnx';
-import {getOnnxObject} from '../api/onnx-impl';
 import {Backend, SessionHandler} from '../backend';
 import {Logger} from '../instrument';
 import {Session} from '../session';
@@ -38,6 +37,3 @@ export class WebGLBackend implements Backend, WebGLOptions {
     this.glContext.dispose();
   }
 }
-
-// register WebGL backend
-getOnnxObject().backend.webgl = new WebGLBackend();

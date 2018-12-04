@@ -134,6 +134,13 @@ Learn more about ONNX
 - [ONNX website](http://onnx.ai/)
 - [ONNX on GitHub](https://github.com/onnx/onnx)
 
+### Platforms supported
+| OS/Browser | Chrome | Edge | FireFox | Safari | Opera |
+|--:|---|---|---|---|---|
+| Windows | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark:  | -  |  :heavy_check_mark: |
+| iOS |   |   |   |   |   |
+| Ubuntu |   |   |   |   |   |
+
 ### Operators supported
 The [list](./docs/operators.md) of ONNX operators supported by each of the 3 available builtin backends (cpu, wasm, and webgl).
 

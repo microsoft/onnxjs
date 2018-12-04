@@ -138,10 +138,10 @@ Learn more about ONNX
 
 ### Platforms supported
 | OS/Browser | Chrome | Edge | FireFox | Safari | Opera |
-|----------:|-------|------|--------|--------|-------|
-|  Windows  |   :heavy_check_mark:   |   :heavy_check_mark:    |   :heavy_check_mark:   |  -  |    :heavy_check_mark:   |
-|    iOS    |   :heavy_check_mark:   |  -  |   :heavy_check_mark:   |   :heavy_check_mark:   |   :heavy_check_mark:   |
-|  Ubuntu   |   :heavy_check_mark:   |  -  |   :heavy_check_mark:   |  -  |   :heavy_check_mark:   |
+|:----------:|:------:|:----:|:-------:|:------:|:-----:|
+| Windows | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | - | :heavy_check_mark: |
+| iOS | :heavy_check_mark: | - | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Ubuntu | :heavy_check_mark: | - | :heavy_check_mark: | - | :heavy_check_mark: |
 
 ### Operators supported
 The [list](./docs/operators.md) of ONNX operators supported by each of the 3 available builtin backends (cpu, wasm, and webgl).

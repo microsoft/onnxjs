@@ -115,3 +115,6 @@ export interface InferenceSessionConstructor {
    */
   new(config?: InferenceSession.Config): InferenceSession;
 }
+
+import * as InferenceSessionImpl from './inference-session-impl';
+export const InferenceSession: InferenceSessionConstructor = InferenceSessionImpl.InferenceSession;

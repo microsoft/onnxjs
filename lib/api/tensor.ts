@@ -97,3 +97,6 @@ export interface TensorConstructor {
 export interface Tensor {
   // Tensor utilities
 }
+
+import * as TensorImpl from './tensor-impl';
+export const Tensor: TensorConstructor = TensorImpl.Tensor;

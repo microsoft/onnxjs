@@ -26,7 +26,7 @@ The supported platforms are Windows 10 + Edge/Chrome/Firefox/Electron/Node.js.
 |      [GlobalMaxPool](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#GlobalMaxPool)      |      x      |       x      |       x       |
 |            [Greater](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Greater)            |             |              |       x       |
 |           [Identity](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Identity)           |             |              |       x       |
-|        [ImageScaler](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ImageScaler)        |             |              |       x       |
+|        [ImageScaler](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ImageScaler)        |      x      |              |       x       |
 |          [LeakyRelu](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#LeakyRelu)          |      x      |              |       x       |
 |               [Less](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Less)               |             |              |       x       |
 |                [Log](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Log)                |      x      |              |       x       |

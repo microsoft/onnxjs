@@ -40,5 +40,6 @@ export interface WebGLContext {
   deleteTexture(texture: WebGLTexture): void;
   deleteProgram(program: WebGLProgram): void;
   getEncoder(dataType: Encoder.DataType, channels: number): DataEncoder;
+  clearActiveTextures(): void;
   dispose(): void;
 }

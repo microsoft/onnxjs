@@ -2,7 +2,8 @@
 // Licensed under the MIT license.
 
 import {Tensor as InternalTensor} from '../tensor';
-import {Tensor as ApiTensor} from './tensor';
+import {Tensor as TensorInterface} from './tensor';
+import {Tensor as ApiTensor} from './tensor-impl';
 
 export function toApiTensor(internalTensor: InternalTensor): ApiTensor {
   switch (internalTensor.type) {
@@ -23,7 +24,7 @@ export function toApiTensor(internalTensor: InternalTensor): ApiTensor {
   }
 }
 
-export function matchElementType(type: ApiTensor.Type, element: ApiTensor.ElementType) {
+export function matchElementType(type: TensorInterface.Type, element: TensorInterface.ElementType) {
   switch (typeof element) {
     case 'string':
       if (type !== 'string') {

@@ -82,7 +82,8 @@ export class WebGLInferenceHandler implements InferenceHandler {
         channels === 1 ? tensor.dims.slice() : getPackedShape(tensor.dims.slice()), channels, unpackedShape);
   }
   dispose(): void {
-    this.tensorToTexture.forEach(td => this.textureManager.saveTexture(td.texture, [td.width, td.height]));
+    this.textureManager.clearActiveTextures();
+    this.tensorToTexture.forEach(td => this.textureManager.releaseTexture(td.texture));
     this.tensorToTexture = new Map();
     this.textureToTensor = new Map();
   }

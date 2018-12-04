@@ -65,8 +65,9 @@ export class WebGLSessionHandler implements SessionHandler {
   }
   dispose(): void {
     this.programManager.dispose();
-    this.textureManager.dispose();
-    this.textureDataCache.forEach(td => this.textureManager.saveTexture(td.texture, [td.width, td.height]));
+    this.textureManager.clearActiveTextures();
+    this.textureDataCache.forEach(td => this.textureManager.releaseTexture(td.texture));
+    this.textureDataCache = new Map();
   }
   resolve(node: Graph.Node, domain: string, version: number): Operator {
     const op = this.createOperator(node, domain, version);

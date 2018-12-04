@@ -11,6 +11,8 @@ With ONNX.js, web developers can score pre-trained ONNX models directly on brows
 
 ONNX.js can run on both CPU and GPU. For running on CPU, [WebAssembly](https://developer.mozilla.org/en-US/docs/WebAssembly) is adopted to execute model at near-native speed. Furthermore, ONNX.js utilizes [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) to provide a "multi-threaded" environment to parallelize data processing. Empirical evaluation shows very promising performance gains on CPU by taking full advantage of WebAssembly and Web Workers. For running on GPUs, a popular standard for accessing GPU capabilities - WebGL is adopted. ONNX.js has further adopted several novel optimization techniques for reducing data transfer between CPU and GPU, as well as some techniques to reduce GPU processing cycles to further push the performance to the maximum.
 
+See [here](#Platforms-supported) for a list of platforms ONNX.js supports.
+
 ### Benchmarks
 
 Benchmarks have been run against the most prominent open source solutions in the same market. Below are the results collected for Chrome and Edge browsers on one sample machine (computations run on both CPU and GPU):
@@ -136,10 +138,10 @@ Learn more about ONNX
 
 ### Platforms supported
 | OS/Browser | Chrome | Edge | FireFox | Safari | Opera |
-|--:|---|---|---|---|---|
-| Windows | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark:  | -  |  :heavy_check_mark: |
-| iOS |   |   |   |   |   |
-| Ubuntu |   |   |   |   |   |
+|----------:|-------|------|--------|--------|-------|
+|  Windows  |   :heavy_check_mark:   |   :heavy_check_mark:    |   :heavy_check_mark:   |  -  |    :heavy_check_mark:   |
+|    iOS    |   :heavy_check_mark:   |  -  |   :heavy_check_mark:   |   :heavy_check_mark:   |   :heavy_check_mark:   |
+|  Ubuntu   |   :heavy_check_mark:   |  -  |   :heavy_check_mark:   |  -  |   :heavy_check_mark:   |
 
 ### Operators supported
 The [list](./docs/operators.md) of ONNX operators supported by each of the 3 available builtin backends (cpu, wasm, and webgl).

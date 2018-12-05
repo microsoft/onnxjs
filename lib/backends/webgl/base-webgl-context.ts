@@ -229,13 +229,6 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
         throw new Error(`Invalid dataType: ${dataType}`);
     }
   }
-  clearActiveTextures(): void {
-    const gl = this.gl;
-    for (let unit = 0; unit < this.maxTextureImageUnits; ++unit) {
-      gl.activeTexture(gl.TEXTURE0 + unit);
-      gl.bindTexture(gl.TEXTURE_2D, null);
-    }
-  }
   protected queryVitalParameters(): void {
     const gl = this.gl;
     this.maxCombinedTextureImageUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);

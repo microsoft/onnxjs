@@ -146,7 +146,7 @@ Learn more about ONNX
 
 #### Mobile Platforms
 | OS/Browser | Chrome | Edge | FireFox | Safari | Opera |
-|:----------:|:------:|:----:|:-------:|:------:|:-----:|:-----:|:-----:|
+|:----------:|:------:|:----:|:-------:|:------:|:-----:|
 | iOS | Coming soon | - | Coming soon | Coming soon | Coming soon |
 | Android | :heavy_check_mark: | :heavy_check_mark: | Coming soon | - | :heavy_check_mark: |
 

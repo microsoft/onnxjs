@@ -10,7 +10,8 @@ import {ProgramInfo} from './program-info';
 import {RunData} from './program-manager';
 
 export interface PositionalSubOperator extends Operator {
-  getPositionalFunction(handler: WebGLInferenceHandler, inputShape: number[], name?: string): GlslPositionalFunction;
+  getPositionalFunction(handler: WebGLInferenceHandler, inputShape: ReadonlyArray<number>, name?: string):
+      GlslPositionalFunction;
 }
 export interface WebGLRunnable extends Operator {
   addPositionalSub(positionalSubOperator: PositionalSubOperator): void;

@@ -16,8 +16,8 @@ export interface GlslFunction<T extends FunctionType> {
 }
 export interface GlslValueFunction extends GlslFunction<FunctionType.ValueBased> {}
 export interface GlslPositionalFunction extends GlslFunction<FunctionType.Positional> {
-  inputShape: number[];
-  outputShape: number[];
+  inputShape: ReadonlyArray<number>;
+  outputShape: ReadonlyArray<number>;
 }
 
 export class GlslContext {

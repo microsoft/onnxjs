@@ -89,7 +89,7 @@ function doTranspose(
   let startTargetIndex = 0;
 
   for (let i = 0; i < numBlocks; ++i) {
-    const sizeOffset = ShapeUtil.computeOffset(targetIndex, stride, numAxes);
+    const sizeOffset = ShapeUtil.indicesToOffset(targetIndex, stride, numAxes);
     arrayCopyHelper(target, source, startTargetIndex, startSourceIndex + sizeOffset, numElementsInBlock);
 
     ShapeUtil.incrementIndex(targetIndex, targetDims, numAxes);
@@ -108,7 +108,7 @@ function doTransposeEltWise(
   let startTargetIndex = 0;
 
   for (let i = 0; i < numBlocks; ++i) {
-    const sourceOffset = ShapeUtil.computeOffset(targetIndex, stride, numAxes);
+    const sourceOffset = ShapeUtil.indicesToOffset(targetIndex, stride, numAxes);
     target[startTargetIndex++] = source[sourceOffset];
     ShapeUtil.incrementIndex(targetIndex, targetDims, numAxes);
   }

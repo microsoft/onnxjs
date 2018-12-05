@@ -1,44 +1,57 @@
 # **API Documentation**
 
 ## **Table of Contents**
-### 1. [Globals](#Globals)
-  1. [onnx](#onnx)
-  2. [onnx.backend](#onnx.backend)
-  3. [onnx.debug](#onnx.debug)
+### - [Global Variable](#ref-global)
+  - [onnx](#ref-global-onnx)
 
-### 2. [Inference Session](#Inference-Session)
-  1. [Creating an Inference Session](#Creating-an-Inference-Session)
-  2. [Run in Inference Session](#Run-in-Inference-Session)
-  3. [Profile a Session](#Profile-a-Session)
+### - [Onnx](#ref-Onnx)
+  - [Tensor](#ref-Onnx-Tensor)
+  - [InferenceHandler](#ref-Onnx-InferenceHandler)
+  - [backend](#ref-Onnx-backend)
+  - [ENV](#ref-Onnx-ENV)
 
-### 3. [Tensor](#Tensor)
-  1. [Create a Tensor](#Create-a-Tensor)
-  2. [Tensor Properties](#Tensor-Properties)
-  3. [Access Tensor Elements](#Access-Tensor-Elements)
+### - [Inference Session](#Inference-Session)
+  - [Creating an Inference Session](#Creating-an-Inference-Session)
+  - [Run in Inference Session](#Run-in-Inference-Session)
+  - [Profile a Session](#Profile-a-Session)
 
-## **Globals**
-- ### **onnx**
+### - [Tensor](#Tensor)
+  - [Create a Tensor](#Create-a-Tensor)
+  - [Tensor Properties](#Tensor-Properties)
+  - [Access Tensor Elements](#Access-Tensor-Elements)
+
+## <a name="ref-global"></a>**Global Variable**
+- ### <a name="ref-global-onnx"></a>**onnx**
   The `onnx` object is available in global context (window.onnx in browser, global.onnx in Node.js) after require /import 'onnxjs' module, or imported from a `<script> tag`.
 
-- ### **onnx.backend**
+## <a name="ref-Onnx"></a>**Onnx**
+- ### <a name="ref-Onnx-Tensor"></a>**Tensor**
+  See [Tensor](#Tensor).
+
+- ### <a name="ref-Onnx-InferenceHandler"></a>**InferenceHandler**
+  See [InferenceHandler](#InferenceHandler).
+
+- ### <a name="ref-Onnx-backend"></a>**backend**
   Customizes settings for all available backends. `ONNX.js` currently supports three types of backend - *cpu* (pure JavaScript backend), *webgl* (WebGL backend), and *wasm*   (WebAssembly backend).
 
-  ### `onnx.backend.cpu`
+  ### `backend.cpu`
     An object specifying CPU backend settings. Available soon.
   ***
-  ### `onnx.backend.webgl`
+  ### `backend.webgl`
     An object specifying WebGL backend settings. Available soon.
   ***
-  ### `onnx.backend.wasm`
+  ### `backend.wasm`
     An object specifying WebAssembly backend settings. The supported member variables are:
     - **worker** (`number`)
 
-      Optional. Specifies the number of [web workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) to run in background threads. If not set, run with number of `CPU cores - 1` workers.
+      Optional. Specifies the number of [web workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) to run in background threads. If not set, run with number of `(CPU cores - 1)` workers.
     - **cpuFallback** (`boolean`)
 
       Optional. Determines whether to fall back to use CPU backend if WebAssembly backend is missing certain ONNX operators. Default is set to true.
 
-- ### **onnx.debug**
+- ### <a name="ref-Onnx-backend"></a>**ENV**
+  Represent runtime environment settings and status of ONNX.js
+  ### `ENV.debug`
   A global flag to indicate whether to run `ONNX.js` in debug mode.
 
 ## **Inference Session**

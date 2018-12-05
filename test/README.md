@@ -28,9 +28,9 @@ tests is located under `deps/data/data/test/node` and `deps/data/data/test/onnx/
 
 To run individual Model tests for the included, well-known models (such as Resnet50) type the following:
 ```
-npm test -- model resnet
+npm test -- model resnet50
 ```
-Replace `resnet` with the name of any other model located under `deps/data/data/test/onnx/v7` folder.
+Replace `resnet50` with the name of any other model located under `deps/data/data/test/onnx/v7` folder.
 
 To run individual Model tests for the unit-level models (such as `abs`) type the following:
 ```

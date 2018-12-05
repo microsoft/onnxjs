@@ -10,12 +10,12 @@
   - [backend](#ref-Onnx-backend)
   - [ENV](#ref-Onnx-ENV)
 
-### - [Inference Session](#Inference-Session)
+### - [Inference Session](#ref-InferenceSession)
   - [Creating an Inference Session](#Creating-an-Inference-Session)
   - [Run in Inference Session](#Run-in-Inference-Session)
   - [Profile a Session](#Profile-a-Session)
 
-### - [Tensor](#Tensor)
+### - [Tensor](#ref-Tensor)
   - [Create a Tensor](#Create-a-Tensor)
   - [Tensor Properties](#Tensor-Properties)
   - [Access Tensor Elements](#Access-Tensor-Elements)
@@ -26,10 +26,10 @@
 
 ## <a name="ref-Onnx"></a>**Onnx**
 - ### <a name="ref-Onnx-Tensor"></a>**Tensor**
-  See [Tensor](#Tensor).
+  See [Tensor](#ref-Tensor).
 
 - ### <a name="ref-Onnx-InferenceHandler"></a>**InferenceHandler**
-  See [InferenceHandler](#InferenceHandler).
+  See [InferenceHandler](#ref-InferenceSession).
 
 - ### <a name="ref-Onnx-backend"></a>**backend**
   Customizes settings for all available backends. `ONNX.js` currently supports three types of backend - *cpu* (pure JavaScript backend), *webgl* (WebGL backend), and *wasm*   (WebAssembly backend).
@@ -54,13 +54,13 @@
   ### `ENV.debug`
   A global flag to indicate whether to run `ONNX.js` in debug mode.
 
-## **Inference Session**
+## <a name="ref-InferenceSession"></a>**Inference Session**
 An `InferenceSession` encapsulates the environment for `ONNX.js` operations to execute. It loads and runs `ONNX` models with the desired configurations.
 
 To configure an `InferenceSession`, use an object with the following parameters-
   - **backendHint** (`string`)
       Specify a preferred backend to start an `InferenceSession`. Current available backend hints are:
-      - `'cpu'`     : CPU backend
+      - `'cpu'`: CPU backend
       - `'wasm'`: WebAssembly backend
       - `'webgl'`: WebGL backend
       If not set, the backend will be determined by the platform and environment.
@@ -194,7 +194,7 @@ To configure an `InferenceSession`, use an object with the following parameters-
     ```
 
 
-## **Tensor**
+## <a name="ref-Tensor"></a>**Tensor**
 Tensor is a representation of vectors, matrices and n-dimension data in `ONNX.js`. Tensors are used in `InferenceSession` as inputs for models to run.
 
 - ### **Create a Tensor**

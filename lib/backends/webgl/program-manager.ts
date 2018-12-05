@@ -100,6 +100,7 @@ export class ProgramManager {
         } else {
           this.doDraw(buildArtifact, runData);
         }
+        gl.flush();
       });
       if (runData.postRun) {
         Logger.verbose('ProgramManager', 'PostRun');

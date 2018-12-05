@@ -40,7 +40,7 @@ Replace `test_abs` with any other sub-folder located under the `deps/data/data/t
 
 By default, all available backends will be tested. Use the --backend flag (options: `cpu`, `wasm`, `webgl`) to test specific backends
 ```
-npm test -- model test_abs --backend webgl
+npm test -- model test_abs --backend=webgl
 ```
 
 ### Op Tests
@@ -54,7 +54,7 @@ Replace `abs.jsonc` with any other operator data file located under the `deps/da
 
 By default, all available backends will be tested. Use the --backend flag (options: `cpu`, `wasm`, `webgl`) to test specific backends
 ```
-npm test -- op abs.jsonc --backend webgl
+npm test -- op abs.jsonc --backend=webgl
 ```
 
 ## More information

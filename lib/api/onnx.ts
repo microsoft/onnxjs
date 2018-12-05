@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {InferenceSessionConstructor, Onnx, TensorConstructor} from '.';
-import {getOnnxObject} from './onnx-impl';
+import {InferenceSessionConstructor} from './inference-session';
+import {TensorConstructor} from './tensor';
 
 //#region Backends
 
@@ -57,12 +57,7 @@ export interface Backend {
 /**
  * represent runtime environment settings and status of ONNX.js
  */
-interface Environment {
-  /**
-   * represent all available backends and settings of them
-   */
-  readonly backend: Backend;
-
+export interface Environment {
   /**
    * a global flag to indicate whether to run ONNX.js in debug mode
    */
@@ -70,18 +65,16 @@ interface Environment {
 }
 
 export interface Onnx extends Environment {
-  readonly Tensor: TensorConstructor;
-  readonly InferenceSession: InferenceSessionConstructor;
-}
-
-declare global {
   /**
-   * the global onnxjs exported object
+   * represent a tensor with specified dimensions and data type.
    */
-  const onnx: Onnx;
+  readonly Tensor: TensorConstructor;
+  /**
+   * represent a runtime instance of an ONNX model
+   */
+  readonly InferenceSession: InferenceSessionConstructor;
+  /**
+   * represent all available backends and settings of them
+   */
+  readonly backend: Backend;
 }
-
-//
-// get or set the onnx object in the global context
-//
-export const onnx: Onnx = getOnnxObject();

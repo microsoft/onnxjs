@@ -7,12 +7,6 @@ import {Tensor} from '../../../lib/api';
 
 let t: Tensor;
 
-describe('#UnitTest# - API - Check Globals and Imports', () => {
-  it('Compare Global Tensor and Imported Tensor', () => {
-    expect(onnx.Tensor).is.equal(Tensor);
-  });
-});
-
 describe('#UnitTest# - API - Tensor constructors', () => {
   it('1. Create a new Tensor with specific type', () => {
     t = new Tensor([2, 3], 'int32');              // ok, a int32-typed 1D tensor with 2 elements
@@ -189,6 +183,6 @@ describe('#UnitTest# - API - Tensor Data Setter', () => {
 // by-pass unused variable check
 t = unused();
 unused(t);
-function unused<T, U>(t?: T) {
+function unused<U>(...t: Array<unknown>) {
   return t as unknown as U;
 }

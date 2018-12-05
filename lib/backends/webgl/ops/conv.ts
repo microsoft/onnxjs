@@ -213,8 +213,7 @@ export class WebGLConv extends Conv {
       inputLayouts: inputs.length === 3 ? [im2colLayout, kLayout, bLayout!] : [im2colLayout, kLayout],
       outputLayout,
       shaderSource,
-      params: {'sharedDim': sharedDim, 'sharedDimReadSize': sharedDimReadSize},
-      blockSize: this.calcBlockSize(outputLayout)
+      params: {'sharedDim': sharedDim, 'sharedDimReadSize': sharedDimReadSize}
     };
   }
   createDotProdRunData(inferenceHandler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
@@ -289,15 +288,15 @@ export class WebGLConv extends Conv {
     return outputShape;
   }
   protected calcSharedDimReadSize(sharedDim: number): number {
-    const preferredBatchSize = 8;
+    const preferredBatchSize = 16;
     if (sharedDim < preferredBatchSize || sharedDim % preferredBatchSize !== 0) {
       return sharedDim;
     }
     return preferredBatchSize;
   }
   protected calcBlockSize(outputLayout: TextureLayout): [number, number]|undefined {
-    const preferredRowCount = 32;
-    const preferredColCount = 32;
+    const preferredRowCount = 64;
+    const preferredColCount = 64;
     if (outputLayout.height < preferredRowCount) {
       return undefined;
     }

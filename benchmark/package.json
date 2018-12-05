@@ -6,9 +6,9 @@
   "scripts": {
     "build": "webpack --config ./webpack.conf.js --mode production",
     "build-debug": "webpack --config ./webpack.conf.js --mode development",
-    "test": "karma start --browsers ChromeTest --single-run  --printMatches",
+    "test": "karma start --browsers ChromeTest --single-run",
     "test-debug": "karma start --browsers ChromeDebug  --printMatches",
-    "test-edge": "karma start --browsers Edge --single-run  --printMatches"
+    "test-edge": "karma start --browsers Edge --single-run"
   },
   "keywords": [
     "resnet",

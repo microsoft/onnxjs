@@ -62,12 +62,10 @@ export class ProgramManager {
   // tslint:disable-next-line:ban-types
   repo: Map<Object, Artifact>;  // this should be per-session object
   vertexShader: WebGLShader;
-  attributesBound: boolean;
 
   constructor(public profiler: Readonly<Profiler>, public glContext: WebGLContext) {
     this.repo = new Map();
     this.glContext = glContext;
-    this.attributesBound = false;
   }
   getArtifact(key: {}): Artifact|undefined {
     return this.repo.get(key);
@@ -86,9 +84,7 @@ export class ProgramManager {
       gl.useProgram(program);
       try {
         this.bindOutput(runData.outputTextureData);
-        if (!this.attributesBound) {
-          this.bindAttributes(buildArtifact.attribLocations);
-        }
+        this.bindAttributes(buildArtifact.attribLocations);
         this.bindUniforms(buildArtifact.uniformLocations, runData.uniformData);
         this.bindTextures(buildArtifact.uniformLocations, runData.inputTextureDatas);
       } catch (err) {
@@ -101,7 +97,6 @@ export class ProgramManager {
         } else {
           this.doDraw(buildArtifact, runData);
         }
-        gl.flush();
       });
       if (runData.postRun) {
         Logger.verbose('ProgramManager', 'PostRun');
@@ -143,6 +138,7 @@ export class ProgramManager {
       runData.draw(this.glContext, artifact);
     } else {
       this.glContext.draw();
+      this.glContext.gl.flush();
     }
   }
   protected doBlockDraw(artifact: Artifact, runData: RunData): void {
@@ -192,7 +188,6 @@ export class ProgramManager {
     const positionHandle = attribLocations.position.location as number;
     const textureCoordHandle = attribLocations.textureCoord.location as number;
     this.glContext.setVertexAttributes(positionHandle, textureCoordHandle);
-    this.attributesBound = true;
   }
   bindUniformArray(location: WebGLUniformLocation, type: string, value: number[]): void {
     const gl = this.glContext.gl;

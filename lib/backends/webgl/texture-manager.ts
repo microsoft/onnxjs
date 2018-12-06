@@ -55,8 +55,9 @@ export class TextureManager {
     return {...layout, dataType, texture, arrayType: textureDataType};
   }
   createTexture(
-      dataType: Tensor.DataType, shape: number[], strides?: number[], data?: Tensor.NumberType, channels?: number,
-      width?: number, height?: number, unpackedShape?: number[]): TextureData {
+      dataType: Tensor.DataType, shape: ReadonlyArray<number>, strides?: ReadonlyArray<number>,
+      data?: Tensor.NumberType, channels?: number, width?: number, height?: number,
+      unpackedShape?: ReadonlyArray<number>): TextureData {
     return this.profiler.event('backend', 'TextureManager.createTexture', () => {
       if (!width || !height) {
         [width, height] = this.layoutStrategy.computeTextureWH(shape);
@@ -86,7 +87,7 @@ export class TextureManager {
       return this.toTensorData(dataType, data);
     });
   }
-  saveTexture(texture: WebGLTexture, dims: number[]): void {
+  saveTexture(texture: WebGLTexture, dims: ReadonlyArray<number>): void {
     return this.profiler.event('backend', 'TextureManager.saveTexture', () => {
       const size = `${dims[0]}-${dims[1]}`;
       Logger.verbose('TextureManager', `caching texture of size ${size}`);

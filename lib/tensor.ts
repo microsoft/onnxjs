@@ -126,6 +126,11 @@ export class Tensor {
     // return this.cache!;
   }
 
+  /**
+   * get the number of elements in the tensor
+   */
+  public readonly size: number;
+
   constructor(
       /**
        * get the dimensions of the tensor
@@ -299,8 +304,6 @@ export class Tensor {
   static fromData(data: Tensor.DataTypeMap[Tensor.DataType], dims: ReadonlyArray<number>, type: Tensor.DataType) {
     return new Tensor(dims, type, undefined, undefined, data);
   }
-
-  public size: number;
 }
 
 function sizeof(type: Tensor.DataType): number {

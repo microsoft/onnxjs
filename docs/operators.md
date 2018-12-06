@@ -14,10 +14,11 @@ The supported platforms are Windows 10 + Edge/Chrome/Firefox/Electron/Node.js.
 | [BatchNormalization](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#BatchNormalization) |      x      |       x      |       x       |
 |               [Ceil](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Ceil)               |      x      |              |       x       |
 |             [Concat](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Concat)             |      x      |              |       x       |
+|             [Concat](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Constant)           |      x      |       x      |       x       |
 |               [Conv](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Conv)               |      x      |       x      |       x       |
 |                [Cos](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Cos)                |      x      |              |       x       |
 |                [Div](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Div)                |      x      |              |       x       |
-|            [Dropout](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Dropout)            |      x      |              |       x       |
+|            [Dropout](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Dropout)            |      x      |       x      |       x       |
 |              [Equal](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Equal)              |             |              |       x       |
 |                [Exp](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Exp)                |      x      |              |       x       |
 |              [Floor](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Floor)              |      x      |              |       x       |
@@ -25,7 +26,7 @@ The supported platforms are Windows 10 + Edge/Chrome/Firefox/Electron/Node.js.
 |  [GlobalAveragePool](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#GlobalAveragePool)  |      x      |       x      |       x       |
 |      [GlobalMaxPool](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#GlobalMaxPool)      |      x      |       x      |       x       |
 |            [Greater](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Greater)            |             |              |       x       |
-|           [Identity](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Identity)           |             |              |       x       |
+|           [Identity](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Identity)           |      x      |       x      |       x       |
 |        [ImageScaler](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ImageScaler)        |      x      |              |       x       |
 |          [LeakyRelu](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#LeakyRelu)          |      x      |              |       x       |
 |               [Less](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Less)               |             |              |       x       |

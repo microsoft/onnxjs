@@ -5,7 +5,7 @@ import Long from 'long';
 import ndarray from 'ndarray';
 import {onnx} from 'onnx-proto';
 
-import {ProtoUtil} from './util';
+import {ProtoUtil, ShapeUtil} from './util';
 
 type NdArray = ndarray<number>|ndarray<string>;
 
@@ -46,7 +46,11 @@ export class Tensor {
    */
   get data(): TensorData {
     if (this.cache === undefined) {
-      this.cache = this.dataProvider!(this.dataId);
+      const data = this.dataProvider!(this.dataId);
+      if (data.length !== this.size) {
+        throw new Error(`Length of data provided by the Data Provider is inconsistent with the dims of this Tensor.`);
+      }
+      this.cache = data;
     }
     return this.cache;
   }
@@ -125,9 +129,7 @@ export class Tensor {
   /**
    * get the number of elements in the tensor
    */
-  get size(): number {
-    return this.dims.length === 0 ? 1 : this.dims.reduce((a, b) => a * b);
-  }
+  public readonly size: number;
 
   constructor(
       /**
@@ -143,8 +145,7 @@ export class Tensor {
        * get the data ID that used to map to a tensor data
        */
       public readonly dataId: Tensor.Id = {}) {
-    validateDims(dims);
-
+    this.size = ShapeUtil.validateDimsAndCalcSize(dims);
     const size = this.size;
     const empty = (dataProvider === undefined && asyncDataProvider === undefined && cache === undefined);
 
@@ -302,25 +303,6 @@ export class Tensor {
    */
   static fromData(data: Tensor.DataTypeMap[Tensor.DataType], dims: ReadonlyArray<number>, type: Tensor.DataType) {
     return new Tensor(dims, type, undefined, undefined, data);
-  }
-}
-
-function validateDims(dims: ReadonlyArray<number>) {
-  if (dims.length < 0 || dims.length > 6) {
-    throw new TypeError(`Only rank 0 to 6 is supported for tensor shape.`);
-  }
-
-  if (dims.length === 0) {
-    throw new RangeError('Scaler tensor is not implemented yet');
-  }
-
-  for (const n of dims) {
-    if (!Number.isInteger(n)) {
-      throw new TypeError(`Invalid shape: ${n} is not an integer`);
-    }
-    if (n <= 0 || n > 2147483647) {
-      throw new TypeError(`Invalid shape: length ${n} is not allowed`);
-    }
   }
 }
 

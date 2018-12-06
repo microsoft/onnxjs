@@ -431,17 +431,20 @@ export class ShapeUtil {
    * @param axisToIncrementOn The 1-indexed axis to increment on. If undefined, axisToIncrementOn == rank
    */
   static incrementIndex(index: number[], dims: ReadonlyArray<number>, axisToIncrementOn?: number) {
-    let inferredDims = dims;
-    if (dims.length === 0) {
-      inferredDims = [1];
+    if (dims.length === 0 || index.length === 0) {
+      throw new Error(`Index incrementing unsupported for scalar Tensor`);
     }
     if (axisToIncrementOn === undefined) {
-      axisToIncrementOn = inferredDims.length;
+      axisToIncrementOn = dims.length;
+    } else {
+      if (axisToIncrementOn <= 0 || axisToIncrementOn > dims.length) {
+        throw new Error(`Incorrect axis to increment on`);
+      }
     }
 
     for (let k = axisToIncrementOn - 1; k >= 0; --k) {
       index[k]++;
-      if (index[k] < inferredDims[k]) {
+      if (index[k] < dims[k]) {
         break;
       }
       index[k] = 0;

@@ -11,7 +11,7 @@ With ONNX.js, web developers can score pre-trained ONNX models directly on brows
 
 ONNX.js can run on both CPU and GPU. For running on CPU, [WebAssembly](https://developer.mozilla.org/en-US/docs/WebAssembly) is adopted to execute model at near-native speed. Furthermore, ONNX.js utilizes [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) to provide a "multi-threaded" environment to parallelize data processing. Empirical evaluation shows very promising performance gains on CPU by taking full advantage of WebAssembly and Web Workers. For running on GPUs, a popular standard for accessing GPU capabilities - WebGL is adopted. ONNX.js has further adopted several novel optimization techniques for reducing data transfer between CPU and GPU, as well as some techniques to reduce GPU processing cycles to further push the performance to the maximum.
 
-See [Compatibility](#Compatibility) and [Operators Supported](#Operators-supported) for a list of platforms and operators ONNX.js currently supports.
+See [Compatibility](#Compatibility) and [Operators Supported](#Operators) for a list of platforms and operators ONNX.js currently supports.
 
 ### Benchmarks
 
@@ -151,9 +151,9 @@ Learn more about ONNX
 | Android | :heavy_check_mark: | :heavy_check_mark: | Coming soon | - | :heavy_check_mark: |
 
 ### Operators
-ONNX.js currently supports most operators in **`ai.onnx`** operator set v7 (opset v7). See [operators.md](./docs/operators.md) for a complete, detailed list of which ONNX operators are supported by the 3 available builtin backends (cpu, wasm, and webgl).
+ONNX.js currently supports most operators in [ai.onnx](https://github.com/onnx/onnx/blob/master/docs/Operators.md) operator set v7 (opset v7). See [operators.md](./docs/operators.md) for a complete, detailed list of which ONNX operators are supported by the 3 available builtin backends (cpu, wasm, and webgl).
 
-Support for **`ai.onnx.ml`** operators is coming soon.
+Support for [ai.onnx.ml](https://github.com/onnx/onnx/blob/master/docs/Operators-ml.md) operators is coming soon. [operators-ml.md](./docs/operators-ml.md) has the most recent status of ai.onnx.ml operators.
 
 ## Contribute
 We’d love to embrace your contribution to ONNX.js. Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).

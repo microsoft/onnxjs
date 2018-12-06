@@ -64,15 +64,14 @@ export class TextureHelper {
       return this.createTextureFromLayout(dataType, layout, data);
     });
   }
-  readTexture(td: TextureData, dataType: Tensor.DataType, channels?: number, forceRgbaReads?: boolean):
-      Tensor.NumberType {
+  readTexture(td: TextureData, dataType: Tensor.DataType, channels?: number): Tensor.NumberType {
     if (!channels) {
       channels = 1;
     }
     return this.profiler.event('backend', 'TextureHelper.readTexture', () => {
       const dataSize = td.shape.reduce((a, b) => a * b) * channels!;
       const data = this.glContext.readTexture(
-          td.texture, td.width, td.height, dataSize, this.toEncoderType(dataType), channels!, forceRgbaReads);
+          td.texture, td.width, td.height, dataSize, this.toEncoderType(dataType), channels!);
       return this.toTensorData(dataType, data);
     });
   }

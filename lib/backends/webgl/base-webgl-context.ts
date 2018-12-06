@@ -126,12 +126,12 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
   }
   readTexture(
       texture: WebGLTexture, width: number, height: number, dataSize: number, dataType: Encoder.DataType,
-      channels: number, forceRgbaReads?: boolean): Encoder.DataArrayType {
+      channels: number): Encoder.DataArrayType {
     const gl = this.gl;
     if (!channels) {
       channels = 1;
     }
-    const encoder = this.getEncoder(dataType, channels, forceRgbaReads);
+    const encoder = this.getEncoder(dataType, channels);
     const buffer = encoder.allocate(width * height);
     // bind texture to framebuffer
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -139,7 +139,7 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
         gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture,
         0);  // 0, we aren't using MIPMAPs
     // TODO: Check if framebuffer is ready
-    gl.readPixels(0, 0, width, height, encoder.format, encoder.channelType, buffer);
+    gl.readPixels(0, 0, width, height, gl.RGBA, encoder.channelType, buffer);
     this.checkError();
     // unbind FB
     return encoder.decode(buffer, dataSize);
@@ -217,7 +217,7 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
   deleteProgram(program: WebGLProgram): void {
     this.gl.deleteProgram(program);
   }
-  getEncoder(dataType: Encoder.DataType, channels: number, forceRgbaReads?: boolean): DataEncoder {
+  getEncoder(dataType: Encoder.DataType, channels: number): DataEncoder {
     switch (dataType) {
       case 'float':
         return new RGBAFloat32DataEncoder(channels);

@@ -18,11 +18,7 @@ export declare namespace Backend {
     /**
      * set or get the WebGL Context ID (webgl vs webgl2,...)
      */
-    contextId?: string;
-    /**
-     * set or get the flag which determines which format parameter to pass to gl.readPixels()
-     */
-    forceRgbaReads?: boolean;
+    contextId?: 'webgl'|'webgl2'|'webgl-experimental';
   }
   /**
    * set options for the WebAssembly backend

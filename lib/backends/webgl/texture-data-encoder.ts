@@ -36,14 +36,10 @@ export class RedFloat32DataEncoder implements DataEncoder {
   format: number;
   channelType: number;
   channelSize: number;
-  constructor(channels = 1, forceRgbaReads = false) {
+  constructor(channels = 1) {
     if (channels === 1) {
       this.internalFormat = WebGL2RenderingContext.R32F;
-      if (forceRgbaReads) {
-        this.format = WebGL2RenderingContext.RGBA;
-      } else {
-        this.format = WebGL2RenderingContext.RED;
-      }
+      this.format = WebGL2RenderingContext.RED;
       this.channelType = WebGL2RenderingContext.FLOAT;
       this.channelSize = channels;
     } else if (channels === 4) {
@@ -74,22 +70,14 @@ export class RedFloat32DataEncoder implements DataEncoder {
     return result;
   }
   allocate(size: number): Encoder.DataArrayType {
-    const channelSize = this.format === WebGL2RenderingContext.RED ? 1 : 4;
-    return new Float32Array(size * channelSize);
+    return new Float32Array(size * 4);
   }
   decode(buffer: Encoder.DataArrayType, dataSize: number): Float32Array {
-    if (this.channelSize === 1 && this.format === WebGL2RenderingContext.RGBA) {
-      Logger.verbose('Encoder', 'Decoding RGBA onto array of single floats');
-      const result = new Float32Array(dataSize);
-      for (let i = 0; i < dataSize; i++) {
-        result[i] = buffer[i * 4];
-      }
-      return result;
+    if (this.channelSize === 1) {
+      const filteredData = (buffer as Float32Array).filter((value, index) => index % 4 === 0).slice(0, dataSize);
+      return filteredData;
     }
-    if (dataSize < buffer.length) {
-      return buffer.slice(0, dataSize) as Float32Array;
-    }
-    return buffer as Float32Array;
+    return buffer.slice(0, dataSize) as Float32Array;
   }
 }
 /**

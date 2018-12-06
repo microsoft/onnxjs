@@ -19,7 +19,7 @@ type WebGLOptions = BackendInterface.WebGLOptions;
  */
 export class WebGLBackend implements Backend, WebGLOptions {
   glContext: WebGLContext;
-  contextId?: string;
+  contextId?: 'webgl'|'webgl2'|'webgl-experimental';
   forceRgbaReads?: boolean;
 
   initialize(): boolean {
@@ -33,7 +33,7 @@ export class WebGLBackend implements Backend, WebGLOptions {
     }
   }
   createSessionHandler(context: Session.Context): SessionHandler {
-    return new WebGLSessionHandler(this, context, this.forceRgbaReads);
+    return new WebGLSessionHandler(this, context);
   }
   dispose(): void {
     this.glContext.dispose();

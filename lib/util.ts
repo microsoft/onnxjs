@@ -33,9 +33,20 @@ export class BroadcastUtil {
    * @param isMatMul Whether the operation is MatMul
    * @returns The expected shape of the result, or undefined if N/A
    */
-  static calcShape(adims: ReadonlyArray<number>, bdims: ReadonlyArray<number>, isMatMul = false): number[]|undefined {
+  static calcShape(adims: ReadonlyArray<number>, bdims: ReadonlyArray<number>, isMatMul = false):
+      ReadonlyArray<number>|undefined {
     const arank = adims.length;
     const brank = bdims.length;
+    if (arank === 0 && brank === 0) {
+      return [];
+    }
+    if (arank === 0) {
+      return bdims;
+    }
+    if (brank === 0) {
+      return adims;
+    }
+
     const crank = Math.max(adims.length, bdims.length);
     const cdims = new Array<number>(crank);
 
@@ -113,7 +124,7 @@ export class BroadcastUtil {
               a.data.constructor as Int8ArrayConstructor | Int16ArrayConstructor | Int32ArrayConstructor |
               Uint8ArrayConstructor | Uint16ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor |
               Float64ArrayConstructor | Uint8ClampedArrayConstructor)(size),
-          shape);
+          shape as number[]);
 
       const indices = new Array<number>(shape.length);
       for (let i = 0; i < size; i++) {
@@ -545,11 +556,11 @@ export class ShapeUtil {
    * @param dims - input `dims` that needs to be checked
    */
   static validateDimsAndCalcSize(dims: ReadonlyArray<number>): number {
-    if (dims.length < 0 || dims.length > 6) {
+    if (dims.length > 6) {
       throw new TypeError(`Only rank 0 to 6 is supported for tensor shape.`);
     }
     if (dims.length === 0) {
-      throw new RangeError('Scaler tensor is not implemented yet');
+      return 1;
     }
     let size = 1;
     for (const n of dims) {

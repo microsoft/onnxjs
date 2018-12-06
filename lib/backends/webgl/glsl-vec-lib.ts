@@ -21,6 +21,9 @@ export class VecGlslLib extends GlslLib {
   protected binaryVecFunctions(): {[name: string]: GlslLibRoutine;} {
     const outputLayout = this.context.programInfo.outputLayout;
     const rank = outputLayout.shape.length;
+    if (rank === 0) {
+      throw new Error(`No Glsl method inclusion for scalar tensor`);
+    }
     const nameOp: {[name: string]: string;} = {add: '+=', sub: '-=', mul: '*=', div: '/='};
     const result: {[name: string]: GlslLibRoutine;} = {};
     for (const name in nameOp) {
@@ -44,6 +47,9 @@ export class VecGlslLib extends GlslLib {
   protected copyVec(): {[name: string]: GlslLibRoutine;} {
     const outputLayout = this.context.programInfo.outputLayout;
     const rank = outputLayout.shape.length;
+    if (rank === 0) {
+      throw new Error(`No Glsl method inclusion for scalar tensor`);
+    }
     let assignmentBlock = '';
     for (let i = 0; i < rank; ++i) {
       assignmentBlock += `
@@ -61,6 +67,9 @@ export class VecGlslLib extends GlslLib {
   protected setVecItem(): {[name: string]: GlslLibRoutine;} {
     const outputLayout = this.context.programInfo.outputLayout;
     const rank = outputLayout.shape.length;
+    if (rank === 0) {
+      throw new Error(`No Glsl method inclusion for scalar tensor`);
+    }
     let block = `
         if(index < 0)
             index =${rank} + index;
@@ -87,6 +96,9 @@ export class VecGlslLib extends GlslLib {
   protected getVecItem(): {[name: string]: GlslLibRoutine;} {
     const outputLayout = this.context.programInfo.outputLayout;
     const rank = outputLayout.shape.length;
+    if (rank === 0) {
+      throw new Error(`No Glsl method inclusion for scalar tensor`);
+    }
     let block = `
         if(index < 0)
             index = ${rank} + index;

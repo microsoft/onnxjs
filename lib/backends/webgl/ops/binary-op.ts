@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {Attribute} from '../../../attribute';
+import {binaryOp as binaryCpuOp} from '../../../backends/cpu/ops/binary-op';
 import {BinaryOp} from '../../../ops/binary-op';
 import {Tensor} from '../../../tensor';
 import {BroadcastUtil, ShapeUtil} from '../../../util';
@@ -9,21 +10,32 @@ import {FunctionType, GlslValueFunction} from '../glsl-definitions';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo} from '../program-info';
 import {RunData} from '../program-manager';
+import {TextureData, TextureLayout} from '../texture-data';
 import {WebGLOperator} from '../webgl-operator';
 import {WebGLOperatorHelper} from '../webgl-operator-utils';
 
 export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
   constructor(
       protected typeConstraint: ReadonlyArray<Tensor.DataType>, protected glslFunc: GlslValueFunction,
-      protected outputType?: Tensor.DataType) {
+      protected opLambda: (e1: number, e2: number) => number, protected outputType?: Tensor.DataType) {
     super(typeConstraint);
   }
   initialize(attributes: Attribute): void {}
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
+    // both are scalars
+    if (inputs[0].dims.length === 0 && inputs[1].dims.length === 0) {
+      return [binaryCpuOp(inputs[0], inputs[1], this.opLambda, this.outputType)];
+    }
     return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
-    const inputLayouts = inputs.map(t => handler.getOrCreateTextureLayout(t));
+    const inputLayouts: TextureLayout[] = [];
+    if (inputs[0].dims.length !== 0) {
+      inputLayouts.push(handler.getOrCreateTextureLayout(inputs[0]));
+    }
+    if (inputs[1].dims.length !== 0) {
+      inputLayouts.push(handler.getOrCreateTextureLayout(inputs[1]));
+    }
     const isBroadcast = !ShapeUtil.areEqual(inputs[0].dims.slice(), inputs[1].dims.slice());
     if (isBroadcast) {
       const outputShape = BroadcastUtil.calcShape(inputs[0].dims.slice(), inputs[1].dims.slice(), false);
@@ -31,17 +43,54 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
         throw new Error(`Can't perform binary op on the given tensors`);
       }
       const rank = outputShape.length;
-      const shaderSource = `
-      uniform sampler2D A;
-      uniform sampler2D B;
-      ${this.glslFunc.body}
-      float process(int indices[${rank}]) {
-        int aindices[${inputs[0].dims.slice().length}];
-        int bindices[${inputs[1].dims.slice().length}];
-        bcastIndices_A(indices, aindices);
-        bcastIndices_B(indices, bindices);
-        return ${this.glslFunc.name}(_A(aindices), _B(bindices));
-      }`;
+      if (rank === 0) {
+        throw new Error(`No WebGL support for scalar output generation`);
+      }
+      let shaderSource = ``;
+      // no scalars involved
+      if (inputs[0].dims.length !== 0 && inputs[1].dims.length !== 0) {
+        shaderSource = `
+        uniform sampler2D A;
+        uniform sampler2D B;
+        ${this.glslFunc.body}
+        float process(int indices[${rank}]) {
+          int aindices[${inputs[0].dims.slice().length}];
+          int bindices[${inputs[1].dims.slice().length}];
+          bcastIndices_A(indices, aindices);
+          bcastIndices_B(indices, bindices);
+          return ${this.glslFunc.name}(_A(aindices), _B(bindices));
+        }`;
+      }
+      // one of them is a scalar
+      else {
+        let scalar = '';
+        let texture = '';
+        let textureCap = '';
+        let scalarValue: number;
+        let indicesRank: number;
+        if (inputs[0].dims.length === 0) {
+          scalar = 'a';
+          texture = 'b';
+          textureCap = 'B';
+          scalarValue = inputs[0].data[0] as number;
+          indicesRank = inputs[1].dims.length;
+        } else {
+          scalar = 'b';
+          texture = 'a';
+          textureCap = 'A';
+          scalarValue = inputs[1].data[0] as number;
+          indicesRank = inputs[0].dims.length;
+        }
+        shaderSource = `
+        uniform sampler2D ${textureCap};
+        ${this.glslFunc.body}
+        float process(int indices[${rank}]) {
+          int ${texture}indices[${indicesRank}];
+          float ${scalar} = float(${scalarValue});
+          bcastIndices_${textureCap}(indices, ${texture}indices);
+          return ${this.glslFunc.name}(_${textureCap}(${texture}indices), ${scalar});
+        }`;
+      }
       return {
         hasMain: false,
         inputLayouts,
@@ -68,13 +117,36 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = inputs.map((t, i) => handler.getOrCreate(t, programInfo.inputLayouts[i]));
+    let inputTDs: TextureData[] = [];
+    // both scalars - no support in WebGL
+    if (inputs[0].dims.length === 0 && inputs[1].dims.length === 0) {
+      throw new Error(`No WebGL support for scalar output generation`);
+    }
+    // both non-scalars - process regularly
+    if (inputs[0].dims.length !== 0 && inputs[1].dims.length !== 0) {
+      inputTDs = inputs.map((t, i) => handler.getOrCreate(t, programInfo.inputLayouts[i]));
+    }
+    // one of them is a scalar
+    else {
+      if (inputs[0].dims.length !== 0) {
+        inputTDs.push(handler.getOrCreate(inputs[0], programInfo.inputLayouts[0]));
+      } else {
+        inputTDs.push(handler.getOrCreate(inputs[1], programInfo.inputLayouts[0]));
+      }
+    }
     return {
       inputTextureDatas: inputTDs,
       outputTextureData: handler.createTextureDataFromLayout(
           programInfo.outputLayout, this.outputType ? this.outputType : inputs[0].type),
       uniformData: {}
     };
+  }
+
+  handleBothScalarTensors(input1: Tensor, input2: Tensor, opType: string) {
+    switch (opType) {
+      default:
+        throw new Error('Unsupported binary op');
+    }
   }
 }
 

@@ -9,13 +9,14 @@ import {Tensor} from '../../../tensor';
 import {BroadcastUtil} from '../../../util';
 import {CpuInferenceHandler} from '../inference-handler';
 
+type BinaryOpLambda = (e1: number, e2: number) => number;
+
 export class CpuBinaryOp extends BinaryOp {
   constructor(
       typeConstraint: ReadonlyArray<Tensor.DataType>, private opLambda?: (e1: number, e2: number) => number,
       opType?: string, resultType?: Tensor.DataType) {
     super(typeConstraint, opType, resultType);
   }
-
   initialize(attributes: Attribute): void {
     if (!this.opType && !this.opLambda) {
       throw new Error(`Both opType and opLambda cannot be missing for a binary op`);
@@ -36,8 +37,7 @@ export class CpuBinaryOp extends BinaryOp {
   }
 }
 
-export function binaryOp(
-    x: Tensor, y: Tensor, opLambda: (e1: number, e2: number) => number, resultType?: Tensor.DataType): Tensor {
+export function binaryOp(x: Tensor, y: Tensor, opLambda: BinaryOpLambda, resultType?: Tensor.DataType): Tensor {
   const result =
       BroadcastUtil.calc(ndarray(x.numberData, x.dims.slice(0)), ndarray(y.numberData, y.dims.slice(0)), opLambda);
   if (!result) {
@@ -47,3 +47,22 @@ export function binaryOp(
   output.numberData.set(result.data);
   return output;
 }
+
+// specific operator lambdas
+// arithmetic ops
+export const addLambda: BinaryOpLambda = (e1, e2) => (e1 + e2);
+export const subLambda: BinaryOpLambda = (e1, e2) => (e1 - e2);
+export const mulLambda: BinaryOpLambda = (e1, e2) => (e1 * e2);
+export const divLambda: BinaryOpLambda = (e1, e2) => (e1 / e2);
+
+// logical ops
+export const xorLambda: BinaryOpLambda = (e1, e2) => (e1 ^ e2);
+export const orLambda: BinaryOpLambda = (e1, e2) => (e1 || e2);
+export const andLambda: BinaryOpLambda = (e1, e2) => (e1 && e2);
+export const equalLambda: BinaryOpLambda = (e1, e2) => (e1 === e2) ? 1 : 0;
+export const greaterLambda: BinaryOpLambda = (e1, e2) => (e1 > e2) ? 1 : 0;
+export const lessLambda: BinaryOpLambda = (e1, e2) => (e1 < e2) ? 1 : 0;
+
+// misc ops
+export const pReluLambda: BinaryOpLambda = (e1, e2) => (e1 >= 0 ? e1 : e1 * e2);
+export const powLambda: BinaryOpLambda = (e1, e2) => (e1 ^ e2);

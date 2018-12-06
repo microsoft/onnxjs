@@ -59,6 +59,9 @@ export class TextureManager {
       data?: Tensor.NumberType, channels?: number, width?: number, height?: number,
       unpackedShape?: ReadonlyArray<number>): TextureData {
     return this.profiler.event('backend', 'TextureManager.createTexture', () => {
+      if (shape.length === 0) {
+        throw new Error(`Creation of textures for scalar tensors not supported`);
+      }
       if (!width || !height) {
         [width, height] = this.layoutStrategy.computeTextureWH(shape);
       }

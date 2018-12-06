@@ -79,6 +79,9 @@ export class GlslPreprocessor {
   protected addClosing(script: string): string {
     let currentIndexVar = 'indices';
     const rank = this.context.programInfo.outputLayout.shape.length;
+    if (rank === 0) {
+      throw new Error(`No WebGL support for scalar output generation`);
+    }
     // these should be traversed in the reverse order since the very
     // first set of indices are the outer most indices
     const positionalSubs = this.context.programInfo.positionalSubFunctions;

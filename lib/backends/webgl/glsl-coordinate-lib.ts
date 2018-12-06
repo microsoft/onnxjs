@@ -62,6 +62,9 @@ export class CoordsGlslLib extends GlslLib {
   protected toVec(): {[name: string]: GlslLibRoutine;} {
     const output = this.context.programInfo.outputLayout;
     const rank = output.shape.length;
+    if (rank === 0) {
+      throw new Error(`No Glsl method inclusion for scalar tensor`);
+    }
     const strides = output.strides;
     const xScale = output.width;
     const yScale = output.height;
@@ -113,6 +116,9 @@ export class CoordsGlslLib extends GlslLib {
       const layout = programInfo.inputLayouts[i];
       const shape = layout.shape;
       const rank = shape.length;
+      if (rank === 0) {
+        throw new Error(`No Glsl method inclusion for scalar tensor`);
+      }
       let funcName = `_${name}`;
       result[funcName] = new GlslLibRoutine(
           this.getValueFromSingle(name, rank, layout.width, layout.height, false),
@@ -133,6 +139,9 @@ export class CoordsGlslLib extends GlslLib {
    */
   protected getValueFromSingle(varName: string, rank: number, width: number, height: number, transpose: boolean):
       string {
+    if (rank === 0) {
+      throw new Error(`No Glsl method inclusion for scalar tensor`);
+    }
     let name = `_${varName}`;
     if (transpose) {
       name = name + '_T';

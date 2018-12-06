@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as binaryOpLambda from '../../backends/cpu/ops/binary-op';
 import {Graph} from '../../graph';
 import {Logger} from '../../instrument';
 import {FLOAT_TYPES, NUMBER_TYPES, Operator} from '../../operators';
 import {Session} from '../../session';
 import {Tensor} from '../../tensor';
 import {WebGLBackend} from '../backend-webgl';
-
 import {SessionHandler} from './../../backend';
 import {WebGLInferenceHandler} from './inference-handler';
 import {WebGLBatchNormalization} from './ops/batch-normalization';
@@ -83,9 +83,9 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'Acos':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslAcos());
       case 'Add':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslAdd());
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslAdd(), binaryOpLambda.addLambda);
       case 'And':
-        return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslAnd());
+        return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslAnd(), binaryOpLambda.andLambda);
       case 'Asin':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslAsin());
       case 'Atan':
@@ -103,11 +103,11 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'Conv':
         return new WebGLConv();
       case 'Div':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslDiv());
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslDiv(), binaryOpLambda.divLambda);
       case 'Dropout':
         return new WebGLDropout();
       case 'Equal':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslEqual(), 'bool');
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslEqual(), binaryOpLambda.equalLambda, 'bool');
       case 'Exp':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslExp());
       case 'Floor':
@@ -119,7 +119,7 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'GlobalMaxPool':
         return new WebGLGlobalMaxPool();
       case 'Greater':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslGreater(), 'bool');
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslGreater(), binaryOpLambda.greaterLambda, 'bool');
       case 'Identity':
         return new unaryOps.WebGLUnaryOp(NUMBER_TYPES, unaryOps.glslIdentity());
       case 'ImageScaler':
@@ -127,7 +127,7 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'LeakyRelu':
         return new WebGLLeakyRelu();
       case 'Less':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslLess(), 'bool');
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslLess(), binaryOpLambda.lessLambda, 'bool');
       case 'Log':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslLog());
       case 'MatMul':
@@ -135,19 +135,19 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'MaxPool':
         return new WebGLMaxPool();
       case 'Mul':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslMul());
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslMul(), binaryOpLambda.mulLambda);
       case 'Neg':
         return new unaryOps.WebGLUnaryOp(NUMBER_TYPES, unaryOps.glslNeg());
       case 'Not':
         return new unaryOps.WebGLUnaryOp(['bool'], unaryOps.glslNot());
       case 'Or':
-        return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslOr());
+        return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslOr(), binaryOpLambda.orLambda);
       case 'Pad':
         return new WebGLPad();
       case 'Pow':
-        return new binaryOps.WebGLBinaryOp(FLOAT_TYPES, binaryOps.glslPow());
+        return new binaryOps.WebGLBinaryOp(FLOAT_TYPES, binaryOps.glslPow(), binaryOpLambda.powLambda);
       case 'PRelu':
-        return new binaryOps.WebGLBinaryOp(FLOAT_TYPES, binaryOps.glslPRelu());
+        return new binaryOps.WebGLBinaryOp(FLOAT_TYPES, binaryOps.glslPRelu(), binaryOpLambda.pReluLambda);
       case 'Relu':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslRelu());
       case 'Reshape':
@@ -167,7 +167,7 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'Sqrt':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSqrt());
       case 'Sub':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslSub());
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslSub(), binaryOpLambda.subLambda);
       case 'Sum':
         return new WebGLSum();
       case 'Tan':
@@ -175,7 +175,7 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'Transpose':
         return new WebGLTranspose();
       case 'Xor':
-        return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslXor());
+        return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslXor(), binaryOpLambda.xorLambda);
       default:
         throw new TypeError(`unrecognized operator '${node.opType}'`);
     }

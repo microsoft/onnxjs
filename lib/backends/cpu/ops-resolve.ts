@@ -5,7 +5,7 @@ import {Graph} from '../../graph';
 import {FLOAT_TYPES, NUMBER_TYPES, Operator} from '../../operators';
 
 import {CpuBatchNormalization} from './ops/batch-normalization';
-import {CpuBinaryOp} from './ops/binary-op';
+import * as binaryOps from './ops/binary-op';
 import {CpuConcat} from './ops/concat';
 import {CpuConv} from './ops/conv';
 import {CpuDropout} from './ops/dropout';
@@ -66,21 +66,21 @@ function createOperator(node: Graph.Node, domain: string, version: number): Oper
       return new unaryOps.CpuUnaryOp(FLOAT_TYPES, unaryOps.sigmoid);
     // Binary arithmetic ops
     case 'Add':
-      return new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 + e2));
+      return new binaryOps.CpuBinaryOp(NUMBER_TYPES, binaryOps.addLambda);
     case 'Sub':
-      return new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 - e2));
+      return new binaryOps.CpuBinaryOp(NUMBER_TYPES, binaryOps.subLambda);
     case 'Mul':
-      return new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 * e2));
+      return new binaryOps.CpuBinaryOp(NUMBER_TYPES, binaryOps.mulLambda);
     case 'Div':
-      // TODO: Handle division by zero
-      return new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 / e2));
+      // TODO: Handle division by zero gracefully
+      return new binaryOps.CpuBinaryOp(NUMBER_TYPES, binaryOps.divLambda);
     // Binary logical ops
     case 'Xor':
-      return new CpuBinaryOp(['bool'], (e1, e2) => (e1 ^ e2));
+      return new binaryOps.CpuBinaryOp(['bool'], binaryOps.xorLambda);
     case 'Or':
-      return new CpuBinaryOp(['bool'], (e1, e2) => (e1 || e2));
+      return new binaryOps.CpuBinaryOp(['bool'], binaryOps.orLambda);
     case 'And':
-      return new CpuBinaryOp(['bool'], (e1, e2) => (e1 && e2));
+      return new binaryOps.CpuBinaryOp(['bool'], binaryOps.andLambda);
     // Non-unary and non-binary ops
     case 'BatchNormalization':
       return new CpuBatchNormalization();
@@ -111,7 +111,7 @@ function createOperator(node: Graph.Node, domain: string, version: number): Oper
     case 'GlobalAveragePool':
       return new CpuGlobalAveragePool();
     case 'PRelu':
-      return new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 >= 0 ? e1 : e1 * e2));
+      return new binaryOps.CpuBinaryOp(NUMBER_TYPES, binaryOps.pReluLambda);
     case 'Reshape':
       return new CpuReshape();
     case 'ReduceLogSum':

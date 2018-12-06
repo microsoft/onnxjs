@@ -89,12 +89,12 @@ export class BroadcastUtil {
     // length as the broadcasted shape, and for each dimension the index should
     // not be out of range.
     const dimOffset = indices.length - originalShape.length;
-    const indicesOrigin = indices.slice(dimOffset);
-    const dimLen = isMatMul ? indicesOrigin.length - 2 : indicesOrigin.length;
+    const indicesOriginal = indices.slice(dimOffset);
+    const dimLen = isMatMul ? indicesOriginal.length - 2 : indicesOriginal.length;
     for (let i = 0; i < dimLen; i++) {
-      indicesOrigin[i] = indices[dimOffset + i] % originalShape[i];
+      indicesOriginal[i] = indices[dimOffset + i] % originalShape[i];
     }
-    return indicesOrigin;
+    return indicesOriginal;
   }
 
   /**
@@ -444,7 +444,7 @@ export class ShapeUtil {
 
     for (let k = axisToIncrementOn - 1; k >= 0; --k) {
       index[k]++;
-      if (index[k] < inferredDims[k]) {
+      if (index[k] < dims[k]) {
         break;
       }
       index[k] = 0;

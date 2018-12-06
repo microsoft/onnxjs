@@ -57,8 +57,8 @@ export function getPadFunction(
   }
 }
 function getPadConstant(
-    name: string, shape: ReadonlyArray<number>, strides: number[], width: number, height: number, pads: number[],
-    value: number) {
+    name: string, shape: ReadonlyArray<number>, strides: ReadonlyArray<number>, width: number, height: number,
+    pads: number[], value: number) {
   const rank = shape.length;
   let block = '';
   for (let i = rank - 1; i >= 0; --i) {
@@ -82,7 +82,8 @@ function getPadConstant(
         `;
 }
 function getPadReflect(
-    name: string, shape: ReadonlyArray<number>, strides: number[], width: number, height: number, pads: number[]) {
+    name: string, shape: ReadonlyArray<number>, strides: ReadonlyArray<number>, width: number, height: number,
+    pads: number[]) {
   const rank = shape.length;
 
   let block = '';
@@ -110,7 +111,8 @@ function getPadReflect(
       `;
 }
 function getPadEdge(
-    name: string, shape: ReadonlyArray<number>, strides: number[], width: number, height: number, pads: number[]) {
+    name: string, shape: ReadonlyArray<number>, strides: ReadonlyArray<number>, width: number, height: number,
+    pads: number[]) {
   const rank = shape.length;
 
   let block = '';

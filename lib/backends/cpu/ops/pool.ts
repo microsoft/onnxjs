@@ -105,7 +105,6 @@ export function pool(
     const curInd = ShapeUtil.offsetToIndices(ind, outputStride);
     const startInd = curInd.slice(0);
     const x = curInd.slice(0);
-    let offset = new Array<number>(stridesRank);
     // calculate the start indices of kernel corresponding to current output indices
     for (let i = 0; i < stridesRank; i++) {
       startInd[rank - stridesRank + i] = curInd[rank - stridesRank + i] * strides[i];
@@ -115,7 +114,7 @@ export function pool(
     let isPad = false;
     // loop through elements within kernel
     for (let i = 0; i < kernelSize; i++) {
-      offset = ShapeUtil.offsetToIndices(i, kernelStrides);
+      const offset = ShapeUtil.offsetToIndices(i, kernelStrides);
       isPad = false;
       // "Shift" the kernel by the kernel start indices to loop through the kernel mapped to current output indices
       for (let j = rank - stridesRank; j < rank; j++) {

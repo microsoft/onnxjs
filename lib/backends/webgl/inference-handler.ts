@@ -73,7 +73,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     return tensor;
   }
-  getOrCreateTextureLayout(tensor: Tensor, channels = 1, unpackedShape?: number[]): TextureLayout {
+  getOrCreateTextureLayout(tensor: Tensor, channels = 1, unpackedShape?: ReadonlyArray<number>): TextureLayout {
     const td = this.getTextureData(tensor);
     if (td) {
       return td;
@@ -87,8 +87,8 @@ export class WebGLInferenceHandler implements InferenceHandler {
     this.textureToTensor = new Map();
   }
   createTextureData(
-      dataType: Tensor.DataType, shape: number[], strides?: number[], data?: Tensor.NumberType, channels?: number,
-      width?: number, height?: number): TextureData {
+      dataType: Tensor.DataType, shape: ReadonlyArray<number>, strides?: ReadonlyArray<number>,
+      data?: Tensor.NumberType, channels?: number, width?: number, height?: number): TextureData {
     Logger.verbose('InferenceHandler', `Creating TextureData: shape:[${shape}], channels:${channels ? channels : 1}`);
     const td = this.textureManager.createTexture(dataType, shape, strides, data, channels, width, height);
     return td;
@@ -98,8 +98,9 @@ export class WebGLInferenceHandler implements InferenceHandler {
     const td = this.textureManager.createTextureFromLayout(dataType, layout, data);
     return td;
   }
-  createBasicTextureLayout(shape: number[], channels = 1, unpackedShape?: number[], prefs?: WidthHeightPrefs):
-      TextureLayout {
+  createBasicTextureLayout(
+      shape: ReadonlyArray<number>, channels = 1, unpackedShape?: ReadonlyArray<number>,
+      prefs?: WidthHeightPrefs): TextureLayout {
     const [width, height] = this.session.layoutStrategy.computeTextureWH(shape, prefs);
     if (channels === 1) {
       unpackedShape = shape;

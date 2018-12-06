@@ -14,9 +14,9 @@ export interface TextureLayout {
   width: number;
   height: number;
   channels: number;
-  shape: number[];
-  strides: number[];
-  unpackedShape: number[];
+  shape: ReadonlyArray<number>;
+  strides: ReadonlyArray<number>;
+  unpackedShape: ReadonlyArray<number>;
 }
 export interface TextureData extends TextureLayout {
   dataType: Tensor.DataType;

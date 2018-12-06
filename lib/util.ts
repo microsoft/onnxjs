@@ -549,11 +549,11 @@ export class ShapeUtil {
    * @param dims - input `dims` that needs to be checked
    */
   static validateDimsAndCalcSize(dims: ReadonlyArray<number>): number {
-    if (dims.length > 6) {
+    if (dims.length < 0 || dims.length > 6) {
       throw new TypeError(`Only rank 0 to 6 is supported for tensor shape.`);
     }
     if (dims.length === 0) {
-      return 1;
+      throw new RangeError('Scaler tensor is not implemented yet');
     }
     let size = 1;
     for (const n of dims) {

@@ -14,7 +14,7 @@ The supported platforms are Windows 10 + Edge/Chrome/Firefox/Electron/Node.js.
 | [BatchNormalization](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#BatchNormalization) |      x      |       x      |       x       |
 |               [Ceil](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Ceil)               |      x      |              |       x       |
 |             [Concat](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Concat)             |      x      |              |       x       |
-|             [Concat](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Constant)           |      x      |       x      |       x       |
+|             [Constant](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Constant)         |      x      |       x      |       x       |
 |               [Conv](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Conv)               |      x      |       x      |       x       |
 |                [Cos](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Cos)                |      x      |              |       x       |
 |                [Div](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Div)                |      x      |              |       x       |

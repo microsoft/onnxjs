@@ -73,7 +73,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     return tensor;
   }
-  getOrCreateTextureLayout(tensor: Tensor, channels = 1, unpackedShape?: number[]): TextureLayout {
+  getOrCreateTextureLayout(tensor: Tensor, channels = 1, unpackedShape?: ReadonlyArray<number>): TextureLayout {
     const td = this.getTextureData(tensor);
     if (td) {
       return td;

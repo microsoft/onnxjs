@@ -188,7 +188,7 @@ export class GemmUtil {
   // will throw exception if the input shapes are not compatible
   static getShapeOfGemmResult(
       leftShape: ReadonlyArray<number>, transLeft: boolean, rightShape: ReadonlyArray<number>, transRight: boolean,
-      biasShape: ReadonlyArray<number>): number[] {
+      biasShape: ReadonlyArray<number>): ReadonlyArray<number> {
     if (leftShape.length !== 2 || rightShape.length !== 2) {
       throw new Error(`shape need to be of size 2`);
     }
@@ -447,6 +447,7 @@ export class ShapeUtil {
       index[k] = 0;
     }
   }
+
   /**
    * Produces a new dimensions array based on the values in the 'originalDimensions' and 'shape' array
    * Used in Reshape
@@ -459,8 +460,9 @@ export class ShapeUtil {
    * https://github.com/onnx/onnx/blob/master/docs/Operators.md#Reshape
    */
 
-  static calculateReshapedDims(originalDims: ReadonlyArray<number>, shapeHints: number[]|Tensor.IntegerType):
-      ReadonlyArray<number> {
+  static calculateReshapedDims(
+      originalDims: ReadonlyArray<number>,
+      shapeHints: number[]|ReadonlyArray<number>|Tensor.IntegerType): ReadonlyArray<number> {
     const nDims = shapeHints.length;
     const reshapedDims = new Array<number>(nDims);
     let unknownDimension = -1;
@@ -505,13 +507,14 @@ export class ShapeUtil {
    * @param a Array to be sorted such as dims or strides
    * @param perm Perm given; if null a will be reversed
    */
-  static sortBasedOnPerm(a: ReadonlyArray<number>, perm?: number[]): ReadonlyArray<number> {
+  static sortBasedOnPerm(a: ReadonlyArray<number>, perm?: ReadonlyArray<number>): ReadonlyArray<number> {
     if (perm) {
       return perm.map((v) => a[v]);
     } else {
       return a.slice().reverse();
     }
   }
+
   /**
    * Pads a given shape according to the padding values
    * @param dims shape of the Tensor to be padded
@@ -521,12 +524,13 @@ export class ShapeUtil {
     const rank = dims.length;
     return dims.map((v, i) => v + pad[i] + pad[i + rank]);
   }
+
   /**
    * Determines if the two shapes are identical
    * @param shape1
    * @param shape2
    */
-  static areEqual(shape1: number[], shape2: number[]): boolean {
+  static areEqual(shape1: ReadonlyArray<number>, shape2: ReadonlyArray<number>): boolean {
     if (shape1.length !== shape2.length) {
       return false;
     }

@@ -543,6 +543,30 @@ export class ShapeUtil {
     }
     return shape1.every((v, i) => v === shape2[i]);
   }
+
+  /**
+   * Validates if the given `dims` or `shape` is valid in ONNX.js context and returns data size
+   * @param dims - input `dims` that needs to be checked
+   */
+  static validateDimsAndCalcSize(dims: ReadonlyArray<number>): number {
+    if (dims.length < 0 || dims.length > 6) {
+      throw new TypeError(`Only rank 0 to 6 is supported for tensor shape.`);
+    }
+    if (dims.length === 0) {
+      throw new RangeError('Scaler tensor is not implemented yet');
+    }
+    let size = 1;
+    for (const n of dims) {
+      if (!Number.isInteger(n)) {
+        throw new TypeError(`Invalid shape: ${n} is not an integer`);
+      }
+      if (n <= 0 || n > 2147483647) {
+        throw new TypeError(`Invalid shape: length ${n} is not allowed`);
+      }
+      size *= n;
+    }
+    return size;
+  }
 }
 
 // bunch of helper methods that do a variety of math operations

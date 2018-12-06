@@ -23,8 +23,8 @@ export class WebGLOperatorHelper {
     return [inferenceHandler.getTensor(runData.outputTextureData)];
   }
   static getFinalLayout(
-      inferenceHandler: WebGLInferenceHandler, positionalSubFunctions: GlslPositionalFunction[], outputShape: number[],
-      channels: number, prefs?: WidthHeightPrefs): TextureLayout {
+      inferenceHandler: WebGLInferenceHandler, positionalSubFunctions: GlslPositionalFunction[],
+      outputShape: ReadonlyArray<number>, channels: number, prefs?: WidthHeightPrefs): TextureLayout {
     let finalShape = outputShape;
     if (positionalSubFunctions.length > 0) {
       finalShape = positionalSubFunctions[positionalSubFunctions.length - 1].outputShape;
@@ -35,7 +35,7 @@ export class WebGLOperatorHelper {
   }
   static getPositionalFunctions(
       inferenceHandler: WebGLInferenceHandler, subOperators: PositionalSubOperator[],
-      outputShape: number[]): GlslPositionalFunction[] {
+      outputShape: ReadonlyArray<number>): GlslPositionalFunction[] {
     let shape = outputShape;
     if (subOperators && subOperators.length > 0) {
       const result = new Array<GlslPositionalFunction>(subOperators.length);

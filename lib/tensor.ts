@@ -5,7 +5,7 @@ import Long from 'long';
 import ndarray from 'ndarray';
 import {onnx} from 'onnx-proto';
 
-import {ProtoUtil, ShapeUtil} from './util';
+import {ProtoUtil} from './util';
 
 type NdArray = ndarray<number>|ndarray<string>;
 
@@ -46,14 +46,7 @@ export class Tensor {
    */
   get data(): TensorData {
     if (this.cache === undefined) {
-      const data = this.dataProvider!(this.dataId);
-      if (data === undefined) {
-        throw new Error(`No data provided by the provider for this Tensor`);
-      }
-      if (data.length !== this.calcSize) {
-        throw new Error(`Input dims doesn't match length of data provided.`);
-      }
-      this.cache = data;
+      this.cache = this.dataProvider!(this.dataId);
     }
     return this.cache;
   }
@@ -133,7 +126,7 @@ export class Tensor {
    * get the number of elements in the tensor
    */
   get size(): number {
-    return this.calcSize;
+    return this.dims.length === 0 ? 1 : this.dims.reduce((a, b) => a * b);
   }
 
   constructor(
@@ -150,11 +143,13 @@ export class Tensor {
        * get the data ID that used to map to a tensor data
        */
       public readonly dataId: Tensor.Id = {}) {
-    this.calcSize = ShapeUtil.validateDimsAndCalcSize(dims);
+    validateDims(dims);
+
+    const size = this.size;
     const empty = (dataProvider === undefined && asyncDataProvider === undefined && cache === undefined);
 
     if (cache !== undefined) {
-      if (cache.length !== this.calcSize) {
+      if (cache.length !== size) {
         throw new RangeError(`Input dims doesn't match data length.`);
       }
     }
@@ -165,7 +160,7 @@ export class Tensor {
       }
 
       if (empty) {
-        cache = new Array<string>(this.calcSize);
+        cache = new Array<string>(size);
       }
     } else {
       if (cache !== undefined) {
@@ -176,7 +171,7 @@ export class Tensor {
       }
 
       if (empty) {
-        const buf = new ArrayBuffer(this.calcSize * sizeof(type));
+        const buf = new ArrayBuffer(size * sizeof(type));
         this.cache = createView(buf, type);
       }
     }
@@ -308,8 +303,25 @@ export class Tensor {
   static fromData(data: Tensor.DataTypeMap[Tensor.DataType], dims: ReadonlyArray<number>, type: Tensor.DataType) {
     return new Tensor(dims, type, undefined, undefined, data);
   }
+}
 
-  private calcSize: number;
+function validateDims(dims: ReadonlyArray<number>) {
+  if (dims.length < 0 || dims.length > 6) {
+    throw new TypeError(`Only rank 0 to 6 is supported for tensor shape.`);
+  }
+
+  if (dims.length === 0) {
+    throw new RangeError('Scaler tensor is not implemented yet');
+  }
+
+  for (const n of dims) {
+    if (!Number.isInteger(n)) {
+      throw new TypeError(`Invalid shape: ${n} is not an integer`);
+    }
+    if (n <= 0 || n > 2147483647) {
+      throw new TypeError(`Invalid shape: length ${n} is not allowed`);
+    }
+  }
 }
 
 function sizeof(type: Tensor.DataType): number {

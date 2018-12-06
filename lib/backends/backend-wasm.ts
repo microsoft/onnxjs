@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import {Backend as BackendInterface} from '../api/onnx';
-import {getOnnxObject} from '../api/onnx-impl';
 import {Backend, SessionHandler} from '../backend';
 import {Logger} from '../instrument';
 import {Session} from '../session';
@@ -14,7 +13,7 @@ export let bindingInitPromise: Promise<void>|undefined;
 
 type WasmOptions = BackendInterface.WasmOptions;
 
-class WasmBackend implements Backend, WasmOptions {
+export class WasmBackend implements Backend, WasmOptions {
   worker: number;
   cpuFallback: boolean;
   constructor() {
@@ -57,6 +56,3 @@ class WasmBackend implements Backend, WasmOptions {
     }
   }
 }
-
-// register Wasm backend
-getOnnxObject().backend.wasm = new WasmBackend();

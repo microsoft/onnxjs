@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {getOnnxObject} from './api/onnx-impl';
 import {Graph} from './graph';
 import {Operator} from './operators';
 import {Session} from './session';
@@ -102,7 +101,7 @@ export async function Backend(hint?: string|ReadonlyArray<string>): Promise<Back
 }
 
 async function tryLoadBackend(backendHint: string): Promise<Backend|undefined> {
-  const backendObj = getOnnxObject().backend;
+  const backendObj = onnx.backend;
 
   if (typeof backendObj[backendHint] !== 'undefined' && isBackend(backendObj[backendHint])) {
     const backend = backendObj[backendHint] as Backend;

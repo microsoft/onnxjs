@@ -141,7 +141,7 @@ The [list](./docs/operators.md) of ONNX operators supported by each of the 3 ava
 We’d love to embrace your contribution to ONNX.js. Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Credit
-BrowswerStack(https://www.browserstack.com/) - We're using BrowserStack for cross browser testing of ONNX.js. 
+[BrowswerStack](https://www.browserstack.com/) - We're using BrowserStack for cross browser testing of ONNX.js. 
 
 ## License
 Copyright (c) Microsoft Corporation. All rights reserved.

@@ -493,13 +493,19 @@ export class ShapeUtil {
       }
     }
 
+    const originalTensorFlattenedSize = ShapeUtil.size(originalDims);
     if (unknownDimension !== -1) {
-      const originalTensorFlattenedSize = ShapeUtil.size(originalDims);
       if (originalTensorFlattenedSize % size !== 0) {
         throw new Error(`the input tensor cannot be reshaped to the requested shape. Input shape: [${
             originalDims}] Output shape: [${shapeHints}]`);
       }
       reshapedDims[unknownDimension] = originalTensorFlattenedSize / size;
+    }
+    // validate sizes from originalDims and reshapedDims match
+    else {
+      if (size !== originalTensorFlattenedSize) {
+        throw new Error(`reshapedDims and originalDims don't have matchinf sizes`);
+      }
     }
     return reshapedDims;
   }

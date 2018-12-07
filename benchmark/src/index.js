@@ -4,7 +4,7 @@ import ndarray from 'ndarray';
 import ops from 'ndarray-ops';
 import KerasJS from 'keras-js';
 import * as WebDNN from 'webdnn';
-import {onnx} from 'onnxjs';
+import * as onnx from 'onnxjs';
 import {imagenetClassesTopK} from './imagenet';
 
 const IMAGE_URLS = [

@@ -15,7 +15,8 @@ export class WebGLReshape extends Reshape {
     this.outputShape = attributes.getInts('output_shape', []);
     this.dimsToKeep = attributes.getInts('dims_to_keep', []);
   }
-  getOutputShape(inferenceHandler: WebGLInferenceHandler, inputShapes: number[][]): number[] {
+  getOutputShape(inferenceHandler: WebGLInferenceHandler, inputShapes: Array<ReadonlyArray<number>>):
+      ReadonlyArray<number> {
     if (inputShapes.length >= 2) {
       return inputShapes[1];
     }
@@ -32,19 +33,18 @@ export class WebGLReshape extends Reshape {
     }
   }
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const inputShape = inputs[0].dims.slice();
+    const inputShape: ReadonlyArray<number> = inputs[0].dims.slice();
     const inputShapes = [inputShape];
     if (inputs.length > 1) {
       inputShapes.push(ShapeUtil.calculateReshapedDims(inputShape, inputs[1].integerData));
     }
     const inputTD = inferenceHandler.getOrCreate(inputs[0]);
-    const isInitializer = inferenceHandler.session.isInitializer(inputs[0]);
     const reshapedDims = this.getOutputShape(inferenceHandler, inputShapes);
     let packedShape = reshapedDims;
     if (inputTD.channels === 4) {
       packedShape = getPackedShape(reshapedDims);
     }
-    const newTD = {
+    return [inferenceHandler.getTensor({
       channels: inputTD.channels,
       dataType: inputs[0].type,
       texture: inputTD.texture,
@@ -54,19 +54,9 @@ export class WebGLReshape extends Reshape {
       strides: ShapeUtil.computeStrides(packedShape),
       unpackedShape: reshapedDims,
       arrayType: inputTD.arrayType
-    };
-    const newTensor = new Tensor(newTD.unpackedShape, newTD.dataType, (id: Tensor.Id) => {
-      const values = inferenceHandler.textureHelper.readTexture(newTD, newTD.dataType, newTD.channels);
-      return values;
-    });
-    if (isInitializer) {
-      inferenceHandler.session.setTextureData(newTensor, newTD);
-    } else {
-      inferenceHandler.setTextureData(newTensor, newTD);
-    }
-    return [newTensor];
+    })];
   }
-  getPositionalFunction(inferenceHandler: WebGLInferenceHandler, inputShape: number[], name?: string):
+  getPositionalFunction(inferenceHandler: WebGLInferenceHandler, inputShape: ReadonlyArray<number>, name?: string):
       GlslPositionalFunction {
     const outputShape = this.getOutputShape(inferenceHandler, [inputShape]);
     if (!name) {
@@ -80,7 +70,8 @@ export class WebGLReshape extends Reshape {
       outputShape
     };
   }
-  protected getReshapeFunctionBody(name: string, inputShape: number[], outputShape: number[]): string {
+  protected getReshapeFunctionBody(name: string, inputShape: ReadonlyArray<number>, outputShape: ReadonlyArray<number>):
+      string {
     const inputStrides = ShapeUtil.computeStrides(inputShape);
     const outputStrides = ShapeUtil.computeStrides(outputShape);
     return `

@@ -12,7 +12,7 @@ export function using<T extends Disposable>(resource: T, func: (resource: T) => 
     resource.dispose();
   }
 }
-export function expandArray(shape: number[], newLength: number, fill: number) {
+export function expandArray(shape: ReadonlyArray<number>, newLength: number, fill: number) {
   if (shape.length === newLength) {
     return shape;
   }
@@ -27,7 +27,7 @@ export function expandArray(shape: number[], newLength: number, fill: number) {
  * NOTE: it is always the last dim that gets packed.
  * @param unpackedShape original shape to create a packed version from
  */
-export function getPackedShape(unpackedShape: number[]): number[] {
+export function getPackedShape(unpackedShape: ReadonlyArray<number>): ReadonlyArray<number> {
   const len = unpackedShape.length;
   return unpackedShape.slice(0, len - 1).concat(unpackedShape[len - 1] / 4);
 }

@@ -1,6 +1,6 @@
 {
   "name": "onnxjs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Javascript library for running ONNX models on browsers and on Node.js",
   "main": "./lib/api/index.js",
   "browser": "./dist/onnx.min.js",

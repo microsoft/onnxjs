@@ -107,6 +107,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
       inferredDims = [1];
     }
     if (channels === 1) {
+      // unpackedShape will take `shape` and not `inferredDims` so as to create a scalar Tensor if need be
       unpackedShape = shape;
     } else if (!unpackedShape) {
       throw new Error('Unpacked shape is needed when using channels > 1');

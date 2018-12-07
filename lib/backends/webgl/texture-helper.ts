@@ -44,8 +44,9 @@ export class TextureHelper {
     return {...layout, dataType, texture, arrayType: textureDataType};
   }
   createTexture(
-      dataType: Tensor.DataType, shape: number[], strides?: number[], data?: Tensor.NumberType, channels?: number,
-      width?: number, height?: number, unpackedShape?: number[]): TextureData {
+      dataType: Tensor.DataType, shape: ReadonlyArray<number>, strides?: ReadonlyArray<number>,
+      data?: Tensor.NumberType, channels?: number, width?: number, height?: number,
+      unpackedShape?: ReadonlyArray<number>): TextureData {
     return this.profiler.event('backend', 'TextureHelper.createTexture', () => {
       if (!width || !height) {
         [width, height] = this.layoutStrategy.computeTextureWH(shape);

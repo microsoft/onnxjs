@@ -15,7 +15,7 @@ export class WebGLTranspose extends Transpose implements WebGLOperator, Position
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
   }
-  getOutputShape(handler: WebGLInferenceHandler, inputShapes: number[][]): number[] {
+  getOutputShape(handler: WebGLInferenceHandler, inputShapes: Array<ReadonlyArray<number>>): ReadonlyArray<number> {
     const perm = this.getAdjustedPerm(inputShapes[0]);
     return ShapeUtil.sortBasedOnPerm(inputShapes[0], perm);
   }
@@ -70,7 +70,7 @@ export class WebGLTranspose extends Transpose implements WebGLOperator, Position
   addPositionalSub(positionalSubOperator: PositionalSubOperator): void {
     this.positionalSubs.push(positionalSubOperator);
   }
-  protected getAdjustedPerm(inputShape: number[]): number[] {
+  protected getAdjustedPerm(inputShape: ReadonlyArray<number>): number[] {
     let perm = this.perm;
     if (perm && perm.length !== inputShape.length) {
       perm = [...(inputShape.keys())].reverse();

@@ -147,13 +147,6 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
       uniformData: {}
     };
   }
-
-  handleBothScalarTensors(input1: Tensor, input2: Tensor, opType: string) {
-    switch (opType) {
-      default:
-        throw new Error('Unsupported binary op');
-    }
-  }
 }
 
 export function glslAdd(): GlslValueFunction {

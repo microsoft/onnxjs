@@ -477,6 +477,15 @@ export class ShapeUtil {
   static calculateReshapedDims(
       originalDims: ReadonlyArray<number>,
       shapeHints: number[]|ReadonlyArray<number>|Tensor.IntegerType): ReadonlyArray<number> {
+    // reshape to a Scalar Tensor
+    if (shapeHints.length === 0) {
+      if (originalDims.length === 0 || ShapeUtil.size(originalDims) === 1) {
+        return [];
+      } else {
+        throw new Error(`cannot reshape to a scalar Tensor`);
+      }
+    }
+
     const nDims = shapeHints.length;
     const reshapedDims = new Array<number>(nDims);
     let unknownDimension = -1;
@@ -484,17 +493,18 @@ export class ShapeUtil {
 
     for (let i = 0; i < nDims; i++) {
       if (shapeHints[i] < -1) {
-        throw new Error('a dimension cannot be less than -1');
+        throw new Error('a dimension in shape hints cannot be less than -1');
       }
       if (shapeHints[i] === -1) {
         if (unknownDimension !== -1) {
-          throw new Error('at most one dimension can be -1');
+          throw new Error('at most one dimension in shape hints can be -1');
         }
         unknownDimension = i;
       } else {
         if (shapeHints[i] === 0) {
           if (i >= originalDims.length) {
-            throw new Error('the dimension with value zero exceeds the dimension size of the input tensor');
+            throw new Error(
+                'the dimension with value zero in shape hints exceeds the dimension size of the input tensor');
           }
           reshapedDims[i] = originalDims[i];
         } else {

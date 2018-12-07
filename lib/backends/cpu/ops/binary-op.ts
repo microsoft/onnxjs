@@ -65,4 +65,4 @@ export const lessLambda: BinaryOpLambda = (e1, e2) => (e1 < e2) ? 1 : 0;
 
 // misc ops
 export const pReluLambda: BinaryOpLambda = (e1, e2) => (e1 >= 0 ? e1 : e1 * e2);
-export const powLambda: BinaryOpLambda = (e1, e2) => (e1 ^ e2);
+export const powLambda: BinaryOpLambda = (e1, e2) => Math.pow(e1, e2);

@@ -68,7 +68,9 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
         let textureCap = '';
         let scalarValue: number;
         let indicesRank: number;
+        let scalarFirst = false;
         if (inputs[0].dims.length === 0) {
+          scalarFirst = true;
           scalar = 'a';
           texture = 'b';
           textureCap = 'B';
@@ -87,9 +89,13 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
         float process(int indices[${rank}]) {
           int ${texture}indices[${indicesRank}];
           float ${scalar} = float(${scalarValue});
-          bcastIndices_${textureCap}(indices, ${texture}indices);
-          return ${this.glslFunc.name}(_${textureCap}(${texture}indices), ${scalar});
-        }`;
+          bcastIndices_${textureCap}(indices, ${texture}indices);`;
+
+        if (scalarFirst) {
+          shaderSource += `return ${this.glslFunc.name}(${scalar}, _${textureCap}(${texture}indices)); }`;
+        } else {
+          shaderSource += `return ${this.glslFunc.name}(_${textureCap}(${texture}indices), ${scalar}); }`;
+        }
       }
       return {
         hasMain: false,

@@ -14,7 +14,8 @@ import {WebGL2Context} from './webgl2-context';
  * The order is from higher/most recent versions to most basic
  */
 export class WebGLContextFactory {
-  static create(contextId?: string, contextAttributes?: WebGLContextAttributes): WebGLContext {
+  static create(contextId?: 'webgl'|'webgl2'|'experimental-webgl', contextAttributes?: WebGLContextAttributes):
+      WebGLContext {
     const canvas = this.createCanvas();
     if (contextAttributes == null) {
       contextAttributes = {

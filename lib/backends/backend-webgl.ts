@@ -19,7 +19,7 @@ type WebGLOptions = BackendInterface.WebGLOptions;
  */
 export class WebGLBackend implements Backend, WebGLOptions {
   glContext: WebGLContext;
-  contextId?: 'webgl'|'webgl2'|'webgl-experimental';
+  contextId?: 'webgl'|'webgl2'|'experimental-webgl';
 
   initialize(): boolean {
     try {

@@ -1,4 +1,4 @@
-The following table lists the [ai.onnx](https://github.com/onnx/onnx/blob/master/docs/Operators.md) operators supported by each of the available backends.
+The following table lists the [ai.onnx](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md) operators supported by each of the available backends.
 
 See [Compatibility](../README.md#Compatibility) for a list of the supported platforms.
 

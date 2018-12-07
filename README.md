@@ -151,7 +151,7 @@ Learn more about ONNX
 | Android | :heavy_check_mark: | :heavy_check_mark: | Coming soon | - | :heavy_check_mark: |
 
 ### Operators
-ONNX.js currently supports most operators in [ai.onnx](https://github.com/onnx/onnx/blob/master/docs/Operators.md) operator set v7 (opset v7). See [operators.md](./docs/operators.md) for a complete, detailed list of which ONNX operators are supported by the 3 available builtin backends (cpu, wasm, and webgl).
+ONNX.js currently supports most operators in [ai.onnx](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md) operator set v7 (opset v7). See [operators.md](./docs/operators.md) for a complete, detailed list of which ONNX operators are supported by the 3 available builtin backends (cpu, wasm, and webgl).
 
 Support for [ai.onnx.ml](https://github.com/onnx/onnx/blob/master/docs/Operators-ml.md) operators is coming soon. [operators-ml.md](./docs/operators-ml.md) has the most recent status of ai.onnx.ml operators.
 

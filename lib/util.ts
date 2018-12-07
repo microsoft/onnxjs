@@ -504,7 +504,7 @@ export class ShapeUtil {
     // validate sizes from originalDims and reshapedDims match
     else {
       if (size !== originalTensorFlattenedSize) {
-        throw new Error(`reshapedDims and originalDims don't have matchinf sizes`);
+        throw new Error(`reshapedDims and originalDims don't have matching sizes`);
       }
     }
     return reshapedDims;

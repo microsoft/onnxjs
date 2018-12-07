@@ -24,29 +24,38 @@ npm test -- unittest
 
 ### Model Tests
 These are tests based on Onnx models and their inputs and outputs are also in binary `ProtoBuf` formats. Data for these
-tests is located under `test/test-data/models` and `test/test-data/nodes`.
+tests is located under `deps/data/data/test/node` and `deps/data/data/test/onnx/v7`.
 
 To run individual Model tests for the included, well-known models (such as Resnet50) type the following:
 ```
-npm test -- model test/test-data/onnx/v7/resnet
+npm test -- model resnet50
 ```
-Replace `resnet` with the name of any other model located under `test/test-data/onnx/v7` folder.
-
+Replace `resnet50` with the name of any other model located under `deps/data/data/test/onnx/v7` folder.
 
 To run individual Model tests for the unit-level models (such as `abs`) type the following:
 ```
-npm test -- model test/test-data/node/test_abs
+npm test -- model test_abs
 ```
-Substitute `test_abs` with any other sub-folder located under the `test/test-data/node` folder.
+Replace `test_abs` with any other sub-folder located under the `deps/data/data/test/node` folder.
+
+By default, all available backends will be tested. Use the --backend flag (options: `cpu`, `wasm`, `webgl`) to test specific backends
+```
+npm test -- model test_abs --backend=webgl
+```
 
 ### Op Tests
-These are specifically scripted to test the Operators in ONNX.js. The test data can be found under `test/test-data/ops`
+These are specifically scripted to test the Operators in ONNX.js. The test data can be found under `deps/data/data/test/ops`
 
 To run an individual operator test use the following command:
 ```
-npm test -- op test/test-data/ops/abs.jsonc
+npm test -- op abs.jsonc
 ```
-Replace `abs.jsonc` with any other operator data file located under the `test/test-data/ops` folder.
+Replace `abs.jsonc` with any other operator data file located under the `deps/data/data/test/ops` folder.
+
+By default, all available backends will be tested. Use the --backend flag (options: `cpu`, `wasm`, `webgl`) to test specific backends
+```
+npm test -- op abs.jsonc --backend=webgl
+```
 
 ## More information
 For further info type the following:

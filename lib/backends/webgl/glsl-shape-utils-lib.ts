@@ -95,7 +95,7 @@ export class ShapeUtilsGlslLib extends GlslLib {
     });
     return result;
   }
-  static indexToOffsetSingle(name: string, rank: number, strides: number[]): string {
+  static indexToOffsetSingle(name: string, rank: number, strides: ReadonlyArray<number>): string {
     let block = '';
     for (let i = rank - 1; i >= 0; --i) {
       block += `
@@ -126,7 +126,7 @@ export class ShapeUtilsGlslLib extends GlslLib {
     });
     return result;
   }
-  static offsetToIndicesSingle(name: string, rank: number, strides: number[]): string {
+  static offsetToIndicesSingle(name: string, rank: number, strides: ReadonlyArray<number>): string {
     const stridesBlock = [];
     for (let i = 0; i < rank - 1; ++i) {
       stridesBlock.push(`

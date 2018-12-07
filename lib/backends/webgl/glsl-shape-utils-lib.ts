@@ -56,9 +56,9 @@ export class ShapeUtilsGlslLib extends GlslLib {
   protected bcastMatmulIndex(): {[name: string]: GlslLibRoutine;} {
     const programInfo = this.context.programInfo;
     const outputRank = programInfo.outputLayout.shape.length;
-    //    if (outputRank === 0) {
-    //      throw new Error(`No Glsl method inclusion for scalar tensor`);
-    //    }
+    if (outputRank === 0) {
+      throw new Error(`No Glsl method inclusion for scalar tensor`);
+    }
     const result: {[name: string]: GlslLibRoutine} = {};
     this.context.uniformInfo.filter(ui => ui.type === 'sampler2D').forEach((ui, i) => {
       const name = ui.name;
@@ -93,9 +93,9 @@ export class ShapeUtilsGlslLib extends GlslLib {
       const shape = programInfo.inputLayouts[i].shape;
       const strides = programInfo.inputLayouts[i].strides;
       const rank = shape.length;
-      //      if (rank === 0) {
-      //        throw new Error(`No Glsl method inclusion for scalar tensor`);
-      //      }
+      if (rank === 0) {
+        throw new Error(`No Glsl method inclusion for scalar tensor`);
+      }
       let funcName = `indicesToOffset_${name}`;
       result[funcName] = new GlslLibRoutine(ShapeUtilsGlslLib.indexToOffsetSingle(funcName, rank, strides));
       funcName = `indicesToOffset_${name}_T`;
@@ -105,9 +105,9 @@ export class ShapeUtilsGlslLib extends GlslLib {
     return result;
   }
   static indexToOffsetSingle(name: string, rank: number, strides: ReadonlyArray<number>): string {
-    //    if (rank === 0) {
-    //      throw new Error(`No Glsl method inclusion for scalar tensor`);
-    //    }
+    if (rank === 0) {
+      throw new Error(`No Glsl method inclusion for scalar tensor`);
+    }
     let block = '';
     for (let i = rank - 1; i >= 0; --i) {
       block += `
@@ -130,9 +130,9 @@ export class ShapeUtilsGlslLib extends GlslLib {
       const shape = programInfo.inputLayouts[i].shape;
       const strides = programInfo.inputLayouts[i].strides;
       const rank = shape.length;
-      //      if (rank === 0) {
-      //        throw new Error(`No Glsl method inclusion for scalar tensor`);
-      //      }
+      if (rank === 0) {
+        throw new Error(`No Glsl method inclusion for scalar tensor`);
+      }
       let funcName = `offsetToIndices_${name}`;
       result[funcName] = new GlslLibRoutine(ShapeUtilsGlslLib.offsetToIndicesSingle(funcName, rank, strides));
       funcName = `offsetToIndices_${name}_T`;
@@ -142,9 +142,9 @@ export class ShapeUtilsGlslLib extends GlslLib {
     return result;
   }
   static offsetToIndicesSingle(name: string, rank: number, strides: ReadonlyArray<number>): string {
-    //    if (rank === 0) {
-    //      throw new Error(`No Glsl method inclusion for scalar tensor`);
-    //    }
+    if (rank === 0) {
+      throw new Error(`No Glsl method inclusion for scalar tensor`);
+    }
     const stridesBlock = [];
     for (let i = 0; i < rank - 1; ++i) {
       stridesBlock.push(`
@@ -167,9 +167,9 @@ export class ShapeUtilsGlslLib extends GlslLib {
       const name = ui.name;
       const shape = programInfo.inputLayouts[i].shape;
       const rank = shape.length;
-      //      if (rank === 0) {
-      //        throw new Error(`No Glsl method inclusion for scalar tensor`);
-      //      }
+      if (rank === 0) {
+        throw new Error(`No Glsl method inclusion for scalar tensor`);
+      }
       const funcName = `incrementIndices_${name}`;
       let shapeInit = '';
       for (let i = 0; i < rank; ++i) {

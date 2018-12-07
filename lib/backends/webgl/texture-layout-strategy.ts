@@ -21,8 +21,9 @@ export interface TextureLayoutStrategy {
 export class AlwaysKeepOriginalSizeStrategy implements TextureLayoutStrategy {
   constructor(public maxTextureSize: number) {}
   computeTextureWH(shape: ReadonlyArray<number>, prefs?: WidthHeightPrefs): [number, number] {
+    // scalar Tensor
     if (shape.length === 0) {
-      throw new Error(`Creation of textures for scalar tensors not supported`);
+      return [1, 1];
     }
     const maxTextureSize = this.maxTextureSize;
     if (prefs) {

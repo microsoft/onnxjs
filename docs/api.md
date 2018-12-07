@@ -1,9 +1,6 @@
 # **API Documentation**
 
 ## **Table of Contents**
-### - [Global Variable](#ref-global)
-  - [onnx](#ref-global-onnx)
-
 ### - [Onnx](#ref-Onnx)
   - [Tensor](#ref-Onnx-Tensor)
   - [InferenceHandler](#ref-Onnx-InferenceHandler)
@@ -20,18 +17,17 @@
   - [Tensor Properties](#Tensor-Properties)
   - [Access Tensor Elements](#Access-Tensor-Elements)
 
-## <a name="ref-global"></a>**Global Variable**
-- ### <a name="ref-global-onnx"></a>**onnx**
-  The `onnx` object is available in global context (window.onnx in browser, global.onnx in Node.js) after require /import 'onnxjs' module, or imported from a `<script> tag`.
-
 ## <a name="ref-Onnx"></a>**Onnx**
-- ### <a name="ref-Onnx-Tensor"></a>**Tensor**
+
+The `onnx` object is the exported object of the module. It's available in global context (`window.onnx` in browser, `global.onnx` in Node.js) after require/import 'onnxjs' module, or imported from a `<script> tag`.
+
+- ### <a name="ref-Onnx-Tensor"></a>**onnx.Tensor**
   See [Tensor](#ref-Tensor).
 
-- ### <a name="ref-Onnx-InferenceHandler"></a>**InferenceHandler**
-  See [InferenceHandler](#ref-InferenceSession).
+- ### <a name="ref-Onnx-InferenceSession"></a>**onnx.InferenceSession**
+  See [InferenceSession](#ref-InferenceSession).
 
-- ### <a name="ref-Onnx-backend"></a>**backend**
+- ### <a name="ref-Onnx-backend"></a>**onnx.backend**
   Customizes settings for all available backends. `ONNX.js` currently supports three types of backend - *cpu* (pure JavaScript backend), *webgl* (WebGL backend), and *wasm*   (WebAssembly backend).
 
   ### `backend.cpu`

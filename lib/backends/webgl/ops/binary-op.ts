@@ -35,7 +35,6 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
       const bRank = inputs[1].dims.length !== 0 ? inputs[1].dims.length : 1;
       const aBcast = inputs[0].dims.length !== 0 ? `bcastIndices_A(indices, aindices);` : `aindices[0] = 0;`;
       const bBcast = inputs[1].dims.length !== 0 ? `bcastIndices_B(indices, bindices);` : `bindices[0] = 0;`;
-
       const shaderSource = `
       uniform sampler2D A;
       uniform sampler2D B;

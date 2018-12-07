@@ -33,6 +33,9 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
       const outputRank = outputShape.length;
       const aRank = inputs[0].dims.length !== 0 ? inputs[0].dims.length : 1;
       const bRank = inputs[1].dims.length !== 0 ? inputs[1].dims.length : 1;
+      const aBcast = inputs[0].dims.length !== 0 ? `bcastIndices_A(indices, aindices);` : `aindices[0] = 0;`;
+      const bBcast = inputs[1].dims.length !== 0 ? `bcastIndices_B(indices, bindices);` : `bindices[0] = 0;`;
+
       const shaderSource = `
       uniform sampler2D A;
       uniform sampler2D B;
@@ -40,8 +43,8 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
       float process(int indices[${outputRank}]) {
         int aindices[${aRank}];
         int bindices[${bRank}];
-        bcastIndices_A(indices, aindices);
-        bcastIndices_B(indices, bindices);
+        ${aBcast}
+        ${bBcast}
         return ${this.glslFunc.name}(_A(aindices), _B(bindices));
     }`;
       return {

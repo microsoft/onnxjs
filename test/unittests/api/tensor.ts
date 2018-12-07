@@ -27,13 +27,21 @@ describe('#UnitTest# - API - Tensor constructors', () => {
     t = new Tensor([2], 'float32', [1]);                  // ok: this is a 1-d tensor with size 1
 
     expect(() => {
-      t = new Tensor([2], 'float32', []);  // throws RangeError. Scalar is not supported.
-    }).to.throw(RangeError);
-    expect(() => {
       t = new Tensor([2, 3], 'float32', [1, 0.5, 4]);  // throws TypeError. input dims is not integer.
     }).to.throw(TypeError);
     expect(() => {
       t = new Tensor([2, 3], 'float32', [1, 1, 3]);  // throws RangeError. input dims doesn't match data length.
+    }).to.throw(RangeError);
+  });
+
+  it('3. Create a scalar Tensor', () => {
+    t = new Tensor([1], 'float32', []);
+    expect(t.data).to.have.lengthOf(1);
+    expect(t.data[0]).to.equal(1);
+    expect(t.data).to.be.an('Float32Array');
+    expect(t.dims).to.have.lengthOf(0);
+    expect(() => {
+      t = new Tensor([2, 3, 4], 'float32', []);  // throws RangeError. input dims doesn't match data length.
     }).to.throw(RangeError);
   });
 });

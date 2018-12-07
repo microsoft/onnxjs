@@ -20,7 +20,6 @@ type WebGLOptions = BackendInterface.WebGLOptions;
 export class WebGLBackend implements Backend, WebGLOptions {
   glContext: WebGLContext;
   contextId?: 'webgl'|'webgl2'|'webgl-experimental';
-  forceRgbaReads?: boolean;
 
   initialize(): boolean {
     try {

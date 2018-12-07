@@ -17,7 +17,7 @@ export class WebGL2Context extends BaseWebGLContext {
     super();
     this.init();
   }
-  getEncoder(dataType: Encoder.DataType, channels: number, forceRgbaReads?: boolean): DataEncoder {
+  getEncoder(dataType: Encoder.DataType, channels: number): DataEncoder {
     return new RedFloat32DataEncoder(channels);
   }
   protected queryVitalParameters(): void {

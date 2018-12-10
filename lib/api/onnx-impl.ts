@@ -5,8 +5,11 @@ import {CpuBackend} from '../backends/backend-cpu';
 import {WasmBackend} from '../backends/backend-wasm';
 import {WebGLBackend} from '../backends/backend-webgl';
 
+import {Environment} from './env';
+import {envImpl} from './env-impl';
 import {Backend} from './onnx';
 
+export * from './env';
 export * from './onnx';
 export * from './tensor';
 export * from './inference-session';
@@ -17,4 +20,4 @@ export const backend: Backend = {
   webgl: new WebGLBackend()
 };
 
-export let debug = false;
+export const ENV: Environment = envImpl;

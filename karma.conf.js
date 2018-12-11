@@ -1,5 +1,5 @@
 module.exports = function(config) {
-  const bundleMode = require('minimist')(process.argv).bundleMode || 'dev';  // 'prod'|'dev'|'debug'|'perf'|undefined;
+  const bundleMode = require('minimist')(process.argv)['bundle-mode'] || 'dev';  // 'dev'|'perf'|undefined;
 
   const mainFile = bundleMode === 'perf' ? 'test/onnx.perf.js' : 'test/onnx.dev.js';
 

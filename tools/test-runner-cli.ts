@@ -387,8 +387,8 @@ function run(config: Test.Config) {
     const webpackCommand = path.join(npmBin, 'webpack');
     const webpackArgs = [
       '--mode',
-      args.bundleMode === 'debug' || args.bundleMode === 'dev' ? 'development' : 'production',
-      `--bundleMode=${args.bundleMode}`,
+      args.bundleMode === 'dev' ? 'development' : 'production',
+      `--bundle-mode=${args.bundleMode}`,
     ];
     logger.info('TestRunnerCli.Run', `CMD: ${webpackCommand} ${webpackArgs.join(' ')}`);
     const webpack = spawnSync(webpackCommand, webpackArgs, {shell: true, stdio: 'inherit'});
@@ -411,7 +411,7 @@ function run(config: Test.Config) {
     if (args.noSandbox) {
       karmaArgs.push('--no-sandbox');
     }
-    karmaArgs.push(`--bundleMode=${args.bundleMode}`);
+    karmaArgs.push(`--bundle-mode=${args.bundleMode}`);
     // == Special treatment to Microsoft Edge ==
     //
     // == Edge's Auto Recovery Feature ==

@@ -88,6 +88,9 @@ Examples:
 export interface TestRunnerCliArgs {
   debug: boolean;
   mode: 'suite0'|'suite1'|'model'|'unittest'|'op';
+  /**
+   * The parameter that used when in mode 'model' or 'op', specifying the search string for the model or op test
+   */
   param?: string;
   backend: ['cpu'|'webgl'|'wasm'];
   env: 'chrome'|'edge'|'firefox'|'electron'|'node';
@@ -97,11 +100,16 @@ export interface TestRunnerCliArgs {
    *
    * this field affects the behavior of Karma and Webpack.
    *
-   * Mode   | Folder       | Files                   | Source Map         | Webpack Config
-   * ------ | ------------ | ----------------------- | ------------------ | --------------
-   * prod   | /dist/       | onnx.min.js + test.js   | source-map         | production
-   * dev    | /test/       | onnx.dev.js             | inline-source-map  | development
-   * perf   | /test/       | onnx.perf.js            | source-map         | production
+   * For Karma, if flag '--bundle-mode' is not set, the default behavior is 'dev'
+   * For Webpack, if flag '--bundle-mode' is not set, the default behavior is 'prod'
+   *
+   * For running tests, the default mode is 'dev'. If flag '--perf' is set, the mode will be set to 'perf'.
+   *
+   * Mode   | Folder       | Files             | Main                 | Source Map         | Webpack Config
+   * ------ | ------------ | ----------------- | -------------------- | ------------------ | --------------
+   * prod   | /dist/       | onnx.min.js       | /lib/api/index.ts    | source-map         | production
+   * dev    | /test/       | onnx.dev.js       | /test/test-main.ts   | inline-source-map  | development
+   * perf   | /test/       | onnx.perf.js      | /test/test-main.ts   | source-map         | production
    */
   bundleMode: 'prod'|'dev'|'perf';
 
@@ -183,7 +191,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
     mode: mode as TestRunnerCliArgs['mode'],
     param: args._.length > 1 ? args._[1] : undefined,
     backend: backend as TestRunnerCliArgs['backend'],
-    bundleMode: perf ? 'perf' : (debug ? 'debug' : 'dev'),
+    bundleMode: perf ? 'perf' : 'dev',
     env: env as TestRunnerCliArgs['env'],
     logConfig,
     profile,

@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as api from '../lib/api';
 import {Attribute} from '../lib/attribute';
 import {Logger} from '../lib/instrument';
 import {Tensor} from '../lib/tensor';
 
 export declare namespace Test {
-  export interface NamedTensor extends Tensor {
+  export interface NamedTensor extends api.Tensor {
     name: string;
   }
 

@@ -7,12 +7,13 @@ import {onnx} from 'onnx-proto';
 import {extname} from 'path';
 import {inspect, promisify} from 'util';
 
+import * as api from '../lib/api';
+import {fromInternalTensor, toInternalTensor} from '../lib/api/tensor-impl-utils';
 import {Attribute} from '../lib/attribute';
 import {Backend, InferenceHandler, SessionHandler} from '../lib/backend';
 import {TextureData} from '../lib/backends/webgl/texture-data';
 import {Logger, Profiler} from '../lib/instrument';
 import {Operator} from '../lib/operators';
-import {Session} from '../lib/session';
 import {Tensor} from '../lib/tensor';
 
 import {Test} from './test-types';
@@ -28,7 +29,7 @@ const WASM_THRESHOLD_RELATIVE_ERROR = 1.000001;
 /**
  * a simple class that implementes interface Test.NamedTensor
  */
-class NamedTensorImpl extends Tensor implements Test.NamedTensor {
+class NamedTensorImpl extends api.Tensor implements Test.NamedTensor {
   name: string;
 }
 
@@ -36,7 +37,7 @@ class NamedTensorImpl extends Tensor implements Test.NamedTensor {
  * a ModelTestContext object contains all states in a ModelTest
  */
 export class ModelTestContext {
-  session: Session;
+  session: api.InferenceSession;
   backend: string;
   private constructor() {}
 
@@ -92,7 +93,7 @@ async function loadTensorProto(uri: string): Promise<Test.NamedTensor> {
   const buf = await loadFile(uri);
   const tensorProto = onnx.TensorProto.decode(Buffer.from(buf));
   const tensor = Tensor.fromProto(tensorProto);
-  const namedTensor = tensor as NamedTensorImpl;
+  const namedTensor = fromInternalTensor(tensor) as unknown as NamedTensorImpl;
   namedTensor.name = tensorProto.name;
   return namedTensor;
 }
@@ -115,8 +116,9 @@ function loadMlProto(uri: string): Promise<Test.NamedTensor> {
 async function initializeSession(modelFilePath: string, backendHint: string, profile: boolean) {
   Logger.verbose('TestRunner', `Start to load model from file: ${modelFilePath}`);
 
-  const sessionConfig: Session.Config = {backendHint, profiler: {maxNumberEvents: 65536}};
-  const session = new Session(sessionConfig);
+  const profilerConfig = profile ? {maxNumberEvents: 65536} : undefined;
+  const sessionConfig: api.InferenceSession.Config = {backendHint, profiler: profilerConfig};
+  const session = new api.InferenceSession(sessionConfig);
 
   if (profile) {
     session.startProfiling();
@@ -272,7 +274,11 @@ export class TensorResultValidator {
     }
   }
 
-  checkNamedTensorResult(actual: Map<string, Tensor>, expected: Test.NamedTensor[]): void {
+  checkApiTensorResult(actual: api.Tensor[], expected: api.Tensor[]): void {
+    this.checkTensorResult(actual.map(toInternalTensor), expected.map(toInternalTensor));
+  }
+
+  checkNamedTensorResult(actual: ReadonlyMap<string, api.Tensor>, expected: Test.NamedTensor[]): void {
     // check output size
     expect(actual.size, 'size of output tensors').to.equal(expected.length);
 
@@ -281,7 +287,7 @@ export class TensorResultValidator {
       expect(actual, 'keys of output tensors').to.contain.keys(expectedOneOutput.name);
     }
 
-    this.checkTensorResult(expected.map(i => actual.get(i.name)!), expected);
+    this.checkApiTensorResult(expected.map(i => actual.get(i.name)!), expected);
   }
 
   // This function check whether 2 tensors should be considered as 'match' or not

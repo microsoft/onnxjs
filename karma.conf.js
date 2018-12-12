@@ -3,7 +3,7 @@ module.exports = function(config) {
  // global config of your BrowserStack account
     browserStack: {
       username: 'onnxjs1',
-      accessKey: process.env.BROWSER_STACK_ACCESS_KEY,
+      accessKey: $secret.BROWSER_STACK_ACCESS_KEY,
       forceLocal: true,
       startTunnel: true,
     },
@@ -62,9 +62,9 @@ module.exports = function(config) {
       bs_ff_mac: {
         base: 'BrowserStack',
         os : 'OS X',
-	      os_version : 'High Sierra',
-	      browser : 'Firefox',
-	      browser_version : '63.0',
+	os_version : 'High Sierra',
+	browser : 'Firefox',
+	browser_version : '63.0',
       }
     }
   });

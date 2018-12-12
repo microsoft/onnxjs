@@ -15,9 +15,15 @@ module.exports = (env, argv) => {
 
   if (bundleMode === 'perf' || bundleMode === 'dev') {
     config.entry = path.resolve(__dirname, 'test/test-main.ts');
-    config.output = {path: path.resolve(__dirname, 'test'), filename: 'onnx.perf.js', libraryTarget: 'umd'};
   } else {
     config.entry = path.resolve(__dirname, 'lib/api/index.ts');
+  }
+
+  if (bundleMode === 'perf') {
+    config.output = {path: path.resolve(__dirname, 'test'), filename: 'onnx.perf.js', libraryTarget: 'umd'};
+  } else if (bundleMode === 'dev') {
+    config.output = {path: path.resolve(__dirname, 'test'), filename: 'onnx.dev.js', libraryTarget: 'umd'};
+  } else {
     config.output = {path: path.resolve(__dirname, 'dist'), filename: 'onnx.min.js', libraryTarget: 'umd'};
   }
 

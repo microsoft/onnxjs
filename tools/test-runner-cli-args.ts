@@ -176,6 +176,12 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
   if (debug && perf) {
     throw new Error('Flag "perf" cannot be used together with flag "debug".');
   }
+  if (perf && (mode !== 'model')) {
+    throw new Error('Flag "perf" can only be used in mode "model".');
+  }
+  if (perf) {
+    logConfig.push({category: 'TestRunner.Perf', config: {minimalSeverity: 'verbose'}});
+  }
 
   // Option: --no-sandbox
   const noSandbox = !!args['no-sandbox'];

@@ -34,24 +34,79 @@ class NamedTensorImpl extends api.Tensor implements Test.NamedTensor {
 }
 
 /**
+ * returns a number to represent the current timestamp in a resolution as high as possible.
+ */
+const now = (typeof performance !== 'undefined' && performance.now) ? () => performance.now() : Date.now;
+
+/**
  * a ModelTestContext object contains all states in a ModelTest
  */
 export class ModelTestContext {
-  session: api.InferenceSession;
-  backend: string;
-  private constructor() {}
+  private constructor(
+      readonly session: api.InferenceSession,
+      readonly backend: string,
+      readonly perfData: ModelTestContext.ModelTestPerfData,
+      private readonly profile: boolean,
+  ) {}
+
+  /**
+   * dump the current performance data
+   */
+  private logPerfData() {
+    const data = this.perfData;
+    Logger.verbose('TestRunner.Perf', `***Perf Data Start`);
+    Logger.verbose('TestRunner.Perf', ` * Init          : ${data.init}`);
+    Logger.verbose('TestRunner.Perf', ` * Running times : ${data.count}`);
+    Logger.verbose('TestRunner.Perf', ` * FirstRun      : ${data.firstRun.toFixed(2)}`);
+    const runs = data.runs;
+    if (runs.length > 0) {
+      Logger.verbose('TestRunner.Perf', ` * Runs          : ${runs.map(r => r.toFixed(2)).join(', ')}`);
+
+      if (runs.length > 1) {
+        const avg = runs.reduce((prev, current) => prev + current) / runs.length;
+        Logger.verbose('TestRunner.Perf', ` * Runs Avg      : ${avg.toFixed(2)}`);
+        const variance = runs.reduce((prev, current) => prev + (current - avg) * (current - avg));
+        const sd = Math.sqrt(variance / (runs.length - 1));
+        Logger.verbose('TestRunner.Perf', ` * Runs SD       : ${sd.toFixed(2)}`);
+      }
+    }
+    Logger.verbose('TestRunner.Perf', `***Perf Data End`);
+  }
+
+  release() {
+    if (this.profile) {
+      this.session.endProfiling();
+    }
+    this.logPerfData();
+  }
 
   /**
    * create a ModelTestContext object that used in every test cases in the given ModelTest.
    */
   static async create(modelTest: Test.ModelTest, profile: boolean): Promise<ModelTestContext> {
+    const initStart = now();
     const session = await initializeSession(modelTest.modelUrl, modelTest.backend!, profile);
+    const initEnd = now();
 
     for (const testCase of modelTest.cases) {
       await loadTensors(testCase);
     }
 
-    return {session, backend: modelTest.backend!};
+    return new ModelTestContext(
+        session,
+        modelTest.backend!,
+        {init: initEnd - initStart, firstRun: -1, runs: [], count: 0},
+        profile,
+    );
+  }
+}
+
+export declare namespace ModelTestContext {
+  export interface ModelTestPerfData {
+    init: number;
+    firstRun: number;
+    runs: number[];
+    count: number;
   }
 }
 
@@ -143,7 +198,15 @@ export async function runModelTestSet(context: ModelTestContext, testCase: Test.
   Logger.verbose('TestRunner', `Start to run test data from folder: ${testCase.name}`);
   const validator = new TensorResultValidator(context.backend);
   try {
+    const start = now();
     const outputs = await context.session.run(testCase.inputs!);
+    const end = now();
+    if (context.perfData.count === 0) {
+      context.perfData.firstRun = end - start;
+    } else {
+      context.perfData.runs.push(end - start);
+    }
+    context.perfData.count++;
 
     Logger.verbose('TestRunner', `Finished running model from file: ${testCase.name}`);
     Logger.verbose('TestRunner', ` Stats:`);

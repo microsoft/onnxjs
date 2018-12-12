@@ -1,5 +1,12 @@
 module.exports = function(config) {
   config.set({
+ // global config of your BrowserStack account
+    browserStack: {
+      username: 'onnxjs1',
+      accessKey: '%BROWSER_STACK_ACCESS_KEY%',
+      forceLocal: true,
+      startTunnel: true,
+    },
     frameworks: ['mocha'],
     files: [
       {pattern: 'test/onnx.dev.js'},
@@ -14,7 +21,7 @@ module.exports = function(config) {
     client: {captureConsole: true, mocha: {expose: ['body'], timeout: 60000}},
     preprocessors: {'test/onnx.dev.js': ['sourcemap']},
     reporters: ['mocha'],
-    browsers: ['ChromeTest', 'ChromeDebug', 'Edge', 'Firefox', 'Electron'],
+    browsers: ['ChromeTest', 'ChromeDebug', 'Edge', 'Firefox', 'Electron', 'bs_chrome_win', 'bs_edge_win', 'bs_ff_win'],
     captureTimeout: 120000,
     reportSlowerThan: 100,
     browserDisconnectTimeout: 600000,
@@ -23,7 +30,29 @@ module.exports = function(config) {
     browserSocketTimeout: 60000,
     customLaunchers: {
       ChromeTest: {base: 'Chrome', flags: ['--window-size=1,1']},
-      ChromeDebug: {debug: true, base: 'Chrome', flags: ['--remote-debugging-port=9333']}
+      ChromeDebug: {debug: true, base: 'Chrome', flags: ['--remote-debugging-port=9333']},
+       bs_chrome_win: {
+        base: 'BrowserStack',
+        browser: 'Chrome',
+        browser_version: '71.0',
+        os: 'Windows',
+        os_version: '10',
+      },
+      bs_edge_win: {
+        base: 'BrowserStack',
+        os : 'Windows',
+	os_version : '10',
+	browser : 'Edge',
+	browser_version : '18.0',
+      },
+      bs_ff_win: {
+        base: 'BrowserStack',
+        os : 'Windows',
+	os_version : '10',
+	browser : 'Firefox',
+	browser_version : '63.0',
+      },
+
     }
   });
 };

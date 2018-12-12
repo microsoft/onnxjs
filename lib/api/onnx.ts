@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {Environment} from './env';
 import {InferenceSessionConstructor} from './inference-session';
 import {TensorConstructor} from './tensor';
 
@@ -59,17 +60,7 @@ export interface Backend {
 
 //#endregion Backends
 
-/**
- * represent runtime environment settings and status of ONNX.js
- */
-export interface Environment {
-  /**
-   * a global flag to indicate whether to run ONNX.js in debug mode
-   */
-  debug: boolean;
-}
-
-export interface Onnx extends Environment {
+export interface Onnx {
   /**
    * represent a tensor with specified dimensions and data type.
    */
@@ -82,4 +73,8 @@ export interface Onnx extends Environment {
    * represent all available backends and settings of them
    */
   readonly backend: Backend;
+  /**
+   * represent runtime environment settings and status of ONNX.js
+   */
+  readonly ENV: Environment;
 }

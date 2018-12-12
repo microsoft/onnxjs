@@ -4,12 +4,14 @@ ONNX.js is a Javascript library for running ONNX models on browsers and on Node.
 ONNX.js has adopted WebAssembly and WebGL technologies for providing an optimized ONNX model inference runtime for both CPUs and GPUs.
 
 ### Why ONNX models
-The [Open Neural Network Exchange](http://onnx.ai/) (ONNX) is an open standard for representing machine learning models. The biggest advantage of ONNX is that it allows interoperability across different open source AI frameworks, which itself offers more flexibility for AI frameworks adoption.  [This](#Getting-ONNX-models) is a great place to start getting acquainted with ONNX models.
+The [Open Neural Network Exchange](http://onnx.ai/) (ONNX) is an open standard for representing machine learning models. The biggest advantage of ONNX is that it allows interoperability across different open source AI frameworks, which itself offers more flexibility for AI frameworks adoption.  See [Getting ONNX Models](#Getting-ONNX-models).
 
 ### Why ONNX.js
 With ONNX.js, web developers can score pre-trained ONNX models directly on browsers with various benefits of reducing server-client communication and protecting user privacy, as well as offering install-free and cross-platform in-browser ML experience.
 
 ONNX.js can run on both CPU and GPU. For running on CPU, [WebAssembly](https://developer.mozilla.org/en-US/docs/WebAssembly) is adopted to execute model at near-native speed. Furthermore, ONNX.js utilizes [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) to provide a "multi-threaded" environment to parallelize data processing. Empirical evaluation shows very promising performance gains on CPU by taking full advantage of WebAssembly and Web Workers. For running on GPUs, a popular standard for accessing GPU capabilities - WebGL is adopted. ONNX.js has further adopted several novel optimization techniques for reducing data transfer between CPU and GPU, as well as some techniques to reduce GPU processing cycles to further push the performance to the maximum.
+
+See [Compatibility](#Compatibility) and [Operators Supported](#Operators) for a list of platforms and operators ONNX.js currently supports.
 
 ### Benchmarks
 
@@ -134,8 +136,24 @@ Learn more about ONNX
 - [ONNX website](http://onnx.ai/)
 - [ONNX on GitHub](https://github.com/onnx/onnx)
 
-### Operators supported
-The [list](./docs/operators.md) of ONNX operators supported by each of the 3 available builtin backends (cpu, wasm, and webgl).
+### Compatibility
+#### Desktop Platforms
+| OS/Browser | Chrome | Edge | FireFox | Safari | Opera | Electron | Node.js |
+|:----------:|:------:|:----:|:-------:|:------:|:-----:|:-----:|:-----:|
+| Windows 10 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | - | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| macOS | :heavy_check_mark: | - | :heavy_check_mark: | Coming soon | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Ubuntu LTS 18.04 | :heavy_check_mark: | - | :heavy_check_mark: | - | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+
+#### Mobile Platforms
+| OS/Browser | Chrome | Edge | FireFox | Safari | Opera |
+|:----------:|:------:|:----:|:-------:|:------:|:-----:|
+| iOS | Coming soon | - | Coming soon | Coming soon | Coming soon |
+| Android | :heavy_check_mark: | :heavy_check_mark: | Coming soon | - | :heavy_check_mark: |
+
+### Operators
+ONNX.js currently supports most operators in [ai.onnx](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md) operator set v7 (opset v7). See [operators.md](./docs/operators.md) for a complete, detailed list of which ONNX operators are supported by the 3 available builtin backends (cpu, wasm, and webgl).
+
+Support for [ai.onnx.ml](https://github.com/onnx/onnx/blob/master/docs/Operators-ml.md) operators is coming soon. [operators-ml.md](./docs/operators-ml.md) has the most recent status of ai.onnx.ml operators.
 
 ## Contribute
 We’d love to embrace your contribution to ONNX.js. Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).

@@ -3,7 +3,7 @@ module.exports = function(config) {
  // global config of your BrowserStack account
     browserStack: {
       username: 'onnxjs1',
-      accessKey: '%BROWSER_STACK_ACCESS_KEY%',
+      accessKey: process.env.BROWSER_STACK_ACCESS_KEY,
       forceLocal: true,
       startTunnel: true,
     },
@@ -21,7 +21,7 @@ module.exports = function(config) {
     client: {captureConsole: true, mocha: {expose: ['body'], timeout: 60000}},
     preprocessors: {'test/onnx.dev.js': ['sourcemap']},
     reporters: ['mocha'],
-    browsers: ['ChromeTest', 'ChromeDebug', 'Edge', 'Firefox', 'Electron', 'bs_chrome_win', 'bs_edge_win', 'bs_ff_win'],
+    browsers: ['ChromeTest', 'ChromeDebug', 'Edge', 'Firefox', 'Electron', 'bs_chrome_win', 'bs_edge_win', 'bs_ff_win', 'bs_chrome_mac', 'bs_safari_mac', 'bs_ff_mac', 'bs_opera_mac'],
     captureTimeout: 120000,
     reportSlowerThan: 100,
     browserDisconnectTimeout: 600000,
@@ -52,7 +52,20 @@ module.exports = function(config) {
 	browser : 'Firefox',
 	browser_version : '63.0',
       },
-
+       bs_chrome_mac: {
+        base: 'BrowserStack',
+        browser: 'Chrome',
+        browser_version: '71.0',
+        os: 'OS X',
+        os_version: 'High Sierra',
+      },
+      bs_ff_mac: {
+        base: 'BrowserStack',
+        os : 'OS X',
+	      os_version : 'High Sierra',
+	      browser : 'Firefox',
+	      browser_version : '63.0',
+      }
     }
   });
 };

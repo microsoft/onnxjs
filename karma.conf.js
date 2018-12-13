@@ -3,7 +3,7 @@ module.exports = function(config) {
  // global config of your BrowserStack account
     browserStack: {
       username: 'onnxjs1',
-      accessKey: '%BROWSER_STACK_ACCESS_KEY%',
+      accessKey: '$(BROWSER_STACK_ACCESS_KEY)',
       forceLocal: true,
       startTunnel: true,
     },

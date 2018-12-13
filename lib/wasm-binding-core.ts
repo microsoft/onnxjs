@@ -25,8 +25,8 @@ export interface WasmCallArgumentTypeMap {
   int32: number;
   float32: number;
   float64: number;
-  int32ptr: ReadonlyArray<number>|Int32Array|null;
-  float32ptr: ReadonlyArray<number>|Float32Array|null;
+  int32ptr: ReadonlyArray<number>|Uint32Array|Int32Array|null;
+  float32ptr: ReadonlyArray<number>|Int32Array|Uint32Array|Float32Array|null;
   float64ptr: ReadonlyArray<number>|Float64Array|null;
 }
 

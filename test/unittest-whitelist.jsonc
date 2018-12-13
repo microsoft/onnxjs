@@ -413,6 +413,40 @@
       // Check in node tests that have native Wasm implementations
       // (i.e.) not tests that rely on the fallback cpu implementations
       // Use the 'cpu' level of node tests to test those implementations
+      "test_add_bcast",
+      "test_add",
+      "test_sub_bcast",
+      "test_sub_example",
+      "test_sub",
+      "test_mul_bcast",
+      "test_mul_example",
+      "test_mul",
+      "test_div_bcast",
+      "test_div_example",
+      "test_div",
+      "test_xor_bcast3v1d",
+      "test_xor_bcast3v2d",
+      "test_xor_bcast4v2d",
+      "test_xor_bcast4v3d",
+      "test_xor_bcast4v4d",
+      "test_xor2d",
+      "test_xor3d",
+      "test_xor4d",
+      "test_or_bcast3v1d",
+      "test_or_bcast3v2d",
+      "test_or_bcast4v2d",
+      "test_or_bcast4v3d",
+      "test_or_bcast4v4d",
+      "test_and_bcast3v1d",
+      "test_and_bcast3v2d",
+      "test_and_bcast4v2d",
+      "test_and_bcast4v3d",
+      "test_and_bcast4v4d",
+      "test_and2d",
+      "test_and3d",
+      "test_and4d",
+      "test_prelu_broadcast",
+      "test_prelu_example",
       "test_basic_conv_with_padding",
       "test_basic_conv_without_padding",
       "test_batchnorm_epsilon",
@@ -461,7 +495,14 @@
       // (i.e.) not tests that rely on the fallback cpu implementations
       // Use the 'cpu' level of node tests to test those implementations
       "conv.jsonc",
-      "softmax.jsonc"
+      "softmax.jsonc",
+      "add.jsonc",
+      "sub.jsonc",
+      "mul.jsonc",
+      "div.jsonc",
+      "and.jsonc",
+      "or.jsonc",
+      "xor.jsonc"
     ]
   }
 }

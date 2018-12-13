@@ -372,7 +372,7 @@ function run(config: Test.Config) {
     // STEP 4. run mocha
     logger.info('TestRunnerCli.Run', '(4/4) Running mocha...');
     const mochaCommand = path.join(npmBin, 'mocha');
-    const mochaArgs = [path.join(TEST_ROOT, 'unittest'), '--timeout 60000'];
+    const mochaArgs = [path.join(TEST_ROOT, 'test-main'), '--timeout 60000'];
     logger.info('TestRunnerCli.Run', `CMD: ${mochaCommand} ${mochaArgs.join(' ')}`);
     const mocha = spawnSync(mochaCommand, mochaArgs, {shell: true, stdio: 'inherit'});
     if (mocha.status !== 0) {

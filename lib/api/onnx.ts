@@ -4,6 +4,7 @@
 import {Environment} from './env';
 import {InferenceSessionConstructor} from './inference-session';
 import {TensorConstructor} from './tensor';
+import {TensorTransforms} from './tensor-transforms';
 
 //#region Backends
 
@@ -55,7 +56,7 @@ export interface Backend {
 
 //#endregion Backends
 
-export interface Onnx {
+export interface Onnx extends TensorTransforms {
   /**
    * represent a tensor with specified dimensions and data type.
    */

@@ -13,6 +13,7 @@ export * from './env';
 export * from './onnx';
 export * from './tensor';
 export * from './inference-session';
+export * from './tensor-transforms-impl';
 
 export const backend: Backend = {
   cpu: new CpuBackend(),

@@ -58,8 +58,9 @@ export interface ReductionTensorTransforms {
   max(t: Tensor, axis: number, keepDims: boolean): Tensor;
 }
 
-export interface TensorTransformsInterface extends UtilityTensorCreators, BasicMathTensorTransforms,
-                                                   ArithmeticTensorTransforms, NormalizationTensorTransforms,
-                                                   SliceAndJoinTensorTransforms, PermutationTensorTransforms,
-                                                   ShapeTensorTransforms, LogicalTensorTransforms, CastTensorTransforms,
-                                                   ReductionTensorTransforms {}
+export interface TensorTransforms extends UtilityTensorCreators, BasicMathTensorTransforms, ArithmeticTensorTransforms,
+                                          NormalizationTensorTransforms, SliceAndJoinTensorTransforms,
+                                          PermutationTensorTransforms, ShapeTensorTransforms, LogicalTensorTransforms,
+                                          CastTensorTransforms, ReductionTensorTransforms {}
+import * as TensorTransformsImpl from './tensor-transforms-impl';
+export const transform: TensorTransforms = TensorTransformsImpl;

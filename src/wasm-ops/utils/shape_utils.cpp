@@ -44,8 +44,9 @@ size_t ShapeUtils::indices_to_offset(const std::vector<int32_t> &strides,
   return offset;
 }
 
-std::vector<int32_t> ShapeUtils::offset_to_indices(const std::vector<int32_t> &strides,
-                                               size_t offset) {
+std::vector<int32_t>
+ShapeUtils::offset_to_indices(const std::vector<int32_t> &strides,
+                              size_t offset) {
   auto rank = static_cast<size_t>(strides.size());
   if (rank == static_cast<size_t>(0)) {
     return std::vector<int32_t>();

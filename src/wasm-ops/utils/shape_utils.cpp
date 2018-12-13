@@ -26,20 +26,17 @@ ShapeUtils::compute_strides(const std::vector<int32_t> &dims) {
     std::vector<int32_t> strides(1, 1);
     return strides;
   }
-  std::vector<int32_t> strides(rank, 0);
+  std::vector<int32_t> strides(rank);
   strides[rank - 1] = 1;
   strides[rank - 2] = dims[rank - 1];
-  for (int i = rank - 3; i >= 0; --i) {
+  for (int32_t i = rank - 3; i >= 0; --i) {
     strides[i] = strides[i + 1] * dims[i + 1];
   }
   return strides;
 }
 
 size_t ShapeUtils::indices_to_offset(const std::vector<int32_t> &strides,
-                                     const std::vector<int> indices) {
-  if (strides.size() != indices.size()) {
-    // TODO: Throw error
-  }
+                                     const std::vector<int32_t> indices) {
   size_t offset = 0;
   for (size_t i = 0; i < indices.size(); ++i) {
     offset += strides[i] * indices[i];
@@ -47,17 +44,16 @@ size_t ShapeUtils::indices_to_offset(const std::vector<int32_t> &strides,
   return offset;
 }
 
-std::vector<int> ShapeUtils::offset_to_indices(const std::vector<int> &strides,
+std::vector<int32_t> ShapeUtils::offset_to_indices(const std::vector<int32_t> &strides,
                                                size_t offset) {
   auto rank = static_cast<size_t>(strides.size());
   if (rank == static_cast<size_t>(0)) {
-    return std::vector<int>();
+    return std::vector<int32_t>();
   }
-
-  if (rank == static_cast<int>(1)) {
-    return std::vector<int>(1, offset * strides[0]);
+  if (rank == static_cast<size_t>(1)) {
+    return std::vector<int32_t>(1, offset * strides[0]);
   }
-  std::vector<int> indices(rank);
+  std::vector<int32_t> indices(rank);
   for (size_t i = 0; i < indices.size() - 1; ++i) {
     indices[i] = floor(offset / strides[i]);
     offset -= indices[i] * strides[i];

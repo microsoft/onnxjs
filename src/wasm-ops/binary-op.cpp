@@ -61,7 +61,7 @@ void binary_f32_imp_wrapper(void *data,
   std::vector<int32_t> dims1_vector;
   if (rank1 > 0) {
     dims1_vector.resize(rank1);
-    for (int i = 0; i < rank1; ++i) {
+    for (int32_t i = 0; i < rank1; ++i) {
       dims1_vector[i] = dims1[i];
     }
   }
@@ -72,7 +72,7 @@ void binary_f32_imp_wrapper(void *data,
   std::vector<int32_t> dims2_vector;
   if (rank2 > 0) {
     dims2_vector.resize(rank2);
-    for (int i = 0; i < rank2; ++i) {
+    for (int32_t i = 0; i < rank2; ++i) {
       dims2_vector[i] = dims2[i];
     }
   }
@@ -83,8 +83,8 @@ void binary_f32_imp_wrapper(void *data,
   std::vector<int32_t> output_dims_vector;
   if (output_rank != 0) {
     output_dims_vector.resize(output_rank);
-    for (size_t i = 0; i < output_rank; ++i) {
-      output_dims_vector[i] = output_dims[static_cast<int32_t>(i)];
+    for (int32_t i = 0; i < output_rank; ++i) {
+      output_dims_vector[i] = output_dims[i];
     }
   }
   binary_f32_imp(input1, length1, rank1, dims1_vector, input2, length2, rank2,

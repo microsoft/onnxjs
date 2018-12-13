@@ -21,7 +21,7 @@ module.exports = function(config) {
     client: {captureConsole: true, mocha: {expose: ['body'], timeout: 60000}},
     preprocessors: {'test/onnx.dev.js': ['sourcemap']},
     reporters: ['mocha'],
-    browsers: ['ChromeTest', 'ChromeDebug', 'Edge', 'Firefox', 'Electron', 'bs_chrome_win', 'bs_edge_win', 'bs_ff_win', 'bs_chrome_mac', 'bs_safari_mac', 'bs_ff_mac', 'bs_opera_mac'],
+    browsers: ['ChromeTest', 'ChromeDebug', 'Edge', 'Firefox', 'Electron', 'bs_chrome_win', 'bs_edge_win', 'bs_ff_win', 'bs_chrome_mac', 'bs_ff_mac'],
     captureTimeout: 120000,
     reportSlowerThan: 100,
     browserDisconnectTimeout: 600000,

@@ -16,6 +16,8 @@ logger.info('TestRunnerCli', 'Initializing...');
 
 const args = parseTestRunnerCliArgs(process.argv.slice(2));
 
+console.log(args);
+
 const TEST_ROOT = path.join(__dirname, '..', 'test');
 const TEST_DATA_ROOT = path.join(__dirname, '..', 'deps', 'data', 'data', 'test');
 const TEST_DATA_NODE_ROOT = path.join(TEST_DATA_ROOT, 'node');
@@ -98,7 +100,7 @@ switch (args.mode) {
     const testFolderSearchPattern = args.param;
     const testFolder = tryLocateModelTestFolder(testFolderSearchPattern);
     for (const b of args.backend) {
-      modelTestGroups.push({name: testFolder, tests: [modelTestFromFolder(testFolder, b)]});
+      modelTestGroups.push({name: testFolder, tests: [modelTestFromFolder(testFolder, b, args.times)]});
     }
     break;
 
@@ -219,19 +221,19 @@ function suiteFromFolder(
   const tests = fs.readdirSync(suiteRootFolder);
   for (const test of tests) {
     const skip = whitelist && whitelist.indexOf(test) === -1;
-    sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, skip));
+    sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, skip ? 0 : undefined));
   }
   return {name, tests: sessions};
 }
 
-function modelTestFromFolder(testDataRootFolder: string, backend: string, skip = false): Test.ModelTest {
-  if (skip) {
+function modelTestFromFolder(testDataRootFolder: string, backend: string, times?: number): Test.ModelTest {
+  if (times === 0) {
     logger.verbose('TestRunnerCli.Init.Model', `Skip test data from folder: ${testDataRootFolder}`);
     return {name: path.basename(testDataRootFolder), backend, modelUrl: '', cases: []};
   }
 
   let modelUrl: string|null = null;
-  const cases: Test.ModelTestCase[] = [];
+  let cases: Test.ModelTestCase[] = [];
 
   logger.verbose('TestRunnerCli.Init.Model', `Start to prepare test data from folder: ${testDataRootFolder}`);
 
@@ -272,11 +274,24 @@ function modelTestFromFolder(testDataRootFolder: string, backend: string, skip =
     throw e;
   }
 
+  const caseCount = cases.length;
+  if (times !== undefined) {
+    if (times > caseCount) {
+      for (let i = 0; cases.length < times; i++) {
+        const origin = cases[i % caseCount];
+        const duplicated = {name: `${origin.name} - copy ${Math.floor(i / caseCount)}`, dataFiles: origin.dataFiles};
+        cases.push(duplicated);
+      }
+    } else {
+      cases = cases.slice(0, times);
+    }
+  }
+
   logger.verbose('TestRunnerCli.Init.Model', `Finished preparing test data.`);
   logger.verbose('TestRunnerCli.Init.Model', `===============================================================`);
   logger.verbose('TestRunnerCli.Init.Model', ` Model file: ${modelUrl}`);
   logger.verbose('TestRunnerCli.Init.Model', ` Backend: ${backend}`);
-  logger.verbose('TestRunnerCli.Init.Model', ` Test set(s): ${cases.length}`);
+  logger.verbose('TestRunnerCli.Init.Model', ` Test set(s): ${cases.length} (${caseCount})`);
   logger.verbose('TestRunnerCli.Init.Model', `===============================================================`);
 
   return {name: path.basename(testDataRootFolder), modelUrl, backend, cases};

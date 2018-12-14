@@ -47,7 +47,9 @@ Options:
  -p, --profile               Enable profiler.
                                Profiler will generate extra logs which include the information of events time
                                consumption
- -P, --perf                  Generate performance number. Cannot be used with flag --debug.
+ -P[=<...>], --perf[=<...>]  Generate performance number. Cannot be used with flag --debug.
+                               This flag can be used with a number as value, specifying the total count of test cases
+                               to run. The test cases may be used multiple times. Default value is 10.
 
  --log-verbose=<...>         Set log level to verbose
  --log-info=<...>            Set log level to info
@@ -114,7 +116,16 @@ export interface TestRunnerCliArgs {
   bundleMode: 'prod'|'dev'|'perf';
 
   logConfig: Test.Config['log'];
+
+  /**
+   * Whether to enable InferenceSession's profiler
+   */
   profile: boolean;
+
+  /**
+   * Specify the times that test cases to run
+   */
+  times?: number;
 
   worker?: Backend.WasmOptions['worker'];
   // contextId?: Backend.WebGLOptions['contextId'];
@@ -172,7 +183,9 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
     logConfig.push({category: 'Profiler.backend', config: {minimalSeverity: 'verbose'}});
   }
 
-  const perf = (args.perf || args.P) ? true : false;
+  const perfArg = (args.perf || args.P);
+  const perf = perfArg ? true : false;
+  const times = (typeof perfArg === 'number') ? perfArg : 10;
   if (debug && perf) {
     throw new Error('Flag "perf" cannot be used together with flag "debug".');
   }
@@ -201,6 +214,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
     env: env as TestRunnerCliArgs['env'],
     logConfig,
     profile,
+    times: perf ? times : undefined,
     noSandbox
   };
 }

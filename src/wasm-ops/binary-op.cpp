@@ -23,9 +23,8 @@ float and_core(const float &a, const float &b) {
 float prelu_core(const float &a, const float &b) { return a >= 0 ? a : a * b; }
 
 // Core binary operator implementation
-void binary_f32_imp(const float *input_1,
-                    const int32_t &rank_1, const std::vector<int32_t> &dims_1,
-                    const float *input_2, 
+void binary_f32_imp(const float *input_1, const int32_t &rank_1,
+                    const std::vector<int32_t> &dims_1, const float *input_2,
                     const int32_t &rank2, const std::vector<int32_t> &dims_2,
                     float *output, const int32_t &output_length,
                     const int32_t &output_rank,
@@ -85,9 +84,9 @@ void binary_f32_imp_wrapper(void *data,
       output_dims_vector[i] = output_dims[i];
     }
   }
-  binary_f32_imp(input_1, rank_1, dims1_vector, input_2, rank2,
-                 dims2_vector, output, output_length, output_rank,
-                 output_dims_vector, core_op);
+  binary_f32_imp(input_1, rank_1, dims1_vector, input_2, rank2, dims2_vector,
+                 output, output_length, output_rank, output_dims_vector,
+                 core_op);
 }
 
 // Wasm interop methods

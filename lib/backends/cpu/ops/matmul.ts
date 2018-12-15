@@ -84,7 +84,6 @@ export function matMul(a: Tensor, b: Tensor) {
   }
   const tensorY = new Tensor(shape, isFloat64 ? 'float64' : 'float32');
   tensorY.floatData.set(ndY.data);
-
   return tensorY;
 }
 

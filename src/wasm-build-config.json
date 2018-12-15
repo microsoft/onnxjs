@@ -13,10 +13,11 @@
 	  "_xor_f32",
 	  "_or_f32",
 	  "_and_f32",
-	  "_prelu_f32",	  
+	  "_prelu_f32",
     "_conv_f32",
     "_pool_f32",
     "_gemm_f32",
+	  "_matmul_f32",
     "_batch_normalization_f32",
     "_sum_f32",
     "_softmax_f32"

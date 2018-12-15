@@ -55,45 +55,19 @@ export class WasmBinaryOp extends BinaryOp {
 
     if (inputType === 'float32' || inputType === 'int32' || inputType === 'uint32') {
       WasmBinding.getInstance().ccall(
-          fun, [inputs[0].numberData as fourByteTypes, 'float32ptr'], [inputs[0].data.length, 'int32'],
-          [inputs[0].dims.length, 'int32'], [inputs[0].dims, 'int32ptr'],
-          [inputs[1].numberData as fourByteTypes, 'float32ptr'], [inputs[1].data.length, 'int32'],
+          fun, [inputs[0].numberData as fourByteTypes, 'float32ptr'], [inputs[0].dims.length, 'int32'],
+          [inputs[0].dims, 'int32ptr'], [inputs[1].numberData as fourByteTypes, 'float32ptr'],
           [inputs[1].dims.length, 'int32'], [inputs[1].dims, 'int32ptr'], [resultData, 'float32ptr', 'out'],
           [resultData.length, 'int32'], [outputShape.length, 'int32'], [outputShape, 'int32ptr']);
     } else {
       WasmBinding.getInstance().ccall(
-          fun, [Float32Array.from(inputs[0].numberData), 'float32ptr'], [inputs[0].data.length, 'int32'],
-          [inputs[0].dims.length, 'int32'], [inputs[0].dims, 'int32ptr'],
-          [Float32Array.from(inputs[1].numberData), 'float32ptr'], [inputs[1].data.length, 'int32'],
+          fun, [Float32Array.from(inputs[0].numberData), 'float32ptr'], [inputs[0].dims.length, 'int32'],
+          [inputs[0].dims, 'int32ptr'], [Float32Array.from(inputs[1].numberData), 'float32ptr'],
           [inputs[1].dims.length, 'int32'], [inputs[1].dims, 'int32ptr'], [resultData, 'float32ptr', 'out'],
           [resultData.length, 'int32'], [outputShape.length, 'int32'], [outputShape, 'int32ptr']);
     }
-
-    return [new Tensor(
-        outputShape, outputType, undefined, undefined, createOutputTypedArrayBasedOnType(resultData, outputType))];
-  }
-}
-
-function createOutputTypedArrayBasedOnType(result: Float32Array, requiredType: string) {
-  switch (requiredType) {
-    case 'bool':
-    case 'uint8':
-      return Uint8Array.from(result);
-    case 'int8':
-      return Int8Array.from(result);
-    case 'int16':
-      return Int16Array.from(result);
-    case 'uint16':
-      return Uint16Array.from(result);
-    case 'int32':
-      return Int32Array.from(result);
-    case 'uint32':
-      return Uint32Array.from(result);
-    case 'float32':
-      return result;
-    case 'float64':
-      return Float64Array.from(result);
-    default:
-      throw new Error('unsupported tensor type');
+    const result = new Tensor(outputShape, outputType);
+    result.numberData.set(resultData);
+    return [result];
   }
 }

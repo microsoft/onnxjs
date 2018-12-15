@@ -36,7 +36,7 @@ ShapeUtils::compute_strides(const std::vector<int32_t> &dims) {
 }
 
 size_t ShapeUtils::indices_to_offset(const std::vector<int32_t> &strides,
-                                     const std::vector<int32_t> indices) {
+                                     const std::vector<int32_t> &indices) {
   size_t offset = 0;
   for (size_t i = 0; i < indices.size(); ++i) {
     offset += strides[i] * indices[i];

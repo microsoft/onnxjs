@@ -456,6 +456,9 @@
       "test_conv_with_strides_padding",
       "test_gemm_nobroadcast",
       "test_gemm_broadcast",
+      "test_matmul_2d",
+      "test_matmul_3d",
+      "test_matmul_4d",
       "test_softmax_axis_0",
       "test_softmax_axis_1",
       "test_softmax_axis_2",
@@ -502,7 +505,8 @@
       "div.jsonc",
       "and.jsonc",
       "or.jsonc",
-      "xor.jsonc"
+      "xor.jsonc",
+      "matmul.jsonc"
     ]
   }
 }

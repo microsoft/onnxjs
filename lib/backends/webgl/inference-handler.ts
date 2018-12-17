@@ -65,6 +65,12 @@ export class WebGLInferenceHandler implements InferenceHandler {
     tensor = this.textureToTensor.get(td);
     if (!tensor) {
       Logger.verbose('InferenceHandler', `Creating new Tensor from texture data: [${td.unpackedShape}]`);
+      /**
+       * We're creating a Tensor without converting data from Texture onto CPU
+       * Instead we're passing a closure which is only executed if Tesor.data is accessed
+       * This allows for the execution of the graph without paying the penalty of
+       * data movement from GPU to CPU
+       */
       tensor = new Tensor(td.unpackedShape, td.dataType, (id: Tensor.Id) => {
         const values = this.textureHelper.readTexture(td, td.dataType, td.channels);
         return values;

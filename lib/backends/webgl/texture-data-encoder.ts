@@ -136,7 +136,7 @@ export class Float16DataEncoder implements DataEncoder {
 /**
  * Data encoder for WebGL 1 with not support only for floating point textures
  */
-export class UInt8DataEncoder implements DataEncoder {
+export class WebGl2UInt8DataEncoder implements DataEncoder {
   internalFormat: number;
   format: number;
   channelType: number;
@@ -164,5 +164,38 @@ export class UInt8DataEncoder implements DataEncoder {
   }
   decode(buffer: Encoder.DataArrayType, dataSize: number): Uint8Array {
     return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.length / this.channelSize);
+  }
+}
+export class UInt8DataEncoder implements DataEncoder {
+  internalFormat: number;
+  format: number;
+  channelType: number;
+  channelSize = 4;
+  constructor(channels = 1) {
+    if (channels === 1) {
+      this.internalFormat = WebGLRenderingContext.ALPHA;
+      this.format = WebGLRenderingContext.ALPHA;  // not tested
+      this.channelType = WebGLRenderingContext.UNSIGNED_BYTE;
+      this.channelSize = channels;
+    } else if (channels === 4) {
+      this.internalFormat = WebGLRenderingContext.RGBA;
+      this.format = WebGLRenderingContext.RGBA;
+      this.channelType = WebGLRenderingContext.UNSIGNED_BYTE;
+      this.channelSize = channels;
+    } else {
+      throw new Error(`Invalid number of channels: ${channels}`);
+    }
+  }
+  encode(src: Uint8Array, textureSize: number): Encoder.DataArrayType {
+    return new Uint8Array(src.buffer, src.byteOffset, src.byteLength);
+  }
+  allocate(size: number): Encoder.DataArrayType {
+    return new Uint8Array(size * this.channelSize);
+  }
+  decode(buffer: Encoder.DataArrayType, dataSize: number): Uint8Array {
+    if (buffer.constructor === Uint8Array) {
+      return buffer.subarray(0, dataSize) as Uint8Array;
+    }
+    throw new Error(`Invalid array type: ${buffer.constructor}`);
   }
 }

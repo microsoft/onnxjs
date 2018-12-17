@@ -7,6 +7,7 @@ import {Tensor} from '../../tensor';
 import {ShapeUtil} from '../../util';
 import {WebGLBackend} from '../backend-webgl';
 
+import {WebGLUint8Encode} from './ops/uint8-encode';
 import {ProgramManager} from './program-manager';
 import {WebGLSessionHandler} from './session-handler';
 import {TextureData, TextureLayout} from './texture-data';
@@ -72,6 +73,10 @@ export class WebGLInferenceHandler implements InferenceHandler {
        * data movement from GPU to CPU
        */
       tensor = new Tensor(td.unpackedShape, td.dataType, (id: Tensor.Id) => {
+        if (this.backend.forceUint8Reads) {
+          const uint8TD = this.executeUint8ConversionOp(td);
+          return this.textureHelper.readUint8TextureAsFloat(uint8TD);
+        }
         const values = this.textureHelper.readTexture(td, td.dataType, td.channels);
         return values;
       });
@@ -124,5 +129,10 @@ export class WebGLInferenceHandler implements InferenceHandler {
       strides: ShapeUtil.computeStrides(shape),
       unpackedShape
     };
+  }
+  executeUint8ConversionOp(input: TextureData): TextureData {
+    const op = new WebGLUint8Encode();
+    const output = op.runInternal(this, input);
+    return output;
   }
 }

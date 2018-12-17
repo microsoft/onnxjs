@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as platform from 'platform';
+
 import {Backend as BackendInterface} from '../api/onnx';
 import {Backend, SessionHandler} from '../backend';
 import {Logger} from '../instrument';
@@ -20,9 +22,13 @@ type WebGLOptions = BackendInterface.WebGLOptions;
 export class WebGLBackend implements Backend, WebGLOptions {
   glContext: WebGLContext;
   contextId?: 'webgl'|'webgl2'|'experimental-webgl';
+  forceUint8Reads = false;
 
   initialize(): boolean {
     try {
+      if (platform.name === 'Safari') {
+        this.forceUint8Reads = true;
+      }
       this.glContext = WebGLContextFactory.create(this.contextId);
       Logger.verbose('WebGLBackend', `Created WebGLContext: ${typeof this.glContext}`);
       return true;

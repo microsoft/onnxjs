@@ -2,94 +2,73 @@
 // Licensed under the MIT license.
 
 import {Tensor} from './tensor';
-export function zeros(shape: ReadonlyArray<number>, dtype: Tensor.NumberOrBoolType): Tensor {
+
+export function zeros(shape: ReadonlyArray<number>, type: Tensor.NumberOrBoolType): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function linspace(start: number, stop: number, num: number): Tensor {
+export function linspace(start: number, stop: number, num: number, type: Tensor.NumberType): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function range(start: number, stop: number, step: number, dtype: Tensor.NumberType): Tensor {
+export function range(start: number, stop: number, step: number, type: Tensor.NumberType): Tensor {
   throw new Error('Method not implemented.');
 }
-
 export function as1d(t: Tensor): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function scalar(value: number, dtype: Tensor.NumberType): Tensor {
+export function scalar(value: number, type: Tensor.NumberType): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function exp(t: Tensor): Tensor {
+export function exp(x: Tensor): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function sigmoid(t: Tensor): Tensor {
+export function sigmoid(x: Tensor): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function add(t1: Tensor, t2: Tensor): Tensor {
+export function add(a: Tensor, b: Tensor): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function sub(t1: Tensor, t2: Tensor): Tensor {
+export function sub(a: Tensor, b: Tensor): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function mul(t1: Tensor, t2: Tensor): Tensor {
+export function mul(a: Tensor, b: Tensor): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function div(t1: Tensor, t2: Tensor): Tensor {
+export function div(a: Tensor, b: Tensor): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function softmax(t: Tensor, dim: number): Tensor {
+export function softmax(x: Tensor, axis: number): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function concat(tensors: Tensor[], axis: number): Tensor {
+export function concat(x: Tensor[], axis: number): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function stack(tensors: Tensor[], axis: number): Tensor {
+export function stack(x: Tensor[], axis: number): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function gather(t: Tensor, indices: ReadonlyArray<number>, axis: number): Tensor {
+export function gather(x: Tensor, indices: ReadonlyArray<number>, axis: number): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function tile(t: Tensor, reps: ReadonlyArray<number>): Tensor {
+export function tile(x: Tensor, repeats: ReadonlyArray<number>): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function transpose(t: Tensor, perm: ReadonlyArray<number>): Tensor {
+export function transpose(x: Tensor, perm: ReadonlyArray<number>): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function expandDims(t: Tensor, axis: number): Tensor {
+export function expandDims(x: Tensor, axis: number): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function greaterEqual(t1: Tensor, t2: Tensor): Tensor {
+export function greaterEqual(a: Tensor, b: Tensor): Tensor {
   throw new Error('Method not implemented.');
 }
-
 export function where(condition: ReadonlyArray<boolean>, t1: Tensor, t2: Tensor): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function cast(t: Tensor, dtype: Tensor.NumberOrBoolType): Tensor {
+export function cast(x: Tensor, type: Tensor.NumberOrBoolType): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function argMax(t: Tensor, axis: number): Tensor {
+export function argMax(x: Tensor, axis: number): Tensor {
   throw new Error('Method not implemented.');
 }
-
-export function max(t: Tensor, axis: number, keepDims: boolean): Tensor {
+export function max(x: Tensor, axis: number): Tensor {
   throw new Error('Method not implemented.');
 }

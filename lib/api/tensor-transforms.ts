@@ -165,16 +165,15 @@ interface ReductionTensorTransforms {
    * has the same rank as the input if keepdims equal 1. If keepdims equal 0, then the resulted tensor have the reduced
    * dimension pruned.
    * @param x The input Tensor.
-   * @param axis The axis in which to compute the arg indices. Default is 0.
+   * @param axis The axis in which to compute the arg indices.
    */
   argMax(x: Tensor, axis: number): Tensor;
   /**
    * Element-wise max of each of the input tensors. All inputs and outputs must have the same shape and data type.
-   * @param x
-   * @param axis
-   * @param keepDims
+   * @param x The input Tensor.
+   * @param axis The axis in which to compute the arg indices.
    */
-  max(x: Tensor, axis: number, keepDims: boolean): Tensor;
+  max(x: Tensor, axis: number): Tensor;
 }
 
 export interface TensorTransforms extends UtilityTensorCreators, BasicMathTensorTransforms, ArithmeticTensorTransforms,

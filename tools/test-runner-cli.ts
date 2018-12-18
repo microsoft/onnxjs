@@ -102,7 +102,7 @@ for (const b of backend) {
 // Option: -e=<...>, --env=<...>
 const envArg = args.e || args.env;
 const env = (typeof envArg !== 'string') ? 'chrome' : envArg;
-if (['chrome', 'edge', 'firefox', 'electron', 'node'].indexOf(env) === -1) {
+if (['chrome', 'edge', 'firefox', 'electron', 'safari', 'node'].indexOf(env) === -1) {
   throw new Error(`not supported env ${env}`);
 }
 
@@ -560,8 +560,11 @@ function run(config: Test.Config) {
     logger.info('TestRunnerCli.Run', '(4/4) Running karma to start test runner...');
     const karmaCommand = path.join(npmBin, 'karma');
     // currently only ChromeDebug, ChromeTest, Edge, Firefox and Electron browsers are supported
-    const browser = (env === 'chrome') ? (debug ? 'ChromeDebug' : 'ChromeTest') :
-                                         (env === 'edge') ? 'Edge' : (env === 'firefox') ? 'Firefox' : 'Electron';
+    const browser = (env === 'chrome') ?
+        (debug ? 'ChromeDebug' : 'ChromeTest') :
+        (env === 'edge') ?
+        'Edge' :
+        (env === 'firefox') ? 'Firefox' : (env === 'electron') ? 'Electron' : (env === 'safari') ? 'Safari' : '';
     const karmaArgs = ['start', `--browsers ${browser}`];
     if (debug) {
       karmaArgs.push('--log-level info');

@@ -139,7 +139,7 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
         gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture,
         0);  // 0, we aren't using MIPMAPs
     // TODO: Check if framebuffer is ready
-    gl.readPixels(0, 0, width, height, encoder.format, encoder.channelType, buffer);
+    gl.readPixels(0, 0, width, height, gl.RGBA, encoder.channelType, buffer);
     this.checkError();
     // unbind FB
     return encoder.decode(buffer, dataSize);
@@ -227,6 +227,13 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
         throw new Error('not implemented');
       default:
         throw new Error(`Invalid dataType: ${dataType}`);
+    }
+  }
+  clearActiveTextures(): void {
+    const gl = this.gl;
+    for (let unit = 0; unit < this.maxTextureImageUnits; ++unit) {
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, null);
     }
   }
   protected queryVitalParameters(): void {

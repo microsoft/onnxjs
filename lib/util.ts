@@ -469,7 +469,7 @@ export class ShapeUtil {
     const nDims = shapeHints.length;
     const reshapedDims = new Array<number>(nDims);
     let unknownDimension = -1;
-    let size = 1;
+    let newTensorSize = 1;
 
     for (let i = 0; i < nDims; i++) {
       if (shapeHints[i] < -1) {
@@ -489,17 +489,23 @@ export class ShapeUtil {
         } else {
           reshapedDims[i] = shapeHints[i];
         }
-        size *= reshapedDims[i];
+        newTensorSize *= reshapedDims[i];
       }
     }
 
+    const oldTensorSize = ShapeUtil.size(originalDims);
     if (unknownDimension !== -1) {
-      const originalTensorFlattenedSize = ShapeUtil.size(originalDims);
-      if (originalTensorFlattenedSize % size !== 0) {
+      if (oldTensorSize % newTensorSize !== 0) {
         throw new Error(`the input tensor cannot be reshaped to the requested shape. Input shape: [${
             originalDims}] Output shape: [${shapeHints}]`);
       }
-      reshapedDims[unknownDimension] = originalTensorFlattenedSize / size;
+      reshapedDims[unknownDimension] = oldTensorSize / newTensorSize;
+    }
+    // validate sizes from originalDims and reshapedDims match
+    else {
+      if (newTensorSize !== oldTensorSize) {
+        throw new Error(`reshapedDims and originalDims don't have matching sizes`);
+      }
     }
     return reshapedDims;
   }

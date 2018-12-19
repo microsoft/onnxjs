@@ -17,28 +17,27 @@ interface UtilityTensorCreators {
    * @param start The start value of the sequence
    * @param stop The end value of the sequence
    * @param num The number of values to generate.
-   * @param type The output Tensor data type.
    */
-  linspace(start: number, stop: number, num: number, type: Tensor.NumberType): Tensor;
+  linspace(start: number, stop: number, num: number): Tensor;
   /**
    * Creates a 1-D Tensor filled with an arithmetic sequence.
    * @param start The start value of the sequence.
    * @param end The end value of the sequence.
-   * @param step The increment value.
-   * @param type The output Tensor data type.
+   * @param step The increment value. Optional. Default is 1.
+   * @param type The output Tensor data type. Optional. Default is "float32"
    */
-  range(start: number, stop: number, step: number, type: Tensor.NumberType): Tensor;
+  range(start: number, stop: number, step?: number, type?: Tensor.NumberType): Tensor;
   /**
    * Reshapes a Tensor to 1-D Tensor
    * @param x Input Tensor
    */
-  as1d(t: Tensor): Tensor;
+  as1d(x: Tensor): Tensor;
   /**
    * Creates a scalar Tensor (rank = 0) with given value and type
    * @param value The data value of the Tensor
-   * @param type Data type of the scalar Tensor
+   * @param type Data type of the scalar Tensor. Default is float32
    */
-  scalar(value: number, type: Tensor.NumberType): Tensor;
+  scalar(value: number, type?: Tensor.NumberType): Tensor;
 }
 
 interface BasicMathTensorTransforms {
@@ -88,17 +87,16 @@ interface NormalizationTensorTransforms {
    * @param x The input Tensor
    * @param axis The axis of the inputs when coerced to 2D. Default to 1;
    */
-  softmax(x: Tensor, axis: number): Tensor;
+  softmax(x: Tensor, axis?: number): Tensor;
 }
 
 interface SliceAndJoinTensorTransforms {
   /**
    * Concatenate a list of tensors into a single tensor.
    * @param x List of tensors for concatenation
-   * @param axis Which axis to concat on
+   * @param axis Which axis to concat on.
    */
   concat(x: Tensor[], axis: number): Tensor;
-  stack(x: Tensor[], axis: number): Tensor;
   /**
    * Gather entries of the axis dimension of data (by default outer-most one as axis=0) indexed by indices, and
    * concatenates them in an output tensor of rank q + (r - 1).
@@ -107,7 +105,22 @@ interface SliceAndJoinTensorTransforms {
    * @param axis Which axis to gather on, defaults to 0. Negative value means counting dimensions from the back.
    *     Accepted range in [-r, r-1]
    */
-  gather(x: Tensor, indices: ReadonlyArray<number>, axis: number): Tensor;
+  gather(x: Tensor, indices: Tensor, axis?: number): Tensor;
+  /**
+   * Produces a slice of the input tensor along multiple axes.
+   * @param x The input Tensor to slice from
+   * @param starts Starting indices of corresponding axis in "axes"
+   * @param ends Ending indices (exclusive) of corresponding axis in "axes"
+   * @param axes Axes that "starts" and "ends" apply to. Optional. Default = [0, 1, ..., len("starts" - 1)]
+   */
+  slice(x: Tensor, starts: number[], ends: number[], axes?: number[]): Tensor;
+  /**
+   * Stack a list of tensors into a single tensor.
+   * @param x List of tensors of the same shape and type.
+   * @param axis Which axis to concat on. Default is 0 (first dim).
+   */
+  stack(x: Tensor[], axis?: number): Tensor;
+
   /**
    * Constructs a tensor by tiling a given tensor.
    * @param x Input tensor of any shape.
@@ -125,16 +138,22 @@ interface PermutationTensorTransforms {
    * @param perm A list of integers. By default, reverse the dimensions, otherwise permute the axes according to the
    *     values given.
    */
-  transpose(x: Tensor, perm: ReadonlyArray<number>): Tensor;
+  transpose(x: Tensor, perm?: number[]): Tensor;
 }
 
 interface ShapeTensorTransforms {
   /**
-   * Creates a Tensor with rank expanded at the specified axis
-   * @param x The input Tensor
+   * Creates a Tensor with rank expanded at the specified axis.
+   * @param x The input Tensor.
    * @param axis The dimension index where to expand.
    */
   expandDims(x: Tensor, axis: number): Tensor;
+  /**
+   * Reshapes the input Tensor.
+   * @param x The input Tensor.
+   * @param shape Specified shape for output.
+   */
+  reshape(x: Tensor, shape: ReadonlyArray<number>): Tensor;
 }
 
 interface LogicalTensorTransforms {
@@ -145,7 +164,15 @@ interface LogicalTensorTransforms {
    * @param b Second input operand for the logical operator.
    */
   greaterEqual(a: Tensor, b: Tensor): Tensor;
-  where(condition: ReadonlyArray<boolean>, t1: Tensor, t2: Tensor): Tensor;
+  /**
+   * Returns the elements, either a or b depending on the condition.
+   * If the condition is true, select from a, otherwise select from b.
+   * @param condition The input condition. Must be of data type bool.
+   * @param a  If condition is rank 1, a may have a higher rank but its first dimension must match the size of
+   *     condition.
+   * @param b A tensor with the same shape and type as a.
+   */
+  where(condition: Tensor, a: Tensor, b: Tensor): Tensor;
 }
 
 interface CastTensorTransforms {
@@ -156,7 +183,7 @@ interface CastTensorTransforms {
    * @param type The data type to which the elements of the input tensor are cast. Strictly must be one of the types
    *     from Tensor.NumberOrBoolType
    */
-  cast(x: Tensor, type: Tensor.NumberOrBoolType): Tensor;
+  cast(x: Tensor, type: Tensor.Type): Tensor;
 }
 
 interface ReductionTensorTransforms {
@@ -169,11 +196,14 @@ interface ReductionTensorTransforms {
    */
   argMax(x: Tensor, axis: number): Tensor;
   /**
-   * Element-wise max of each of the input tensors. All inputs and outputs must have the same shape and data type.
-   * @param x The input Tensor.
-   * @param axis The axis in which to compute the arg indices.
+   * Computes the max of the input tensor's element along the provided axes. The resulted tensor has the same rank as
+   * the input if keepdims equal 1. If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
+   * @param x An input tensor.
+   * @param axis A list of integers, along which to reduce. The default is to reduce over all the dimensions of the
+   *     input tensor.
+   * @param keepdims Keep the reduced dimension or not, default 1 mean keep reduced dimension.
    */
-  max(x: Tensor, axis: number): Tensor;
+  reduceMax(x: Tensor, axes?: number[], keepdims?: number): Tensor;
 }
 
 export interface TensorTransforms extends UtilityTensorCreators, BasicMathTensorTransforms, ArithmeticTensorTransforms,

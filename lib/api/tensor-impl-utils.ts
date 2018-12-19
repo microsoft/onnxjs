@@ -24,6 +24,10 @@ export function toApiTensor(internalTensor: InternalTensor): ApiTensor {
   }
 }
 
+export function toInternalTensor(apiTensor: TensorInterface): InternalTensor {
+  return new InternalTensor(apiTensor.dims, apiTensor.type, undefined, undefined, apiTensor.data);
+}
+
 export function matchElementType(type: TensorInterface.Type, element: TensorInterface.ElementType) {
   switch (typeof element) {
     case 'string':
@@ -63,5 +67,77 @@ export function validateIndices(indices: ReadonlyArray<number>) {
     if (n < 0 || n > 2147483647) {
       throw new TypeError(`Invalid index: length ${n} is not allowed`);
     }
+  }
+}
+
+export class TensorTransformUtils {
+  static createTypedArray(type: string, size: number): Uint8Array|Int32Array|Float32Array {
+    switch (type) {
+      case 'bool':
+        return new Uint8Array(size);
+      case 'int32':
+        return new Int32Array(size);
+      case 'float32':
+        return new Float32Array(size);
+      default:
+        throw new Error('Unsupported type');
+    }
+  }
+  static validateSameTypes(typesArray: TensorInterface.Type[]) {
+    if (typesArray.length < 2) {
+      throw new Error('must contain atleast 2 types to compare equality');
+    }
+    const baseType = typesArray[0];
+    for (let i = 0; i < typesArray.length; ++i) {
+      if (typesArray[i] !== baseType) {
+        throw new Error('input types are ');
+      }
+    }
+  }
+
+  static validateEqualDims(dimsArray: Array<ReadonlyArray<number>>) {
+    if (dimsArray.length < 2) {
+      throw new Error('must contain atleast 2 shapes to compare equality');
+    }
+    const baseDims = dimsArray[0];
+    const baseRank = baseDims.length;
+    for (let i = 1; i < dimsArray.length; ++i) {
+      const dims = dimsArray[i];
+      if (dims.length !== baseRank) {
+        throw new Error('rank is not the same for given inpu shapes');
+      }
+      for (let j = 0; j < baseRank; ++j) {
+        if (baseDims[j] !== dims[j]) {
+          throw new Error('input shapes are not the same');
+        }
+      }
+    }
+  }
+
+  /**
+   * Splits a given `dims` into 2 mutually exclusive `dims`
+   * @param dims ReadonlyArray<number>
+   * @param pick number - picks the dim along this axis and composes a new `dims`.
+   * The remnants make up another `dims`
+   */
+  static splitDimsIntoTwo(dims: ReadonlyArray<number>, pick: number): [number[], number[]] {
+    const picked: number[] = [];
+    const remnants: number[] = [];
+
+    for (let i = 0; i < dims.length; ++i) {
+      if (i === pick) {
+        picked.push(dims[i]);
+      } else {
+        remnants.push(dims[i]);
+      }
+    }
+    return [picked, remnants];
+  }
+
+  static getActualAxisFromNegativeValue(axis: number, tensorRank: number): number {
+    if (axis < -tensorRank && axis >= tensorRank - 1) {
+      throw new Error('unsupported axis for this operation.');
+    }
+    return axis < 0 ? axis + tensorRank : axis;
   }
 }

@@ -13,7 +13,7 @@ export class CpuTranspose extends Transpose {
   }
 }
 
-export function transpose(x: Tensor, perm: number[]): Tensor {
+export function transpose(x: Tensor, perm?: number[]): Tensor {
   const inputDims = x.dims;
   const rank = inputDims.length;
 
@@ -21,7 +21,7 @@ export function transpose(x: Tensor, perm: number[]): Tensor {
   // if no permutation was specified in the attributes,
   // the default is [rank-1, ..., 0]
   let finalPerm = new Array<number>(rank);
-  if (perm.length === rank) {
+  if (perm && perm.length === rank) {
     finalPerm = perm;
   } else {
     for (let i = 0; i < rank; i++) {

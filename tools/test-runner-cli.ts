@@ -16,7 +16,7 @@ logger.info('TestRunnerCli', 'Initializing...');
 
 const args = parseTestRunnerCliArgs(process.argv.slice(2));
 
-console.log(args);
+logger.verbose('TestRunnerCli.Init.Config', inspect(args));
 
 const TEST_ROOT = path.join(__dirname, '..', 'test');
 const TEST_DATA_ROOT = path.join(__dirname, '..', 'deps', 'data', 'data', 'test');
@@ -125,7 +125,14 @@ switch (args.mode) {
 logger.verbose('TestRunnerCli.Init', `Preparing test config... DONE`);
 
 logger.info('TestRunnerCli', 'Initialization completed. Start to run tests...');
-run({unittest, model: modelTestGroups, op: opTestGroups, log: args.logConfig, profile: args.profile});
+run({
+  unittest,
+  model: modelTestGroups,
+  op: opTestGroups,
+  log: args.logConfig,
+  profile: args.profile,
+  options: {debug: args.debug, cpu: args.cpuOptions, webgl: args.webglOptions, wasm: args.wasmOptions}
+});
 logger.info('TestRunnerCli', 'Tests completed successfully');
 
 process.exit();
@@ -462,8 +469,25 @@ function run(config: Test.Config) {
 }
 
 function saveConfig(config: Test.Config) {
-  fs.writeFileSync(path.join(TEST_ROOT, './testdata.js'), `module.exports=${JSON.stringify(config, null, 2)};`);
+  let setOptions = '';
+  if (config.options.debug !== undefined) {
+    setOptions += `onnx.ENV.debug = ${config.options.debug};`;
+  }
+  if (config.options.webgl && config.options.webgl.contextId) {
+    setOptions += `onnx.backend.webgl.contextId = ${JSON.stringify(config.options.webgl.contextId)};`;
+  }
+  if (config.options.wasm && config.options.wasm.worker) {
+    setOptions += `onnx.backend.wasm.worker = ${JSON.stringify(config.options.wasm.worker)};`;
+  }
+  if (config.options.wasm && config.options.wasm.cpuFallback !== undefined) {
+    setOptions += `onnx.backend.wasm.cpuFallback = ${JSON.stringify(config.options.wasm.cpuFallback)};`;
+  }
+
+  fs.writeFileSync(path.join(TEST_ROOT, './testdata.js'), `${setOptions}
+
+module.exports=${JSON.stringify(config, null, 2)};`);
 }
+
 function getBrowserNameFromEnv(env: TestRunnerCliArgs['env'], debug?: boolean) {
   switch (env) {
     case 'chrome':

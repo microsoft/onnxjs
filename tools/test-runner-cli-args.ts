@@ -61,7 +61,8 @@ Options:
 
 *** Backend Options ***
 
- --wasm-worker               Set the WASM worker number
+ --wasm-worker               Set the WebAssembly worker number
+ --wasm-cpu-fallback         Set whether to allow WebAssembly backend to fallback to CPU
  --webgl-context-id          Set the WebGL context ID
 
 *** Browser Options ***
@@ -127,8 +128,9 @@ export interface TestRunnerCliArgs {
    */
   times?: number;
 
-  worker?: Backend.WasmOptions['worker'];
-  // contextId?: Backend.WebGLOptions['contextId'];
+  cpuOptions?: Backend.CpuOptions;
+  wasmOptions?: Backend.WasmOptions;
+  webglOptions?: Backend.WebGLOptions;
 
   noSandbox?: boolean;
 }
@@ -196,6 +198,10 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
     logConfig.push({category: 'TestRunner.Perf', config: {minimalSeverity: 'verbose'}});
   }
 
+  const cpuOptions = parseCpuOptions(args);
+  const wasmOptions = parseWasmOptions(args);
+  const webglOptions = parseWebglOptions(args);
+
   // Option: --no-sandbox
   const noSandbox = !!args['no-sandbox'];
 
@@ -215,6 +221,9 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
     logConfig,
     profile,
     times: perf ? times : undefined,
+    cpuOptions,
+    webglOptions,
+    wasmOptions,
     noSandbox
   };
 }
@@ -264,4 +273,29 @@ function parseLogConfig(args: minimist.ParsedArgs) {
   }
 
   return config;
+}
+
+function parseCpuOptions(args: minimist.ParsedArgs): Backend.CpuOptions {
+  return {};
+}
+
+function parseWasmOptions(args: minimist.ParsedArgs): Backend.WasmOptions {
+  const worker = args['wasm-worker'];
+  if (typeof worker !== 'undefined' && typeof worker !== 'number') {
+    throw new Error('Flag "wasm-worker" must be a number value');
+  }
+  const cpuFallback = args['wasm-cpu-fallback'];
+  if (typeof cpuFallback !== 'undefined' && typeof cpuFallback !== 'boolean') {
+    throw new Error('Flag "wasm-cpu-fallback" must be a boolean value');
+  }
+  return {worker, cpuFallback};
+}
+
+function parseWebglOptions(args: minimist.ParsedArgs): Backend.WebGLOptions {
+  const contextId = args['webgl-context-id'];
+  if (contextId !== undefined && contextId !== 'webgl' && contextId !== 'webgl2' &&
+      contextId !== 'experimental-webgl') {
+    throw new Error('Flag "webgl-context-id" is invalid');
+  }
+  return {contextId};
 }

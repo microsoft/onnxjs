@@ -3,49 +3,12 @@
 
 import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
-import {EncodingGlslLib} from '../glsl-encoding-lib.';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
 import {TextureData, TextureLayout} from '../texture-data';
-import {WebGLOperator} from '../webgl-operator';
-import {WebGLOperatorHelper} from '../webgl-operator-utils';
 
-export class WebGLUint8Encode implements WebGLOperator {
+export class WebGLUint8Encode {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
-  }
-  createProgramInfo(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
-    const outputShape = inputs[0].dims.slice();
-    const [width, height] = inferenceHandler.session.layoutStrategy.computeTextureWH(inputs[0].dims);
-    const outputLayout: TextureLayout = {
-      width,
-      height,
-      channels: 4,
-      shape: outputShape,
-      strides: ShapeUtil.computeStrides(outputShape),
-      unpackedShape: outputShape,
-    };
-    const shaderSource = `
-     uniform sampler2D X;
-      void main() {
-        float value = texture2D(X,TexCoords).r;
-        gl_FragColor = encode(value);
-      }`;
-    return {
-      hasMain: true,
-      inputLayouts: [inferenceHandler.getOrCreateTextureLayout(inputs[0])],
-      outputLayout,
-      shaderSource,
-    };
-  }
-  createRunData(inferenceHandler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = inputs.map((t, i) => inferenceHandler.getOrCreate(t, programInfo.inputLayouts[i]));
-    return {
-      inputTextureDatas: inputTDs,
-      outputTextureData: inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),
-      uniformData: {}
-    };
+    throw new Error('not implemented');
   }
   runInternal(inferenceHandler: WebGLInferenceHandler, input: TextureData): TextureData {
     const outputShape = input.shape;
@@ -58,23 +21,54 @@ export class WebGLUint8Encode implements WebGLOperator {
       strides: ShapeUtil.computeStrides(outputShape),
       unpackedShape: outputShape
     };
-    const endianness = EncodingGlslLib.isLittleEndian() ? 'rgba.rgba=rgba.abgr;' : '';
+    /**
+     * The following shader code has been copied from TensorFlow.js
+     * The previous code was buggy
+     */
     const shaderSource = `
-       uniform sampler2D X;
-       highp vec4 encodeAsUint8(highp float f) {
-        highp float F = abs(f);
-        highp float Sign = step(0.0,-f);
-        highp float Exponent = floor(log2(F));
-        highp float Mantissa = (exp2(- Exponent) * F);
-        Exponent = floor(log2(F) + 127.0) + floor(log2(Mantissa));
-        highp vec4 rgba;
-        rgba[0] = 128.0 * Sign  + floor(Exponent*exp2(-1.0));
-        rgba[1] = 128.0 * mod(Exponent,2.0) + mod(floor(Mantissa*128.0),128.0);
-        rgba[2] = floor(mod(floor(Mantissa*exp2(23.0 -8.0)),exp2(8.0)));
-        rgba[3] = floor(exp2(23.0)*mod(Mantissa,exp2(-15.0)));
-        ${endianness}
-        rgba = rgba / 255.0; // values need to be normalized to [0,1]
-        return rgba;
+      const float FLOAT_MAX = 1.70141184e38;
+      const float FLOAT_MIN = 1.17549435e-38;
+
+      uniform sampler2D X;
+
+      bool isNaN(float val) {
+        return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;
+      }
+
+      highp vec4 encodeAsUint8(highp float v) {
+        if (isNaN(v)) {
+          return vec4(255, 255, 255, 255);
+        }
+
+        highp float av = abs(v);
+
+        if(av < FLOAT_MIN) {
+          return vec4(0.0, 0.0, 0.0, 0.0);
+        } else if(v > FLOAT_MAX) {
+          return vec4(0.0, 0.0, 128.0, 127.0) / 255.0;
+        } else if(v < -FLOAT_MAX) {
+          return vec4(0.0, 0.0,  128.0, 255.0) / 255.0;
+        }
+
+        highp vec4 c = vec4(0,0,0,0);
+
+        highp float e = floor(log2(av));
+        highp float m = exp2(fract(log2(av))) - 1.0;
+
+        c[2] = floor(128.0 * m);
+        m -= c[2] / 128.0;
+        c[1] = floor(32768.0 * m);
+        m -= c[1] / 32768.0;
+        c[0] = floor(8388608.0 * m);
+
+        highp float ebias = e + 127.0;
+        c[3] = floor(ebias / 2.0);
+        ebias -= c[3] * 2.0;
+        c[2] += floor(ebias) * 128.0;
+
+        c[3] += 128.0 * step(0.0, -v);
+
+        return c / 255.0;
       }
 
       void main() {

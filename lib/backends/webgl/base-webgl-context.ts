@@ -24,6 +24,7 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
   webglVendor: string;
   webglVersion: string;
   disposed: boolean;
+  frameBufferBound = false;
 
   init(): void {
     this.getExtensions();
@@ -130,6 +131,9 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
     const gl = this.gl;
     if (!channels) {
       channels = 1;
+    }
+    if (!this.frameBufferBound) {
+      this.attachFramebuffer(texture, width, height);
     }
     const encoder = this.getEncoder(dataType, channels);
     const buffer = encoder.allocate(width * height);

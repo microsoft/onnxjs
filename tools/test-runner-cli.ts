@@ -560,11 +560,7 @@ function run(config: Test.Config) {
     logger.info('TestRunnerCli.Run', '(4/4) Running karma to start test runner...');
     const karmaCommand = path.join(npmBin, 'karma');
     // currently only ChromeDebug, ChromeTest, Edge, Firefox and Electron browsers are supported
-    const browser = (env === 'chrome') ?
-        (debug ? 'ChromeDebug' : 'ChromeTest') :
-        (env === 'edge') ?
-        'Edge' :
-        (env === 'firefox') ? 'Firefox' : (env === 'electron') ? 'Electron' : (env === 'safari') ? 'Safari' : '';
+    const browser = getBrowser(env, debug);
     const karmaArgs = ['start', `--browsers ${browser}`];
     if (debug) {
       karmaArgs.push('--log-level info');
@@ -610,4 +606,21 @@ function run(config: Test.Config) {
 
 function saveConfig(config: Test.Config) {
   fs.writeFileSync(path.join(TEST_ROOT, './testdata.js'), `module.exports=${JSON.stringify(config, null, 2)};`);
+}
+
+function getBrowser(env: string, debug: boolean): string {
+  switch (env) {
+    case 'chrome':
+      return debug ? 'ChromeDebug' : 'ChromeTest';
+    case 'edge':
+      return 'Edge';
+    case 'firefox':
+      return 'Firefox';
+    case 'electron':
+      return 'Electron';
+    case 'safari':
+      return 'Safari';
+    default:
+      return '';
+  }
 }

@@ -27,8 +27,7 @@ export class WebGLReshape extends Reshape {
       unpackedShape: reshapedDims,
     };
     const newTensor = new Tensor(newTD.unpackedShape, newTD.dataType, (id: Tensor.Id) => {
-      const values = inferenceHandler.textureHelper.readTexture(newTD, newTD.dataType, newTD.channels);
-      return values;
+      return WebGLInferenceHandler.readTexture(inferenceHandler, newTD);
     });
     if (isInitializer) {
       inferenceHandler.session.setTextureData(newTensor, newTD);

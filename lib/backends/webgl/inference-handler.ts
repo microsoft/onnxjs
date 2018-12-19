@@ -73,12 +73,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
        * data movement from GPU to CPU
        */
       tensor = new Tensor(td.unpackedShape, td.dataType, (id: Tensor.Id) => {
-        if (this.backend.forceUint8Reads) {
-          const uint8TD = this.executeUint8ConversionOp(td);
-          return this.textureHelper.readUint8TextureAsFloat(uint8TD);
-        }
-        const values = this.textureHelper.readTexture(td, td.dataType, td.channels);
-        return values;
+        return WebGLInferenceHandler.readTexture(this, td);
       });
       this.setTextureData(tensor, td);
     } else {
@@ -130,9 +125,13 @@ export class WebGLInferenceHandler implements InferenceHandler {
       unpackedShape
     };
   }
-  executeUint8ConversionOp(input: TextureData): TextureData {
-    const op = new WebGLUint8Encode();
-    const output = op.runInternal(this, input);
-    return output;
+  static readTexture(inferenceHandler: WebGLInferenceHandler, textureData: TextureData): Tensor.NumberType {
+    if (inferenceHandler.backend.forceUint8Reads) {
+      const op = new WebGLUint8Encode();
+      const uint8TD = op.runInternal(inferenceHandler, textureData);
+      return inferenceHandler.textureHelper.readUint8TextureAsFloat(uint8TD);
+    }
+    const values = inferenceHandler.textureHelper.readTexture(textureData, textureData.dataType, textureData.channels);
+    return values;
   }
 }

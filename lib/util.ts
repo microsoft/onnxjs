@@ -25,6 +25,13 @@ export function checkInputsShape(inputs: Tensor[], ...expectedDimensions: number
   return true;
 }
 
+export function getActualAxisFromNegativeValue(axis: number, tensorRank: number): number {
+  if (axis < -tensorRank || axis > tensorRank - 1) {
+    throw new Error('unsupported axis for this operation.');
+  }
+  return axis < 0 ? axis + tensorRank : axis;
+}
+
 export class BroadcastUtil {
   /**
    * Calculate the expected shape when broadcasting 2 tensors
@@ -469,7 +476,7 @@ export class ShapeUtil {
     const nDims = shapeHints.length;
     const reshapedDims = new Array<number>(nDims);
     let unknownDimension = -1;
-    let newTensorSize = 1;
+    let size = 1;
 
     for (let i = 0; i < nDims; i++) {
       if (shapeHints[i] < -1) {
@@ -489,23 +496,17 @@ export class ShapeUtil {
         } else {
           reshapedDims[i] = shapeHints[i];
         }
-        newTensorSize *= reshapedDims[i];
+        size *= reshapedDims[i];
       }
     }
 
-    const oldTensorSize = ShapeUtil.size(originalDims);
     if (unknownDimension !== -1) {
-      if (oldTensorSize % newTensorSize !== 0) {
+      const originalTensorFlattenedSize = ShapeUtil.size(originalDims);
+      if (originalTensorFlattenedSize % size !== 0) {
         throw new Error(`the input tensor cannot be reshaped to the requested shape. Input shape: [${
             originalDims}] Output shape: [${shapeHints}]`);
       }
-      reshapedDims[unknownDimension] = oldTensorSize / newTensorSize;
-    }
-    // validate sizes from originalDims and reshapedDims match
-    else {
-      if (newTensorSize !== oldTensorSize) {
-        throw new Error(`reshapedDims and originalDims don't have matching sizes`);
-      }
+      reshapedDims[unknownDimension] = originalTensorFlattenedSize / size;
     }
     return reshapedDims;
   }

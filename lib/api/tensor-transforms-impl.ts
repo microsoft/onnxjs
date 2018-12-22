@@ -2,15 +2,19 @@
 // Licensed under the MIT license.
 
 import {Attribute} from '../attribute';
+import {argMax as argMaxImpl} from '../backends/cpu/ops/argMax';
 import {binaryOp} from '../backends/cpu/ops/binary-op';
 import {concat as concatImpl} from '../backends/cpu/ops/concat';
+import {gather as gatherImpl} from '../backends/cpu/ops/gather';
 import {reduceMax as reduceMaxImpl} from '../backends/cpu/ops/reduce';
 import {reshape as reshapeImpl} from '../backends/cpu/ops/reshape';
+import {slice as sliceImpl} from '../backends/cpu/ops/slice';
 import {softmax as softmaxImpl} from '../backends/cpu/ops/softmax';
+import {tile as tileImpl} from '../backends/cpu/ops/tile';
 import {transpose as transposeImpl} from '../backends/cpu/ops/transpose';
 import * as unaryOps from '../backends/cpu/ops/unary-op';
 import {Tensor as InternalTensor} from '../tensor';
-import {ShapeUtil} from '../util';
+import {getActualAxisFromNegativeValue, ShapeUtil} from '../util';
 
 import {Tensor} from './tensor';
 import {TensorTransformUtils, toApiTensor, toInternalTensor, validateIndices} from './tensor-impl-utils';
@@ -153,20 +157,9 @@ export function slice(x: Tensor, starts: number[], ends: number[], axes?: number
   if (x.type === 'string') {
     throw new Error('Unspported type for this transformation');
   }
-  // axes = axes ||
-  // const newDimsStride = ShapeUtil.computeStrides(size);
-  // const oldDimsStride = ShapeUtil.computeStrides(t.dims ? t.dims : [t.data.length]);
-  // const X = t.data;
-  // const Y = TypedArrayUtil.createTypedArray(t.type, ShapeUtil.size(size));
-  // for (let i = 0; i < Y.length; ++i) {
-  //   const newLogicalIndex = ShapeUtil.offsetToIndices(i, newDimsStride);
-  //   const oldLogicalIndex = newLogicalIndex.map((idx, j) => idx + begin[j]);
-  //   const oldOffset = ShapeUtil.indicesToOffset(oldLogicalIndex, oldDimsStride);
-  //   Y[i] = X[oldOffset] as number;
-  // }
-  // return new Tensor(Y, t.type, size);
-  throw new Error('not implemented');
+  return toApiTensor(sliceImpl(toInternalTensor(x), starts, ends, axes || []));
 }
+
 export function stack(x: Tensor[], axis = 0): Tensor {
   if (x.length < 2) {
     throw new Error('Must have at least 2 tensors to stack');
@@ -181,7 +174,7 @@ export function stack(x: Tensor[], axis = 0): Tensor {
   TensorTransformUtils.validateSameTypes(types);
   TensorTransformUtils.validateEqualDims(shapes);
   const rank = x[0].dims ? x[0].dims.length : 1;
-  axis = TensorTransformUtils.getActualAxisFromNegativeValue(axis, rank);
+  axis = getActualAxisFromNegativeValue(axis, rank);
   const expanded = x.map(t => expandDims(t, axis));
   const internalTensors: InternalTensor[] = [];
   expanded.forEach(t => {
@@ -197,22 +190,7 @@ export function gather(x: Tensor, indices: Tensor, axis = 0): Tensor {
   if (indices.type !== 'int32' || (indices.dims && indices.dims.length > 1)) {
     throw new Error('Indices tensor not of specified format');
   }
-  const dims = x.dims ? x.dims.slice() : [x.data.length];
-  const newDims = dims;
-  const indicesData = indices.data;
-  newDims[axis] = indicesData.length;
-  const dimsStrides = ShapeUtil.computeStrides(dims);
-  const newDimsStrides = ShapeUtil.computeStrides(newDims);
-  const Y = TensorTransformUtils.createTypedArray(x.type, ShapeUtil.size(newDims));
-  const X = x.data;
-  for (let i = 0; i < Y.length; ++i) {
-    const newLogicalIndex = ShapeUtil.offsetToIndices(i, newDimsStrides);
-    const oldLogicalIndex = newLogicalIndex.slice();
-    oldLogicalIndex[axis] = indicesData[newLogicalIndex[axis]] as number;
-    const oldOffset = ShapeUtil.indicesToOffset(oldLogicalIndex, dimsStrides);
-    Y[i] = X[oldOffset] as number;
-  }
-  return new Tensor(Y, x.type, newDims);
+  return toApiTensor(gatherImpl(toInternalTensor(x), toInternalTensor(indices), axis));
 }
 
 export function tile(x: Tensor, repeats: ReadonlyArray<number>): Tensor {
@@ -221,27 +199,12 @@ export function tile(x: Tensor, repeats: ReadonlyArray<number>): Tensor {
   }
   const dims = x.dims ? x.dims : [x.data.length];
   const rank = dims.length;
-  const newDims = new Array(rank);
   if (rank !== repeats.length) {
     throw new Error('Repetitions must be of the same rank as input dims');
   }
-  for (let i = 0; i < rank; i++) {
-    newDims[i] = dims[i] * repeats[i];
-  }
-  const dimsStrides = ShapeUtil.computeStrides(dims);
-  const newDimsStrides = ShapeUtil.computeStrides(newDims);
-  const Y = TensorTransformUtils.createTypedArray(x.type, ShapeUtil.size(newDims));
-  const X = x.data;
-  for (let i = 0; i < Y.length; ++i) {
-    const newLogicalIndex = ShapeUtil.offsetToIndices(i, newDimsStrides);
-    const oldLogicalIndex = new Array(rank);
-    for (let j = 0; j < rank; ++j) {
-      oldLogicalIndex[j] = newLogicalIndex[j] % x.dims[j];
-    }
-    const oldOffset = ShapeUtil.indicesToOffset(oldLogicalIndex, dimsStrides);
-    Y[i] = X[oldOffset] as number;
-  }
-  return new Tensor(Y, x.type, newDims);
+  return toApiTensor(tileImpl(
+      toInternalTensor(x),
+      new InternalTensor([repeats.length], 'int32', undefined, undefined, Int32Array.from(repeats))));
 }
 
 export function transpose(x: Tensor, perm?: number[]): Tensor {
@@ -249,7 +212,7 @@ export function transpose(x: Tensor, perm?: number[]): Tensor {
 }
 
 export function expandDims(x: Tensor, axis: number): Tensor {
-  axis = TensorTransformUtils.getActualAxisFromNegativeValue(axis, x.dims ? x.dims.length : 1);
+  axis = getActualAxisFromNegativeValue(axis, x.dims ? x.dims.length : 1);
   const dims = x.dims ? x.dims : [x.data.length];
   const changedShapeLength = dims.length + 1;
   const changedShape = new Array<number>(changedShapeLength);
@@ -347,30 +310,11 @@ export function cast(x: Tensor, type: Tensor.Type): Tensor {
   }
 }
 
-export function argMax(x: Tensor, axis: number): Tensor {
+export function argMax(x: Tensor, axis = 0, keepdims = 1): Tensor {
   if (x.type !== 'float32' && x.type !== 'int32') {
     throw new Error('Unsupported type for transform');
   }
-  const rank = x.dims ? x.dims.length : 1;
-  axis = TensorTransformUtils.getActualAxisFromNegativeValue(axis, rank);
-  const [reduceDims, resultDims] = TensorTransformUtils.splitDimsIntoTwo(x.dims ? x.dims : [x.data.length], axis);
-  const X = x.data;
-  const Y = TensorTransformUtils.createTypedArray('int32', resultDims.length === 0 ? 1 : ShapeUtil.size(resultDims));
-  const blockSize = reduceDims[0];
-  for (let i = 0; i < Y.length; ++i) {
-    const offset = blockSize * i;
-    let max = X[offset];
-    let index = 0;
-    for (let j = 0; j < blockSize; ++j) {
-      const value = X[offset + j];
-      if (value > max) {
-        max = value;
-        index = j;
-      }
-    }
-    Y[i] = index;
-  }
-  return new Tensor(Y, 'int32', resultDims.length === 0 ? [1] : resultDims);
+  return toApiTensor(argMaxImpl(toInternalTensor(x), axis, keepdims));
 }
 
 export function reduceMax(x: Tensor, axes?: number[], keepdims?: number): Tensor {
@@ -379,7 +323,7 @@ export function reduceMax(x: Tensor, axes?: number[], keepdims?: number): Tensor
   }
   const rank = x.dims ? x.dims.length : 1;
   if (axes) {
-    axes = axes.map(axis => TensorTransformUtils.getActualAxisFromNegativeValue(axis, rank));
+    axes = axes.map(axis => getActualAxisFromNegativeValue(axis, rank));
   }
   return toApiTensor(reduceMaxImpl(toInternalTensor(x), axes || [], keepdims || 1));
 }

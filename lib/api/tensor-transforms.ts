@@ -192,9 +192,10 @@ interface ReductionTensorTransforms {
    * has the same rank as the input if keepdims equal 1. If keepdims equal 0, then the resulted tensor have the reduced
    * dimension pruned.
    * @param x The input Tensor.
-   * @param axis The axis in which to compute the arg indices.
+   * @param axis The axis in which to compute the arg indices. Default is 0.
+   * @param keepdims Keep the reduced dimension or not, default 1 mean keep reduced dimension.
    */
-  argMax(x: Tensor, axis: number): Tensor;
+  argMax(x: Tensor, axis?: number, keepdims?: number): Tensor;
   /**
    * Computes the max of the input tensor's element along the provided axes. The resulted tensor has the same rank as
    * the input if keepdims equal 1. If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.

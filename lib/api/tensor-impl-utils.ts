@@ -133,11 +133,4 @@ export class TensorTransformUtils {
     }
     return [picked, remnants];
   }
-
-  static getActualAxisFromNegativeValue(axis: number, tensorRank: number): number {
-    if (axis < -tensorRank && axis >= tensorRank - 1) {
-      throw new Error('unsupported axis for this operation.');
-    }
-    return axis < 0 ? axis + tensorRank : axis;
-  }
 }

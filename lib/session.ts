@@ -64,7 +64,7 @@ export class Session {
         }
       } else if (!ArrayBuffer.isView(arg)) {
         // load model from ArrayBuffer
-        const arr = new Uint8Array(arg, byteOffset!, length);
+        const arr = new Uint8Array(arg, byteOffset || 0, length || arg.byteLength);
         this.initialize(Buffer.from(arr));
       } else {
         // load model from Uint8array

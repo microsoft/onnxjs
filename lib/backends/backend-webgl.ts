@@ -19,10 +19,11 @@ type WebGLOptions = BackendInterface.WebGLOptions;
  */
 export class WebGLBackend implements Backend, WebGLOptions {
   glContext: WebGLContext;
+  contextId?: 'webgl'|'webgl2'|'experimental-webgl';
 
   initialize(): boolean {
     try {
-      this.glContext = WebGLContextFactory.create(null);
+      this.glContext = WebGLContextFactory.create(this.contextId);
       Logger.verbose('WebGLBackend', `Created WebGLContext: ${typeof this.glContext}`);
       return true;
     } catch (e) {

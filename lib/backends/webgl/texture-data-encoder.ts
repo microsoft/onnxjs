@@ -70,13 +70,14 @@ export class RedFloat32DataEncoder implements DataEncoder {
     return result;
   }
   allocate(size: number): Encoder.DataArrayType {
-    return new Float32Array(size * this.channelSize);
+    return new Float32Array(size * 4);
   }
   decode(buffer: Encoder.DataArrayType, dataSize: number): Float32Array {
-    if (dataSize < buffer.length) {
-      return buffer.slice(0, dataSize) as Float32Array;
+    if (this.channelSize === 1) {
+      const filteredData = (buffer as Float32Array).filter((value, index) => index % 4 === 0).subarray(0, dataSize);
+      return filteredData;
     }
-    return buffer as Float32Array;
+    return buffer.subarray(0, dataSize) as Float32Array;
   }
 }
 /**
@@ -107,10 +108,10 @@ export class RGBAFloat32DataEncoder implements DataEncoder {
   }
   decode(buffer: Encoder.DataArrayType, dataSize: number): Float32Array {
     if (this.channelSize === 1) {
-      const filteredData = (buffer as Float32Array).filter((value, index) => index % 4 === 0).slice(0, dataSize);
+      const filteredData = (buffer as Float32Array).filter((value, index) => index % 4 === 0).subarray(0, dataSize);
       return filteredData;
     }
-    return buffer.slice(0, dataSize) as Float32Array;
+    return buffer.subarray(0, dataSize) as Float32Array;
   }
 }
 /**

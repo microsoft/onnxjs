@@ -38,10 +38,8 @@ export function concat(x: Tensor[], axis: number) {
       // add to the placeholder for computing output shape
       if (axisIndex === axis) {
         concatAxisSize += dataNShape[axisIndex];
-      }
-
-      // ensure all non-cancatenated axes match each other
-      if (inputShape[axisIndex] !== dataNShape[axisIndex]) {
+      } else  // ensure all non-cancatenated axes match each other
+          if (inputShape[axisIndex] !== dataNShape[axisIndex]) {
         throw new Error(`non concat dimensions must match`);
       }
 

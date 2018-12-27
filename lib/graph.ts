@@ -218,20 +218,6 @@ class GraphImpl implements Graph, Graph.Transformer {
       }
     }
 
-    // scan all outputs
-    if (!graph.output) {
-      throw new Error('missing information in graph: output');
-    }
-    for (const i of graph.output) {
-      if (dataIndices.has(i.name!)) {
-        throw new Error(`duplicated output name: ${i.name}`);
-      }
-      const currentIndex = this._allData.push(new Value(i)) - 1;
-      dataIndices.set(i.name!, currentIndex);
-      this._allOutputIndices.push(currentIndex);
-      this._allOutputNames.push(i.name!);
-    }
-
     // scan all nodes
     if (!graph.node) {
       throw new Error('missing information in graph: node');
@@ -291,6 +277,19 @@ class GraphImpl implements Graph, Graph.Transformer {
           this._allData[dataIndex].tensor = Tensor.fromProto(nodeProto.attribute[0].t);
         }
       }
+    }
+
+    // scan all outputs
+    if (!graph.output) {
+      throw new Error('missing information in graph: output');
+    }
+    for (const i of graph.output) {
+      if (!dataIndices.has(i.name!)) {
+        throw new Error(`missing output node: ${i.name}`);
+      }
+      const currentIndex = dataIndices.get(i.name!);
+      this._allOutputIndices.push(currentIndex!);
+      this._allOutputNames.push(i.name!);
     }
 
     // scan node's inputs

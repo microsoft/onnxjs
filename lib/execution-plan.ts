@@ -116,8 +116,9 @@ export class ExecutionPlan {
           const j = thisOp.node.outputs[i];
           if (this._values[j]) {
             throw new Error(`output [${j}] already has value: op:${thisOp.node.name}`);
+          } else {
+            this._values[j] = output;
           }
-          this._values[j] = output;
         });
 
         // resolve downstream nodes
@@ -133,7 +134,9 @@ export class ExecutionPlan {
               }
             }
             if (resolved) {
-              sequence.push(currentDownstreamNodeIndex);
+              if (sequence.indexOf(currentDownstreamNodeIndex) === -1) {
+                sequence.push(currentDownstreamNodeIndex);
+              }
             }
           }
         });

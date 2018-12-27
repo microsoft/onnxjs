@@ -116,6 +116,27 @@ export function glslNot(): GlslValueFunction {
   `;
   return {body, name, type: FunctionType.ValueBased};
 }
+export function glslTanh(): GlslValueFunction {
+  const name = `tanh_`;
+  const body = `
+  float ${name}(float a) {
+    if (a < 0.0) {
+      float t = exp(2.0*a);
+      return (t - 1.0) / (t + 1.0);}
+    else {
+      float t = exp(-2.0*a);
+      return (1.0 - t) / (1.0 + t);
+    }
+  }
+  vec4 ${name}(vec4 v) {
+    vec4  m = max(v, -v);  // to avoid overflow
+    vec4 ep = exp( v - m); // exp(+v)
+    vec4 em = exp(-v - m); // exp(-v)
+    return (ep - em) / (ep + em);
+  }
+  `;
+  return {body, name, type: FunctionType.ValueBased};
+}
 export function glslSin(): GlslValueFunction {
   return glslBuiltinUnary('sin');
 }
@@ -135,10 +156,18 @@ export function glslSigmoid(): GlslValueFunction {
   const name = `sigmoid_`;
   const body = `
   float ${name}(float a) {
-    return 1.0 / (1.0 + exp(-a));
+    if (a > 0.0) {
+      return 1.0 / (1.0 + exp(-a));
+    } else {
+      float t = exp(a);
+      return t / (1.0 + t);
+    }
   }
   vec4 ${name}(vec4 v) {
-    return 1.0 / (1.0 + exp(-v));
+    vec4  m = max(v, -v); // to avoid overflow
+    vec4 ex = exp(v - m); // exp(x)
+    vec4 e0 = exp(-m);    // exp(0)
+    return ex / (ex + e0);// exp(x) / (exp(x) + 1.0)
   }
   `;
   return {body, name, type: FunctionType.ValueBased};

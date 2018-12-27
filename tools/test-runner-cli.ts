@@ -621,6 +621,6 @@ function getBrowser(env: string, debug: boolean): string {
     case 'safari':
       return 'Safari';
     default:
-      return '';
+      throw new Error('Unsupported browser');
   }
 }

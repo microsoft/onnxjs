@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {DataEncoder, Encoder, RGBAFloat32DataEncoder, UInt8DataEncoder} from './texture-data-encoder';
+import {DataEncoder, Encoder, RGBAFloat32DataEncoder, Uint8DataEncoder} from './texture-data-encoder';
 import {Disposable} from './utils';
 import {WebGLContext} from './webgl-context';
 
@@ -228,7 +228,7 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
       case 'int':
         throw new Error('not implemented');
       case 'byte':
-        return new UInt8DataEncoder(channels);
+        return new Uint8DataEncoder(channels);
       default:
         throw new Error(`Invalid dataType: ${dataType}`);
     }

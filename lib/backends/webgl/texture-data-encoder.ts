@@ -136,7 +136,7 @@ export class Float16DataEncoder implements DataEncoder {
 /**
  * Data encoder for WebGL 1 with not support only for floating point textures
  */
-export class WebGl2UInt8DataEncoder implements DataEncoder {
+export class WebGl2Uint8DataEncoder implements DataEncoder {
   internalFormat: number;
   format: number;
   channelType: number;
@@ -166,7 +166,7 @@ export class WebGl2UInt8DataEncoder implements DataEncoder {
     return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.length / this.channelSize);
   }
 }
-export class UInt8DataEncoder implements DataEncoder {
+export class Uint8DataEncoder implements DataEncoder {
   internalFormat: number;
   format: number;
   channelType: number;

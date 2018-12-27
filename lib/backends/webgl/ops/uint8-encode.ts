@@ -1,15 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {TextureData, TextureLayout} from '../texture-data';
 
 export class WebGLUint8Encode {
-  run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    throw new Error('not implemented');
-  }
   runInternal(inferenceHandler: WebGLInferenceHandler, input: TextureData): TextureData {
     const outputShape = input.shape;
     const [width, height] = inferenceHandler.session.layoutStrategy.computeTextureWH(input.shape);
@@ -22,8 +18,7 @@ export class WebGLUint8Encode {
       unpackedShape: outputShape
     };
     /**
-     * The following shader code has been copied from TensorFlow.js
-     * The previous code was buggy
+     * https://github.com/tensorflow/tfjs-core/blob/master/src/kernels/webgl/encode_float_gpu.ts
      */
     const shaderSource = `
       const float FLOAT_MAX = 1.70141184e38;

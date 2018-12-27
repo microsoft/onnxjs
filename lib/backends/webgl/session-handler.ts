@@ -155,6 +155,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new WebGLReshape();
       case 'Sigmoid':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSigmoid());
+      case 'Tanh':
+        return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslTanh());
       case 'Sin':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSin());
       case 'Softmax':

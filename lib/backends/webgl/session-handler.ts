@@ -22,6 +22,7 @@ import {WebGLMatMul} from './ops/matmul';
 import {WebGLPad} from './ops/pad';
 import {WebGLAveragePool, WebGLGlobalAveragePool, WebGLGlobalMaxPool, WebGLMaxPool} from './ops/pool';
 import {WebGLReshape} from './ops/reshape';
+import {WebGLSlice} from './ops/slice';
 import {WebGLSoftmax} from './ops/softmax';
 import {WebGLSplit} from './ops/split';
 import {WebGLSum} from './ops/sum';
@@ -171,6 +172,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslSub());
       case 'Sum':
         return new WebGLSum();
+      case 'Slice':
+        return new WebGLSlice();
       case 'Tan':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslTan());
       case 'Transpose':

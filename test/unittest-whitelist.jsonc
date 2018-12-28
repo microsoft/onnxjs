@@ -396,6 +396,11 @@
       "test_split_equal_parts_default_axis",
       "test_split_equal_parts_1d",
       "test_split_equal_parts_2d",
+      "test_slice",
+      "test_slice_default_axes",
+      "test_slice_end_out_of_bounds",
+      "test_slice_neg",
+      // "test_slice_start_out_of_bounds", // tensor shape of 0
       "test_tan_example",
       "test_tan",
       "test_tanh_example",

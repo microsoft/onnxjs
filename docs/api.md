@@ -79,17 +79,17 @@ To configure an `InferenceSession`, use an object with the following parameters-
       Optional. The maximum interval in milliseconds to flush. Default = 5000.
   ***
 
-  ### <a name="ref-Onnx-InferenceSession"></a>**onnx.TensorTransform**
+  ### <a name="ref-Onnx-TensorTransform"></a>**onnx.TensorTransform**
   `onnx.TensorTransforms` contains a set of utility functions to quickly create and compute [Tensor](#ref-Tensor)
   ### Utility Tensor Creators
   #### `zeros(shape, type)`
   Creates a Tensor of given shape and type with elements all zeros.
 
   *parameters*
-  - **shape**( `ReadonlyArray<number>` ):
+  - **shape**(`ReadonlyArray<number>`):
 
     The desired output Tensor shape.
-  - **type** ( `"int32"` | `"float32"` ):
+  - **type** (`'int32'` | `'float32'`):
 
     The data type of the output Tensor.
 
@@ -97,20 +97,21 @@ To configure an `InferenceSession`, use an object with the following parameters-
   - **Tensor**
 
     A new Tensor of given shape with elements all zeros
+  ***
 
   #### `linspace(start, stop, num)`
   Creates an evenly spaced sequence of numbers over the given interval.
 
   *parameters*
-  - **start**( `number` ):
+  - **start** (`number`):
 
     The desired output Tensor shape.
 
-  - **stop** ( `number` ):
+  - **stop** (`number`):
 
     The data type of the output Tensor.
 
-  - **num** ( `number` ):
+  - **num** (`number`):
 
     The number of values to generate.
 
@@ -119,20 +120,22 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     A new 1-D Tensor filled with an evenly spaced sequence of numbers over the given interval.
 
+  ***
+
   #### `range(start, end, step?, type?)`
   Creates a 1-D Tensor filled with an arithmetic sequence.
 
   *parameters*
-  - **start** ( `number` ):
+  - **start** (`number`):
 
     The start value of the sequence.
-  - **end** ( `number` ):
+  - **end** (`number`):
 
     The end value of the sequence
-  - **step** ( `number` ):
+  - **step** (`number`):
 
     The increment value. Optional. Default is 1.
-  - **type** ( `"int32"` |`"float32"` ):
+  - **type** (`'int32'` |`'float32'`):
 
     The output Tensor data type. Optional. Default is "float32"
 
@@ -141,11 +144,13 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     A new 1-D Tensor filled with the generated arithmetic sequence.
 
+  ***
+
   #### `as1d(x)`
   Reshapes a Tensor to 1-D Tensor.
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     The input Tensor.
 
@@ -154,15 +159,17 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     A reshaped 1-D Tensor of the same data as the input Tensor.
 
+  ***
+
   #### `scalar(value, type?)`
   Creates a scalar Tensor (rank = 0) with given value and type.
 
   *parameters*
-  - **value**( `ReadonlyArray<number>` ):
+  - **value**(`ReadonlyArray<number>`):
 
     The desired data value of the scalar Tensor
 
-  - **type**  (`"int32"` | `"float32"` ):
+  - **type**  (`'int32'`|`'float32'`):
 
     The data type of the output Tensor. Optional. Default is "float32".
 
@@ -171,13 +178,14 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     A new scalar Tensor of given data and type.
 
+  ***
   ### Basic Math Tensor Transforms
 
   #### `exp(x)`
   Calculates the exponential of the given input Tensor, element-wise.
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     The input Tensor.
 
@@ -185,12 +193,14 @@ To configure an `InferenceSession`, use an object with the following parameters-
   - **Tensor**
 
     The resulting Tensor.
+
+  ***
 
   #### `sigmoid(x)`
   Calculates sigmoid of the given input Tensor. Sigmoid takes one input data (Tensor) and produces one output data (Tensor) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the tensor elementwise.
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     The input Tensor.
 
@@ -198,16 +208,18 @@ To configure an `InferenceSession`, use an object with the following parameters-
   - **Tensor**
 
     The resulting Tensor.
+
+  ***
 
   ### Arithmetic Tensor Transforms
   #### `add(a, b)`
   Performs element-wise binary addition (with Numpy-style broadcasting support).
 
   *parameters*
-  - **a** ( `Tensor` ):
+  - **a** (`Tensor`):
 
     The first operand.
-  - **b** ( `Tensor` ):
+  - **b** (`Tensor`):
 
     The second operand.
 
@@ -215,15 +227,17 @@ To configure an `InferenceSession`, use an object with the following parameters-
   - **Tensor**
 
     The resulting Tensor.
+
+  ***
 
   #### `sub(a, b)`
   Performs element-wise binary substraction (with Numpy-style broadcasting support).
 
   *parameters*
-  - **a** ( `Tensor` ):
+  - **a** (`Tensor`):
 
     The first operand.
-  - **b** ( `Tensor` ):
+  - **b** (`Tensor`):
 
     The second operand.
 
@@ -231,15 +245,17 @@ To configure an `InferenceSession`, use an object with the following parameters-
   - **Tensor**
 
     The resulting Tensor.
+
+  ***
 
   #### `mul(a, b)`
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
 
   *parameters*
-  - **a** ( `Tensor` ):
+  - **a** (`Tensor`):
 
     The first operand.
-  - **b** ( `Tensor` ):
+  - **b** (`Tensor`):
 
     The second operand.
 
@@ -247,15 +263,17 @@ To configure an `InferenceSession`, use an object with the following parameters-
   - **Tensor**
 
     The resulting Tensor.
+
+  ***
 
   #### `div(a, b)`
   Performs element-wise binary division (with Numpy-style broadcasting support).
 
   *parameters*
-  - **a** ( `Tensor` ):
+  - **a** (`Tensor`):
 
     The first operand.
-  - **b** ( `Tensor` ):
+  - **b** (`Tensor`):
 
     The second operand.
 
@@ -263,16 +281,18 @@ To configure an `InferenceSession`, use an object with the following parameters-
   - **Tensor**
 
     The resulting Tensor.
+
+  ***
 
   ### Normalization Tensor Transforms
   #### `softmax(x, axis?)`
   Computes the softmax (normalized exponential) values.
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     The input Tensor.
-  - **axis** ( `number` ):
+  - **axis** (`number`):
 
     The axis of the inputs when coerced to 2D. Optional. Default to 1.
 
@@ -281,15 +301,17 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   ### Slice and Join Tensor Transforms
   #### `concat(x, axis)`
   Concatenate a list of Tneosrs into a single Tensor.
 
   *parameters*
-  - **x** ( `Tensor[]` ):
+  - **x** (`Tensor[]`):
 
     List of Tensors for concatenation.
-  - **axis**( `number` ):
+  - **axis**(`number`):
 
     Which axis to concat on.
 
@@ -298,17 +320,19 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   #### `gather(x, indices, axis?)`
-  Gather entries of the axis dimension of data (by default outer-most one as axis=0) indexed by indices, and concatenates them in an output tneosr of rank q + (r - 1)
+  Gather entries of the axis dimension of data (by default outer-most one as axis=0) indexed by indices, and concatenates them in an output tneosr of rank q + (r - 1).
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     Tensor of rank r >= 1.
-  - **indices** ( `Tensor` ):
+  - **indices** (`Tensor`):
 
     Tensor of int32/int64 indices, of any rank q.
-  - **axis** ( `number` ):
+  - **axis** (`number`):
 
     The axis to gather on. Optional. Defaults to 0. Negative vaulue means counting dimensions from the back.
 
@@ -317,20 +341,22 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   #### `slice(x, starts, ends, axes?)`
   Produces a slice of the input Tensor along multiple axes.
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     The input Tensor to slice from.
-  - **starts** ( `number[]` ):
+  - **starts** (`number[]`):
 
     Starting indices of corresponding axis in "axes".
-  - **ends** ( `number[]` ):
+  - **ends** (`number[]`):
 
     Ending indices (exclusive) of corresponding axis in "axes".
-  - **axes**( `number[]` ):
+  - **axes**(`number[]`):
 
     Axes that "starts" and "ends" apply to. Optional. Default = [0, 1, ..., len("start" - 1)].
 
@@ -339,14 +365,16 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   #### `stack(x, axis?)`
   Stack a list of Tensors into a single Tensor.
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     List of Tensors of the same shape and type.
-  - **axis** ( `number` ):
+  - **axis** (`number`):
 
     The axis to stack on. Optional. Defaults to 0 (first dim).
 
@@ -355,14 +383,16 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   #### `tile(x, repeats)`
   Constructs a Tensor by tiling a given Tensor
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     The input Tensor of any shape.
-  - **repeats** ( `ReadonlyArray<number>` ):
+  - **repeats** (`ReadonlyArray<number>`):
 
     A number array of the same length as input's dimension number, specifying numbers of repeated copies along input's dimension.
 
@@ -371,15 +401,17 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   ### Permutation Tensor Transforms
   #### `transpose(x, perm?)`
   Transpose the input tensor similar to numpy.transpose. For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape will be (2, 1, 3).
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     The input Tensor of any shape.
-  - **perm** ( `number[]` ):
+  - **perm** (`number[]`):
 
     A list of integers. Optional. By default, reverse the dimensions, otherwise permute the axes according to the values given.
 
@@ -388,15 +420,17 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   ### Shape Tensor Transforms
   #### `expandDims(x, axis)`
   Creates a Tensor with rank expanded at the specified axis.
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     The input Tensor of any shape.
-  - **axis** ( `number[]` ):
+  - **axis** (`number[]`):
 
     The axis at which to expand.
 
@@ -405,14 +439,16 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   #### `reshape(x, shape)`
   Reshapes the input Tensor to a new shape.
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     The input Tensor of any shape.
-  - **shape** ( `ReadonlyArray<number>` ):
+  - **shape** (`ReadonlyArray<number>`):
 
     The new shape.
 
@@ -421,16 +457,17 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   ### Logical Tensor Transforms
   #### `greaterEqual(a, b)`
-  Returns the tensor resulted from performing the greater logical operation elementwise on the input tensors A and B
-(with Numpy-style broadcasting support).
+  Returns the tensor resulted from performing the greater logical operation elementwise on the input tensors A and B (with Numpy-style broadcasting support).
 
   *parameters*
-  - **a** ( `Tensor` ):
+  - **a** (`Tensor`):
 
     First input operand for the logical operator.
-  - **b** ( `Tensor` ):
+  - **b** (`Tensor`):
 
     Second input operand for the logical operator.
 
@@ -439,17 +476,19 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   #### `where(condition, a, b)`
   Returns the elements, either a or b depending on the condition. If the condition is true, select from a, otherwise select from b.
 
   *parameters*
-  - **condition** ( `Tensor` ):
+  - **condition** (`Tensor`):
 
     The input condition. Must be of data type bool.
-  - **a** ( `Tensor` ):
+  - **a** (`Tensor`):
 
     A Tensor. If condition is rank 1, it may have a higher rank but its first dimension must match the size of condition.
-  - **b** ( `Tensor` ):
+  - **b** (`Tensor`):
 
     A tensor with the same shape and type as "a".
 
@@ -458,15 +497,17 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   ### Cast Tensor Transforms
   #### `cast(x, type)`
-  The operator casts the elements of a given input tensor to a data type specified by the 'type' argument and returns an output tensor of the same size in the converted type. NOTE: casting to string is not supported yet.
+  The operator casts the elements of a given input tensor to a data type specified by the "type" argument and returns an output tensor of the same size in the converted type. NOTE: casting to string is not supported yet.
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     The input Tensor
-  - **type** ( `"int32"` | `"float32"` | `"bool"` ):
+  - **type** (`'int32'`|`'float32'`|`'bool'`):
 
     The data type to which the elements of the input tensor are cast. Strictly must be one of the types
 
@@ -475,18 +516,20 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   ### Reduction Tensor Transforms
   #### `argMax(x, axis?, keepdims?)`
   Computes the indices of the max elements of the input tensor's element along the provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     The input Tensor
-  - **axis** ( `number` ):
+  - **axis** (`number`):
 
     The axis in which to compute the arg indices. Optional. Default is 0.
-  - **keepdims** ( `number` ):
+  - **keepdims** (`number`):
 
     Keep the reduced dimension or not. Optional. Default 1 mean keep reduced dimension.
 
@@ -495,17 +538,19 @@ To configure an `InferenceSession`, use an object with the following parameters-
 
     The resulting Tensor.
 
+  ***
+
   #### `reduceMax(x, axis?, keepdims?)`
   Computes the max of the input tensor's element along the provided axes. The resulted tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
 
   *parameters*
-  - **x** ( `Tensor` ):
+  - **x** (`Tensor`):
 
     The input Tensor
-  - **axis** ( `number` ):
+  - **axis** (`number`):
 
     The axis in which to compute the arg indices. Optional. Default is 0.
-  - **keepdims** ( `number` ):
+  - **keepdims** (`number`):
 
     Keep the reduced dimension or not. Optional. Default 1 mean keep reduced dimension.
 

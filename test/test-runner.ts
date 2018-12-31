@@ -27,13 +27,6 @@ const WASM_THRESHOLD_ABSOLUTE_ERROR = 1.0e-4;
 const WASM_THRESHOLD_RELATIVE_ERROR = 1.000001;
 
 /**
- * a simple class that implementes interface Test.NamedTensor
- */
-class NamedTensorImpl extends api.Tensor implements Test.NamedTensor {
-  name: string;
-}
-
-/**
  * returns a number to represent the current timestamp in a resolution as high as possible.
  */
 const now = (typeof performance !== 'undefined' && performance.now) ? () => performance.now() : Date.now;
@@ -148,7 +141,8 @@ async function loadTensorProto(uri: string): Promise<Test.NamedTensor> {
   const buf = await loadFile(uri);
   const tensorProto = onnx.TensorProto.decode(Buffer.from(buf));
   const tensor = Tensor.fromProto(tensorProto);
-  const namedTensor = fromInternalTensor(tensor) as unknown as NamedTensorImpl;
+  // add property 'name' to the tensor object.
+  const namedTensor = fromInternalTensor(tensor) as unknown as Test.NamedTensor;
   namedTensor.name = tensorProto.name;
   return namedTensor;
 }

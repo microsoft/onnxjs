@@ -124,7 +124,7 @@ interface SliceAndJoinTensorTransforms {
   /**
    * Constructs a tensor by tiling a given tensor.
    * @param x Input tensor of any shape.
-   * @param repeats 1D int64 tensor of the same length as input's dimension number, includes numbers of repeated copies
+   * @param repeats A number array of the same length as input's dimension number, specifying numbers of repeated copies
    *     along input's dimensions.
    */
   tile(x: Tensor, repeats: ReadonlyArray<number>): Tensor;

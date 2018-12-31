@@ -4,132 +4,19 @@
 import {execSync, spawnSync} from 'child_process';
 import * as fs from 'fs';
 import * as globby from 'globby';
-import minimist from 'minimist';
 import logger from 'npmlog';
 import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
 import {inspect} from 'util';
 
-import {Logger} from '../lib/instrument';
 import {Test} from '../test/test-types';
-
-const args = minimist(process.argv.slice(2));
-
-if (args.help || args.h) {
-  console.log(`
-test-runner-cli
-
-Generate file 'testdata.js' to use in unittest.
-
-Usage:
- test-runner-cli [options] <mode> ...
-
-Modes:
- suite0                      Run all unittests, all operator tests and node model tests that described in white list
- suite1                      Run all unittests, all operator tests and all model tests that described in white list
- model                       Run a single model test
- unittest                    Run all unittests
- op                          Run a single operator test
-
-Options:
- -h, --help                  Print this message.
- -d, --debug                 Specify to run test runner in debug mode.
- -b=<...>, --backend=<...>   Specify one or more backend(s) to run the test upon.
-                               Backends can be one or more of the following, splitted by comma:
-                                 cpu
-                                 webgl
-                                 wasm
- -e=<...>, --env=<...>       Specify the environment to run the test. Should be one of the following:
-                               chrome (default)
-                               edge
-                               firefox
-                               electron
-                               node
- -p, --profile               Enable profiler.
-                               Profiler will generate extra logs which include the information of events time
-                               consumption
- --log-verbose=<...>         Set log level to verbose
- --log-info=<...>            Set log level to info
- --log-warning=<...>         Set log level to warning
- --log-error=<...>           Set log level to error
-                               The 4 flags above specify the logging configuration. Each flag allows to specify one or
-                               more category(s), splitted by comma. If use the flags without value, the log level will
-                               be applied to all category.
- --no-sandbox                This flag will be passed to Chrome.
-                               Sometimes Chrome need this flag to work together with Karma.
-
-Examples:
-
- Run all suite0 tests:
- > test-runner-cli suite0
-
- Run single model test (test_relu) on CPU backend and show verbose log
- > test-runner-cli model test_relu --verbose --backend=cpu
-
- Debug unittest
- > test-runner-cli unittest --debug
-
- Debug operator matmul, highlight verbose log from BaseGlContext and WebGLBackend
- > test-runner-cli op matmul --debug --info --verbose=BaseGlContext,WebGLBackend
-
- Profile the model ResNet50 on WebGL backend
- > test-runner-cli model resnet50 --profile --backend=webgl
- `);
-  process.exit();
-}
+import {parseTestRunnerCliArgs, TestRunnerCliArgs} from './test-runner-cli-args';
 
 logger.info('TestRunnerCli', 'Initializing...');
 
-if (typeof (args.verbose || args.v) === 'boolean' || (args.debug || args.d)) {
-  logger.level = 'verbose';
-}
-logger.verbose('TestRunnerCli.Init', `Parsing commandline arguments...`);
+const args = parseTestRunnerCliArgs(process.argv.slice(2));
 
-const mode = args._.length === 0 ? 'suite0' : args._[0];
-
-// Option: -d, --debug
-const debug = (args.debug || args.d) ? true : false;
-
-// Option: -b=<...>, --backend=<...>
-const backendArgs = args.b || args.backend;
-const backend = (typeof backendArgs !== 'string') ? ['cpu', 'webgl', 'wasm'] : backendArgs.split(',');
-for (const b of backend) {
-  if (b !== 'cpu' && b !== 'webgl' && b !== 'wasm') {
-    throw new Error(`not supported backend ${b}`);
-  }
-}
-
-// Option: -e=<...>, --env=<...>
-const envArg = args.e || args.env;
-const env = (typeof envArg !== 'string') ? 'chrome' : envArg;
-if (['chrome', 'edge', 'firefox', 'electron', 'safari', 'node'].indexOf(env) === -1) {
-  throw new Error(`not supported env ${env}`);
-}
-
-// Options:
-// --log-verbose=<...>
-// --log-info=<...>
-// --log-warning=<...>
-// --log-error=<...>
-const logConfig = parseLogConfig();
-
-// Option: -p, --profile
-const profile = (args.profile || args.p) ? true : false;
-if (profile) {
-  logConfig.push({category: 'Profiler.session', config: {minimalSeverity: 'verbose'}});
-  logConfig.push({category: 'Profiler.node', config: {minimalSeverity: 'verbose'}});
-  logConfig.push({category: 'Profiler.op', config: {minimalSeverity: 'verbose'}});
-  logConfig.push({category: 'Profiler.backend', config: {minimalSeverity: 'verbose'}});
-}
-
-// Option: --no-sandbox
-const noSandbox = args['no-sandbox'];
-
-logger.verbose('TestRunnerCli.Init', ` Mode:              ${mode}`);
-logger.verbose('TestRunnerCli.Init', ` Env:               ${env}`);
-logger.verbose('TestRunnerCli.Init', ` Debug:             ${debug}`);
-logger.verbose('TestRunnerCli.Init', ` Backend:           ${backend}`);
-logger.verbose('TestRunnerCli.Init', `Parsing commandline arguments... DONE`);
+logger.verbose('TestRunnerCli.Init.Config', inspect(args));
 
 const TEST_ROOT = path.join(__dirname, '..', 'test');
 const TEST_DATA_ROOT = path.join(__dirname, '..', 'deps', 'data', 'data', 'test');
@@ -137,7 +24,7 @@ const TEST_DATA_NODE_ROOT = path.join(TEST_DATA_ROOT, 'node');
 const TEST_DATA_ONNX_ROOT = path.join(TEST_DATA_ROOT, 'onnx', 'v7');
 const TEST_DATA_OP_ROOT = path.join(TEST_DATA_ROOT, 'ops');
 
-const TEST_DATA_BASE = env === 'node' ? TEST_ROOT : '/base/test/';
+const TEST_DATA_BASE = args.env === 'node' ? TEST_ROOT : '/base/test/';
 
 logger.verbose('TestRunnerCli.Init', `Loading whitelist...`);
 
@@ -148,7 +35,7 @@ const json = stripJsonComments(jsonWithComments, {whitespace: true});
 const whitelist = JSON.parse(json) as Test.WhiteList;
 logger.verbose('TestRunnerCli.Init', `Loading whitelist... DONE`);
 
-const shouldLoadSuiteTestData = (mode === 'suite0' || mode === 'suite1');
+const shouldLoadSuiteTestData = (args.mode === 'suite0' || args.mode === 'suite1');
 if (shouldLoadSuiteTestData) {
   logger.verbose('TestRunnerCli.Init', `Loading test groups for suite test...`);
 }
@@ -178,28 +65,28 @@ const opTestGroups: Test.OperatorTestGroup[] = [];
 let unittest = false;
 
 logger.verbose('TestRunnerCli.Init', `Preparing test config...`);
-switch (mode) {
+switch (args.mode) {
   case 'suite1':
-    if (backend.indexOf('cpu') !== -1) {
+    if (args.backend.indexOf('cpu') !== -1) {
       modelTestGroups.push(onnxTestsCpu!);  // model test : ONNX model (CPU)
     }
-    if (backend.indexOf('webgl') !== -1) {
+    if (args.backend.indexOf('webgl') !== -1) {
       modelTestGroups.push(onnxTestsWebGL!);  // model test : ONNX model (WebGL)
     }
-    if (backend.indexOf('wasm') !== -1) {
+    if (args.backend.indexOf('wasm') !== -1) {
       modelTestGroups.push(onnxTestsWasm!);  // model test : ONNX model (Wasm)
     }
 
   case 'suite0':
-    if (backend.indexOf('cpu') !== -1) {
+    if (args.backend.indexOf('cpu') !== -1) {
       modelTestGroups.push(nodeTestsCpu!);  // model test : node (CPU)
       opTestGroups.push(...opTestsCpu!);    // operator test (CPU)
     }
-    if (backend.indexOf('webgl') !== -1) {
+    if (args.backend.indexOf('webgl') !== -1) {
       modelTestGroups.push(nodeTestsWebGL!);  // model test : node (WebGL)
       opTestGroups.push(...opTestsWebGL!);    // operator test (WebGL)
     }
-    if (backend.indexOf('wasm') !== -1) {
+    if (args.backend.indexOf('wasm') !== -1) {
       modelTestGroups.push(nodeTestsWasm!);  // model test : node (Wasm)
       opTestGroups.push(...opTestsWasm!);    // operator test (Wasm)
     }
@@ -207,13 +94,13 @@ switch (mode) {
     break;
 
   case 'model':
-    if (args._.length < 2) {
+    if (!args.param) {
       throw new Error(`the test folder should be specified in mode 'node'`);
     }
-    const testFolderSearchPattern = args._[1];
+    const testFolderSearchPattern = args.param;
     const testFolder = tryLocateModelTestFolder(testFolderSearchPattern);
-    for (const b of backend) {
-      modelTestGroups.push({name: testFolder, tests: [modelTestFromFolder(testFolder, b)]});
+    for (const b of args.backend) {
+      modelTestGroups.push({name: testFolder, tests: [modelTestFromFolder(testFolder, b, args.times)]});
     }
     break;
 
@@ -222,73 +109,33 @@ switch (mode) {
     break;
 
   case 'op':
-    if (args._.length < 2) {
+    if (!args.param) {
       throw new Error(`the test manifest should be specified in mode 'op'`);
     }
-    const manifestFileSearchPattern = args._[1];
+    const manifestFileSearchPattern = args.param;
     const manifestFile = tryLocateOpTestManifest(manifestFileSearchPattern);
-    for (const b of backend) {
+    for (const b of args.backend) {
       opTestGroups.push(opTestFromManifest(manifestFile, b));
     }
     break;
   default:
-    throw new Error(`unsupported mode '${mode}'`);
+    throw new Error(`unsupported mode '${args.mode}'`);
 }
 
 logger.verbose('TestRunnerCli.Init', `Preparing test config... DONE`);
 
 logger.info('TestRunnerCli', 'Initialization completed. Start to run tests...');
-run({unittest, model: modelTestGroups, op: opTestGroups, log: logConfig, profile});
+run({
+  unittest,
+  model: modelTestGroups,
+  op: opTestGroups,
+  log: args.logConfig,
+  profile: args.profile,
+  options: {debug: args.debug, cpu: args.cpuOptions, webgl: args.webglOptions, wasm: args.wasmOptions}
+});
 logger.info('TestRunnerCli', 'Tests completed successfully');
 
 process.exit();
-
-function parseLogLevel<T>(arg: T) {
-  let v: string[]|boolean;
-  if (typeof arg === 'string') {
-    v = arg.split(',');
-  } else if (Array.isArray(arg)) {
-    v = [];
-    for (const e of arg) {
-      v.push(...e.split(','));
-    }
-  } else {
-    v = arg ? true : false;
-  }
-  return v;
-}
-function parseLogConfig() {
-  const config: Array<{category: string, config: Logger.Config}> = [];
-  const verbose = parseLogLevel(args['log-verbose']);
-  const info = parseLogLevel(args['log-info']);
-  const warning = parseLogLevel(args['log-warning']);
-  const error = parseLogLevel(args['log-error']);
-
-  if (typeof error === 'boolean' && error) {
-    config.push({category: '*', config: {minimalSeverity: 'error'}});
-  } else if (typeof warning === 'boolean' && warning) {
-    config.push({category: '*', config: {minimalSeverity: 'warning'}});
-  } else if (typeof info === 'boolean' && info) {
-    config.push({category: '*', config: {minimalSeverity: 'info'}});
-  } else if (typeof verbose === 'boolean' && verbose) {
-    config.push({category: '*', config: {minimalSeverity: 'verbose'}});
-  }
-
-  if (Array.isArray(error)) {
-    config.push(...error.map(i => ({category: i, config: {minimalSeverity: 'error' as Logger.Severity}})));
-  }
-  if (Array.isArray(warning)) {
-    config.push(...warning.map(i => ({category: i, config: {minimalSeverity: 'warning' as Logger.Severity}})));
-  }
-  if (Array.isArray(info)) {
-    config.push(...info.map(i => ({category: i, config: {minimalSeverity: 'info' as Logger.Severity}})));
-  }
-  if (Array.isArray(verbose)) {
-    config.push(...verbose.map(i => ({category: i, config: {minimalSeverity: 'verbose' as Logger.Severity}})));
-  }
-
-  return config;
-}
 
 function validateWhiteList() {
   if (nodeTestsCpu) {
@@ -381,19 +228,19 @@ function suiteFromFolder(
   const tests = fs.readdirSync(suiteRootFolder);
   for (const test of tests) {
     const skip = whitelist && whitelist.indexOf(test) === -1;
-    sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, skip));
+    sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, skip ? 0 : undefined));
   }
   return {name, tests: sessions};
 }
 
-function modelTestFromFolder(testDataRootFolder: string, backend: string, skip = false): Test.ModelTest {
-  if (skip) {
+function modelTestFromFolder(testDataRootFolder: string, backend: string, times?: number): Test.ModelTest {
+  if (times === 0) {
     logger.verbose('TestRunnerCli.Init.Model', `Skip test data from folder: ${testDataRootFolder}`);
     return {name: path.basename(testDataRootFolder), backend, modelUrl: '', cases: []};
   }
 
   let modelUrl: string|null = null;
-  const cases: Test.ModelTestCase[] = [];
+  let cases: Test.ModelTestCase[] = [];
 
   logger.verbose('TestRunnerCli.Init.Model', `Start to prepare test data from folder: ${testDataRootFolder}`);
 
@@ -434,11 +281,24 @@ function modelTestFromFolder(testDataRootFolder: string, backend: string, skip =
     throw e;
   }
 
+  const caseCount = cases.length;
+  if (times !== undefined) {
+    if (times > caseCount) {
+      for (let i = 0; cases.length < times; i++) {
+        const origin = cases[i % caseCount];
+        const duplicated = {name: `${origin.name} - copy ${Math.floor(i / caseCount)}`, dataFiles: origin.dataFiles};
+        cases.push(duplicated);
+      }
+    } else {
+      cases = cases.slice(0, times);
+    }
+  }
+
   logger.verbose('TestRunnerCli.Init.Model', `Finished preparing test data.`);
   logger.verbose('TestRunnerCli.Init.Model', `===============================================================`);
   logger.verbose('TestRunnerCli.Init.Model', ` Model file: ${modelUrl}`);
   logger.verbose('TestRunnerCli.Init.Model', ` Backend: ${backend}`);
-  logger.verbose('TestRunnerCli.Init.Model', ` Test set(s): ${cases.length}`);
+  logger.verbose('TestRunnerCli.Init.Model', ` Test set(s): ${cases.length} (${caseCount})`);
   logger.verbose('TestRunnerCli.Init.Model', `===============================================================`);
 
   return {name: path.basename(testDataRootFolder), modelUrl, backend, cases};
@@ -520,21 +380,21 @@ function run(config: Test.Config) {
   const npmBin = execSync('npm bin', {encoding: 'utf8'}).trimRight();
   logger.info('TestRunnerCli.Run', `(2/4) Retrieving npm bin folder... DONE, folder: ${npmBin}`);
 
-  if (env === 'node') {
-    // STEP 3. use webpack to generate ONNX.js
+  if (args.env === 'node') {
+    // STEP 3. use tsc to build ONNX.js
     logger.info('TestRunnerCli.Run', '(3/4) Running tsc...');
     const tscCommand = path.join(npmBin, 'tsc');
-    const webpack = spawnSync(tscCommand, {shell: true, stdio: 'inherit'});
-    if (webpack.status !== 0) {
-      console.error(webpack.error);
-      process.exit(webpack.status);
+    const tsc = spawnSync(tscCommand, {shell: true, stdio: 'inherit'});
+    if (tsc.status !== 0) {
+      console.error(tsc.error);
+      process.exit(tsc.status);
     }
     logger.info('TestRunnerCli.Run', '(3/4) Running tsc... DONE');
 
     // STEP 4. run mocha
     logger.info('TestRunnerCli.Run', '(4/4) Running mocha...');
     const mochaCommand = path.join(npmBin, 'mocha');
-    const mochaArgs = [path.join(TEST_ROOT, 'unittest'), '--timeout 60000'];
+    const mochaArgs = [path.join(TEST_ROOT, 'test-main'), '--timeout 60000'];
     logger.info('TestRunnerCli.Run', `CMD: ${mochaCommand} ${mochaArgs.join(' ')}`);
     const mocha = spawnSync(mochaCommand, mochaArgs, {shell: true, stdio: 'inherit'});
     if (mocha.status !== 0) {
@@ -547,7 +407,11 @@ function run(config: Test.Config) {
     // STEP 3. use webpack to generate ONNX.js
     logger.info('TestRunnerCli.Run', '(3/4) Running webpack to generate ONNX.js...');
     const webpackCommand = path.join(npmBin, 'webpack');
-    const webpackArgs = ['--mode', 'development'];
+    const webpackArgs = [
+      '--mode',
+      args.bundleMode === 'dev' ? 'development' : 'production',
+      `--bundle-mode=${args.bundleMode}`,
+    ];
     logger.info('TestRunnerCli.Run', `CMD: ${webpackCommand} ${webpackArgs.join(' ')}`);
     const webpack = spawnSync(webpackCommand, webpackArgs, {shell: true, stdio: 'inherit'});
     if (webpack.status !== 0) {
@@ -559,17 +423,17 @@ function run(config: Test.Config) {
     // STEP 4. use Karma to run test
     logger.info('TestRunnerCli.Run', '(4/4) Running karma to start test runner...');
     const karmaCommand = path.join(npmBin, 'karma');
-    // currently only ChromeDebug, ChromeTest, Edge, Firefox and Electron browsers are supported
-    const browser = getBrowser(env, debug);
+    const browser = getBrowserNameFromEnv(args.env, args.debug);
     const karmaArgs = ['start', `--browsers ${browser}`];
-    if (debug) {
+    if (args.debug) {
       karmaArgs.push('--log-level info');
     } else {
       karmaArgs.push('--single-run');
     }
-    if (noSandbox) {
+    if (args.noSandbox) {
       karmaArgs.push('--no-sandbox');
     }
+    karmaArgs.push(`--bundle-mode=${args.bundleMode}`);
     // == Special treatment to Microsoft Edge ==
     //
     // == Edge's Auto Recovery Feature ==
@@ -605,10 +469,26 @@ function run(config: Test.Config) {
 }
 
 function saveConfig(config: Test.Config) {
-  fs.writeFileSync(path.join(TEST_ROOT, './testdata.js'), `module.exports=${JSON.stringify(config, null, 2)};`);
+  let setOptions = '';
+  if (config.options.debug !== undefined) {
+    setOptions += `onnx.ENV.debug = ${config.options.debug};`;
+  }
+  if (config.options.webgl && config.options.webgl.contextId) {
+    setOptions += `onnx.backend.webgl.contextId = ${JSON.stringify(config.options.webgl.contextId)};`;
+  }
+  if (config.options.wasm && config.options.wasm.worker) {
+    setOptions += `onnx.backend.wasm.worker = ${JSON.stringify(config.options.wasm.worker)};`;
+  }
+  if (config.options.wasm && config.options.wasm.cpuFallback !== undefined) {
+    setOptions += `onnx.backend.wasm.cpuFallback = ${JSON.stringify(config.options.wasm.cpuFallback)};`;
+  }
+
+  fs.writeFileSync(path.join(TEST_ROOT, './testdata.js'), `${setOptions}
+
+module.exports=${JSON.stringify(config, null, 2)};`);
 }
 
-function getBrowser(env: string, debug: boolean): string {
+function getBrowserNameFromEnv(env: TestRunnerCliArgs['env'], debug?: boolean) {
   switch (env) {
     case 'chrome':
       return debug ? 'ChromeDebug' : 'ChromeTest';
@@ -621,6 +501,6 @@ function getBrowser(env: string, debug: boolean): string {
     case 'safari':
       return 'Safari';
     default:
-      throw new Error('Unsupported browser');
+      throw new Error(`env "${env}" not supported.`);
   }
 }

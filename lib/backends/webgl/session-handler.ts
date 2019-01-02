@@ -21,6 +21,13 @@ import {WebGLLeakyRelu} from './ops/leaky-relu';
 import {WebGLMatMul} from './ops/matmul';
 import {WebGLPad} from './ops/pad';
 import {WebGLAveragePool, WebGLGlobalAveragePool, WebGLGlobalMaxPool, WebGLMaxPool} from './ops/pool';
+import {WebGLReduceSum} from './ops/reduce';
+import {WebGLReduceMean} from './ops/reduce';
+import {WebGLReduceMax} from './ops/reduce';
+import {WebGLReduceMin} from './ops/reduce';
+import {WebGLReduceProd} from './ops/reduce';
+import {WebGLReduceLogSum} from './ops/reduce';
+import {WebGLReduceSumSquare} from './ops/reduce';
 import {WebGLReshape} from './ops/reshape';
 import {WebGLSoftmax} from './ops/softmax';
 import {WebGLSplit} from './ops/split';
@@ -157,6 +164,20 @@ export class WebGLSessionHandler implements SessionHandler {
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSigmoid());
       case 'Sin':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSin());
+      case 'ReduceSum':
+        return new WebGLReduceSum();
+      case 'ReduceMean':
+        return new WebGLReduceMean();
+      case 'ReduceMax':
+        return new WebGLReduceMax();
+      case 'ReduceMin':
+        return new WebGLReduceMin();
+      case 'ReduceProd':
+        return new WebGLReduceProd();
+      case 'ReduceLogSum':
+        return new WebGLReduceLogSum();
+      case 'ReduceSumSquare':
+        return new WebGLReduceSumSquare();
       case 'Softmax':
         return new WebGLSoftmax();
       case 'Split':

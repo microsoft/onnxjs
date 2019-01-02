@@ -7,7 +7,7 @@ import {Tensor as InternalTensor} from '../tensor';
 import {InferenceSession as InferenceSessionInterface} from './inference-session';
 import * as TensorInterface from './tensor';
 import {Tensor as ApiTensor} from './tensor-impl';
-import * as Utils from './tensor-impl-utils';
+import * as tensorUtils from './tensor-impl-utils';
 
 type InputType = InferenceSessionInterface.InputType;
 type RunOptions = InferenceSessionInterface.RunOptions;
@@ -62,7 +62,7 @@ export class InferenceSession implements InferenceSessionInterface {
     }
     const convertedOutput: Map<string, TensorInterface.Tensor> = new Map<string, TensorInterface.Tensor>();
     output.forEach((value, key) => {
-      convertedOutput.set(key, Utils.toApiTensor(value));
+      convertedOutput.set(key, tensorUtils.fromInternalTensor(value));
     });
     return convertedOutput;
   }

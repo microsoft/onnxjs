@@ -5,7 +5,7 @@ import {Tensor as InternalTensor} from '../tensor';
 import {Tensor as TensorInterface} from './tensor';
 import {Tensor as ApiTensor} from './tensor-impl';
 
-export function toApiTensor(internalTensor: InternalTensor): ApiTensor {
+export function fromInternalTensor(internalTensor: InternalTensor): ApiTensor {
   switch (internalTensor.type) {
     case 'bool':
       return new ApiTensor(new Uint8Array(internalTensor.integerData), 'bool', internalTensor.dims);
@@ -22,6 +22,10 @@ export function toApiTensor(internalTensor: InternalTensor): ApiTensor {
     default:
       throw new TypeError('Tensor type is not supported. ');
   }
+}
+
+export function toInternalTensor(tensor: ApiTensor): InternalTensor {
+  return new InternalTensor(tensor.dims, tensor.type, undefined, undefined, tensor.data);
 }
 
 export function matchElementType(type: TensorInterface.Type, element: TensorInterface.ElementType) {

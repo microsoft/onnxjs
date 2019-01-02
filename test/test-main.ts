@@ -36,9 +36,7 @@ for (const group of ONNX_JS_TEST_CONFIG.model) {
         });
 
         after('release session', () => {
-          if (ONNX_JS_TEST_CONFIG.profile) {
-            context.session.endProfiling();
-          }
+          context.release();
         });
 
         for (const testCase of test.cases) {

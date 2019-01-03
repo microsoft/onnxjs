@@ -153,19 +153,14 @@ export function glslTanh(): GlslValueFunction {
   const name = `tanh_`;
   const body = `
   float ${name}(float a) {
-    if (a < 0.0) {
-      float t = exp(2.0*a);
-      return (t - 1.0) / (t + 1.0);}
-    else {
-      float t = exp(-2.0*a);
-      return (1.0 - t) / (1.0 + t);
-    }
+    a = clamp(a, -10., 10.);
+    a = exp(2.*a);
+    return (a - 1.) / (a + 1.);
   }
   vec4 ${name}(vec4 v) {
-    vec4  m = abs(v);      // to avoid overflow
-    vec4 ep = exp( v - m); // exp(+v)
-    vec4 em = exp(-v - m); // exp(-v)
-    return (ep - em) / (ep + em);
+    v = clamp(v, -10., 10.);
+    v = exp(2.*v);
+    return (v - 1.) / (v + 1.);
   }
   `;
   return {body, name, type: FunctionType.ValueBased};

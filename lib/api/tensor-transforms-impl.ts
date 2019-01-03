@@ -17,7 +17,7 @@ import {Tensor as InternalTensor} from '../tensor';
 import {getActualAxisFromNegativeValue, ShapeUtil} from '../util';
 
 import {Tensor} from './tensor';
-import {TensorTransformUtils, toApiTensor, toInternalTensor, validateIndices} from './tensor-impl-utils';
+import {fromInternalTensor, TensorTransformUtils, toInternalTensor, validateIndices} from './tensor-impl-utils';
 
 type NumberDataType = Uint8Array|Int32Array|Float32Array;
 
@@ -80,14 +80,14 @@ export function exp(x: Tensor): Tensor {
   if (x.type !== 'float32' && x.type !== 'int32') {
     throw new Error('Unsupported type for transform');
   }
-  return toApiTensor(unaryOps.unaryOp(toInternalTensor(x), unaryOps.exp, new Attribute(null)));
+  return fromInternalTensor(unaryOps.unaryOp(toInternalTensor(x), unaryOps.exp, new Attribute(null)));
 }
 
 export function sigmoid(x: Tensor): Tensor {
   if (x.type !== 'float32' && x.type !== 'int32') {
     throw new Error('Unsupported type for transform');
   }
-  return toApiTensor(unaryOps.unaryOp(toInternalTensor(x), unaryOps.sigmoid, new Attribute(null)));
+  return fromInternalTensor(unaryOps.unaryOp(toInternalTensor(x), unaryOps.sigmoid, new Attribute(null)));
 }
 
 export function add(a: Tensor, b: Tensor): Tensor {
@@ -97,7 +97,7 @@ export function add(a: Tensor, b: Tensor): Tensor {
   if (a.type !== b.type) {
     throw new Error('Types are not homogeneous');
   }
-  return toApiTensor(binaryOp(toInternalTensor(a), toInternalTensor(b), (e1, e2) => (e1 + e2), a.type));
+  return fromInternalTensor(binaryOp(toInternalTensor(a), toInternalTensor(b), (e1, e2) => (e1 + e2), a.type));
 }
 
 export function sub(a: Tensor, b: Tensor): Tensor {
@@ -107,7 +107,7 @@ export function sub(a: Tensor, b: Tensor): Tensor {
   if (a.type !== b.type) {
     throw new Error('Types are not homogeneous');
   }
-  return toApiTensor(binaryOp(toInternalTensor(a), toInternalTensor(b), (e1, e2) => (e1 - e2), a.type));
+  return fromInternalTensor(binaryOp(toInternalTensor(a), toInternalTensor(b), (e1, e2) => (e1 - e2), a.type));
 }
 
 export function mul(a: Tensor, b: Tensor): Tensor {
@@ -117,7 +117,7 @@ export function mul(a: Tensor, b: Tensor): Tensor {
   if (a.type !== b.type) {
     throw new Error('Types are not homogeneous');
   }
-  return toApiTensor(binaryOp(toInternalTensor(a), toInternalTensor(b), (e1, e2) => (e1 * e2), a.type));
+  return fromInternalTensor(binaryOp(toInternalTensor(a), toInternalTensor(b), (e1, e2) => (e1 * e2), a.type));
 }
 
 export function div(a: Tensor, b: Tensor): Tensor {
@@ -127,14 +127,14 @@ export function div(a: Tensor, b: Tensor): Tensor {
   if (a.type !== b.type) {
     throw new Error('Types are not homogeneous');
   }
-  return toApiTensor(binaryOp(toInternalTensor(a), toInternalTensor(b), (e1, e2) => (e1 / e2), a.type));
+  return fromInternalTensor(binaryOp(toInternalTensor(a), toInternalTensor(b), (e1, e2) => (e1 / e2), a.type));
 }
 
 export function softmax(x: Tensor, axis = 1): Tensor {
   if (x.type !== 'float32' && x.type !== 'int32') {
     throw new Error('Unsupported type for transform');
   }
-  return toApiTensor(softmaxImpl(toInternalTensor(x), axis));
+  return fromInternalTensor(softmaxImpl(toInternalTensor(x), axis));
 }
 
 export function concat(x: Tensor[], axis: number): Tensor {
@@ -150,14 +150,14 @@ export function concat(x: Tensor[], axis: number): Tensor {
   x.forEach(t => {
     internalTensors.push(toInternalTensor(t));
   });
-  return toApiTensor(concatImpl(internalTensors, axis));
+  return fromInternalTensor(concatImpl(internalTensors, axis));
 }
 
 export function slice(x: Tensor, starts: number[], ends: number[], axes?: number[]): Tensor {
   if (x.type === 'string') {
     throw new Error('Unspported type for this transformation');
   }
-  return toApiTensor(sliceImpl(toInternalTensor(x), starts, ends, axes || []));
+  return fromInternalTensor(sliceImpl(toInternalTensor(x), starts, ends, axes || []));
 }
 
 export function stack(x: Tensor[], axis = 0): Tensor {
@@ -180,7 +180,7 @@ export function stack(x: Tensor[], axis = 0): Tensor {
   expanded.forEach(t => {
     internalTensors.push(toInternalTensor(t));
   });
-  return toApiTensor(concatImpl(internalTensors, axis));
+  return fromInternalTensor(concatImpl(internalTensors, axis));
 }
 
 export function gather(x: Tensor, indices: Tensor, axis = 0): Tensor {
@@ -190,7 +190,7 @@ export function gather(x: Tensor, indices: Tensor, axis = 0): Tensor {
   if (indices.type !== 'int32' || (indices.dims && indices.dims.length > 1)) {
     throw new Error('Indices tensor not of specified format');
   }
-  return toApiTensor(gatherImpl(toInternalTensor(x), toInternalTensor(indices), axis));
+  return fromInternalTensor(gatherImpl(toInternalTensor(x), toInternalTensor(indices), axis));
 }
 
 export function tile(x: Tensor, repeats: ReadonlyArray<number>): Tensor {
@@ -202,13 +202,13 @@ export function tile(x: Tensor, repeats: ReadonlyArray<number>): Tensor {
   if (rank !== repeats.length) {
     throw new Error('Repetitions must be of the same rank as input dims');
   }
-  return toApiTensor(tileImpl(
+  return fromInternalTensor(tileImpl(
       toInternalTensor(x),
       new InternalTensor([repeats.length], 'int32', undefined, undefined, Int32Array.from(repeats))));
 }
 
 export function transpose(x: Tensor, perm?: number[]): Tensor {
-  return toApiTensor(transposeImpl(toInternalTensor(x), perm));
+  return fromInternalTensor(transposeImpl(toInternalTensor(x), perm));
 }
 
 export function expandDims(x: Tensor, axis: number): Tensor {
@@ -228,7 +228,7 @@ export function expandDims(x: Tensor, axis: number): Tensor {
 }
 
 export function reshape(x: Tensor, shape: number[]): Tensor {
-  return toApiTensor(reshapeImpl(
+  return fromInternalTensor(reshapeImpl(
       toInternalTensor(x), new InternalTensor([shape.length], 'int32', undefined, undefined, Int32Array.from(shape))));
 }
 
@@ -239,7 +239,7 @@ export function greaterEqual(a: Tensor, b: Tensor): Tensor {
   if (a.type !== b.type) {
     throw new Error('Types are not homogeneous');
   }
-  return toApiTensor(binaryOp(toInternalTensor(a), toInternalTensor(b), (e1, e2) => (e1 >= e2 ? 1 : 0), 'bool'));
+  return fromInternalTensor(binaryOp(toInternalTensor(a), toInternalTensor(b), (e1, e2) => (e1 >= e2 ? 1 : 0), 'bool'));
 }
 
 export function where(condition: Tensor, a: Tensor, b: Tensor): Tensor {
@@ -314,7 +314,7 @@ export function argMax(x: Tensor, axis = 0, keepdims = 1): Tensor {
   if (x.type !== 'float32' && x.type !== 'int32') {
     throw new Error('Unsupported type for transform');
   }
-  return toApiTensor(argMaxImpl(toInternalTensor(x), axis, keepdims));
+  return fromInternalTensor(argMaxImpl(toInternalTensor(x), axis, keepdims));
 }
 
 export function reduceMax(x: Tensor, axes?: number[], keepdims?: number): Tensor {
@@ -325,5 +325,5 @@ export function reduceMax(x: Tensor, axes?: number[], keepdims?: number): Tensor
   if (axes) {
     axes = axes.map(axis => getActualAxisFromNegativeValue(axis, rank));
   }
-  return toApiTensor(reduceMaxImpl(toInternalTensor(x), axes || [], keepdims || 1));
+  return fromInternalTensor(reduceMaxImpl(toInternalTensor(x), axes || [], keepdims || 1));
 }

@@ -5,7 +5,7 @@ import {Tensor as InternalTensor} from '../tensor';
 import {Tensor as TensorInterface} from './tensor';
 import {Tensor as ApiTensor} from './tensor-impl';
 
-export function toApiTensor(internalTensor: InternalTensor): ApiTensor {
+export function fromInternalTensor(internalTensor: InternalTensor): ApiTensor {
   switch (internalTensor.type) {
     case 'bool':
       return new ApiTensor(new Uint8Array(internalTensor.integerData), 'bool', internalTensor.dims);

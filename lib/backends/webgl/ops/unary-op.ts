@@ -149,6 +149,27 @@ export function glslSqrt(): GlslValueFunction {
 export function glslTan(): GlslValueFunction {
   return glslBuiltinUnary('tan');
 }
+export function glslTanh(): GlslValueFunction {
+  const name = `tanh_`;
+  const body = `
+  float ${name}(float a) {
+    if (a < 0.0) {
+      float t = exp(2.0*a);
+      return (t - 1.0) / (t + 1.0);}
+    else {
+      float t = exp(-2.0*a);
+      return (1.0 - t) / (1.0 + t);
+    }
+  }
+  vec4 ${name}(vec4 v) {
+    vec4  m = abs(v);      // to avoid overflow
+    vec4 ep = exp( v - m); // exp(+v)
+    vec4 em = exp(-v - m); // exp(-v)
+    return (ep - em) / (ep + em);
+  }
+  `;
+  return {body, name, type: FunctionType.ValueBased};
+}
 function glslBuiltinUnary(fname: string): GlslValueFunction {
   const name = `${fname}_`;
   const body = `

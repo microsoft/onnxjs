@@ -29,11 +29,15 @@ import {WebGLReduceProd} from './ops/reduce';
 import {WebGLReduceLogSum} from './ops/reduce';
 import {WebGLReduceSumSquare} from './ops/reduce';
 import {WebGLReshape} from './ops/reshape';
+import {WebGLSlice} from './ops/slice';
 import {WebGLSoftmax} from './ops/softmax';
 import {WebGLSplit} from './ops/split';
+import {WebGLSqueeze} from './ops/squeeze';
 import {WebGLSum} from './ops/sum';
+import {WebGLTile} from './ops/tile';
 import {WebGLTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
+import {WebGLUnsqueeze} from './ops/unsqueeze';
 import {ProgramManager} from './program-manager';
 import {TextureData} from './texture-data';
 import {TextureHelper} from './texture-helper';
@@ -162,6 +166,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new WebGLReshape();
       case 'Sigmoid':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSigmoid());
+      case 'Tanh':
+        return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslTanh());
       case 'Sin':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSin());
       case 'ReduceSum':
@@ -192,12 +198,20 @@ export class WebGLSessionHandler implements SessionHandler {
         return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslSub());
       case 'Sum':
         return new WebGLSum();
+      case 'Slice':
+        return new WebGLSlice();
+      case 'Squeeze':
+        return new WebGLSqueeze();
+      case 'Unsqueeze':
+        return new WebGLUnsqueeze();
       case 'Tan':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslTan());
       case 'Tanh':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslTanh());
       case 'Transpose':
         return new WebGLTranspose();
+      case 'Tile':
+        return new WebGLTile();
       case 'Xor':
         return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslXor());
       default:

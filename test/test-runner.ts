@@ -7,12 +7,13 @@ import {onnx} from 'onnx-proto';
 import {extname} from 'path';
 import {inspect, promisify} from 'util';
 
+import * as api from '../lib/api';
+import {fromInternalTensor, toInternalTensor} from '../lib/api/tensor-impl-utils';
 import {Attribute} from '../lib/attribute';
 import {Backend, InferenceHandler, SessionHandler} from '../lib/backend';
 import {TextureData} from '../lib/backends/webgl/texture-data';
 import {Logger, Profiler} from '../lib/instrument';
 import {Operator} from '../lib/operators';
-import {Session} from '../lib/session';
 import {Tensor} from '../lib/tensor';
 
 import {Test} from './test-types';
@@ -26,31 +27,79 @@ const WASM_THRESHOLD_ABSOLUTE_ERROR = 1.0e-4;
 const WASM_THRESHOLD_RELATIVE_ERROR = 1.000001;
 
 /**
- * a simple class that implementes interface Test.NamedTensor
+ * returns a number to represent the current timestamp in a resolution as high as possible.
  */
-class NamedTensorImpl extends Tensor implements Test.NamedTensor {
-  name: string;
-}
+const now = (typeof performance !== 'undefined' && performance.now) ? () => performance.now() : Date.now;
 
 /**
  * a ModelTestContext object contains all states in a ModelTest
  */
 export class ModelTestContext {
-  session: Session;
-  backend: string;
-  private constructor() {}
+  private constructor(
+      readonly session: api.InferenceSession,
+      readonly backend: string,
+      readonly perfData: ModelTestContext.ModelTestPerfData,
+      private readonly profile: boolean,
+  ) {}
+
+  /**
+   * dump the current performance data
+   */
+  private logPerfData() {
+    const data = this.perfData;
+    Logger.verbose('TestRunner.Perf', `***Perf Data Start`);
+    Logger.verbose('TestRunner.Perf', ` * Init          : ${data.init}`);
+    Logger.verbose('TestRunner.Perf', ` * Running times : ${data.count}`);
+    Logger.verbose('TestRunner.Perf', ` * FirstRun      : ${data.firstRun.toFixed(2)}`);
+    const runs = data.runs;
+    if (runs.length > 0) {
+      Logger.verbose('TestRunner.Perf', ` * Runs          : ${runs.map(r => r.toFixed(2)).join(', ')}`);
+
+      if (runs.length > 1) {
+        const avg = runs.reduce((prev, current) => prev + current) / runs.length;
+        Logger.verbose('TestRunner.Perf', ` * Runs Avg      : ${avg.toFixed(2)}`);
+        const variance = runs.reduce((prev, current) => prev + (current - avg) * (current - avg));
+        const sd = Math.sqrt(variance / (runs.length - 1));
+        Logger.verbose('TestRunner.Perf', ` * Runs SD       : ${sd.toFixed(2)}`);
+      }
+    }
+    Logger.verbose('TestRunner.Perf', `***Perf Data End`);
+  }
+
+  release() {
+    if (this.profile) {
+      this.session.endProfiling();
+    }
+    this.logPerfData();
+  }
 
   /**
    * create a ModelTestContext object that used in every test cases in the given ModelTest.
    */
   static async create(modelTest: Test.ModelTest, profile: boolean): Promise<ModelTestContext> {
+    const initStart = now();
     const session = await initializeSession(modelTest.modelUrl, modelTest.backend!, profile);
+    const initEnd = now();
 
     for (const testCase of modelTest.cases) {
       await loadTensors(testCase);
     }
 
-    return {session, backend: modelTest.backend!};
+    return new ModelTestContext(
+        session,
+        modelTest.backend!,
+        {init: initEnd - initStart, firstRun: -1, runs: [], count: 0},
+        profile,
+    );
+  }
+}
+
+export declare namespace ModelTestContext {
+  export interface ModelTestPerfData {
+    init: number;
+    firstRun: number;
+    runs: number[];
+    count: number;
   }
 }
 
@@ -92,7 +141,8 @@ async function loadTensorProto(uri: string): Promise<Test.NamedTensor> {
   const buf = await loadFile(uri);
   const tensorProto = onnx.TensorProto.decode(Buffer.from(buf));
   const tensor = Tensor.fromProto(tensorProto);
-  const namedTensor = tensor as NamedTensorImpl;
+  // add property 'name' to the tensor object.
+  const namedTensor = fromInternalTensor(tensor) as unknown as Test.NamedTensor;
   namedTensor.name = tensorProto.name;
   return namedTensor;
 }
@@ -115,8 +165,9 @@ function loadMlProto(uri: string): Promise<Test.NamedTensor> {
 async function initializeSession(modelFilePath: string, backendHint: string, profile: boolean) {
   Logger.verbose('TestRunner', `Start to load model from file: ${modelFilePath}`);
 
-  const sessionConfig: Session.Config = {backendHint, profiler: {maxNumberEvents: 65536}};
-  const session = new Session(sessionConfig);
+  const profilerConfig = profile ? {maxNumberEvents: 65536} : undefined;
+  const sessionConfig: api.InferenceSession.Config = {backendHint, profiler: profilerConfig};
+  const session = new api.InferenceSession(sessionConfig);
 
   if (profile) {
     session.startProfiling();
@@ -141,7 +192,15 @@ export async function runModelTestSet(context: ModelTestContext, testCase: Test.
   Logger.verbose('TestRunner', `Start to run test data from folder: ${testCase.name}`);
   const validator = new TensorResultValidator(context.backend);
   try {
+    const start = now();
     const outputs = await context.session.run(testCase.inputs!);
+    const end = now();
+    if (context.perfData.count === 0) {
+      context.perfData.firstRun = end - start;
+    } else {
+      context.perfData.runs.push(end - start);
+    }
+    context.perfData.count++;
 
     Logger.verbose('TestRunner', `Finished running model from file: ${testCase.name}`);
     Logger.verbose('TestRunner', ` Stats:`);
@@ -272,7 +331,11 @@ export class TensorResultValidator {
     }
   }
 
-  checkNamedTensorResult(actual: Map<string, Tensor>, expected: Test.NamedTensor[]): void {
+  checkApiTensorResult(actual: api.Tensor[], expected: api.Tensor[]): void {
+    this.checkTensorResult(actual.map(toInternalTensor), expected.map(toInternalTensor));
+  }
+
+  checkNamedTensorResult(actual: ReadonlyMap<string, api.Tensor>, expected: Test.NamedTensor[]): void {
     // check output size
     expect(actual.size, 'size of output tensors').to.equal(expected.length);
 
@@ -281,7 +344,7 @@ export class TensorResultValidator {
       expect(actual, 'keys of output tensors').to.contain.keys(expectedOneOutput.name);
     }
 
-    this.checkTensorResult(expected.map(i => actual.get(i.name)!), expected);
+    this.checkApiTensorResult(expected.map(i => actual.get(i.name)!), expected);
   }
 
   // This function check whether 2 tensors should be considered as 'match' or not

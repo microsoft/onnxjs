@@ -41,7 +41,7 @@ export function concat(x: Tensor[], axis: number) {
       }
 
       // ensure all non-cancatenated axes match each other
-      if (inputShape[axisIndex] !== dataNShape[axisIndex]) {
+      else if (inputShape[axisIndex] !== dataNShape[axisIndex]) {
         throw new Error(`non concat dimensions must match`);
       }
 

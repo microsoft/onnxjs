@@ -423,7 +423,7 @@ To configure an `InferenceSession`, use an object with the following parameters-
   ***
 
   ### Shape Tensor Transforms
-  #### `expandDims(x, axis)`
+  #### `expandDims(x, axis?)`
   Creates a Tensor with rank expanded at the specified axis.
 
   *parameters*
@@ -432,7 +432,7 @@ To configure an `InferenceSession`, use an object with the following parameters-
     The input Tensor of any shape.
   - **axis** (`number[]`):
 
-    The axis at which to expand.
+    The axis at which to expand. Optional. Defaults to 0.
 
   *returns*
   - **Tensor**

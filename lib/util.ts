@@ -800,7 +800,8 @@ export class ReduceUtil {
       }
     }
     outputDims = outputDims.filter(dim => dim !== 0);
-    return outputDims;
+    // return 1d shape if all input tensor dims are reduced and keepdims = 0
+    return outputDims.length > 0 ? outputDims : [1];
   }
 }
 

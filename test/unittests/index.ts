@@ -10,3 +10,4 @@ require('./api/onnx');
 require('./api/inference-session');
 require('./api/tensor');
 require('./api/types');
+require('./api/tensor-transforms');

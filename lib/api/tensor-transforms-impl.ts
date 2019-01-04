@@ -211,7 +211,7 @@ export function transpose(x: Tensor, perm?: number[]): Tensor {
   return fromInternalTensor(transposeImpl(toInternalTensor(x), perm));
 }
 
-export function expandDims(x: Tensor, axis: number): Tensor {
+export function expandDims(x: Tensor, axis = 0): Tensor {
   axis = getActualAxisFromNegativeValue(axis, x.dims ? x.dims.length : 1);
   const dims = x.dims ? x.dims : [x.data.length];
   const changedShapeLength = dims.length + 1;
@@ -317,7 +317,7 @@ export function argMax(x: Tensor, axis = 0, keepdims = 1): Tensor {
   return fromInternalTensor(argMaxImpl(toInternalTensor(x), axis, keepdims));
 }
 
-export function reduceMax(x: Tensor, axes?: number[], keepdims?: number): Tensor {
+export function reduceMax(x: Tensor, axes: number[] = [], keepdims = 1): Tensor {
   if (x.type !== 'float32' && x.type !== 'int32') {
     throw new Error('Unsupported type for transform');
   }
@@ -325,5 +325,5 @@ export function reduceMax(x: Tensor, axes?: number[], keepdims?: number): Tensor
   if (axes) {
     axes = axes.map(axis => getActualAxisFromNegativeValue(axis, rank));
   }
-  return fromInternalTensor(reduceMaxImpl(toInternalTensor(x), axes || [], keepdims || 1));
+  return fromInternalTensor(reduceMaxImpl(toInternalTensor(x), axes, keepdims));
 }

@@ -145,9 +145,9 @@ interface ShapeTensorTransforms {
   /**
    * Creates a Tensor with rank expanded at the specified axis.
    * @param x The input Tensor.
-   * @param axis The dimension index where to expand.
+   * @param axis The dimension index where to expand. Optional. Defaults to 0.
    */
-  expandDims(x: Tensor, axis: number): Tensor;
+  expandDims(x: Tensor, axis?: number): Tensor;
   /**
    * Reshapes the input Tensor.
    * @param x The input Tensor.

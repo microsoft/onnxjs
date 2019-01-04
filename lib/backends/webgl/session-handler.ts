@@ -15,6 +15,7 @@ import * as binaryOps from './ops/binary-op';
 import {WebGLConcat} from './ops/concat';
 import {WebGLConv} from './ops/conv';
 import {WebGLDropout} from './ops/dropout';
+import {WebGLGather} from './ops/gather';
 import {WebGLGemm} from './ops/gemm';
 import {WebGLImageScaler} from './ops/image-scaler';
 import {WebGLLeakyRelu} from './ops/leaky-relu';
@@ -120,6 +121,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslExp());
       case 'Floor':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslFloor());
+      case 'Gather':
+        return new WebGLGather();
       case 'Gemm':
         return new WebGLGemm();
       case 'GlobalAveragePool':

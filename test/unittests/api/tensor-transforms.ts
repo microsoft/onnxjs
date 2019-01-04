@@ -119,7 +119,7 @@ describe('#UnitTest# - API - SliceAndJoinTensorTransforms', () => {
     }
   });
   it('slice() test', () => {
-    const actual = onnx.slice(new Tensor(Int32Array.from([1, 2, 3, 4]), 'int32', [2, 2]), [1, 0], [1, 2]);
+    const actual = onnx.slice(new Tensor(Int32Array.from([1, 2, 3, 4]), 'int32', [2, 2]), [1, 0], [2, 2]);
     const expected = new Tensor(Int32Array.from([3, 4]), 'int32', [1, 2]);
     if (!assertTensorEquality(actual, expected)) {
       throw new Error('Slice Test failed');
@@ -220,7 +220,7 @@ describe('#UnitTest# - API - ReductionTensorTransforms', () => {
     }
   });
   it('argMax() 2D test', () => {
-    const actual = onnx.argMax(new Tensor(Int32Array.from([1, 2, 4, 3]), 'int32', [2, 2]), 1);
+    const actual = onnx.argMax(new Tensor(Int32Array.from([1, 2, 4, 3]), 'int32', [2, 2]), 1, 0);
     const expected = new Tensor(Int32Array.from([1, 0]), 'int32', [2]);
     if (!assertTensorEquality(actual, expected)) {
       throw new Error('ArgMax 2D Test failed');
@@ -229,8 +229,6 @@ describe('#UnitTest# - API - ReductionTensorTransforms', () => {
   it('reduceMax() 1D test', () => {
     const actual = onnx.reduceMax(new Tensor(Int32Array.from([1, 2, 3]), 'int32'), [0], 0);
     const expected = new Tensor(Int32Array.from([3]), 'int32', [1]);
-    console.log('actual ', actual);
-    console.log('expected ', expected);
     if (!assertTensorEquality(actual, expected)) {
       throw new Error('Max 1D Test failed');
     }

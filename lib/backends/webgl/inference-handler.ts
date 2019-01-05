@@ -111,7 +111,12 @@ export class WebGLInferenceHandler implements InferenceHandler {
       shape: ReadonlyArray<number>, channels = 1, unpackedShape?: ReadonlyArray<number>,
       prefs?: WidthHeightPrefs): TextureLayout {
     const [width, height] = this.session.layoutStrategy.computeTextureWH(shape, prefs);
+    let inferredDims = shape;
+    if (shape.length === 0) {
+      inferredDims = [1];
+    }
     if (channels === 1) {
+      // unpackedShape will take `shape` and not `inferredDims` so as to create a scalar Tensor if need be
       unpackedShape = shape;
     } else if (!unpackedShape) {
       throw new Error('Unpacked shape is needed when using channels > 1');
@@ -120,8 +125,8 @@ export class WebGLInferenceHandler implements InferenceHandler {
       width,
       height,
       channels: channels ? channels : 1,
-      shape,
-      strides: ShapeUtil.computeStrides(shape),
+      shape: inferredDims,
+      strides: ShapeUtil.computeStrides(inferredDims),
       unpackedShape
     };
   }

@@ -4,11 +4,13 @@
 import {Graph} from '../../graph';
 import {FLOAT_TYPES, NUMBER_TYPES, Operator} from '../../operators';
 
+import {CpuArgMax} from './ops/argMax';
 import {CpuBatchNormalization} from './ops/batch-normalization';
 import {CpuBinaryOp} from './ops/binary-op';
 import {CpuConcat} from './ops/concat';
 import {CpuConv} from './ops/conv';
 import {CpuDropout} from './ops/dropout';
+import {CpuGather} from './ops/gather';
 import {CpuGemm} from './ops/gemm';
 import {CpuImageScaler} from './ops/image-scaler';
 import {CpuLrn} from './ops/lrn';
@@ -16,8 +18,10 @@ import {CpuMatMul} from './ops/matmul';
 import {CpuAveragePool, CpuGlobalAveragePool, CpuGlobalMaxPool, CpuMaxPool} from './ops/pool';
 import * as cpuReduce from './ops/reduce';
 import {CpuReshape} from './ops/reshape';
+import {CpuSlice} from './ops/slice';
 import {CpuSoftmax} from './ops/softmax';
 import {CpuSum} from './ops/sum';
+import {CpuTile} from './ops/tile';
 import {CpuTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
 import {CpuUnsqueeze} from './ops/unsqueeze';
@@ -82,6 +86,8 @@ function createOperator(node: Graph.Node, domain: string, version: number): Oper
     case 'And':
       return new CpuBinaryOp(['bool'], (e1, e2) => (e1 && e2));
     // Non-unary and non-binary ops
+    case 'ArgMax':
+      return new CpuArgMax();
     case 'BatchNormalization':
       return new CpuBatchNormalization();
     case 'Concat':
@@ -106,6 +112,8 @@ function createOperator(node: Graph.Node, domain: string, version: number): Oper
       return new CpuAveragePool();
     case 'MaxPool':
       return new CpuMaxPool();
+    case 'Gather':
+      return new CpuGather();
     case 'GlobalMaxPool':
       return new CpuGlobalMaxPool();
     case 'GlobalAveragePool':
@@ -128,10 +136,14 @@ function createOperator(node: Graph.Node, domain: string, version: number): Oper
       return new cpuReduce.CpuReduceSum();
     case 'ReduceSumSquare':
       return new cpuReduce.CpuReduceSumSquare();
+    case 'Slice':
+      return new CpuSlice();
     case 'Softmax':
       return new CpuSoftmax();
     case 'Sum':
       return new CpuSum();
+    case 'Tile':
+      return new CpuTile();
     case 'Transpose':
       return new CpuTranspose();
     case 'Unsqueeze':

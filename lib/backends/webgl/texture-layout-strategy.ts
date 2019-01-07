@@ -21,6 +21,10 @@ export interface TextureLayoutStrategy {
 export class AlwaysKeepOriginalSizeStrategy implements TextureLayoutStrategy {
   constructor(public maxTextureSize: number) {}
   computeTextureWH(shape: ReadonlyArray<number>, prefs?: WidthHeightPrefs): [number, number] {
+    // scalar tensor
+    if (shape.length === 0) {
+      return [1, 1];
+    }
     const maxTextureSize = this.maxTextureSize;
     if (prefs) {
       // check to see if dims fit

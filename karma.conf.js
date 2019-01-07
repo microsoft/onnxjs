@@ -18,7 +18,7 @@ module.exports = function(config) {
     client: {captureConsole: true, mocha: {expose: ['body'], timeout: 60000}},
     preprocessors: {mainFile: ['sourcemap']},
     reporters: ['mocha'],
-    browsers: ['ChromeTest', 'ChromeDebug', 'Edge', 'Firefox', 'Electron'],
+    browsers: ['ChromeTest', 'ChromeDebug', 'Edge', 'Firefox', 'Electron', 'Safari'],
     captureTimeout: 120000,
     reportSlowerThan: 100,
     browserDisconnectTimeout: 600000,

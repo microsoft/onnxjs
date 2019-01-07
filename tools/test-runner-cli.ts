@@ -498,6 +498,8 @@ function getBrowserNameFromEnv(env: TestRunnerCliArgs['env'], debug?: boolean) {
       return 'Firefox';
     case 'electron':
       return 'Electron';
+    case 'safari':
+      return 'Safari';
     default:
       throw new Error(`env "${env}" not supported.`);
   }

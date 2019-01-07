@@ -96,7 +96,7 @@ export interface TestRunnerCliArgs {
    */
   param?: string;
   backend: ['cpu'|'webgl'|'wasm'];
-  env: 'chrome'|'edge'|'firefox'|'electron'|'node';
+  env: 'chrome'|'edge'|'firefox'|'electron'|'safari'|'node';
 
   /**
    * Bundle Mode
@@ -165,7 +165,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
   // Option: -e=<...>, --env=<...>
   const envArg = args.e || args.env;
   const env = (typeof envArg !== 'string') ? 'chrome' : envArg;
-  if (['chrome', 'edge', 'firefox', 'electron', 'node'].indexOf(env) === -1) {
+  if (['chrome', 'edge', 'firefox', 'electron', 'safari', 'node'].indexOf(env) === -1) {
     throw new Error(`not supported env ${env}`);
   }
 

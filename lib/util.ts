@@ -25,6 +25,13 @@ export function checkInputsShape(inputs: Tensor[], ...expectedDimensions: number
   return true;
 }
 
+export function getActualAxisFromNegativeValue(axis: number, tensorRank: number): number {
+  if (axis < -tensorRank || axis > tensorRank - 1) {
+    throw new Error('unsupported axis for this operation.');
+  }
+  return axis < 0 ? axis + tensorRank : axis;
+}
+
 export class BroadcastUtil {
   /**
    * Calculate the expected shape when broadcasting 2 tensors
@@ -33,9 +40,16 @@ export class BroadcastUtil {
    * @param isMatMul Whether the operation is MatMul
    * @returns The expected shape of the result, or undefined if N/A
    */
-  static calcShape(adims: ReadonlyArray<number>, bdims: ReadonlyArray<number>, isMatMul = false): number[]|undefined {
+  static calcShape(adims: ReadonlyArray<number>, bdims: ReadonlyArray<number>, isMatMul = false):
+      ReadonlyArray<number>|undefined {
     const arank = adims.length;
     const brank = bdims.length;
+    if (arank === 0) {
+      return bdims;
+    }
+    if (brank === 0) {
+      return adims;
+    }
     const crank = Math.max(adims.length, bdims.length);
     const cdims = new Array<number>(crank);
 
@@ -78,23 +92,23 @@ export class BroadcastUtil {
   /**
    * Given the indices of a broadcasted tensor, calculate the original indices
    * @param indices The given indices of the broadcasted tensor.
-   * @param shapeOrigin The origin shape of the tensor before broadcast
+   * @param originalShape The original shape of the tensor before broadcast
    * @param isMatMul Whether the operation is MatMul
    * @returns The calculated indices that maps to the original tensor. If the
    * operation is MatMul, the indices of last 2 dimensions will keep as same as
    * input indices
    */
-  static index(indices: number[], shapeOrigin: number[], isMatMul = false): number[] {
+  static index(indices: ReadonlyArray<number>, originalShape: ReadonlyArray<number>, isMatMul = false): number[] {
     // we assume the parameter indices is valid. ie. it should have the same
     // length as the broadcasted shape, and for each dimension the index should
     // not be out of range.
-    const dimOffset = indices.length - shapeOrigin.length;
-    const indicesOrigin = indices.slice(dimOffset);
-    const dimLen = isMatMul ? indicesOrigin.length - 2 : indicesOrigin.length;
+    const dimOffset = indices.length - originalShape.length;
+    const indicesOriginal = indices.slice(dimOffset);
+    const dimLen = isMatMul ? indicesOriginal.length - 2 : indicesOriginal.length;
     for (let i = 0; i < dimLen; i++) {
-      indicesOrigin[i] = indices[dimOffset + i] % shapeOrigin[i];
+      indicesOriginal[i] = indices[dimOffset + i] % originalShape[i];
     }
-    return indicesOrigin;
+    return indicesOriginal;
   }
 
   /**
@@ -113,7 +127,7 @@ export class BroadcastUtil {
               a.data.constructor as Int8ArrayConstructor | Int16ArrayConstructor | Int32ArrayConstructor |
               Uint8ArrayConstructor | Uint16ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor |
               Float64ArrayConstructor | Uint8ClampedArrayConstructor)(size),
-          shape);
+          shape as number[]);
 
       const indices = new Array<number>(shape.length);
       for (let i = 0; i < size; i++) {
@@ -188,7 +202,7 @@ export class GemmUtil {
   // will throw exception if the input shapes are not compatible
   static getShapeOfGemmResult(
       leftShape: ReadonlyArray<number>, transLeft: boolean, rightShape: ReadonlyArray<number>, transRight: boolean,
-      biasShape: ReadonlyArray<number>): number[] {
+      biasShape: ReadonlyArray<number>): ReadonlyArray<number> {
     if (leftShape.length !== 2 || rightShape.length !== 2) {
       throw new Error(`shape need to be of size 2`);
     }
@@ -338,19 +352,19 @@ export class ShapeUtil {
     return ShapeUtil.getSizeFromDimensionRange(dims, 0, dims.length);
   }
 
+  // `axis` inclusive
   static sizeFromDimension(dims: ReadonlyArray<number>, axis: number): number {
-    if (axis > dims.length) {
+    if (axis < 0 || axis >= dims.length) {
       throw new Error(`invalid dimension of ${axis} for sizeFromDimension as Tensor has ${dims.length} dimensions.`);
     }
-
     return ShapeUtil.getSizeFromDimensionRange(dims, axis, dims.length);
   }
 
+  // `axis` exclusive
   static sizeToDimension(dims: ReadonlyArray<number>, axis: number): number {
-    if (axis > dims.length) {
+    if (axis < 0 || axis > dims.length) {
       throw new Error(`invalid dimension of ${axis} for sizeToDimension as Tensor has ${dims.length} dimensions.`);
     }
-
     return ShapeUtil.getSizeFromDimensionRange(dims, 0, axis);
   }
 
@@ -369,59 +383,42 @@ export class ShapeUtil {
     return size;
   }
 
-  // Computes the offset up until the start index for the specified axis
-  /**
-   * @param index Given index to compute offset for in the flattened
-   * @param stride The strides of the tensor corresponding to the index
-   * @param axis The 1-indexed axis upto which the offset is to be computed for. If undefined, axis == rank of the
-   * index.
-   */
-
-  static computeOffset(index: number[], stride: number[], axis?: number) {
-    if (axis === undefined) {
-      axis = index.length;
-    }
-    let offset = 0;
-    for (let i = 0; i < axis; ++i) {
-      offset += (index[i] * stride[i]);
-    }
-    return offset;
-  }
-  static computeStrides(shape: ReadonlyArray<number>): number[] {
-    const rank = shape.length;
+  static computeStrides(dims: ReadonlyArray<number>): ReadonlyArray<number> {
+    const rank = dims.length;
     if (rank < 2) {
       return [1];
     }
-
     const strides = new Array(rank);
     strides[rank - 1] = 1;
-    strides[rank - 2] = shape[rank - 1];
+    strides[rank - 2] = dims[rank - 1];
     for (let i = rank - 3; i >= 0; --i) {
-      strides[i] = strides[i + 1] * shape[i + 1];
+      strides[i] = strides[i + 1] * dims[i + 1];
     }
     return strides;
   }
-  static transpose(dims: number[]): number[] {
-    return dims.reverse();
-  }
-  static indicesToOffset(indices: number[], strides: number[]): number {
-    const rank = strides.length;
-    if (rank === 0) {
-      return 0;
-    }
-    let index = indices[indices.length - 1];
-    for (let i = 0; i < indices.length - 1; ++i) {
-      index += strides[i] * indices[i];
-    }
-    return index;
+
+  static transpose(dims: ReadonlyArray<number>): ReadonlyArray<number> {
+    const copy = dims.slice();
+    return copy.reverse();
   }
 
-  static offsetToIndices(offset: number, strides: number[]): number[] {
+  static indicesToOffset(indices: ReadonlyArray<number>, strides: ReadonlyArray<number>, axis?: number): number {
+    if (axis === undefined) {
+      axis = indices.length;
+    }
+    let offset = 0;
+    for (let i = 0; i < axis; ++i) {
+      offset += strides[i] * indices[i];
+    }
+    return offset;
+  }
+
+  static offsetToIndices(offset: number, strides: ReadonlyArray<number>): ReadonlyArray<number> {
     const rank = strides.length;
     if (rank === 0) {
       return [];
     } else if (rank === 1) {
-      return [offset];
+      return [offset * strides[0]];
     }
     const indices: number[] = new Array(strides.length);
     for (let i = 0; i < indices.length - 1; ++i) {
@@ -431,8 +428,9 @@ export class ShapeUtil {
     indices[indices.length - 1] = offset;
     return indices;
   }
-  static getActualAxisFromNegativeValue(axis: number, tensorRank: number): number {
-    if (axis < -tensorRank && axis > (tensorRank - 1)) {
+
+  static parseAxis(axis: number, tensorRank: number): number {
+    if (axis < -tensorRank && axis >= tensorRank) {
       throw new Error('unsupported axis for this operation.');
     }
     return axis < 0 ? axis + tensorRank : axis;
@@ -442,13 +440,20 @@ export class ShapeUtil {
   // ordering), wrapping around the specified upper_bound.
   /**
    * Increment an index into a tensor (in lexicographic ordering), wrapping around the specified upper_bound.
-   * @param index Given index to increment
+   * @param index Given index to increment (Will be mutated)
    * @param dims The dimensions of the tensor for which the given index corresponds to
    * @param axisToIncrementOn The 1-indexed axis to increment on. If undefined, axisToIncrementOn == rank
    */
-  static incrementIndex(index: number[], dims: number[], axisToIncrementOn?: number) {
+  static incrementIndex(index: number[], dims: ReadonlyArray<number>, axisToIncrementOn?: number) {
+    if (dims.length === 0 || index.length === 0) {
+      throw new Error(`Index incrementing unsupported for scalar Tensor`);
+    }
     if (axisToIncrementOn === undefined) {
       axisToIncrementOn = dims.length;
+    } else {
+      if (axisToIncrementOn <= 0 || axisToIncrementOn > dims.length) {
+        throw new Error(`Incorrect axis to increment on`);
+      }
     }
 
     for (let k = axisToIncrementOn - 1; k >= 0; --k) {
@@ -459,6 +464,7 @@ export class ShapeUtil {
       index[k] = 0;
     }
   }
+
   /**
    * Produces a new dimensions array based on the values in the 'originalDimensions' and 'shape' array
    * Used in Reshape
@@ -471,19 +477,29 @@ export class ShapeUtil {
    * https://github.com/onnx/onnx/blob/master/docs/Operators.md#Reshape
    */
 
-  static calculateReshapedDims(originalDims: ReadonlyArray<number>, shapeHints: number[]|Tensor.IntegerType): number[] {
+  static calculateReshapedDims(
+      originalDims: ReadonlyArray<number>,
+      shapeHints: number[]|ReadonlyArray<number>|Tensor.IntegerType): ReadonlyArray<number> {
+    // reshape to a Scalar Tensor
+    if (shapeHints.length === 0) {
+      if (originalDims.length === 0 || ShapeUtil.size(originalDims) === 1) {
+        return [];
+      } else {
+        throw new Error(`cannot reshape to a scalar Tensor`);
+      }
+    }
+
     const nDims = shapeHints.length;
     const reshapedDims = new Array<number>(nDims);
     let unknownDimension = -1;
-    let size = 1;
-
+    let newTensorSize = 1;
     for (let i = 0; i < nDims; i++) {
       if (shapeHints[i] < -1) {
-        throw new Error('a dimension cannot be less than -1');
+        throw new Error('a dimension in shape hints cannot be less than -1');
       }
       if (shapeHints[i] === -1) {
         if (unknownDimension !== -1) {
-          throw new Error('at most one dimension can be -1');
+          throw new Error('at most one dimension in shape hints can be -1');
         }
         unknownDimension = i;
       } else {
@@ -495,17 +511,23 @@ export class ShapeUtil {
         } else {
           reshapedDims[i] = shapeHints[i];
         }
-        size *= reshapedDims[i];
+        newTensorSize *= reshapedDims[i];
       }
     }
 
+    const oldTensorSize = ShapeUtil.size(originalDims);
     if (unknownDimension !== -1) {
-      const originalTensorFlattenedSize = ShapeUtil.size(originalDims);
-      if (originalTensorFlattenedSize % size !== 0) {
+      if (oldTensorSize % newTensorSize !== 0) {
         throw new Error(`the input tensor cannot be reshaped to the requested shape. Input shape: [${
             originalDims}] Output shape: [${shapeHints}]`);
       }
-      reshapedDims[unknownDimension] = originalTensorFlattenedSize / size;
+      reshapedDims[unknownDimension] = oldTensorSize / newTensorSize;
+    }
+    // validate sizes from originalDims and reshapedDims match
+    else {
+      if (newTensorSize !== oldTensorSize) {
+        throw new Error(`reshapedDims and originalDims don't have matching sizes`);
+      }
     }
     return reshapedDims;
   }
@@ -516,32 +538,55 @@ export class ShapeUtil {
    * @param a Array to be sorted such as dims or strides
    * @param perm Perm given; if null a will be reversed
    */
-  static sortBasedOnPerm(a: ReadonlyArray<number>, perm?: number[]): number[] {
+  static sortBasedOnPerm(a: ReadonlyArray<number>, perm?: ReadonlyArray<number>): ReadonlyArray<number> {
     if (perm) {
       return perm.map((v) => a[v]);
     } else {
       return a.slice().reverse();
     }
   }
+
   /**
    * Pads a given shape according to the padding values
    * @param dims shape of the Tensor to be padded
    * @param pad pad values
    */
-  static padShape(dims: ReadonlyArray<number>, pad: number[]): number[] {
+  static padShape(dims: ReadonlyArray<number>, pad: ReadonlyArray<number>): ReadonlyArray<number> {
     const rank = dims.length;
     return dims.map((v, i) => v + pad[i] + pad[i + rank]);
   }
+
   /**
    * Determines if the two shapes are identical
    * @param shape1
    * @param shape2
    */
-  static areEqual(shape1: number[], shape2: number[]): boolean {
+  static areEqual(shape1: ReadonlyArray<number>, shape2: ReadonlyArray<number>): boolean {
     if (shape1.length !== shape2.length) {
       return false;
     }
     return shape1.every((v, i) => v === shape2[i]);
+  }
+
+  /**
+   * Validates if the given `dims` or `shape` is valid in ONNX.js context and returns data size
+   * @param dims - input `dims` that needs to be checked
+   */
+  static validateDimsAndCalcSize(dims: ReadonlyArray<number>): number {
+    if (dims.length > 6) {
+      throw new TypeError(`Only rank 0 to 6 is supported for tensor shape.`);
+    }
+    let size = 1;
+    for (const n of dims) {
+      if (!Number.isInteger(n)) {
+        throw new TypeError(`Invalid shape: ${n} is not an integer`);
+      }
+      if (n <= 0 || n > 2147483647) {
+        throw new TypeError(`Invalid shape: length ${n} is not allowed`);
+      }
+      size *= n;
+    }
+    return size;
   }
 }
 
@@ -700,11 +745,10 @@ export class ReduceUtil {
     // loop through the output and calculate result one by one
     const size = ShapeUtil.size(outputDims);
     const ndY = ndarray(new Array<number>(size), outputDims);
-    let indices = new Array<number>(outputDims.length);
     const strides = ShapeUtil.computeStrides(outputDims);
     const inputStrides = ShapeUtil.computeStrides(dims);
     for (let i = 0; i < size; i++) {
-      indices = ShapeUtil.offsetToIndices(i, strides);
+      const indices = ShapeUtil.offsetToIndices(i, strides);
       // map index
       const indicesY = BroadcastUtil.index(indices, dims);
       ndY.set(

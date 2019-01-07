@@ -10,7 +10,7 @@ import {WasmInferenceHandler} from '../inference-handler';
 export class WasmSoftmax extends Softmax {
   run(inferenceHandler: WasmInferenceHandler, inputs: Tensor[]): Tensor[] {
     const x = inputs[0];
-    const axisCorrected = ShapeUtil.getActualAxisFromNegativeValue(this.axis, x.dims.length);
+    const axisCorrected = ShapeUtil.parseAxis(this.axis, x.dims.length);
     const N = ShapeUtil.sizeToDimension(x.dims, axisCorrected);
     const D = ShapeUtil.sizeFromDimension(x.dims, axisCorrected);
     const y = new Tensor(x.dims, x.type);

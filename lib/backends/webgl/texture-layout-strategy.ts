@@ -12,7 +12,7 @@ export interface WidthHeightPrefs {
  * for mapping n-dimensional arrays to 2D textures (and back)
  */
 export interface TextureLayoutStrategy {
-  computeTextureWH(shape: number[], prefs?: WidthHeightPrefs): [number, number];
+  computeTextureWH(shape: ReadonlyArray<number>, prefs?: WidthHeightPrefs): [number, number];
 }
 
 /**
@@ -20,7 +20,11 @@ export interface TextureLayoutStrategy {
  */
 export class AlwaysKeepOriginalSizeStrategy implements TextureLayoutStrategy {
   constructor(public maxTextureSize: number) {}
-  computeTextureWH(shape: number[], prefs?: WidthHeightPrefs): [number, number] {
+  computeTextureWH(shape: ReadonlyArray<number>, prefs?: WidthHeightPrefs): [number, number] {
+    // scalar tensor
+    if (shape.length === 0) {
+      return [1, 1];
+    }
     const maxTextureSize = this.maxTextureSize;
     if (prefs) {
       // check to see if dims fit

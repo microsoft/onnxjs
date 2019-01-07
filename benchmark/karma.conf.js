@@ -40,7 +40,7 @@ module.exports = function(config) {
       browser: config.browsers,
       printMatches: config.printMatches ? true : false
     },
-    browsers: ['ChromeTest', 'ChromeDebug', 'Edge'],
+    browsers: ['ChromeTest', 'ChromeDebug', 'Edge', 'Safari'],
     browserConsoleLogOptions: {level: "debug", format: "%b %T: %m", terminal: true},
   })
 }

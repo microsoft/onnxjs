@@ -21,20 +21,28 @@ import {WebGLLeakyRelu} from './ops/leaky-relu';
 import {WebGLMatMul} from './ops/matmul';
 import {WebGLPad} from './ops/pad';
 import {WebGLAveragePool, WebGLGlobalAveragePool, WebGLGlobalMaxPool, WebGLMaxPool} from './ops/pool';
+import {WebGLReduceSum} from './ops/reduce';
+import {WebGLReduceMean} from './ops/reduce';
+import {WebGLReduceMax} from './ops/reduce';
+import {WebGLReduceMin} from './ops/reduce';
+import {WebGLReduceProd} from './ops/reduce';
+import {WebGLReduceLogSum} from './ops/reduce';
+import {WebGLReduceSumSquare} from './ops/reduce';
 import {WebGLReshape} from './ops/reshape';
 import {WebGLSoftmax} from './ops/softmax';
 import {WebGLSplit} from './ops/split';
 import {WebGLSum} from './ops/sum';
+import {WebGLTile} from './ops/tile';
 import {WebGLTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
 import {ProgramManager} from './program-manager';
 import {TextureData} from './texture-data';
+import {TextureHelper} from './texture-helper';
 import {AlwaysKeepOriginalSizeStrategy, TextureLayoutStrategy} from './texture-layout-strategy';
-import {TextureManager} from './texture-manager';
 
 export class WebGLSessionHandler implements SessionHandler {
   programManager: ProgramManager;
-  textureManager: TextureManager;
+  textureHelper: TextureHelper;
   layoutStrategy: TextureLayoutStrategy;
   textureDataCache: Map<Tensor, TextureData>;
   initializers: Set<Tensor>;
@@ -42,7 +50,7 @@ export class WebGLSessionHandler implements SessionHandler {
   constructor(public readonly backend: WebGLBackend, public readonly context: Session.Context) {
     this.programManager = new ProgramManager(this.context.profiler, backend.glContext);
     this.layoutStrategy = new AlwaysKeepOriginalSizeStrategy(backend.glContext.maxTextureSize);
-    this.textureManager = new TextureManager(backend.glContext, this.layoutStrategy, this.context.profiler);
+    this.textureHelper = new TextureHelper(backend.glContext, this.layoutStrategy, this.context.profiler);
     this.textureDataCache = new Map();
   }
 
@@ -65,8 +73,9 @@ export class WebGLSessionHandler implements SessionHandler {
   }
   dispose(): void {
     this.programManager.dispose();
-    this.textureManager.dispose();
-    this.textureDataCache.forEach(td => this.textureManager.saveTexture(td.texture, [td.width, td.height]));
+    this.textureHelper.clearActiveTextures();
+    this.textureDataCache.forEach(td => this.textureHelper.releaseTexture(td.texture));
+    this.textureDataCache = new Map();
   }
   resolve(node: Graph.Node, domain: string, version: number): Operator {
     const op = this.createOperator(node, domain, version);
@@ -156,6 +165,20 @@ export class WebGLSessionHandler implements SessionHandler {
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSigmoid());
       case 'Sin':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSin());
+      case 'ReduceSum':
+        return new WebGLReduceSum();
+      case 'ReduceMean':
+        return new WebGLReduceMean();
+      case 'ReduceMax':
+        return new WebGLReduceMax();
+      case 'ReduceMin':
+        return new WebGLReduceMin();
+      case 'ReduceProd':
+        return new WebGLReduceProd();
+      case 'ReduceLogSum':
+        return new WebGLReduceLogSum();
+      case 'ReduceSumSquare':
+        return new WebGLReduceSumSquare();
       case 'Softmax':
         return new WebGLSoftmax();
       case 'Split':
@@ -174,6 +197,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslTan());
       case 'Transpose':
         return new WebGLTranspose();
+      case 'Tile':
+        return new WebGLTile();
       case 'Xor':
         return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslXor());
       default:

@@ -6,9 +6,10 @@
   "scripts": {
     "build": "webpack --config ./webpack.conf.js --mode production",
     "build-debug": "webpack --config ./webpack.conf.js --mode development",
-    "test": "karma start --browsers ChromeTest --single-run",
+    "test": "karma start --browsers ChromeTest --single-run  --printMatches",
     "test-debug": "karma start --browsers ChromeDebug  --printMatches",
-    "test-edge": "karma start --browsers Edge --single-run"
+    "test-edge": "karma start --browsers Edge --single-run  --printMatches",
+    "test-safari": "karma start --browsers Safari --single-run  --printMatches"
   },
   "keywords": [
     "resnet",
@@ -24,6 +25,7 @@
     "karma-mocha": "^1.3.0",
     "karma-mocha-reporter": "^2.2.5",
     "karma-requirejs": "^1.1.0",
+    "karma-safari-launcher": "^1.0.0",
     "mocha": "^5.2.0",
     "requirejs": "^2.3.6",
     "webpack": "^4.24.0",

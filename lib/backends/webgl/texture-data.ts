@@ -2,7 +2,6 @@
 // Licensed under the MIT license.
 
 import {Tensor} from '../../tensor';
-import {Encoder} from './texture-data-encoder';
 
 /**
  * Layout info is used for mapping n-dimensional array to 2D textures
@@ -14,12 +13,11 @@ export interface TextureLayout {
   width: number;
   height: number;
   channels: number;
-  shape: number[];
-  strides: number[];
-  unpackedShape: number[];
+  shape: ReadonlyArray<number>;
+  strides: ReadonlyArray<number>;
+  unpackedShape: ReadonlyArray<number>;
 }
 export interface TextureData extends TextureLayout {
   dataType: Tensor.DataType;
   texture: WebGLTexture;
-  arrayType: Encoder.DataType;
 }

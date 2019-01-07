@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {DataEncoder, Encoder, RGBAFloat32DataEncoder} from './texture-data-encoder';
+import {DataEncoder, Encoder, RGBAFloat32DataEncoder, Uint8DataEncoder} from './texture-data-encoder';
 import {Disposable} from './utils';
 import {WebGLContext} from './webgl-context';
 
@@ -24,6 +24,7 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
   webglVendor: string;
   webglVersion: string;
   disposed: boolean;
+  frameBufferBound = false;
 
   init(): void {
     this.getExtensions();
@@ -131,6 +132,9 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
     if (!channels) {
       channels = 1;
     }
+    if (!this.frameBufferBound) {
+      this.attachFramebuffer(texture, width, height);
+    }
     const encoder = this.getEncoder(dataType, channels);
     const buffer = encoder.allocate(width * height);
     // bind texture to framebuffer
@@ -139,7 +143,7 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
         gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture,
         0);  // 0, we aren't using MIPMAPs
     // TODO: Check if framebuffer is ready
-    gl.readPixels(0, 0, width, height, encoder.format, encoder.channelType, buffer);
+    gl.readPixels(0, 0, width, height, gl.RGBA, encoder.channelType, buffer);
     this.checkError();
     // unbind FB
     return encoder.decode(buffer, dataSize);
@@ -224,9 +228,16 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
       case 'int':
         throw new Error('not implemented');
       case 'byte':
-        throw new Error('not implemented');
+        return new Uint8DataEncoder(channels);
       default:
         throw new Error(`Invalid dataType: ${dataType}`);
+    }
+  }
+  clearActiveTextures(): void {
+    const gl = this.gl;
+    for (let unit = 0; unit < this.maxTextureImageUnits; ++unit) {
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, null);
     }
   }
   protected queryVitalParameters(): void {

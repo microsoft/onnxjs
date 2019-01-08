@@ -124,11 +124,11 @@ export class Float16DataEncoder implements DataEncoder {
   channelSize = 4;
 
   constructor(gl: WebGLRenderingContext) {
-    const halfFloatExtension = gl.getExtension('OES_texture_half_float');
-    if (!halfFloatExtension) {
+    const ext = gl.getExtension('OES_texture_half_float');
+    if (!ext) {
       throw new Error('WebGL extension "OES_texture_half_float" is not supported');
     }
-    this.channelType = halfFloatExtension.HALF_FLOAT_OES;
+    this.channelType = ext.HALF_FLOAT_OES;
   }
 
   encode(src: Float32Array, textureSize: number): Encoder.DataArrayType {

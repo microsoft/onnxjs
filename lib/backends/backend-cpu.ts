@@ -10,6 +10,8 @@ import {CpuSessionHandler} from './cpu/session-handler';
 type CpuOptions = BackendInterface.CpuOptions;
 
 export class CpuBackend implements Backend, CpuOptions {
+  disabled?: boolean;
+
   initialize(): boolean {
     return true;
   }

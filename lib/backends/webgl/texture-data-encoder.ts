@@ -120,8 +120,16 @@ export class RGBAFloat32DataEncoder implements DataEncoder {
 export class Float16DataEncoder implements DataEncoder {
   internalFormat: number = WebGLRenderingContext.RGBA;
   format: number = WebGLRenderingContext.RGBA;
-  channelType: number = OES_texture_half_float.HALF_FLOAT_OES;
+  channelType: number;
   channelSize = 4;
+
+  constructor(gl: WebGLRenderingContext) {
+    const ext = gl.getExtension('OES_texture_half_float');
+    if (!ext) {
+      throw new Error('WebGL extension "OES_texture_half_float" is not supported');
+    }
+    this.channelType = ext.HALF_FLOAT_OES;
+  }
 
   encode(src: Float32Array, textureSize: number): Encoder.DataArrayType {
     throw new Error('Method not implemented.');

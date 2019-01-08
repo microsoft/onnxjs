@@ -14,6 +14,7 @@ export let bindingInitPromise: Promise<void>|undefined;
 type WasmOptions = BackendInterface.WasmOptions;
 
 export class WasmBackend implements Backend, WasmOptions {
+  disabled?: boolean;
   worker: number;
   cpuFallback: boolean;
   constructor() {

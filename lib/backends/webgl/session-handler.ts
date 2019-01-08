@@ -32,6 +32,7 @@ import {WebGLReshape} from './ops/reshape';
 import {WebGLSoftmax} from './ops/softmax';
 import {WebGLSplit} from './ops/split';
 import {WebGLSum} from './ops/sum';
+import {WebGLTile} from './ops/tile';
 import {WebGLTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
 import {ProgramManager} from './program-manager';
@@ -196,6 +197,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslTan());
       case 'Transpose':
         return new WebGLTranspose();
+      case 'Tile':
+        return new WebGLTile();
       case 'Xor':
         return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslXor());
       default:

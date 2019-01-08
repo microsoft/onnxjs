@@ -8,14 +8,20 @@ import {TensorConstructor} from './tensor';
 //#region Backends
 
 export declare namespace Backend {
+  interface BackendOptions {
+    /**
+     * set or get a flag specifying whether to force disable the backend
+     */
+    disabled?: boolean;
+  }
   /**
    * set options for the CPU backend
    */
-  interface CpuOptions {}
+  interface CpuOptions extends BackendOptions {}
   /**
    * set options for the WebGL backend
    */
-  interface WebGLOptions {
+  interface WebGLOptions extends BackendOptions {
     /**
      * set or get the WebGL Context ID (webgl vs webgl2,...)
      */
@@ -24,7 +30,7 @@ export declare namespace Backend {
   /**
    * set options for the WebAssembly backend
    */
-  interface WasmOptions {
+  interface WasmOptions extends BackendOptions {
     /**
      * set or get number of worker(s)
      */
@@ -34,29 +40,33 @@ export declare namespace Backend {
      */
     cpuFallback?: boolean;
   }
-}
-
-// tslint:disable-next-line:no-any
-type BackendOptions = any;
-
-/**
- * represent all available backends and settings of them
- */
-export interface Backend {
-  /**
-   * set one or more string(s) as hint for onnx session to resolve the corresponding backend
-   */
-  hint?: string|ReadonlyArray<string>;
-
-  cpu: Backend.CpuOptions;
-  webgl: Backend.WebGLOptions;
-  wasm: Backend.WasmOptions;
 
   /**
-   * set options for the specific backend
+   * represent all backend settings
    */
-  [name: string]: BackendOptions;
+  interface Settings {
+    /**
+     * set one or more string(s) as hint for onnx session to resolve the corresponding backend
+     */
+    hint?: string|ReadonlyArray<string>;
+  }
+
+  /**
+   * represent all available backends
+   */
+  interface AvailableBackends {
+    cpu: CpuOptions;
+    webgl: WebGLOptions;
+    wasm: WasmOptions;
+
+    /**
+     * set options for the specific backend
+     */
+    [name: string]: Backend.BackendOptions;
+  }
 }
+
+export type Backend = Backend.Settings&Backend.AvailableBackends;
 
 //#endregion Backends
 

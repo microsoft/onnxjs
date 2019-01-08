@@ -400,6 +400,8 @@
       "test_tan",
       // "test_tanh_example",
       // "test_tanh",
+      "test_tile",
+      "test_tile_precomputed",
       "test_transpose_all_permutations_0",
       "test_transpose_all_permutations_1",
       "test_transpose_all_permutations_2",

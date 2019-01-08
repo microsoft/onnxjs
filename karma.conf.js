@@ -32,11 +32,11 @@ module.exports = function(config) {
       'Firefox',
       'Electron',
       'Safari',
-      'bs_chrome_win',
-      'bs_edge_win',
-      'bs_ff_win',
-      'bs_chrome_mac',
-      'bs_ff_mac',
+      'BS_WIN_Chrome',
+      'BS_WIN_Edge',
+      'BS_WIN_Firefox',
+      'BS_MAC_Chrome',
+      'BS_MAC_Safari',
     ],
     captureTimeout: 120000,
     reportSlowerThan: 100,
@@ -47,40 +47,40 @@ module.exports = function(config) {
     customLaunchers: {
       ChromeTest: {base: 'Chrome', flags: ['--window-size=1,1']},
       ChromeDebug: {debug: true, base: 'Chrome', flags: ['--remote-debugging-port=9333']},
-      bs_chrome_win: {
+      BS_WIN_Chrome: {
         base: 'BrowserStack',
         browser: 'Chrome',
         browser_version: '71.0',
         os: 'Windows',
         os_version: '10',
       },
-      bs_edge_win: {
+      BS_WIN_Edge: {
         base: 'BrowserStack',
         os: 'Windows',
         os_version: '10',
         browser: 'Edge',
         browser_version: '18.0',
       },
-      bs_ff_win: {
+      BS_WIN_Firefox: {
         base: 'BrowserStack',
         os: 'Windows',
         os_version: '10',
         browser: 'Firefox',
         browser_version: '63.0',
       },
-      bs_chrome_mac: {
+      BS_MAC_Chrome: {
         base: 'BrowserStack',
         browser: 'Chrome',
         browser_version: '71.0',
         os: 'OS X',
         os_version: 'High Sierra',
       },
-      bs_ff_mac: {
+      BS_MAC_Safari: {
         base: 'BrowserStack',
         os: 'OS X',
         os_version: 'High Sierra',
-        browser: 'Firefox',
-        browser_version: '63.0',
+        browser: 'Safari',
+        browser_version: '11.1',
       }
     }
   });

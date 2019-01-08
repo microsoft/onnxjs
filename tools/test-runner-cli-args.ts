@@ -36,11 +36,13 @@ Options:
                                  webgl
                                  wasm
  -e=<...>, --env=<...>       Specify the environment to run the test. Should be one of the following:
-                               chrome (default)
-                               edge
+                               chrome     (default)
+                               edge       (Windows only)
                                firefox
                                electron
+                               safari     (MacOS only)
                                node
+                               bs         (for BrowserStack tests)
 
 *** Logging Options ***
 
@@ -96,7 +98,7 @@ export interface TestRunnerCliArgs {
    */
   param?: string;
   backend: ['cpu'|'webgl'|'wasm'];
-  env: 'chrome'|'edge'|'firefox'|'electron'|'safari'|'node';
+  env: 'chrome'|'edge'|'firefox'|'electron'|'safari'|'node'|'bs';
 
   /**
    * Bundle Mode
@@ -165,7 +167,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
   // Option: -e=<...>, --env=<...>
   const envArg = args.e || args.env;
   const env = (typeof envArg !== 'string') ? 'chrome' : envArg;
-  if (['chrome', 'edge', 'firefox', 'electron', 'safari', 'node'].indexOf(env) === -1) {
+  if (['chrome', 'edge', 'firefox', 'electron', 'safari', 'node', 'bs'].indexOf(env) === -1) {
     throw new Error(`not supported env ${env}`);
   }
 

@@ -202,7 +202,13 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
 
   const cpuOptions = parseCpuOptions(args);
   const wasmOptions = parseWasmOptions(args);
+  if (backend.indexOf('wasm') === -1) {
+    wasmOptions.disabled = true;
+  }
   const webglOptions = parseWebglOptions(args);
+  if (backend.indexOf('webgl') === -1) {
+    webglOptions.disabled = true;
+  }
 
   // Option: --no-sandbox
   const noSandbox = !!args['no-sandbox'];

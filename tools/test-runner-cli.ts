@@ -473,6 +473,12 @@ function saveConfig(config: Test.Config) {
   if (config.options.debug !== undefined) {
     setOptions += `onnx.ENV.debug = ${config.options.debug};`;
   }
+  if (config.options.webgl && config.options.webgl.disabled !== undefined) {
+    setOptions += `onnx.backend.webgl.disabled = ${config.options.webgl.disabled};`;
+  }
+  if (config.options.wasm && config.options.wasm.disabled !== undefined) {
+    setOptions += `onnx.backend.wasm.disabled = ${config.options.wasm.disabled};`;
+  }
   if (config.options.webgl && config.options.webgl.contextId) {
     setOptions += `onnx.backend.webgl.contextId = ${JSON.stringify(config.options.webgl.contextId)};`;
   }

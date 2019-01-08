@@ -30,11 +30,20 @@ The `onnx` object is the exported object of the module. It's available in global
 - ### <a name="ref-Onnx-backend"></a>**onnx.backend**
   Customizes settings for all available backends. `ONNX.js` currently supports three types of backend - *cpu* (pure JavaScript backend), *webgl* (WebGL backend), and *wasm*   (WebAssembly backend).
 
+  ### `backend.hint`
+    A string or an array of strings that indicate a hint to use backend(s).
+
+  ***
   ### `backend.cpu`
-    An object specifying CPU backend settings. Available soon.
+    An object specifying CPU backend settings. Currently no members are available.
+
   ***
   ### `backend.webgl`
-    An object specifying WebGL backend settings. Available soon.
+    An object specifying WebGL backend settings. The supported member variables are:
+    - **contextId** (`'webgl'|'webgl2'|'experimental-webgl'`)
+
+      Optional. Force the WebGL Context ID.
+
   ***
   ### `backend.wasm`
     An object specifying WebAssembly backend settings. The supported member variables are:

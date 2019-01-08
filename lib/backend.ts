@@ -104,14 +104,16 @@ async function tryLoadBackend(backendHint: string): Promise<Backend|undefined> {
   const backendObj = onnx.backend;
 
   if (typeof backendObj[backendHint] !== 'undefined' && isBackend(backendObj[backendHint])) {
-    const backend = backendObj[backendHint] as Backend;
-    let init = backend.initialize();
-    if (typeof init === 'object' && 'then' in init) {
-      init = await init;
-    }
-    if (init) {
-      backendsCache.set(backendHint, backend);
-      return backend;
+    if (!backendObj[backendHint].disabled) {
+      const backend = backendObj[backendHint] as Backend;
+      let init = backend.initialize();
+      if (typeof init === 'object' && 'then' in init) {
+        init = await init;
+      }
+      if (init) {
+        backendsCache.set(backendHint, backend);
+        return backend;
+      }
     }
   }
 

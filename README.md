@@ -158,6 +158,9 @@ Support for [ai.onnx.ml](https://github.com/onnx/onnx/blob/master/docs/Operators
 ## Contribute
 We’d love to embrace your contribution to ONNX.js. Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
 
+## Thanks
+Thanks to [BrowserStack](https://www.browserstack.com/) for providing cross browser testing support. 
+
 ## License
 Copyright (c) Microsoft Corporation. All rights reserved.
 

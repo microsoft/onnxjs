@@ -17,6 +17,11 @@ export class WebGLGather extends Gather implements WebGLOperator {
     const inputShape = inputs[0].dims.slice();
     const indexDataShape = inputs[1].dims.slice();
     const outputShape = new Array(inputShape.length + indexDataShape.length - 1);
+
+    if (outputShape.length === 0) {
+      throw Error('A scalar tensor output has not been supported');
+    }
+
     const indexCopyOps: string[] = [];
     for (let i = 0; i < outputShape.length; i++) {
       // outputShape is divided into three parts: A, B, C

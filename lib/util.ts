@@ -588,6 +588,33 @@ export class ShapeUtil {
     }
     return size;
   }
+
+  /**
+   * Determines the shape of output tensor y = squeeze(x, axes)
+   * @param dims - shape of input tensor
+   * @param axes - squeeze axes
+   */
+  static squeezeShape(dims: ReadonlyArray<number>, axes: ReadonlyArray<number>): ReadonlyArray<number> {
+    const outputDims = new Array<number>();
+
+    // sanity check
+    if (axes.some(axis => axis >= dims.length || axis < 0)) {
+      throw new Error(`'axes' has an out of range axis`);
+    }
+
+    for (let i = 0; i < dims.length; i++) {
+      const inSqueezeList = axes.indexOf(i) >= 0;
+      if (inSqueezeList && dims[i] !== 1) {
+        throw new Error(`squeeze an axis of size different than 1`);
+      }
+
+      if ((axes.length === 0 && dims[i] > 1) || (axes.length > 0 && !inSqueezeList)) {
+        outputDims.push(dims[i]);
+      }
+    }
+
+    return outputDims;
+  }
 }
 
 // bunch of helper methods that do a variety of math operations

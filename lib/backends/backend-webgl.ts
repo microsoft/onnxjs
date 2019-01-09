@@ -20,6 +20,7 @@ type WebGLOptions = BackendInterface.WebGLOptions;
  * and other main framework components such as Program and Texture Managers
  */
 export class WebGLBackend implements Backend, WebGLOptions {
+  disabled?: boolean;
   glContext: WebGLContext;
   contextId?: 'webgl'|'webgl2'|'experimental-webgl';
   forceUint8Reads = false;

@@ -405,8 +405,8 @@
       // "test_slice_start_out_of_bounds", // tensor shape of 0
       "test_tan_example",
       "test_tan",
-      // "test_tanh_example",
-      // "test_tanh",
+      "test_tanh_example",
+      "test_tanh",
       "test_tile",
       "test_tile_precomputed",
       "test_transpose_all_permutations_0",

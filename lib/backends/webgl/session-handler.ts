@@ -201,6 +201,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new WebGLSlice();
       case 'Tan':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslTan());
+      case 'Tanh':
+        return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslTanh());
       case 'Transpose':
         return new WebGLTranspose();
       case 'Tile':

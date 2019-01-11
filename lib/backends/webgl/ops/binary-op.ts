@@ -24,24 +24,28 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const inputLayouts = inputs.map(t => handler.getOrCreateTextureLayout(t));
-    const isBroadcast = !ShapeUtil.areEqual(inputs[0].dims.slice(), inputs[1].dims.slice());
+    const isBroadcast = !ShapeUtil.areEqual(inputs[0].dims, inputs[1].dims);
     if (isBroadcast) {
-      const outputShape = BroadcastUtil.calcShape(inputs[0].dims.slice(), inputs[1].dims.slice(), false);
+      const outputShape = BroadcastUtil.calcShape(inputs[0].dims, inputs[1].dims, false);
       if (!outputShape) {
         throw new Error(`Can't perform binary op on the given tensors`);
       }
-      const rank = outputShape.length;
+      const outputRank = outputShape.length;
+      const aRank = inputs[0].dims.length !== 0 ? inputs[0].dims.length : 1;
+      const bRank = inputs[1].dims.length !== 0 ? inputs[1].dims.length : 1;
+      const aBcast = inputs[0].dims.length !== 0 ? `bcastIndices_A(indices, aindices);` : `aindices[0] = 0;`;
+      const bBcast = inputs[1].dims.length !== 0 ? `bcastIndices_B(indices, bindices);` : `bindices[0] = 0;`;
       const shaderSource = `
       uniform sampler2D A;
       uniform sampler2D B;
       ${this.glslFunc.body}
-      float process(int indices[${rank}]) {
-        int aindices[${inputs[0].dims.slice().length}];
-        int bindices[${inputs[1].dims.slice().length}];
-        bcastIndices_A(indices, aindices);
-        bcastIndices_B(indices, bindices);
+      float process(int indices[${outputRank}]) {
+        int aindices[${aRank}];
+        int bindices[${bRank}];
+        ${aBcast}
+        ${bBcast}
         return ${this.glslFunc.name}(_A(aindices), _B(bindices));
-      }`;
+    }`;
       return {
         hasMain: false,
         inputLayouts,
@@ -50,20 +54,20 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
       };
     }
     const shaderSource = `
-      uniform sampler2D A;
-      uniform sampler2D B;
-      ${this.glslFunc.body}
-      void main() {
-        vec4 v1 = texture2D(A, TexCoords);
-        vec4 v2 = texture2D(B, TexCoords);
-        vec4 result = ${this.glslFunc.name}(v1, v2);
-        gl_FragColor = result;
-      }
+    uniform sampler2D A;
+    uniform sampler2D B;
+    ${this.glslFunc.body}
+    void main() {
+      vec4 v1 = texture2D(A, TexCoords);
+      vec4 v2 = texture2D(B, TexCoords);
+      vec4 result = ${this.glslFunc.name}(v1, v2);
+      gl_FragColor = result;
+    }
     `;
     return {
       hasMain: true,
       inputLayouts,
-      outputLayout: handler.createBasicTextureLayout(inputs[0].dims.slice()),
+      outputLayout: handler.createBasicTextureLayout(inputs[0].dims),
       shaderSource,
     };
   }

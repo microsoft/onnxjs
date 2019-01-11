@@ -1,12 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as api from '../lib/api';
+import {Backend} from '../lib/api';
 import {Attribute} from '../lib/attribute';
 import {Logger} from '../lib/instrument';
 import {Tensor} from '../lib/tensor';
 
 export declare namespace Test {
-  export interface NamedTensor extends Tensor {
+  export interface NamedTensor extends api.Tensor {
     name: string;
   }
 
@@ -75,6 +77,16 @@ export declare namespace Test {
   }
 
   /**
+   * Represent ONNX.js global options
+   */
+  export interface Options {
+    debug?: boolean;
+    cpu?: Backend.CpuOptions;
+    webgl?: Backend.WebGLOptions;
+    wasm?: Backend.WasmOptions;
+  }
+
+  /**
    * The data schema of a test config.
    */
   export interface Config {
@@ -84,5 +96,6 @@ export declare namespace Test {
 
     log: ReadonlyArray<{category: string, config: Logger.Config}>;
     profile: boolean;
+    options: Options;
   }
 }

@@ -41,7 +41,7 @@ export class TextureHelper {
     texture = this.glContext.allocateTexture(
         layout.width, layout.height, textureDataType, layout.channels, this.toTextureData(dataType, data));
 
-    return {...layout, dataType, texture, arrayType: textureDataType};
+    return {...layout, dataType, texture};
   }
   createTexture(
       dataType: Tensor.DataType, shape: ReadonlyArray<number>, strides?: ReadonlyArray<number>,
@@ -74,6 +74,13 @@ export class TextureHelper {
       const data = this.glContext.readTexture(
           td.texture, td.width, td.height, dataSize, this.toEncoderType(dataType), channels!);
       return this.toTensorData(dataType, data);
+    });
+  }
+  readUint8TextureAsFloat(td: TextureData): Float32Array {
+    return this.profiler.event('backend', 'TextureHelper.readUint8TextureAsFloat', () => {
+      const dataSize = td.shape.reduce((a, b) => a * b);
+      const data = this.glContext.readTexture(td.texture, td.width, td.height, dataSize * 4, 'byte', 4);
+      return new Float32Array(data.buffer, data.byteOffset, dataSize);
     });
   }
   releaseTexture(texture: WebGLTexture): void {

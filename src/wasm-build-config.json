@@ -1,23 +1,22 @@
 {
   "src": [
-    "./wasm-ops/*.cpp",
-    "./wasm-ops/*/*.cpp"
+    "./wasm-ops/**/*.cpp"
   ],
   "exported_functions": [
     "_malloc",
     "_free",
-	  "_add_f32",
-	  "_sub_f32",
-	  "_mul_f32",
-	  "_div_f32",
-	  "_xor_f32",
-	  "_or_f32",
-	  "_and_f32",
-	  "_prelu_f32",
+    "_add_f32",
+    "_sub_f32",
+    "_mul_f32",
+    "_div_f32",
+    "_prelu_f32",
+    "_xor_",
+    "_or_",
+    "_and_",
     "_conv_f32",
     "_pool_f32",
     "_gemm_f32",
-	  "_matmul_f32",
+    "_matmul_f32",
     "_batch_normalization_f32",
     "_sum_f32",
     "_softmax_f32"

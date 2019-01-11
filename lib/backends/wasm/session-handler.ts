@@ -3,7 +3,7 @@
 
 import {Backend, InferenceHandler, SessionHandler} from '../../backend';
 import {Graph} from '../../graph';
-import {NUMBER_TYPES, Operator} from '../../operators';
+import {Operator} from '../../operators';
 import {Session} from '../../session';
 import {resolve} from '../cpu/ops-resolve';
 import {WasmInferenceHandler} from './inference-handler';
@@ -36,14 +36,14 @@ export class WasmSessionHandler implements SessionHandler {
     switch (node.opType) {
       // Binary arithmetic ops
       case 'Add':
-        return new WasmBinaryOp(NUMBER_TYPES, 'Add');
+        return new WasmBinaryOp(['float32'], 'Add');
       case 'Sub':
-        return new WasmBinaryOp(NUMBER_TYPES, 'Sub');
+        return new WasmBinaryOp(['float32'], 'Sub');
       case 'Mul':
-        return new WasmBinaryOp(NUMBER_TYPES, 'Mul');
+        return new WasmBinaryOp(['float32'], 'Mul');
       case 'Div':
         // TODO: Handle division by zero
-        return new WasmBinaryOp(NUMBER_TYPES, 'Div');
+        return new WasmBinaryOp(['float32'], 'Div');
       // Binary logical ops
       case 'Xor':
         return new WasmBinaryOp(['bool'], 'Xor');
@@ -73,7 +73,7 @@ export class WasmSessionHandler implements SessionHandler {
       case 'GlobalAveragePool':
         return new WasmGlobalAveragePool();
       case 'PRelu':
-        return new WasmBinaryOp(NUMBER_TYPES, 'PRelu');
+        return new WasmBinaryOp(['float32'], 'PRelu');
       default:
         if (this.fallbackToCpuOps) {
           return resolve(node, domain, version);

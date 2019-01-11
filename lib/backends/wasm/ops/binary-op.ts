@@ -3,7 +3,7 @@
 
 import {BinaryOp} from '../../../ops/binary-op';
 import {Tensor} from '../../../tensor';
-import {BroadcastUtil, ShapeUtil} from '../../../util';
+import {BroadcastUtil} from '../../../util';
 import {WasmBinding} from '../../../wasm-binding';
 import {WasmInferenceHandler} from '../inference-handler';
 
@@ -17,57 +17,65 @@ export class WasmBinaryOp extends BinaryOp {
     if (!outputShape) {
       throw new Error('not broadcastable');
     }
-    const resultDataLength = ShapeUtil.size(outputShape);
-    const resultData = new Float32Array(resultDataLength);
     let fun = '';
+    let binaryOpType = '';
     switch (this.opType) {
       case 'Add':
         fun = '_add_f32';
+        binaryOpType = 'floatInFloatOut';
         break;
       case 'Sub':
         fun = '_sub_f32';
+        binaryOpType = 'floatInFloatOut';
         break;
       case 'Mul':
         fun = '_mul_f32';
+        binaryOpType = 'floatInFloatOut';
         break;
       case 'Div':
         fun = '_div_f32';
-        break;
-      case 'Xor':
-        fun = '_xor_f32';
-        break;
-      case 'Or':
-        fun = '_or_f32';
-        break;
-      case 'And':
-        fun = '_and_f32';
+        binaryOpType = 'floatInFloatOut';
         break;
       case 'PRelu':
         fun = '_prelu_f32';
+        binaryOpType = 'floatInFloatOut';
+        break;
+      case 'Xor':
+        fun = '_xor_';
+        binaryOpType = 'boolInBoolOut';
+        break;
+      case 'Or':
+        fun = '_or_';
+        binaryOpType = 'boolInBoolOut';
+        break;
+      case 'And':
+        fun = '_and_';
+        binaryOpType = 'boolInBoolOut';
         break;
       default:
         throw Error(`unsupported binary op by the Wasm backend`);
     }
-
-    const inputType = inputs[0].type;
-    const outputType = this.resultType ? this.resultType : inputs[0].type;
-    type fourByteTypes = Float32Array|Int32Array|Uint32Array;
-
-    if (inputType === 'float32' || inputType === 'int32' || inputType === 'uint32') {
+    let result: Tensor;
+    if (binaryOpType === 'floatInFloatOut') {
+      const outputType = this.resultType ? this.resultType : 'float32';
+      result = new Tensor(outputShape, outputType);
       WasmBinding.getInstance().ccall(
-          fun, [inputs[0].numberData as fourByteTypes, 'float32ptr'], [inputs[0].dims.length, 'int32'],
-          [inputs[0].dims, 'int32ptr'], [inputs[1].numberData as fourByteTypes, 'float32ptr'],
-          [inputs[1].dims.length, 'int32'], [inputs[1].dims, 'int32ptr'], [resultData, 'float32ptr', 'out'],
-          [resultData.length, 'int32'], [outputShape.length, 'int32'], [outputShape, 'int32ptr']);
+          fun, [inputs[0].floatData, 'float32ptr'], [inputs[0].dims.length, 'int32'], [inputs[0].dims, 'int32ptr'],
+          [inputs[1].floatData, 'float32ptr'], [inputs[1].dims.length, 'int32'], [inputs[1].dims, 'int32ptr'],
+          [result.floatData, 'float32ptr', 'out'], [result.floatData.length, 'int32'], [outputShape.length, 'int32'],
+          [outputShape, 'int32ptr']);
+    } else if (binaryOpType === 'boolInBoolOut') {
+      const outputType = this.resultType ? this.resultType : 'bool';
+      result = new Tensor(outputShape, outputType);
+      WasmBinding.getInstance().ccall(
+          fun, [inputs[0].integerData as Uint8Array, 'boolptr'], [inputs[0].dims.length, 'int32'],
+          [inputs[0].dims, 'int32ptr'], [inputs[1].integerData as Uint8Array, 'boolptr'],
+          [inputs[1].dims.length, 'int32'], [inputs[1].dims, 'int32ptr'],
+          [result.integerData as Uint8Array, 'boolptr', 'out'], [result.floatData.length, 'int32'],
+          [outputShape.length, 'int32'], [outputShape, 'int32ptr']);
     } else {
-      WasmBinding.getInstance().ccall(
-          fun, [Float32Array.from(inputs[0].numberData), 'float32ptr'], [inputs[0].dims.length, 'int32'],
-          [inputs[0].dims, 'int32ptr'], [Float32Array.from(inputs[1].numberData), 'float32ptr'],
-          [inputs[1].dims.length, 'int32'], [inputs[1].dims, 'int32ptr'], [resultData, 'float32ptr', 'out'],
-          [resultData.length, 'int32'], [outputShape.length, 'int32'], [outputShape, 'int32ptr']);
+      throw new Error(`Unsupported binary op format`);
     }
-    const result = new Tensor(outputShape, outputType);
-    result.numberData.set(resultData);
     return [result];
   }
 }

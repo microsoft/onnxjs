@@ -21,24 +21,34 @@ export class WasmBinaryOp extends BinaryOp {
     let binaryOpType = '';
     switch (this.opType) {
       case 'Add':
-        fun = '_add_f32';
-        binaryOpType = 'floatInFloatOut';
+        if (inputs[0].type === 'float32') {
+          fun = '_add_f32';
+          binaryOpType = 'float32InFloat32Out';
+        }
         break;
       case 'Sub':
-        fun = '_sub_f32';
-        binaryOpType = 'floatInFloatOut';
+        if (inputs[0].type === 'float32') {
+          fun = '_sub_f32';
+          binaryOpType = 'float32InFloat32Out';
+        }
         break;
       case 'Mul':
-        fun = '_mul_f32';
-        binaryOpType = 'floatInFloatOut';
+        if (inputs[0].type === 'float32') {
+          fun = '_mul_f32';
+          binaryOpType = 'float32InFloat32Out';
+        }
         break;
       case 'Div':
-        fun = '_div_f32';
-        binaryOpType = 'floatInFloatOut';
+        if (inputs[0].type === 'float32') {
+          fun = '_div_f32';
+          binaryOpType = 'float32InFloat32Out';
+        }
         break;
       case 'PRelu':
-        fun = '_prelu_f32';
-        binaryOpType = 'floatInFloatOut';
+        if (inputs[0].type === 'float32') {
+          fun = '_prelu_f32';
+          binaryOpType = 'float32InFloat32Out';
+        }
         break;
       case 'Xor':
         fun = '_xor_';
@@ -56,7 +66,7 @@ export class WasmBinaryOp extends BinaryOp {
         throw Error(`unsupported binary op by the Wasm backend`);
     }
     let result: Tensor;
-    if (binaryOpType === 'floatInFloatOut') {
+    if (binaryOpType === 'float32InFloat32Out') {
       const outputType = this.resultType ? this.resultType : 'float32';
       result = new Tensor(outputShape, outputType);
       WasmBinding.getInstance().ccall(
@@ -71,10 +81,10 @@ export class WasmBinaryOp extends BinaryOp {
           fun, [inputs[0].integerData as Uint8Array, 'boolptr'], [inputs[0].dims.length, 'int32'],
           [inputs[0].dims, 'int32ptr'], [inputs[1].integerData as Uint8Array, 'boolptr'],
           [inputs[1].dims.length, 'int32'], [inputs[1].dims, 'int32ptr'],
-          [result.integerData as Uint8Array, 'boolptr', 'out'], [result.floatData.length, 'int32'],
+          [result.integerData as Uint8Array, 'boolptr', 'out'], [result.integerData.length, 'int32'],
           [outputShape.length, 'int32'], [outputShape, 'int32ptr']);
     } else {
-      throw new Error(`Unsupported binary op format`);
+      throw new Error(`Unsupported binary op format. Probably unsupported data types.`);
     }
     return [result];
   }

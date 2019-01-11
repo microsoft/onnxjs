@@ -18,7 +18,7 @@ static_assert(sizeof(int) == sizeof(int32_t),
 #define PARAM_BOOL(data, offset) (!!PARAM_VALUE(data, offset, uint8_t))
 #define PARAM_INT32(data, offset) PARAM_VALUE(data, offset, int32_t)
 #define PARAM_FLOAT(data, offset) PARAM_VALUE(data, offset, float)
-#define PARAM_BOOL_PTR(data, offset) (PARAM_PTR(data, offset, bool))
+#define PARAM_BOOL_PTR(data, offset) PARAM_PTR(data, offset, uint8_t)
 #define PARAM_INT32_PTR(data, offset) PARAM_PTR(data, offset, int32_t)
 #define PARAM_FLOAT_PTR(data, offset) PARAM_PTR(data, offset, float)
 

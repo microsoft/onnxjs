@@ -12,9 +12,9 @@ float sub_core(const float &a, const float &b) { return a - b; }
 float mul_core(const float &a, const float &b) { return a * b; }
 float div_core(const float &a, const float &b) { return a / b; }
 float prelu_core(const float &a, const float &b) { return a >= 0 ? a : a * b; }
-bool xor_core(const bool &a, const bool &b) { return a ^ b; }
-bool or_core(const bool &a, const bool &b) { return a || b; }
-bool and_core(const bool &a, const bool &b) { return a && b; }
+uint8_t xor_core(const uint8_t &a, const uint8_t &b) { return a ^ b; }
+uint8_t or_core(const uint8_t &a, const uint8_t &b) { return a || b; }
+uint8_t and_core(const uint8_t &a, const uint8_t &b) { return a && b; }
 
 // Core binary operator implementation
 void binary_f32_input_f32_output_imp(
@@ -24,9 +24,9 @@ void binary_f32_input_f32_output_imp(
     const int32_t &output_length, const int32_t &output_rank,
     const std::vector<int32_t> &output_dims,
     float (*core_op)(const float &, const float &)) {
-  const std::vector<int32_t> &strides1 = ShapeUtils::compute_strides(dims_1);
-  const std::vector<int32_t> &strides2 = ShapeUtils::compute_strides(dims_2);
-  const std::vector<int32_t> &output_strides =
+  const std::vector<int32_t> strides1 = ShapeUtils::compute_strides(dims_1);
+  const std::vector<int32_t> strides2 = ShapeUtils::compute_strides(dims_2);
+  const std::vector<int32_t> output_strides =
       ShapeUtils::compute_strides(output_dims);
 
   for (size_t i = 0; i < output_length; ++i) {
@@ -42,15 +42,15 @@ void binary_f32_input_f32_output_imp(
 }
 
 void binary_bool_input_bool_output_imp(
-    const bool *input_1, const int32_t &rank_1,
-    const std::vector<int32_t> &dims_1, const bool *input_2,
-    const int32_t &rank2, const std::vector<int32_t> &dims_2, bool *output,
+    const uint8_t *input_1, const int32_t &rank_1,
+    const std::vector<int32_t> &dims_1, const uint8_t *input_2,
+    const int32_t &rank2, const std::vector<int32_t> &dims_2, uint8_t *output,
     const int32_t &output_length, const int32_t &output_rank,
     const std::vector<int32_t> &output_dims,
-    bool (*core_op)(const bool &, const bool &)) {
-  const std::vector<int32_t> &strides1 = ShapeUtils::compute_strides(dims_1);
-  const std::vector<int32_t> &strides2 = ShapeUtils::compute_strides(dims_2);
-  const std::vector<int32_t> &output_strides =
+    uint8_t (*core_op)(const uint8_t &, const uint8_t &)) {
+  const std::vector<int32_t> strides1 = ShapeUtils::compute_strides(dims_1);
+  const std::vector<int32_t> strides2 = ShapeUtils::compute_strides(dims_2);
+  const std::vector<int32_t> output_strides =
       ShapeUtils::compute_strides(output_dims);
 
   for (size_t i = 0; i < output_length; ++i) {
@@ -109,11 +109,11 @@ void binary_f32_input_f32_output_wrapper(void *data,
 }
 
 void binary_bool_input_bool_output_wrapper(void *data,
-                                           bool (*core_op)(const bool &,
-                                                           const bool &)) {
+                                           uint8_t (*core_op)(const uint8_t &,
+                                                           const uint8_t &)) {
   uint32_t *dataIndex = static_cast<uint32_t *>(data);
   uint32_t const argc = dataIndex[0];
-  const bool *input_1 = PARAM_BOOL_PTR(data, dataIndex[1]);
+  const uint8_t *input_1 = PARAM_BOOL_PTR(data, dataIndex[1]);
   const int32_t rank_1 = PARAM_INT32(data, dataIndex[2]);
   const int32_t *dims_1 = PARAM_INT32_PTR(data, dataIndex[3]);
   std::vector<int32_t> dims1_vector;
@@ -123,7 +123,7 @@ void binary_bool_input_bool_output_wrapper(void *data,
       dims1_vector[i] = dims_1[i];
     }
   }
-  const bool *input_2 = PARAM_BOOL_PTR(data, dataIndex[4]);
+  const uint8_t *input_2 = PARAM_BOOL_PTR(data, dataIndex[4]);
   const int32_t rank2 = PARAM_INT32(data, dataIndex[5]);
   const int32_t *dims_2 = PARAM_INT32_PTR(data, dataIndex[6]);
   std::vector<int32_t> dims2_vector;
@@ -133,7 +133,7 @@ void binary_bool_input_bool_output_wrapper(void *data,
       dims2_vector[i] = dims_2[i];
     }
   }
-  bool *output = PARAM_BOOL_PTR(data, dataIndex[7]);
+  uint8_t *output = PARAM_BOOL_PTR(data, dataIndex[7]);
   const int32_t output_length = PARAM_INT32(data, dataIndex[8]);
   const int32_t output_rank = PARAM_INT32(data, dataIndex[9]);
   const int32_t *output_dims = PARAM_INT32_PTR(data, dataIndex[10]);

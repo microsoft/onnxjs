@@ -175,6 +175,16 @@ export class WasmBinding {
           len = 8;
           break;
         case 'boolptr':
+          if (!paramData) {
+            // deal with nullptr
+            offset.push(0);
+            continue;
+          } else if (Array.isArray(paramData) || ArrayBuffer.isView(paramData)) {
+            len = 4 * Math.ceil(paramData.length / 4);
+          } else {
+            throw new Error(`boolptr requires boolean array or Uint8Array`);
+          }
+          break;
         case 'int32ptr':
         case 'float32ptr':
           if (!paramData) {
@@ -239,14 +249,14 @@ export class WasmBinding {
           const boolArray = (paramData as WasmCallArgumentTypeMap['boolptr']);
           // ReadonlyArray<boolean>
           if (Array.isArray(paramData)) {
-            const dataSlice = heapU8.subarray(offset8, offset8 + boolArray.length);
+            const data = heapU8.subarray(offset8, offset8 + boolArray.length);
             for (let i = 0; i < boolArray.length; ++i) {
-              dataSlice[i] = boolArray[i] === true ? 1 : 0;
+              data[i] = boolArray[i] === true ? 1 : 0;
             }
           }
           // Uint8Array
           else {
-            const boolArray = (paramData as WasmCallArgumentTypeMap['boolptr']) as Uint8Array;
+            const boolArray = paramData as Uint8Array;
             heapU8.subarray(offset8, offset8 + boolArray.length).set(boolArray);
           }
           break;

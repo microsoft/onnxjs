@@ -22,22 +22,25 @@ void and_(void *);
 
 // Wrappers
 void binary_f32_input_f32_output_wrapper(void *data,
-                            float (*core_op)(const float &, const float &));
+                                         float (*core_op)(const float &,
+                                                          const float &));
 void binary_bool_input_bool_output_wrapper(void *data,
-                            bool (*core_op)(const bool &, const bool &));
+                                           bool (*core_op)(const bool &,
+                                                           const bool &));
 
 // Implementations
 void binary_f32_input_f32_output_imp(const float *, const int32_t &,
-                    const std::vector<int32_t> &, const float *,
-                    const int32_t &,
-                    const std::vector<int32_t> &, float *, const int32_t &,
-                    const int32_t &, const std::vector<int32_t> &,
-                    float (*)(const float &, const float &));
+                                     const std::vector<int32_t> &,
+                                     const float *, const int32_t &,
+                                     const std::vector<int32_t> &, float *,
+                                     const int32_t &, const int32_t &,
+                                     const std::vector<int32_t> &,
+                                     float (*)(const float &, const float &));
 void binary_bool_input_bool_output_imp(const bool *, const int32_t &,
-                    const std::vector<int32_t> &, const bool *,
-                    const int32_t &,
-                    const std::vector<int32_t> &, bool *, const int32_t &,
-                    const int32_t &, const std::vector<int32_t> &,
-                    bool (*)(const bool &, const bool &));
-
+                                       const std::vector<int32_t> &,
+                                       const bool *, const int32_t &,
+                                       const std::vector<int32_t> &, bool *,
+                                       const int32_t &, const int32_t &,
+                                       const std::vector<int32_t> &,
+                                       bool (*)(const bool &, const bool &));
 }

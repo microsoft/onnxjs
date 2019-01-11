@@ -108,9 +108,8 @@ void binary_f32_input_f32_output_wrapper(void *data,
                                   output_rank, output_dims_vector, core_op);
 }
 
-void binary_bool_input_bool_output_wrapper(void *data,
-                                           uint8_t (*core_op)(const uint8_t &,
-                                                           const uint8_t &)) {
+void binary_bool_input_bool_output_wrapper(
+    void *data, uint8_t (*core_op)(const uint8_t &, const uint8_t &)) {
   uint32_t *dataIndex = static_cast<uint32_t *>(data);
   uint32_t const argc = dataIndex[0];
   const uint8_t *input_1 = PARAM_BOOL_PTR(data, dataIndex[1]);

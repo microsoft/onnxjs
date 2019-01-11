@@ -43,26 +43,26 @@ See [Compatibility](../README.md#Compatibility) for a list of the supported plat
 |                [Pad](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Pad)                |             |              |      :heavy_check_mark:      |
 |                [Pow](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Pow)                |             |              |      :heavy_check_mark:      |
 |              [PRelu](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#PRelu)              |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|       [ReduceLogSum](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ReduceLogSum)       |     :heavy_check_mark:     |              |               |
-|          [ReduceMax](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ReduceMax)          |     :heavy_check_mark:     |              |               |
-|         [ReduceMean](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ReduceMean)         |     :heavy_check_mark:     |              |               |
-|          [ReduceMin](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AReduceMin)         |             |              |               |
-|         [ReduceProd](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AReduceProd)        |             |              |               |
-|          [ReduceSum](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AReduceSum)         |             |              |               |
-|    [ReduceSumSquare](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AReduceSumSquare)   |             |              |               |
+|       [ReduceLogSum](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ReduceLogSum)       |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
+|          [ReduceMax](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ReduceMax)          |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
+|         [ReduceMean](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ReduceMean)         |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
+|          [ReduceMin](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AReduceMin)         |             |              |       :heavy_check_mark:        |
+|         [ReduceProd](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AReduceProd)        |             |              |       :heavy_check_mark:        |
+|          [ReduceSum](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AReduceSum)         |             |              |       :heavy_check_mark:        |
+|    [ReduceSumSquare](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AReduceSumSquare)   |             |              |       :heavy_check_mark:        |
 |               [Relu](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Relu)               |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |            [Reshape](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Reshape)            |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |            [Sigmoid](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Sigmoid)            |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |                [Sin](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Sin)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|            [Slice](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Slice)            |     :heavy_check_mark:     |           |            |
+|            [Slice](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Slice)            |     :heavy_check_mark:     |           |      :heavy_check_mark:      |
 |            [Softmax](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Softmax)            |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
 |              [Split](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Split)              |             |              |      :heavy_check_mark:      |
 |               [Sqrt](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Sqrt)               |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |                [Sub](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Sub)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |                [Sum](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Sum)                |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
 |                [Tan](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Tan)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|               [Tanh](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Tanh)               |     :heavy_check_mark:     |              |               |
-|               [Tile](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Tile)            |     :heavy_check_mark:     |           |            |
+|               [Tanh](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Tanh)               |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
+|               [Tile](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Tile)            |     :heavy_check_mark:     |           |     :heavy_check_mark:       |
 |          [Transpose](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Transpose)          |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |          [Unsqueeze](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Unsqueeze)          |     :heavy_check_mark:     |              |               |
 |                [Xor](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Xor)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |

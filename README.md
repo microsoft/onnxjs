@@ -124,7 +124,6 @@ require('onnxjs');
 
 Refer to [node/Add](./examples/node/add) for a detailed example.
 
-*NOTE: Currently, the supported platforms are Windows 10 + Edge/Chrome/Firefox/Electron/Node.js (support for other platforms is coming soon).*
 
 ## Documents
 

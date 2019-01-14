@@ -3,7 +3,7 @@
 
 import {Slice} from '../../../ops/slice';
 import {Tensor} from '../../../tensor';
-import {getActualAxisFromNegativeValue, ShapeUtil} from '../../../util';
+import {ShapeUtil} from '../../../util';
 import {CpuInferenceHandler} from '../inference-handler';
 
 export class CpuSlice extends Slice {

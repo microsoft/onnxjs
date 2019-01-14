@@ -34,11 +34,11 @@ void binary_f32_input_f32_output_imp(
 
   for (size_t i = 0; i < output_length; ++i) {
     ShapeUtils::offset_to_indices(output_strides, i, broadcasted_indices);
-    BroadcastUtils::broadcasted_to_original_indices(
-        broadcasted_indices, dims_1, indices_1);
+    BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices, dims_1,
+                                                    indices_1);
     auto offset1 = ShapeUtils::indices_to_offset(strides_1, indices_1);
-    BroadcastUtils::broadcasted_to_original_indices(
-        broadcasted_indices, dims_2, indices_2);
+    BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices, dims_2,
+                                                    indices_2);
     auto offset2 = ShapeUtils::indices_to_offset(strides_2, indices_2);
     output[i] = core_op(input_1[offset1], input_2[offset2]);
   }
@@ -61,11 +61,11 @@ void binary_bool_input_bool_output_imp(
 
   for (size_t i = 0; i < output_length; ++i) {
     ShapeUtils::offset_to_indices(output_strides, i, broadcasted_indices);
-    BroadcastUtils::broadcasted_to_original_indices(
-        broadcasted_indices, dims_1, indices_1);
+    BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices, dims_1,
+                                                    indices_1);
     auto offset1 = ShapeUtils::indices_to_offset(strides_1, indices_1);
-    BroadcastUtils::broadcasted_to_original_indices(
-        broadcasted_indices, dims_2, indices_2);
+    BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices, dims_2,
+                                                    indices_2);
     auto offset2 = ShapeUtils::indices_to_offset(strides_2, indices_2);
     output[i] = core_op(input_1[offset1], input_2[offset2]);
   }

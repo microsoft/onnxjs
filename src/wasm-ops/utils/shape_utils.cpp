@@ -31,8 +31,8 @@ ShapeUtils::compute_strides(const std::vector<int32_t> &dims) {
   return strides;
 }
 
-void
-ShapeUtils::compute_strides(const std::vector<int32_t> &dims, std::vector<int32_t> &strides) {
+void ShapeUtils::compute_strides(const std::vector<int32_t> &dims,
+                                 std::vector<int32_t> &strides) {
   auto rank = dims.size();
   if (rank == 0 || rank == 1) {
     strides[0] = 1;
@@ -69,9 +69,9 @@ ShapeUtils::offset_to_indices(const std::vector<int32_t> &strides,
   return indices;
 }
 
-void
-ShapeUtils::offset_to_indices(const std::vector<int32_t> &strides,
-                              size_t offset, std::vector<int32_t> &indices) {
+void ShapeUtils::offset_to_indices(const std::vector<int32_t> &strides,
+                                   size_t offset,
+                                   std::vector<int32_t> &indices) {
   auto rank = strides.size();
   if (rank == 0) {
     return;

@@ -11,7 +11,8 @@ std::vector<int32_t> BroadcastUtils::broadcasted_to_original_indices(
     return std::vector<int32_t>();
   }
   std::vector<int32_t> original_indices(rank);
-  BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices, dims, original_indices);
+  BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices, dims,
+                                                  original_indices);
   return original_indices;
 }
 

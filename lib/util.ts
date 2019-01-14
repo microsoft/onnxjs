@@ -25,6 +25,59 @@ export function checkInputsShape(inputs: Tensor[], ...expectedDimensions: number
   return true;
 }
 
+export class MatMulUtil {
+  /**
+   * Fix the input shapes for MatMul operation if they need fixing
+   * @param dimsA The shape of tensor A. Should be an array of positive integers
+   * @param dimsB The shape of tensor B. Should be an array of positive integers
+   * @returns A tuple containing the preprocessed input shapes as required by ONNX specifications
+   */
+  static preprocessInputShapes(dimsA: number[], dimsB: number[]): [number[], number[]] {
+    // If the first argument is 1-D, it is promoted to a matrix by prepending
+    // a 1 to its dimensions. After matrix multiplication the prepended 1 is
+    // removed.
+    if (dimsA.length === 1) {
+      dimsA = [1, dimsA[0]];
+    }
+    // If the second argument is 1-D, it is promoted to a matrix by appending
+    // a 1 to its dimensions. After matrix multiplication the appended 1 is
+    // removed.
+    if (dimsB.length === 1) {
+      dimsB = [dimsB[0], 1];
+    }
+
+    return [dimsA, dimsB];
+  }
+
+  /**
+   * Fix the output shape computed for MatMul operation if it needs fixing
+   * @param outputShape The computed outputShape. Should be an array (atleast of length 2) of positive integers.
+   * This will be mutated.
+   * @param aRank The rank of tensor A.
+   * @param bRank The rank of tensor B.
+   */
+  static postprocessOutputShape(outputShape: number[], aRank: number, bRank: number) {
+    // Remove prepended dimension if first input is 1d
+    if (aRank === 1) {
+      // outputShape = outputShape.slice(0, outputShape.length - 2).concat(outputShape.slice(outputShape.length - 1));
+      outputShape.splice(outputShape.length - 2, 1);
+    }
+    // Remove appended dimension if second input is 1d
+    if (bRank === 1) {
+      outputShape.pop();
+    }
+  }
+
+  /**
+   * Calculate the expected shape when matrix multiplication
+   * @param a The shape of tensor A. Should be a tuple of 2 positive integers
+   * @param b The shape of tensor B. Should be a tuple of 2 positive integers
+   * @returns The expected shape of the result, or undefined if N/A
+   */
+  static calcMatMulShape(a: [number, number], b: [number, number]): [number, number]|undefined {
+    return (a[1] !== b[0]) ? undefined : [a[0], b[1]];
+  }
+}
 export class BroadcastUtil {
   /**
    * Calculate the expected shape when broadcasting 2 tensors
@@ -45,7 +98,7 @@ export class BroadcastUtil {
         return undefined;
       }
       const cShapeMatMul =
-          BroadcastUtil.calcMatMulShape([adims[arank - 2], adims[arank - 1]], [bdims[brank - 2], bdims[brank - 1]]);
+          MatMulUtil.calcMatMulShape([adims[arank - 2], adims[arank - 1]], [bdims[brank - 2], bdims[brank - 1]]);
       if (cShapeMatMul === undefined) {
         return undefined;
       }
@@ -63,16 +116,6 @@ export class BroadcastUtil {
     }
 
     return cdims;
-  }
-
-  /**
-   * Calculate the expected shape when matrix multiplication
-   * @param a The shape of tensor A. Should be a tuple of 2 positive integers
-   * @param b The shape of tensor B. Should be a tuple of 2 positive integers
-   * @returns The expected shape of the result, or undefined if N/A
-   */
-  static calcMatMulShape(a: [number, number], b: [number, number]): [number, number]|undefined {
-    return (a[1] !== b[0]) ? undefined : [a[0], b[1]];
   }
 
   /**

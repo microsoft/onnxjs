@@ -20,23 +20,26 @@ uint8_t and_core(const uint8_t &a, const uint8_t &b) { return a && b; }
 void binary_f32_input_f32_output_imp(
     const float *input_1, const int32_t &rank_1,
     const std::vector<int32_t> &dims_1, const float *input_2,
-    const int32_t &rank2, const std::vector<int32_t> &dims_2, float *output,
+    const int32_t &rank_2, const std::vector<int32_t> &dims_2, float *output,
     const int32_t &output_length, const int32_t &output_rank,
     const std::vector<int32_t> &output_dims,
     float (*core_op)(const float &, const float &)) {
-  const std::vector<int32_t> strides1 = ShapeUtils::compute_strides(dims_1);
-  const std::vector<int32_t> strides2 = ShapeUtils::compute_strides(dims_2);
+  const std::vector<int32_t> strides_1 = ShapeUtils::compute_strides(dims_1);
+  const std::vector<int32_t> strides_2 = ShapeUtils::compute_strides(dims_2);
   const std::vector<int32_t> output_strides =
       ShapeUtils::compute_strides(output_dims);
+  std::vector<int32_t> indices_1(rank_1);
+  std::vector<int32_t> indices_2(rank_2);
+  std::vector<int32_t> broadcasted_indices(output_strides.size());
 
   for (size_t i = 0; i < output_length; ++i) {
-    auto broadcasted_indices = ShapeUtils::offset_to_indices(output_strides, i);
-    auto indices1 = BroadcastUtils::broadcasted_to_original_indices(
-        broadcasted_indices, dims_1);
-    auto offset1 = ShapeUtils::indices_to_offset(strides1, indices1);
-    auto indices2 = BroadcastUtils::broadcasted_to_original_indices(
-        broadcasted_indices, dims_2);
-    auto offset2 = ShapeUtils::indices_to_offset(strides2, indices2);
+    ShapeUtils::offset_to_indices(output_strides, i, broadcasted_indices);
+    BroadcastUtils::broadcasted_to_original_indices(
+        broadcasted_indices, dims_1, indices_1);
+    auto offset1 = ShapeUtils::indices_to_offset(strides_1, indices_1);
+    BroadcastUtils::broadcasted_to_original_indices(
+        broadcasted_indices, dims_2, indices_2);
+    auto offset2 = ShapeUtils::indices_to_offset(strides_2, indices_2);
     output[i] = core_op(input_1[offset1], input_2[offset2]);
   }
 }
@@ -44,23 +47,26 @@ void binary_f32_input_f32_output_imp(
 void binary_bool_input_bool_output_imp(
     const uint8_t *input_1, const int32_t &rank_1,
     const std::vector<int32_t> &dims_1, const uint8_t *input_2,
-    const int32_t &rank2, const std::vector<int32_t> &dims_2, uint8_t *output,
+    const int32_t &rank_2, const std::vector<int32_t> &dims_2, uint8_t *output,
     const int32_t &output_length, const int32_t &output_rank,
     const std::vector<int32_t> &output_dims,
     uint8_t (*core_op)(const uint8_t &, const uint8_t &)) {
-  const std::vector<int32_t> strides1 = ShapeUtils::compute_strides(dims_1);
-  const std::vector<int32_t> strides2 = ShapeUtils::compute_strides(dims_2);
+  const std::vector<int32_t> strides_1 = ShapeUtils::compute_strides(dims_1);
+  const std::vector<int32_t> strides_2 = ShapeUtils::compute_strides(dims_2);
   const std::vector<int32_t> output_strides =
       ShapeUtils::compute_strides(output_dims);
+  std::vector<int32_t> indices_1(rank_1);
+  std::vector<int32_t> indices_2(rank_2);
+  std::vector<int32_t> broadcasted_indices(output_strides.size());
 
   for (size_t i = 0; i < output_length; ++i) {
-    auto broadcasted_indices = ShapeUtils::offset_to_indices(output_strides, i);
-    auto indices1 = BroadcastUtils::broadcasted_to_original_indices(
-        broadcasted_indices, dims_1);
-    auto offset1 = ShapeUtils::indices_to_offset(strides1, indices1);
-    auto indices2 = BroadcastUtils::broadcasted_to_original_indices(
-        broadcasted_indices, dims_2);
-    auto offset2 = ShapeUtils::indices_to_offset(strides2, indices2);
+    ShapeUtils::offset_to_indices(output_strides, i, broadcasted_indices);
+    BroadcastUtils::broadcasted_to_original_indices(
+        broadcasted_indices, dims_1, indices_1);
+    auto offset1 = ShapeUtils::indices_to_offset(strides_1, indices_1);
+    BroadcastUtils::broadcasted_to_original_indices(
+        broadcasted_indices, dims_2, indices_2);
+    auto offset2 = ShapeUtils::indices_to_offset(strides_2, indices_2);
     output[i] = core_op(input_1[offset1], input_2[offset2]);
   }
 }

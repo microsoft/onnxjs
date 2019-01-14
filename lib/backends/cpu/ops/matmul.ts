@@ -5,7 +5,7 @@ import ndarray from 'ndarray';
 
 import {MatMul} from '../../../ops/matmul';
 import {Tensor} from '../../../tensor';
-import {BroadcastUtil, ShapeUtil} from '../../../util';
+import {BroadcastUtil, MatMulUtil, ShapeUtil} from '../../../util';
 import {CpuInferenceHandler} from '../inference-handler';
 
 export class CpuMatMul extends MatMul {
@@ -16,23 +16,11 @@ export class CpuMatMul extends MatMul {
 }
 
 export function matMul(a: Tensor, b: Tensor) {
-  let dimsA = a.dims.slice(0);
-  let dimsB = b.dims.slice(0);
-  // If the first argument is 1-D, it is promoted to a matrix by prepending
-  // a 1 to its dimensions. After matrix multiplication the prepended 1 is
-  // removed.
-  if (a.dims.length === 1) {
-    dimsA = [1, dimsA[0]];
-  }
-  // If the second argument is 1-D, it is promoted to a matrix by appending
-  // a 1 to its dimensions. After matrix multiplication the appended 1 is
-  // removed.
-  if (b.dims.length === 1) {
-    dimsB = [dimsB[0], 1];
-  }
-
+  let dimsA: number[];
+  let dimsB: number[];
+  [dimsA, dimsB] = MatMulUtil.preprocessInputShapes(a.dims.slice(), b.dims.slice());
   const mat2dShape = [dimsA[dimsA.length - 2], dimsB[dimsB.length - 1]];
-  let shape = BroadcastUtil.calcShape(dimsA, dimsB, true);
+  const shape = BroadcastUtil.calcShape(dimsA, dimsB, true);
   if (!shape) {
     // the inputs cannot broadcast or cannot multiply
     throw new Error(`input dimensions do not match the requirement`);
@@ -73,15 +61,7 @@ export function matMul(a: Tensor, b: Tensor) {
     MatMul2d(subarrayA, subarrayB, ndY, curPos);
     curPos += mat2dShape[0] * mat2dShape[1];
   }
-
-  // Remove prepended dimension if first input is 1d
-  if (a.dims.length === 1) {
-    shape = shape.slice(0, shape.length - 2).concat(shape.slice(shape.length - 1));
-  }
-  // Remove appended dimension if second input is 1d
-  if (b.dims.length === 1) {
-    shape = shape.slice(0, shape.length - 1);
-  }
+  MatMulUtil.postprocessOutputShape(shape, a.dims.length, b.dims.length);
   const tensorY = new Tensor(shape, isFloat64 ? 'float64' : 'float32');
   tensorY.floatData.set(ndY.data);
   return tensorY;

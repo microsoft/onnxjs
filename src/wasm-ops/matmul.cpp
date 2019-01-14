@@ -67,9 +67,9 @@ void matmul_f32_imp(const float *input_1, const int32_t *dims_1,
     broadcasted_indices[output_rank - 1] = 0;
     broadcasted_indices[output_rank - 2] = 0;
 
-    std::vector<int32_t> original_indices_1;
+    std::vector<int32_t> original_indices_1(rank_1);
     int32_t original_offset_1;
-    std::vector<int32_t> original_indices_2;
+    std::vector<int32_t> original_indices_2(rank_2);
     int32_t original_offset_2;
     int32_t offset_remainder;
 
@@ -87,8 +87,8 @@ void matmul_f32_imp(const float *input_1, const int32_t *dims_1,
       }
       // This matrix is not 2D, so no need to find appropriate start_offset
       else {
-        original_indices_1 = BroadcastUtils::broadcasted_to_original_indices(
-            broadcasted_indices, dims_1_vector);
+        BroadcastUtils::broadcasted_to_original_indices(
+            broadcasted_indices, dims_1_vector, original_indices_1);
         original_offset_1 =
             ShapeUtils::indices_to_offset(strides_1, original_indices_1);
         input_1_traverse = input_1 + original_offset_1;
@@ -100,8 +100,8 @@ void matmul_f32_imp(const float *input_1, const int32_t *dims_1,
       }
       // This matrix is not 2D, so no need to find appropriate start_offset
       else {
-        original_indices_2 = BroadcastUtils::broadcasted_to_original_indices(
-            broadcasted_indices, dims_2_vector);
+        BroadcastUtils::broadcasted_to_original_indices(
+            broadcasted_indices, dims_2_vector, original_indices_2);
         original_offset_2 =
             ShapeUtils::indices_to_offset(strides_2, original_indices_2);
         input_2_traverse = input_2 + original_offset_2;

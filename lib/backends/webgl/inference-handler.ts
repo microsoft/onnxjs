@@ -7,6 +7,7 @@ import {Tensor} from '../../tensor';
 import {ShapeUtil} from '../../util';
 import {WebGLBackend} from '../backend-webgl';
 
+import {WebGLUint8Encode} from './ops/uint8-encode';
 import {ProgramManager} from './program-manager';
 import {WebGLSessionHandler} from './session-handler';
 import {TextureData, TextureLayout} from './texture-data';
@@ -65,9 +66,14 @@ export class WebGLInferenceHandler implements InferenceHandler {
     tensor = this.textureToTensor.get(td);
     if (!tensor) {
       Logger.verbose('InferenceHandler', `Creating new Tensor from texture data: [${td.unpackedShape}]`);
+      /**
+       * We're creating a Tensor without converting data from Texture onto CPU
+       * Instead we're passing a closure which is only executed if Tesor.data is accessed
+       * This allows for the execution of the graph without paying the penalty of
+       * data movement from GPU to CPU
+       */
       tensor = new Tensor(td.unpackedShape, td.dataType, (id: Tensor.Id) => {
-        const values = this.textureHelper.readTexture(td, td.dataType, td.channels);
-        return values;
+        return this.readTexture(td);
       });
       this.setTextureData(tensor, td);
     } else {
@@ -105,7 +111,12 @@ export class WebGLInferenceHandler implements InferenceHandler {
       shape: ReadonlyArray<number>, channels = 1, unpackedShape?: ReadonlyArray<number>,
       prefs?: WidthHeightPrefs): TextureLayout {
     const [width, height] = this.session.layoutStrategy.computeTextureWH(shape, prefs);
+    let inferredDims = shape;
+    if (shape.length === 0) {
+      inferredDims = [1];
+    }
     if (channels === 1) {
+      // unpackedShape will take `shape` and not `inferredDims` so as to create a scalar Tensor if need be
       unpackedShape = shape;
     } else if (!unpackedShape) {
       throw new Error('Unpacked shape is needed when using channels > 1');
@@ -114,9 +125,18 @@ export class WebGLInferenceHandler implements InferenceHandler {
       width,
       height,
       channels: channels ? channels : 1,
-      shape,
-      strides: ShapeUtil.computeStrides(shape),
+      shape: inferredDims,
+      strides: ShapeUtil.computeStrides(inferredDims),
       unpackedShape
     };
+  }
+  readTexture(textureData: TextureData): Tensor.NumberType {
+    if (this.backend.forceUint8Reads) {
+      const op = new WebGLUint8Encode();
+      const uint8TD = op.runInternal(this, textureData);
+      return this.textureHelper.readUint8TextureAsFloat(uint8TD);
+    }
+    const values = this.textureHelper.readTexture(textureData, textureData.dataType, textureData.channels);
+    return values;
   }
 }

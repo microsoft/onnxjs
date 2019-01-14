@@ -1,53 +1,71 @@
 # **API Documentation**
 
 ## **Table of Contents**
-### 1. [Globals](#Globals)
-  1. [onnx](#onnx)
-  2. [onnx.backend](#onnx.backend)
-  3. [onnx.debug](#onnx.debug)
+### - [Onnx](#ref-Onnx)
+  - [Tensor](#ref-Onnx-Tensor)
+  - [InferenceHandler](#ref-Onnx-InferenceHandler)
+  - [backend](#ref-Onnx-backend)
+  - [ENV](#ref-Onnx-ENV)
 
-### 2. [Inference Session](#Inference-Session)
-  1. [Creating an Inference Session](#Creating-an-Inference-Session)
-  2. [Run in Inference Session](#Run-in-Inference-Session)
-  3. [Profile a Session](#Profile-a-Session)
+### - [Inference Session](#ref-InferenceSession)
+  - [Creating an Inference Session](#Creating-an-Inference-Session)
+  - [Run in Inference Session](#Run-in-Inference-Session)
+  - [Profile a Session](#Profile-a-Session)
 
-### 3. [Tensor](#Tensor)
-  1. [Create a Tensor](#Create-a-Tensor)
-  2. [Tensor Properties](#Tensor-Properties)
-  3. [Access Tensor Elements](#Access-Tensor-Elements)
+### - [Tensor](#ref-Tensor)
+  - [Create a Tensor](#Create-a-Tensor)
+  - [Tensor Properties](#Tensor-Properties)
+  - [Access Tensor Elements](#Access-Tensor-Elements)
 
-## **Globals**
-- ### **onnx**
-  The `onnx` object is available in global context (window.onnx in browser, global.onnx in Node.js) after require /import 'onnxjs' module, or imported from a `<script> tag`.
+## <a name="ref-Onnx"></a>**Onnx**
 
-- ### **onnx.backend**
+The `onnx` object is the exported object of the module. It's available in global context (`window.onnx` in browser, `global.onnx` in Node.js) after require/import 'onnxjs' module, or imported from a `<script> tag`.
+
+- ### <a name="ref-Onnx-Tensor"></a>**onnx.Tensor**
+  See [Tensor](#ref-Tensor).
+
+- ### <a name="ref-Onnx-InferenceSession"></a>**onnx.InferenceSession**
+  See [InferenceSession](#ref-InferenceSession).
+
+- ### <a name="ref-Onnx-backend"></a>**onnx.backend**
   Customizes settings for all available backends. `ONNX.js` currently supports three types of backend - *cpu* (pure JavaScript backend), *webgl* (WebGL backend), and *wasm*   (WebAssembly backend).
 
-  ### `onnx.backend.cpu`
-    An object specifying CPU backend settings. Available soon.
+  ### `backend.hint`
+    A string or an array of strings that indicate a hint to use backend(s).
+
   ***
-  ### `onnx.backend.webgl`
-    An object specifying WebGL backend settings. Available soon.
+  ### `backend.cpu`
+    An object specifying CPU backend settings. Currently no members are available.
+
   ***
-  ### `onnx.backend.wasm`
+  ### `backend.webgl`
+    An object specifying WebGL backend settings. The supported member variables are:
+    - **contextId** (`'webgl'|'webgl2'|'experimental-webgl'`)
+
+      Optional. Force the WebGL Context ID.
+
+  ***
+  ### `backend.wasm`
     An object specifying WebAssembly backend settings. The supported member variables are:
     - **worker** (`number`)
 
-      Optional. Specifies the number of [web workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) to run in background threads. If not set, run with number of `CPU cores - 1` workers.
+      Optional. Specifies the number of [web workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) to run in background threads. If not set, run with number of `(CPU cores - 1)` workers.
     - **cpuFallback** (`boolean`)
 
       Optional. Determines whether to fall back to use CPU backend if WebAssembly backend is missing certain ONNX operators. Default is set to true.
 
-- ### **onnx.debug**
+- ### <a name="ref-Onnx-backend"></a>**ENV**
+  Represent runtime environment settings and status of ONNX.js
+  ### `ENV.debug`
   A global flag to indicate whether to run `ONNX.js` in debug mode.
 
-## **Inference Session**
+## <a name="ref-InferenceSession"></a>**Inference Session**
 An `InferenceSession` encapsulates the environment for `ONNX.js` operations to execute. It loads and runs `ONNX` models with the desired configurations.
 
 To configure an `InferenceSession`, use an object with the following parameters-
   - **backendHint** (`string`)
       Specify a preferred backend to start an `InferenceSession`. Current available backend hints are:
-      - `'cpu'`     : CPU backend
+      - `'cpu'`: CPU backend
       - `'wasm'`: WebAssembly backend
       - `'webgl'`: WebGL backend
       If not set, the backend will be determined by the platform and environment.
@@ -181,7 +199,7 @@ To configure an `InferenceSession`, use an object with the following parameters-
     ```
 
 
-## **Tensor**
+## <a name="ref-Tensor"></a>**Tensor**
 Tensor is a representation of vectors, matrices and n-dimension data in `ONNX.js`. Tensors are used in `InferenceSession` as inputs for models to run.
 
 - ### **Create a Tensor**

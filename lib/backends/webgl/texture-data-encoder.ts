@@ -70,13 +70,14 @@ export class RedFloat32DataEncoder implements DataEncoder {
     return result;
   }
   allocate(size: number): Encoder.DataArrayType {
-    return new Float32Array(size * this.channelSize);
+    return new Float32Array(size * 4);
   }
   decode(buffer: Encoder.DataArrayType, dataSize: number): Float32Array {
-    if (dataSize < buffer.length) {
-      return buffer.slice(0, dataSize) as Float32Array;
+    if (this.channelSize === 1) {
+      const filteredData = (buffer as Float32Array).filter((value, index) => index % 4 === 0).subarray(0, dataSize);
+      return filteredData;
     }
-    return buffer as Float32Array;
+    return buffer.subarray(0, dataSize) as Float32Array;
   }
 }
 /**
@@ -107,10 +108,10 @@ export class RGBAFloat32DataEncoder implements DataEncoder {
   }
   decode(buffer: Encoder.DataArrayType, dataSize: number): Float32Array {
     if (this.channelSize === 1) {
-      const filteredData = (buffer as Float32Array).filter((value, index) => index % 4 === 0).slice(0, dataSize);
+      const filteredData = (buffer as Float32Array).filter((value, index) => index % 4 === 0).subarray(0, dataSize);
       return filteredData;
     }
-    return buffer.slice(0, dataSize) as Float32Array;
+    return buffer.subarray(0, dataSize) as Float32Array;
   }
 }
 /**
@@ -119,8 +120,16 @@ export class RGBAFloat32DataEncoder implements DataEncoder {
 export class Float16DataEncoder implements DataEncoder {
   internalFormat: number = WebGLRenderingContext.RGBA;
   format: number = WebGLRenderingContext.RGBA;
-  channelType: number = OES_texture_half_float.HALF_FLOAT_OES;
+  channelType: number;
   channelSize = 4;
+
+  constructor(gl: WebGLRenderingContext) {
+    const ext = gl.getExtension('OES_texture_half_float');
+    if (!ext) {
+      throw new Error('WebGL extension "OES_texture_half_float" is not supported');
+    }
+    this.channelType = ext.HALF_FLOAT_OES;
+  }
 
   encode(src: Float32Array, textureSize: number): Encoder.DataArrayType {
     throw new Error('Method not implemented.');
@@ -135,7 +144,7 @@ export class Float16DataEncoder implements DataEncoder {
 /**
  * Data encoder for WebGL 1 with not support only for floating point textures
  */
-export class UInt8DataEncoder implements DataEncoder {
+export class WebGl2Uint8DataEncoder implements DataEncoder {
   internalFormat: number;
   format: number;
   channelType: number;
@@ -163,5 +172,38 @@ export class UInt8DataEncoder implements DataEncoder {
   }
   decode(buffer: Encoder.DataArrayType, dataSize: number): Uint8Array {
     return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.length / this.channelSize);
+  }
+}
+export class Uint8DataEncoder implements DataEncoder {
+  internalFormat: number;
+  format: number;
+  channelType: number;
+  channelSize = 4;
+  constructor(channels = 1) {
+    if (channels === 1) {
+      this.internalFormat = WebGLRenderingContext.ALPHA;
+      this.format = WebGLRenderingContext.ALPHA;  // not tested
+      this.channelType = WebGLRenderingContext.UNSIGNED_BYTE;
+      this.channelSize = channels;
+    } else if (channels === 4) {
+      this.internalFormat = WebGLRenderingContext.RGBA;
+      this.format = WebGLRenderingContext.RGBA;
+      this.channelType = WebGLRenderingContext.UNSIGNED_BYTE;
+      this.channelSize = channels;
+    } else {
+      throw new Error(`Invalid number of channels: ${channels}`);
+    }
+  }
+  encode(src: Uint8Array, textureSize: number): Encoder.DataArrayType {
+    return new Uint8Array(src.buffer, src.byteOffset, src.byteLength);
+  }
+  allocate(size: number): Encoder.DataArrayType {
+    return new Uint8Array(size * this.channelSize);
+  }
+  decode(buffer: Encoder.DataArrayType, dataSize: number): Uint8Array {
+    if (buffer.constructor === Uint8Array) {
+      return buffer.subarray(0, dataSize) as Uint8Array;
+    }
+    throw new Error(`Invalid array type: ${buffer.constructor}`);
   }
 }

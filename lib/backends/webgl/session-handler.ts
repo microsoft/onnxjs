@@ -21,10 +21,19 @@ import {WebGLLeakyRelu} from './ops/leaky-relu';
 import {WebGLMatMul} from './ops/matmul';
 import {WebGLPad} from './ops/pad';
 import {WebGLAveragePool, WebGLGlobalAveragePool, WebGLGlobalMaxPool, WebGLMaxPool} from './ops/pool';
+import {WebGLReduceSum} from './ops/reduce';
+import {WebGLReduceMean} from './ops/reduce';
+import {WebGLReduceMax} from './ops/reduce';
+import {WebGLReduceMin} from './ops/reduce';
+import {WebGLReduceProd} from './ops/reduce';
+import {WebGLReduceLogSum} from './ops/reduce';
+import {WebGLReduceSumSquare} from './ops/reduce';
 import {WebGLReshape} from './ops/reshape';
+import {WebGLSlice} from './ops/slice';
 import {WebGLSoftmax} from './ops/softmax';
 import {WebGLSplit} from './ops/split';
 import {WebGLSum} from './ops/sum';
+import {WebGLTile} from './ops/tile';
 import {WebGLTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
 import {ProgramManager} from './program-manager';
@@ -157,6 +166,20 @@ export class WebGLSessionHandler implements SessionHandler {
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSigmoid());
       case 'Sin':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSin());
+      case 'ReduceSum':
+        return new WebGLReduceSum();
+      case 'ReduceMean':
+        return new WebGLReduceMean();
+      case 'ReduceMax':
+        return new WebGLReduceMax();
+      case 'ReduceMin':
+        return new WebGLReduceMin();
+      case 'ReduceProd':
+        return new WebGLReduceProd();
+      case 'ReduceLogSum':
+        return new WebGLReduceLogSum();
+      case 'ReduceSumSquare':
+        return new WebGLReduceSumSquare();
       case 'Softmax':
         return new WebGLSoftmax();
       case 'Split':
@@ -171,10 +194,16 @@ export class WebGLSessionHandler implements SessionHandler {
         return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslSub());
       case 'Sum':
         return new WebGLSum();
+      case 'Slice':
+        return new WebGLSlice();
       case 'Tan':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslTan());
+      case 'Tanh':
+        return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslTanh());
       case 'Transpose':
         return new WebGLTranspose();
+      case 'Tile':
+        return new WebGLTile();
       case 'Xor':
         return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslXor());
       default:

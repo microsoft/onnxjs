@@ -1,3 +1,11 @@
+[![npm version](https://badge.fury.io/js/onnxjs.svg)](https://badge.fury.io/js/onnxjs)
+[![GitHub version](https://badge.fury.io/gh/Microsoft%2Fonnxjs.svg)](https://badge.fury.io/gh/Microsoft%2Fonnxjs)
+[![ONNX.js CI - Windows CPU (Electron)](https://dev.azure.com/onnxruntime/onnxjs/_apis/build/status/ONNX.js%20CI%20-%20Windows%20CPU%20(Electron)?label=Windows+CPU+(Electron))](https://dev.azure.com/onnxruntime/onnxjs/_build/latest?definitionId=24)
+[![ONNX.js CI - Windows CPU (Node.js)](https://dev.azure.com/onnxruntime/onnxjs/_apis/build/status/ONNX.js%20CI%20-%20Windows%20CPU%20(Node.js)?label=Windows+CPU+(Node.js))](https://dev.azure.com/onnxruntime/onnxjs/_build/latest?definitionId=20)
+[![ONNX.js CI - Windows GPU (Chrome,Edge)](https://dev.azure.com/onnxruntime/onnxjs/_apis/build/status/ONNX.js%20CI%20-%20Windows%20GPU%20(Chrome,Edge)?label=Windows+GPU+(Chrome%2CEdge))](https://dev.azure.com/onnxruntime/onnxjs/_build/latest?definitionId=22)
+[![ONNX.js CI - Linux CPU (Node.js)](https://dev.azure.com/onnxruntime/onnxjs/_apis/build/status/ONNX.js%20CI%20-%20Linux%20CPU%20(Node.js)?label=Linux+CPU+(Node.js))](https://dev.azure.com/onnxruntime/onnxjs/_build/latest?definitionId=5)
+[![ONNX.js CI - BrowserStack (Suite0)](https://dev.azure.com/onnxruntime/onnxjs/_apis/build/status/ONNX.js%20CI%20-%20BrowserStack%20(Suite0)?label=BrowserStack+(Suite0))](https://dev.azure.com/onnxruntime/onnxjs/_build/latest?definitionId=17)
+
 # ONNX.js
 ONNX.js is a Javascript library for running ONNX models on browsers and on Node.js.
 
@@ -116,7 +124,6 @@ require('onnxjs');
 
 Refer to [node/Add](./examples/node/add) for a detailed example.
 
-*NOTE: Currently, the supported platforms are Windows 10 + Edge/Chrome/Firefox/Electron/Node.js (support for other platforms is coming soon).*
 
 ## Documents
 
@@ -157,6 +164,9 @@ Support for [ai.onnx.ml](https://github.com/onnx/onnx/blob/master/docs/Operators
 
 ## Contribute
 We’d love to embrace your contribution to ONNX.js. Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## Thanks
+Thanks to [BrowserStack](https://www.browserstack.com/) for providing cross browser testing support. 
 
 ## License
 Copyright (c) Microsoft Corporation. All rights reserved.

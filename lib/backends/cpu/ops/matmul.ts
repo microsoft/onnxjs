@@ -61,7 +61,7 @@ export function matMul(a: Tensor, b: Tensor) {
     MatMul2d(subarrayA, subarrayB, ndY, curPos);
     curPos += mat2dShape[0] * mat2dShape[1];
   }
-  MatMulUtil.postprocessOutputShape(shape, a.dims.length, b.dims.length);
+  MatMulUtil.postprocessOutputShape(shape as number[], a.dims.length, b.dims.length);
   const tensorY = new Tensor(shape, isFloat64 ? 'float64' : 'float32');
   tensorY.floatData.set(ndY.data);
   return tensorY;

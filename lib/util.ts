@@ -78,6 +78,14 @@ export class MatMulUtil {
     return (a[1] !== b[0]) ? undefined : [a[0], b[1]];
   }
 }
+
+export function getActualAxisFromNegativeValue(axis: number, tensorRank: number): number {
+  if (axis < -tensorRank || axis > tensorRank - 1) {
+    throw new Error('unsupported axis for this operation.');
+  }
+  return axis < 0 ? axis + tensorRank : axis;
+}
+
 export class BroadcastUtil {
   /**
    * Calculate the expected shape when broadcasting 2 tensors
@@ -86,9 +94,16 @@ export class BroadcastUtil {
    * @param isMatMul Whether the operation is MatMul
    * @returns The expected shape of the result, or undefined if N/A
    */
-  static calcShape(adims: ReadonlyArray<number>, bdims: ReadonlyArray<number>, isMatMul = false): number[]|undefined {
+  static calcShape(adims: ReadonlyArray<number>, bdims: ReadonlyArray<number>, isMatMul = false):
+      ReadonlyArray<number>|undefined {
     const arank = adims.length;
     const brank = bdims.length;
+    if (arank === 0) {
+      return bdims;
+    }
+    if (brank === 0) {
+      return adims;
+    }
     const crank = Math.max(adims.length, bdims.length);
     const cdims = new Array<number>(crank);
 
@@ -156,7 +171,7 @@ export class BroadcastUtil {
               a.data.constructor as Int8ArrayConstructor | Int16ArrayConstructor | Int32ArrayConstructor |
               Uint8ArrayConstructor | Uint16ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor |
               Float64ArrayConstructor | Uint8ClampedArrayConstructor)(size),
-          shape);
+          shape as number[]);
 
       const indices = new Array<number>(shape.length);
       for (let i = 0; i < size; i++) {
@@ -509,18 +524,26 @@ export class ShapeUtil {
   static calculateReshapedDims(
       originalDims: ReadonlyArray<number>,
       shapeHints: number[]|ReadonlyArray<number>|Tensor.IntegerType): ReadonlyArray<number> {
+    // reshape to a Scalar Tensor
+    if (shapeHints.length === 0) {
+      if (originalDims.length === 0 || ShapeUtil.size(originalDims) === 1) {
+        return [];
+      } else {
+        throw new Error(`cannot reshape to a scalar Tensor`);
+      }
+    }
+
     const nDims = shapeHints.length;
     const reshapedDims = new Array<number>(nDims);
     let unknownDimension = -1;
-    let size = 1;
-
+    let newTensorSize = 1;
     for (let i = 0; i < nDims; i++) {
       if (shapeHints[i] < -1) {
-        throw new Error('a dimension cannot be less than -1');
+        throw new Error('a dimension in shape hints cannot be less than -1');
       }
       if (shapeHints[i] === -1) {
         if (unknownDimension !== -1) {
-          throw new Error('at most one dimension can be -1');
+          throw new Error('at most one dimension in shape hints can be -1');
         }
         unknownDimension = i;
       } else {
@@ -532,17 +555,23 @@ export class ShapeUtil {
         } else {
           reshapedDims[i] = shapeHints[i];
         }
-        size *= reshapedDims[i];
+        newTensorSize *= reshapedDims[i];
       }
     }
 
+    const oldTensorSize = ShapeUtil.size(originalDims);
     if (unknownDimension !== -1) {
-      const originalTensorFlattenedSize = ShapeUtil.size(originalDims);
-      if (originalTensorFlattenedSize % size !== 0) {
+      if (oldTensorSize % newTensorSize !== 0) {
         throw new Error(`the input tensor cannot be reshaped to the requested shape. Input shape: [${
             originalDims}] Output shape: [${shapeHints}]`);
       }
-      reshapedDims[unknownDimension] = originalTensorFlattenedSize / size;
+      reshapedDims[unknownDimension] = oldTensorSize / newTensorSize;
+    }
+    // validate sizes from originalDims and reshapedDims match
+    else {
+      if (newTensorSize !== oldTensorSize) {
+        throw new Error(`reshapedDims and originalDims don't have matching sizes`);
+      }
     }
     return reshapedDims;
   }
@@ -588,11 +617,8 @@ export class ShapeUtil {
    * @param dims - input `dims` that needs to be checked
    */
   static validateDimsAndCalcSize(dims: ReadonlyArray<number>): number {
-    if (dims.length < 0 || dims.length > 6) {
+    if (dims.length > 6) {
       throw new TypeError(`Only rank 0 to 6 is supported for tensor shape.`);
-    }
-    if (dims.length === 0) {
-      throw new RangeError('Scaler tensor is not implemented yet');
     }
     let size = 1;
     for (const n of dims) {

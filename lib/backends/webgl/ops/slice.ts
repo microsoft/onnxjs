@@ -2,7 +2,7 @@
 
 import {Slice} from '../../../ops/slice';
 import {Tensor} from '../../../tensor';
-import {getActualAxisFromNegativeValue} from '../../../util';
+import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo} from '../program-info';
 import {RunData} from '../program-manager';
@@ -23,18 +23,18 @@ export class WebGLSlice extends Slice implements WebGLOperator {
     if (axes.length === 0) {
       axes = x.dims.slice(0).map((val, ind) => ind);
     }
-    axes = axes.map(axis => getActualAxisFromNegativeValue(axis, x.dims.length));
+    axes = axes.map(axis => ShapeUtil.parseAxis(axis, x.dims.length));
     starts = starts.map((start, ind) => {
       if (start > x.dims[axes[ind]] - 1) {
         return x.dims[axes[ind]];
       }
-      return getActualAxisFromNegativeValue(start, x.dims[axes[ind]]);
+      return ShapeUtil.parseAxis(start, x.dims[axes[ind]]);
     });
     ends = ends.map((end, ind) => {
       if (end > x.dims[axes[ind]] - 1) {
         return x.dims[axes[ind]];
       }
-      return getActualAxisFromNegativeValue(end, x.dims[axes[ind]]);
+      return ShapeUtil.parseAxis(end, x.dims[axes[ind]]);
     });
 
     const outputShape = x.dims.slice();

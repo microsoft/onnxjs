@@ -5,14 +5,11 @@ import {Squeeze} from '../../../ops/squeeze';
 import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {WebGLReshape} from './reshape';
+import {reshape} from './reshape';
 
 export class WebGLSqueeze extends Squeeze {
-  reshapeOps: WebGLReshape = new WebGLReshape();
-
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const outputDims = new Int32Array(ShapeUtil.squeezeShape(inputs[0].dims, this.axes));
-    return this.reshapeOps.run(
-        inferenceHandler, [inputs[0], Tensor.fromData(outputDims, [outputDims.length], 'int32')]);
+    const outputDims = ShapeUtil.squeezeShape(inputs[0].dims, this.axes);
+    return [reshape(inferenceHandler, inputs[0], outputDims)];
   }
 }

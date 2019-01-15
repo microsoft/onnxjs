@@ -19,10 +19,9 @@ const args = parseTestRunnerCliArgs(process.argv.slice(2));
 logger.verbose('TestRunnerCli.Init.Config', inspect(args));
 
 const TEST_ROOT = path.join(__dirname, '..', 'test');
-const TEST_DATA_ROOT = path.join(__dirname, '..', 'deps', 'data', 'data', 'test');
-const TEST_DATA_NODE_ROOT = path.join(TEST_DATA_ROOT, 'node');
-const TEST_DATA_ONNX_ROOT = path.join(TEST_DATA_ROOT, 'onnx', 'v7');
-const TEST_DATA_OP_ROOT = path.join(TEST_DATA_ROOT, 'ops');
+const TEST_DATA_NODE_ROOT = path.join(__dirname, '..', 'deps/onnx/onnx/backend/test/data/node');
+const TEST_DATA_ONNX_ROOT = path.join(__dirname, '..', 'deps/data/data/test/onnx/v7');
+const TEST_DATA_OP_ROOT = path.join(TEST_ROOT, 'data', 'ops');
 
 const TEST_DATA_BASE = args.env === 'node' ? TEST_ROOT : '/base/test/';
 
@@ -306,7 +305,8 @@ function modelTestFromFolder(testDataRootFolder: string, backend: string, times?
 
 function tryLocateModelTestFolder(searchPattern: string): string {
   for (const folderCandidate of globby.sync(
-           [searchPattern, path.join(TEST_DATA_ROOT, '**', searchPattern)], {onlyDirectories: true, absolute: true})) {
+           [searchPattern, path.join(TEST_DATA_ONNX_ROOT, '**', searchPattern)],
+           {onlyDirectories: true, absolute: true})) {
     const modelCandidates = globby.sync('*.onnx', {onlyFiles: true, cwd: folderCandidate});
     if (modelCandidates && modelCandidates.length === 1) {
       return folderCandidate;
@@ -358,9 +358,9 @@ function opTestFromManifest(manifestFile: string, backend: string, skip = false)
 function tryLocateOpTestManifest(searchPattern: string): string {
   for (const manifestCandidate of globby.sync(
            [
-             searchPattern, path.join(TEST_DATA_ROOT, '**', searchPattern),
-             path.join(TEST_DATA_ROOT, '**', searchPattern + '.json'),
-             path.join(TEST_DATA_ROOT, '**', searchPattern + '.jsonc')
+             searchPattern, path.join(TEST_DATA_OP_ROOT, '**', searchPattern),
+             path.join(TEST_DATA_OP_ROOT, '**', searchPattern + '.json'),
+             path.join(TEST_DATA_OP_ROOT, '**', searchPattern + '.jsonc')
            ],
            {onlyFiles: true, absolute: true})) {
     return manifestCandidate;

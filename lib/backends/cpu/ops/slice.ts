@@ -17,18 +17,18 @@ export function slice(x: Tensor, starts: number[], ends: number[], axes: number[
   if (axes.length === 0) {
     axes = x.dims.slice(0).map((val, ind) => ind);
   }
-  axes = axes.map(axis => getActualAxisFromNegativeValue(axis, x.dims.length));
+  axes = axes.map(axis => ShapeUtil.parseAxis(axis, x.dims.length));
   starts = starts.map((start, ind) => {
     if (start > x.dims[axes[ind]] - 1) {
       return x.dims[axes[ind]];
     }
-    return getActualAxisFromNegativeValue(start, x.dims[axes[ind]]);
+    return ShapeUtil.parseAxis(start, x.dims[axes[ind]]);
   });
   ends = ends.map((end, ind) => {
     if (end > x.dims[axes[ind]] - 1) {
       return x.dims[axes[ind]];
     }
-    return getActualAxisFromNegativeValue(end, x.dims[axes[ind]]);
+    return ShapeUtil.parseAxis(end, x.dims[axes[ind]]);
   });
   const size: number[] = [];
   const adjustedStarts: number[] = [];

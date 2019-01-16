@@ -305,7 +305,10 @@ function modelTestFromFolder(testDataRootFolder: string, backend: string, times?
 
 function tryLocateModelTestFolder(searchPattern: string): string {
   for (const folderCandidate of globby.sync(
-           [searchPattern, path.join(TEST_DATA_ONNX_ROOT, '**', searchPattern)],
+           [
+             searchPattern, path.join(TEST_DATA_ONNX_ROOT, '**', searchPattern),
+             path.join(TEST_DATA_NODE_ROOT, '**', searchPattern)
+           ],
            {onlyDirectories: true, absolute: true})) {
     const modelCandidates = globby.sync('*.onnx', {onlyFiles: true, cwd: folderCandidate});
     if (modelCandidates && modelCandidates.length === 1) {

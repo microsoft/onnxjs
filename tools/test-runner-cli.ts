@@ -19,8 +19,8 @@ const args = parseTestRunnerCliArgs(process.argv.slice(2));
 logger.verbose('TestRunnerCli.Init.Config', inspect(args));
 
 const TEST_ROOT = path.join(__dirname, '..', 'test');
-const TEST_DATA_NODE_ROOT = path.join(__dirname, '..', 'deps/onnx/onnx/backend/test/data/node');
-const TEST_DATA_ONNX_ROOT = path.join(__dirname, '..', 'deps/data/data/test/onnx/v7');
+const TEST_DATA_MODEL_NODE_ROOT = path.join(__dirname, '..', 'deps/onnx/onnx/backend/test/data/node');
+const TEST_DATA_MODEL_ONNX_ROOT = path.join(__dirname, '..', 'deps/data/data/test/onnx/v7');
 const TEST_DATA_OP_ROOT = path.join(TEST_ROOT, 'data', 'ops');
 
 const TEST_DATA_BASE = args.env === 'node' ? TEST_ROOT : '/base/test/';
@@ -214,11 +214,11 @@ function validateWhiteList() {
 }
 
 function nodeTests(backend: string): Test.ModelTestGroup {
-  return suiteFromFolder(`node-${backend}`, TEST_DATA_NODE_ROOT, backend, whitelist[backend].node);
+  return suiteFromFolder(`node-${backend}`, TEST_DATA_MODEL_NODE_ROOT, backend, whitelist[backend].node);
 }
 
 function onnxTests(backend: string): Test.ModelTestGroup {
-  return suiteFromFolder(`onnx-${backend}`, TEST_DATA_ONNX_ROOT, backend, whitelist[backend].onnx);
+  return suiteFromFolder(`onnx-${backend}`, TEST_DATA_MODEL_ONNX_ROOT, backend, whitelist[backend].onnx);
 }
 
 function suiteFromFolder(
@@ -306,8 +306,8 @@ function modelTestFromFolder(testDataRootFolder: string, backend: string, times?
 function tryLocateModelTestFolder(searchPattern: string): string {
   for (const folderCandidate of globby.sync(
            [
-             searchPattern, path.join(TEST_DATA_ONNX_ROOT, '**', searchPattern),
-             path.join(TEST_DATA_NODE_ROOT, '**', searchPattern)
+             searchPattern, path.join(TEST_DATA_MODEL_ONNX_ROOT, '**', searchPattern),
+             path.join(TEST_DATA_MODEL_NODE_ROOT, '**', searchPattern)
            ],
            {onlyDirectories: true, absolute: true})) {
     const modelCandidates = globby.sync('*.onnx', {onlyFiles: true, cwd: folderCandidate});

@@ -28,7 +28,6 @@ void sub_f32(void *data) {
   const float *input_2 = PARAM_FLOAT_PTR(data, dataIndex[4]);
   float *output = PARAM_FLOAT_PTR(data, dataIndex[7]);
   binary_wrapper<float>(data, dataIndex, input_1, input_2, output, sub_core);
-
 }
 void mul_f32(void *data) {
   uint32_t *dataIndex = static_cast<uint32_t *>(data);
@@ -36,7 +35,6 @@ void mul_f32(void *data) {
   const float *input_2 = PARAM_FLOAT_PTR(data, dataIndex[4]);
   float *output = PARAM_FLOAT_PTR(data, dataIndex[7]);
   binary_wrapper<float>(data, dataIndex, input_1, input_2, output, mul_core);
-
 }
 void div_f32(void *data) {
   uint32_t *dataIndex = static_cast<uint32_t *>(data);
@@ -44,7 +42,6 @@ void div_f32(void *data) {
   const float *input_2 = PARAM_FLOAT_PTR(data, dataIndex[4]);
   float *output = PARAM_FLOAT_PTR(data, dataIndex[7]);
   binary_wrapper<float>(data, dataIndex, input_1, input_2, output, div_core);
-
 }
 void prelu_f32(void *data) {
   uint32_t *dataIndex = static_cast<uint32_t *>(data);

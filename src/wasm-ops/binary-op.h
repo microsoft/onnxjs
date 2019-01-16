@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <vector>
 #include "common.h"
 #include "utils/broadcast_utils.h"
 #include "utils/shape_utils.h"
+#include <stdint.h>
+#include <vector>
 
 extern "C" {
 // Arithmetic ops
@@ -25,13 +25,13 @@ void and_(void *);
 
 // Core binary operator implementation
 template <class T>
-void binary_imp(
-    const T *input_1, const int32_t &rank_1,
-    const std::vector<int32_t> &dims_1, const T *input_2,
-    const int32_t &rank_2, const std::vector<int32_t> &dims_2, T *output,
-    const int32_t &output_length, const int32_t &output_rank,
-    const std::vector<int32_t> &output_dims,
-    T (*core_op)(const T &, const T &)) {
+void binary_imp(const T *input_1, const int32_t &rank_1,
+                const std::vector<int32_t> &dims_1, const T *input_2,
+                const int32_t &rank_2, const std::vector<int32_t> &dims_2,
+                T *output, const int32_t &output_length,
+                const int32_t &output_rank,
+                const std::vector<int32_t> &output_dims,
+                T (*core_op)(const T &, const T &)) {
   const std::vector<int32_t> strides_1 = ShapeUtils::compute_strides(dims_1);
   const std::vector<int32_t> strides_2 = ShapeUtils::compute_strides(dims_2);
   const std::vector<int32_t> output_strides =
@@ -55,8 +55,9 @@ void binary_imp(
 // Core binary operator wrapper (Does some pre-processing prior to calling the
 // core implementation function)
 template <class T>
-void binary_wrapper(
-    void *data, uint32_t *dataIndex, const T* input_1, const T* input_2, T* output, T (*core_op)(const T &, const T &)) {
+void binary_wrapper(void *data, uint32_t *dataIndex, const T *input_1,
+                    const T *input_2, T *output,
+                    T (*core_op)(const T &, const T &)) {
   const int32_t rank_1 = PARAM_INT32(data, dataIndex[2]);
   const int32_t *dims_1 = PARAM_INT32_PTR(data, dataIndex[3]);
   std::vector<int32_t> dims1_vector;
@@ -88,7 +89,7 @@ void binary_wrapper(
     }
   }
 
-  binary_imp<T>(input_1, rank_1, dims1_vector, input_2,
-                                    rank2, dims2_vector, output, output_length,
-                                    output_rank, output_dims_vector, core_op);
+  binary_imp<T>(input_1, rank_1, dims1_vector, input_2, rank2, dims2_vector,
+                output, output_length, output_rank, output_dims_vector,
+                core_op);
 }

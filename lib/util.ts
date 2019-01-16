@@ -25,13 +25,6 @@ export function checkInputsShape(inputs: Tensor[], ...expectedDimensions: number
   return true;
 }
 
-export function getActualAxisFromNegativeValue(axis: number, tensorRank: number): number {
-  if (axis < -tensorRank || axis > tensorRank - 1) {
-    throw new Error('unsupported axis for this operation.');
-  }
-  return axis < 0 ? axis + tensorRank : axis;
-}
-
 export class BroadcastUtil {
   /**
    * Calculate the expected shape when broadcasting 2 tensors

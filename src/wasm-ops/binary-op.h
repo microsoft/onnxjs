@@ -25,8 +25,7 @@ void and_(void *);
 
 // Binary operator (with broadcasting)
 template <typename T, typename BinaryOp>
-void binary_imp(void *data, const T *input_1,
-                    const T *input_2, T *output) {
+void binary_imp(void *data, const T *input_1, const T *input_2, T *output) {
   uint32_t *dataIndex = static_cast<uint32_t *>(data);
 
   // first input related
@@ -40,7 +39,7 @@ void binary_imp(void *data, const T *input_1,
     }
   }
 
- // second input related
+  // second input related
   const int32_t rank_2 = PARAM_INT32(data, dataIndex[5]);
   const int32_t *dims_2 = PARAM_INT32_PTR(data, dataIndex[6]);
   std::vector<int32_t> dims2_vector;
@@ -64,8 +63,10 @@ void binary_imp(void *data, const T *input_1,
   }
 
   // compute strides and some preprocessing
-  const std::vector<int32_t> strides_1 = ShapeUtils::compute_strides(dims1_vector);
-  const std::vector<int32_t> strides_2 = ShapeUtils::compute_strides(dims2_vector);
+  const std::vector<int32_t> strides_1 =
+      ShapeUtils::compute_strides(dims1_vector);
+  const std::vector<int32_t> strides_2 =
+      ShapeUtils::compute_strides(dims2_vector);
   const std::vector<int32_t> output_strides =
       ShapeUtils::compute_strides(output_dims_vector);
   std::vector<int32_t> indices_1(rank_1);
@@ -75,70 +76,55 @@ void binary_imp(void *data, const T *input_1,
   // core functionality (with broadcasting)
   for (size_t i = 0; i < output_length; ++i) {
     ShapeUtils::offset_to_indices(output_strides, i, broadcasted_indices);
-    BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices, dims1_vector,
-                                                    indices_1);
+    BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices,
+                                                    dims1_vector, indices_1);
     auto offset1 = ShapeUtils::indices_to_offset(strides_1, indices_1);
-    BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices, dims2_vector,
-                                                    indices_2);
+    BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices,
+                                                    dims2_vector, indices_2);
     auto offset2 = ShapeUtils::indices_to_offset(strides_2, indices_2);
     output[i] = BinaryOp::calc(input_1[offset1], input_2[offset2]);
   }
 }
 
 // Core op classes
-class Add
-{
-  public:
-    template <typename T>
-    static T calc(const T &a, const T &b) { return a+b; }
+class Add {
+public:
+  template <typename T> static T calc(const T &a, const T &b) { return a + b; }
 };
 
-class Sub
-{
-  public:
-    template <typename T>
-    static T calc(const T &a, const T &b) { return a-b; }
+class Sub {
+public:
+  template <typename T> static T calc(const T &a, const T &b) { return a - b; }
 };
 
-class Mul
-{
-  public:
-    template <typename T>
-    static T calc(const T &a, const T &b) { return a*b; }
+class Mul {
+public:
+  template <typename T> static T calc(const T &a, const T &b) { return a * b; }
 };
 
-class Div
-{
-  public:
-    template <typename T>
-    static T calc(const T &a, const T &b) { return a/b; }
+class Div {
+public:
+  template <typename T> static T calc(const T &a, const T &b) { return a / b; }
 };
 
-class PRelu
-{
-  public:
-    template <typename T>
-    static T calc(const T &a, const T &b) { return a >= 0 ? a : a * b; }
+class PRelu {
+public:
+  template <typename T> static T calc(const T &a, const T &b) {
+    return a >= 0 ? a : a * b;
+  }
 };
 
-class Xor
-{
-  public:
-    template <typename T>
-    static T calc(const T &a, const T &b) { return a ^ b; }
+class Xor {
+public:
+  template <typename T> static T calc(const T &a, const T &b) { return a ^ b; }
 };
 
-class Or
-{
-  public:
-    template <typename T>
-    static T calc(const T &a, const T &b) { return a || b; }
+class Or {
+public:
+  template <typename T> static T calc(const T &a, const T &b) { return a || b; }
 };
 
-class And
-{
-  public:
-    template <typename T>
-    static T calc(const T &a, const T &b) { return a && b; }
+class And {
+public:
+  template <typename T> static T calc(const T &a, const T &b) { return a && b; }
 };
-

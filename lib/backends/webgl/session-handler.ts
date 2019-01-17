@@ -38,6 +38,7 @@ import {WebGLSum} from './ops/sum';
 import {WebGLTile} from './ops/tile';
 import {WebGLTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
+import {WebGLUnsqueeze} from './ops/unsqueeze';
 import {ProgramManager} from './program-manager';
 import {TextureData} from './texture-data';
 import {TextureHelper} from './texture-helper';
@@ -210,6 +211,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new WebGLTranspose();
       case 'Tile':
         return new WebGLTile();
+      case 'Unsqueeze':
+        return new WebGLUnsqueeze();
       case 'Xor':
         return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslXor());
       default:

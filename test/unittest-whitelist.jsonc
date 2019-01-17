@@ -418,7 +418,7 @@
       "test_transpose_all_permutations_4",
       "test_transpose_all_permutations_5",
       "test_transpose_default",
-      //"test_unsqueeze",
+      "test_unsqueeze",
       "test_xor_bcast3v1d",
       "test_xor_bcast3v2d",
       "test_xor_bcast4v2d",

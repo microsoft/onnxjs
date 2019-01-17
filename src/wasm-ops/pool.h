@@ -15,10 +15,10 @@ void max_pool_f32(void *);
 // Core operator implementations
 // Pool1D implementation
 // isGlobalPool - true if GlobalMaxPool or GlobalAveragePool, false otherwise
-template<typename PoolType>
-void pool1D_f32(bool isGlobalPool, float *X, int *X_shape,
-                    float *Y, int *Y_shape, int *kernel_shape, int *pads,
-                    int *strides, bool count_include_pad) {
+template <typename PoolType>
+void pool1D_f32(bool isGlobalPool, float *X, int *X_shape, float *Y,
+                int *Y_shape, int *kernel_shape, int *pads, int *strides,
+                bool count_include_pad) {
   int batch_size = X_shape[0];
   int channels = X_shape[1];
   int height = X_shape[2];
@@ -52,10 +52,10 @@ void pool1D_f32(bool isGlobalPool, float *X, int *X_shape,
 
 // Pool2D implementation
 // isGlobalPool - true if GlobalMaxPool or GlobalAveragePool, false otherwise
-template<typename PoolType>
-void pool2D_f32(bool isGlobalPool, float *X, int *X_shape,
-                    float *Y, int *Y_shape, int *kernel_shape, int *pads,
-                    int *strides, bool count_include_pad) {
+template <typename PoolType>
+void pool2D_f32(bool isGlobalPool, float *X, int *X_shape, float *Y,
+                int *Y_shape, int *kernel_shape, int *pads, int *strides,
+                bool count_include_pad) {
   int batch_size = X_shape[0];
   int channels = X_shape[1];
   int height = X_shape[2];
@@ -102,10 +102,10 @@ void pool2D_f32(bool isGlobalPool, float *X, int *X_shape,
 
 // Pool3D - implementation
 // isGlobalPool - true if GlobalMaxPool or GlobalAveragePool, false otherwise
-template<typename PoolType>
-void pool3D_f32(bool isGlobalPool, float *X, int *X_shape,
-                    float *Y, int *Y_shape, int *kernel_shape, int *pads,
-                    int *strides, bool count_include_pad) {
+template <typename PoolType>
+void pool3D_f32(bool isGlobalPool, float *X, int *X_shape, float *Y,
+                int *Y_shape, int *kernel_shape, int *pads, int *strides,
+                bool count_include_pad) {
   int batch_size = X_shape[0];
   int channels = X_shape[1];
   int height = X_shape[2];
@@ -165,33 +165,29 @@ void pool3D_f32(bool isGlobalPool, float *X, int *X_shape,
 }
 
 // Core pool classes
-class AveragePool
-{
-  template<typename T>
-  static T Initialize() { return 0; }
+class AveragePool {
+  template <typename T> static T Initialize() { return 0; }
 
-  template<typename T>
-  static void Process(const T &x_data, T &y_data) {
+  template <typename T> static void Process(const T &x_data, T &y_data) {
     y_data += x_data;
   }
 
-  template<typename T>
-  static void Finalize(const int32_t size, T &y_data) { y_data /= size; }
+  template <typename T> static void Finalize(const int32_t size, T &y_data) {
+    y_data /= size;
+  }
 };
 
-class MaxPool
-{
-  template<typename T>
-  static T Initialize() { return std::numeric_limits<T>::lowest(); }
+class MaxPool {
+  template <typename T> static T Initialize() {
+    return std::numeric_limits<T>::lowest();
+  }
 
-  template<typename T>
-  static void Process(const T &x_data, T &y_data) {
+  template <typename T> static void Process(const T &x_data, T &y_data) {
     if (x_data > y_data) {
       y_data = x_data;
     }
   }
 
-  template<typename T>
+  template <typename T>
   static void Finalize(const int32_t /*size*/, T & /*y_data*/) {}
 };
-

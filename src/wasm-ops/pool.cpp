@@ -4,7 +4,6 @@
 #include "pool.h"
 #include "common.h"
 
-
 // Wasm interop method
 void average_pool_f32(void *data) {
   uint32_t *dataIndex = static_cast<uint32_t *>(data);
@@ -14,8 +13,7 @@ void average_pool_f32(void *data) {
   switch (pool_size) {
   case 1:
     pool1D_f32<AveragePool>(
-        PARAM_BOOL(data, dataIndex[2])
-        PARAM_FLOAT_PTR(data, dataIndex[3]),
+        PARAM_BOOL(data, dataIndex[2]) PARAM_FLOAT_PTR(data, dataIndex[3]),
         PARAM_INT32_PTR(data, dataIndex[4]),
         PARAM_FLOAT_PTR(data, dataIndex[5]),
         PARAM_INT32_PTR(data, dataIndex[6]),
@@ -25,8 +23,7 @@ void average_pool_f32(void *data) {
     break;
   case 2:
     pool2D_f32<AveragePool>(
-        PARAM_BOOL(data, dataIndex[2])
-        PARAM_FLOAT_PTR(data, dataIndex[3]),
+        PARAM_BOOL(data, dataIndex[2]) PARAM_FLOAT_PTR(data, dataIndex[3]),
         PARAM_INT32_PTR(data, dataIndex[4]),
         PARAM_FLOAT_PTR(data, dataIndex[5]),
         PARAM_INT32_PTR(data, dataIndex[6]),
@@ -36,8 +33,7 @@ void average_pool_f32(void *data) {
     break;
   case 3:
     pool3D_f32<AveragePool>(
-        PARAM_BOOL(data, dataIndex[2])
-        PARAM_FLOAT_PTR(data, dataIndex[3]),
+        PARAM_BOOL(data, dataIndex[2]) PARAM_FLOAT_PTR(data, dataIndex[3]),
         PARAM_INT32_PTR(data, dataIndex[4]),
         PARAM_FLOAT_PTR(data, dataIndex[5]),
         PARAM_INT32_PTR(data, dataIndex[6]),
@@ -58,8 +54,7 @@ void max_pool_f32(void *data) {
   switch (pool_size) {
   case 1:
     pool1D_f32<MaxPool>(
-        PARAM_BOOL(data, dataIndex[2])
-        PARAM_FLOAT_PTR(data, dataIndex[3]),
+        PARAM_BOOL(data, dataIndex[2]) PARAM_FLOAT_PTR(data, dataIndex[3]),
         PARAM_INT32_PTR(data, dataIndex[4]),
         PARAM_FLOAT_PTR(data, dataIndex[5]),
         PARAM_INT32_PTR(data, dataIndex[6]),
@@ -69,8 +64,7 @@ void max_pool_f32(void *data) {
     break;
   case 2:
     pool2D_f32<MaxPool>(
-        PARAM_BOOL(data, dataIndex[2])
-        PARAM_FLOAT_PTR(data, dataIndex[3]),
+        PARAM_BOOL(data, dataIndex[2]) PARAM_FLOAT_PTR(data, dataIndex[3]),
         PARAM_INT32_PTR(data, dataIndex[4]),
         PARAM_FLOAT_PTR(data, dataIndex[5]),
         PARAM_INT32_PTR(data, dataIndex[6]),
@@ -80,8 +74,7 @@ void max_pool_f32(void *data) {
     break;
   case 3:
     pool3D_f32<MaxPool>(
-        PARAM_BOOL(data, dataIndex[2])
-        PARAM_FLOAT_PTR(data, dataIndex[3]),
+        PARAM_BOOL(data, dataIndex[2]) PARAM_FLOAT_PTR(data, dataIndex[3]),
         PARAM_INT32_PTR(data, dataIndex[4]),
         PARAM_FLOAT_PTR(data, dataIndex[5]),
         PARAM_INT32_PTR(data, dataIndex[6]),
@@ -93,5 +86,3 @@ void max_pool_f32(void *data) {
     throw "Unsupported pooling size";
   }
 }
-
-

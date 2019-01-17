@@ -23,41 +23,13 @@ void or_(void *);
 void and_(void *);
 }
 
-// Core binary operator implementation
-template <class T>
-void binary_imp(const T *input_1, const int32_t &rank_1,
-                const std::vector<int32_t> &dims_1, const T *input_2,
-                const int32_t &rank_2, const std::vector<int32_t> &dims_2,
-                T *output, const int32_t &output_length,
-                const int32_t &output_rank,
-                const std::vector<int32_t> &output_dims,
-                T (*core_op)(const T &, const T &)) {
-  const std::vector<int32_t> strides_1 = ShapeUtils::compute_strides(dims_1);
-  const std::vector<int32_t> strides_2 = ShapeUtils::compute_strides(dims_2);
-  const std::vector<int32_t> output_strides =
-      ShapeUtils::compute_strides(output_dims);
-  std::vector<int32_t> indices_1(rank_1);
-  std::vector<int32_t> indices_2(rank_2);
-  std::vector<int32_t> broadcasted_indices(output_strides.size());
+// Binary operator (with broadcasting)
+template <typename T, typename BinaryOp>
+void binary_imp(void *data, const T *input_1,
+                    const T *input_2, T *output) {
+  uint32_t *dataIndex = static_cast<uint32_t *>(data);
 
-  for (size_t i = 0; i < output_length; ++i) {
-    ShapeUtils::offset_to_indices(output_strides, i, broadcasted_indices);
-    BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices, dims_1,
-                                                    indices_1);
-    auto offset1 = ShapeUtils::indices_to_offset(strides_1, indices_1);
-    BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices, dims_2,
-                                                    indices_2);
-    auto offset2 = ShapeUtils::indices_to_offset(strides_2, indices_2);
-    output[i] = core_op(input_1[offset1], input_2[offset2]);
-  }
-}
-
-// Core binary operator wrapper (Does some pre-processing prior to calling the
-// core implementation function)
-template <class T>
-void binary_wrapper(void *data, uint32_t *dataIndex, const T *input_1,
-                    const T *input_2, T *output,
-                    T (*core_op)(const T &, const T &)) {
+  // first input related
   const int32_t rank_1 = PARAM_INT32(data, dataIndex[2]);
   const int32_t *dims_1 = PARAM_INT32_PTR(data, dataIndex[3]);
   std::vector<int32_t> dims1_vector;
@@ -68,16 +40,18 @@ void binary_wrapper(void *data, uint32_t *dataIndex, const T *input_1,
     }
   }
 
-  const int32_t rank2 = PARAM_INT32(data, dataIndex[5]);
+ // second input related
+  const int32_t rank_2 = PARAM_INT32(data, dataIndex[5]);
   const int32_t *dims_2 = PARAM_INT32_PTR(data, dataIndex[6]);
   std::vector<int32_t> dims2_vector;
-  if (rank2 > 0) {
-    dims2_vector.resize(rank2);
-    for (int32_t i = 0; i < rank2; ++i) {
+  if (rank_2 > 0) {
+    dims2_vector.resize(rank_2);
+    for (int32_t i = 0; i < rank_2; ++i) {
       dims2_vector[i] = dims_2[i];
     }
   }
 
+  // output related
   const int32_t output_length = PARAM_INT32(data, dataIndex[8]);
   const int32_t output_rank = PARAM_INT32(data, dataIndex[9]);
   const int32_t *output_dims = PARAM_INT32_PTR(data, dataIndex[10]);
@@ -89,7 +63,82 @@ void binary_wrapper(void *data, uint32_t *dataIndex, const T *input_1,
     }
   }
 
-  binary_imp<T>(input_1, rank_1, dims1_vector, input_2, rank2, dims2_vector,
-                output, output_length, output_rank, output_dims_vector,
-                core_op);
+  // compute strides and some preprocessing
+  const std::vector<int32_t> strides_1 = ShapeUtils::compute_strides(dims1_vector);
+  const std::vector<int32_t> strides_2 = ShapeUtils::compute_strides(dims2_vector);
+  const std::vector<int32_t> output_strides =
+      ShapeUtils::compute_strides(output_dims_vector);
+  std::vector<int32_t> indices_1(rank_1);
+  std::vector<int32_t> indices_2(rank_2);
+  std::vector<int32_t> broadcasted_indices(output_strides.size());
+
+  // core functionality (with broadcasting)
+  for (size_t i = 0; i < output_length; ++i) {
+    ShapeUtils::offset_to_indices(output_strides, i, broadcasted_indices);
+    BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices, dims1_vector,
+                                                    indices_1);
+    auto offset1 = ShapeUtils::indices_to_offset(strides_1, indices_1);
+    BroadcastUtils::broadcasted_to_original_indices(broadcasted_indices, dims2_vector,
+                                                    indices_2);
+    auto offset2 = ShapeUtils::indices_to_offset(strides_2, indices_2);
+    output[i] = BinaryOp::calc(input_1[offset1], input_2[offset2]);
+  }
 }
+
+// Core op classes
+class Add
+{
+  public:
+    template <typename T>
+    static T calc(const T &a, const T &b) { return a+b; }
+};
+
+class Sub
+{
+  public:
+    template <typename T>
+    static T calc(const T &a, const T &b) { return a-b; }
+};
+
+class Mul
+{
+  public:
+    template <typename T>
+    static T calc(const T &a, const T &b) { return a*b; }
+};
+
+class Div
+{
+  public:
+    template <typename T>
+    static T calc(const T &a, const T &b) { return a/b; }
+};
+
+class PRelu
+{
+  public:
+    template <typename T>
+    static T calc(const T &a, const T &b) { return a >= 0 ? a : a * b; }
+};
+
+class Xor
+{
+  public:
+    template <typename T>
+    static T calc(const T &a, const T &b) { return a ^ b; }
+};
+
+class Or
+{
+  public:
+    template <typename T>
+    static T calc(const T &a, const T &b) { return a || b; }
+};
+
+class And
+{
+  public:
+    template <typename T>
+    static T calc(const T &a, const T &b) { return a && b; }
+};
+

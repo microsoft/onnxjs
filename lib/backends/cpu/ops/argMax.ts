@@ -1,6 +1,6 @@
 import {ArgMax} from '../../../ops/argMax';
 import {Tensor} from '../../../tensor';
-import {BroadcastUtil, getActualAxisFromNegativeValue, ReduceUtil, ShapeUtil} from '../../../util';
+import {BroadcastUtil, ReduceUtil, ShapeUtil} from '../../../util';
 import {CpuInferenceHandler} from '../inference-handler';
 
 export class CpuArgMax extends ArgMax {
@@ -12,7 +12,7 @@ export class CpuArgMax extends ArgMax {
 
 export function argMax(x: Tensor, axis: number, keepdims: number): Tensor {
   const rank = x.dims ? x.dims.length : 1;
-  axis = getActualAxisFromNegativeValue(axis, rank);
+  axis = ShapeUtil.parseAxis(axis, rank);
   const outputDims = ReduceUtil.calcReduceShape(x.dims.slice(0), [axis], 1);
   const X = x.data;
   const Y = new Int32Array(ShapeUtil.size(outputDims));

@@ -32,14 +32,14 @@ void pool1D_f32(bool isGlobalPool, float *X, int *X_shape, float *Y,
         int hend = std::min(hstart + kernel_shape[0], height);
         hstart =
             std::max(static_cast<int64_t>(hstart), static_cast<int64_t>(0));
-        float Yh = PoolType::Initialize<float>();
+        float Yh = PoolType::Initialize();
         for (int h = hstart; h < hend; ++h) {
-          PoolType::Process<float>(X[h], Yh);
+          PoolType::Process(X[h], Yh);
         }
         if (count_include_pad) {
-          PoolType::Finalize<float>(kernel_shape[0], Yh);
+          PoolType::Finalize(kernel_shape[0], Yh);
         } else {
-          PoolType::Finalize<float>(hend - hstart, Yh);
+          PoolType::Finalize(hend - hstart, Yh);
         }
         Y[ph] = Yh;
       }
@@ -78,17 +78,17 @@ void pool2D_f32(bool isGlobalPool, float *X, int *X_shape, float *Y,
           wstart =
               std::max(static_cast<int64_t>(wstart), static_cast<int64_t>(0));
           const int pool_index = ph * pooled_width + pw;
-          float Yh = PoolType::Initialize<float>();
+          float Yh = PoolType::Initialize();
           for (int h = hstart; h < hend; ++h) {
             for (int w = wstart; w < wend; ++w) {
               const int input_index = h * width + w;
-              PoolType::Process<float>(X[input_index], Yh);
+              PoolType::Process(X[input_index], Yh);
             }
           }
           if (count_include_pad) {
-            PoolType::Finalize<float>(kernel_shape[0] * kernel_shape[1], Yh);
+            PoolType::Finalize(kernel_shape[0] * kernel_shape[1], Yh);
           } else {
-            PoolType::Finalize<float>((hend - hstart) * (wend - wstart), Yh);
+            PoolType::Finalize((hend - hstart) * (wend - wstart), Yh);
           }
           Y[pool_index] = Yh;
         }
@@ -137,20 +137,20 @@ void pool3D_f32(bool isGlobalPool, float *X, int *X_shape, float *Y,
                 std::max(static_cast<int64_t>(dstart), static_cast<int64_t>(0));
             const int pool_index =
                 ph * pooled_width * pooled_depth + pw * pooled_depth + pd;
-            float Yh = PoolType::Initialize<float>();
+            float Yh = PoolType::Initialize();
             for (int h = hstart; h < hend; ++h) {
               for (int w = wstart; w < wend; ++w) {
                 for (int d = dstart; d < dend; ++d) {
                   const int input_index = h * width * depth + w * depth + d;
-                  PoolType::Process<float>(X[input_index], Yh);
+                  PoolType::Process(X[input_index], Yh);
                 }
               }
             }
             if (count_include_pad) {
-              PoolType::Finalize<float>(
+              PoolType::Finalize(
                   kernel_shape[0] * kernel_shape[1] * kernel_shape[2], Yh);
             } else {
-              PoolType::Finalize<float>(
+              PoolType::Finalize(
                   (hend - hstart) * (wend - wstart) * (dend - dstart), Yh);
             }
             Y[pool_index] = Yh;
@@ -166,7 +166,8 @@ void pool3D_f32(bool isGlobalPool, float *X, int *X_shape, float *Y,
 
 // Core pool classes
 class AveragePool {
-  template <typename T> static T Initialize() { return 0; }
+  public:
+  static float Initialize() { return 0; }
 
   template <typename T> static void Process(const T &x_data, T &y_data) {
     y_data += x_data;
@@ -178,8 +179,9 @@ class AveragePool {
 };
 
 class MaxPool {
-  template <typename T> static T Initialize() {
-    return std::numeric_limits<T>::lowest();
+  public:
+  static float Initialize() {
+    return std::numeric_limits<float>::lowest();
   }
 
   template <typename T> static void Process(const T &x_data, T &y_data) {

@@ -166,7 +166,7 @@ void pool3D_f32(bool isGlobalPool, float *X, int *X_shape, float *Y,
 
 // Core pool classes
 class AveragePool {
-  public:
+public:
   static float Initialize() { return 0; }
 
   template <typename T> static void Process(const T &x_data, T &y_data) {
@@ -179,10 +179,8 @@ class AveragePool {
 };
 
 class MaxPool {
-  public:
-  static float Initialize() {
-    return std::numeric_limits<float>::lowest();
-  }
+public:
+  static float Initialize() { return std::numeric_limits<float>::lowest(); }
 
   template <typename T> static void Process(const T &x_data, T &y_data) {
     if (x_data > y_data) {

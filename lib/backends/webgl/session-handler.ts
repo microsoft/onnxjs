@@ -15,6 +15,7 @@ import * as binaryOps from './ops/binary-op';
 import {WebGLConcat} from './ops/concat';
 import {WebGLConv} from './ops/conv';
 import {WebGLDropout} from './ops/dropout';
+import {WebGLGather} from './ops/gather';
 import {WebGLGemm} from './ops/gemm';
 import {WebGLImageScaler} from './ops/image-scaler';
 import {WebGLLeakyRelu} from './ops/leaky-relu';
@@ -36,6 +37,7 @@ import {WebGLSum} from './ops/sum';
 import {WebGLTile} from './ops/tile';
 import {WebGLTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
+import {WebGLUnsqueeze} from './ops/unsqueeze';
 import {ProgramManager} from './program-manager';
 import {TextureData} from './texture-data';
 import {TextureHelper} from './texture-helper';
@@ -122,6 +124,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslExp());
       case 'Floor':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslFloor());
+      case 'Gather':
+        return new WebGLGather();
       case 'Gemm':
         return new WebGLGemm();
       case 'GlobalAveragePool':
@@ -204,6 +208,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new WebGLTranspose();
       case 'Tile':
         return new WebGLTile();
+      case 'Unsqueeze':
+        return new WebGLUnsqueeze();
       case 'Xor':
         return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslXor());
       default:

@@ -10,3 +10,7 @@
 	path = deps/data
 	url = https://github.com/Microsoft/onnxjs-demo.git
 	branch = data
+[submodule "deps/onnx"]
+	path = deps/onnx
+	url = https://github.com/onnx/onnx.git
+	ignore = dirty

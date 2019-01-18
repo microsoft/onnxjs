@@ -25,13 +25,6 @@ export function checkInputsShape(inputs: Tensor[], ...expectedDimensions: number
   return true;
 }
 
-export function getActualAxisFromNegativeValue(axis: number, tensorRank: number): number {
-  if (axis < -tensorRank || axis > tensorRank - 1) {
-    throw new Error('unsupported axis for this operation.');
-  }
-  return axis < 0 ? axis + tensorRank : axis;
-}
-
 export class BroadcastUtil {
   /**
    * Calculate the expected shape when broadcasting 2 tensors
@@ -587,6 +580,47 @@ export class ShapeUtil {
       size *= n;
     }
     return size;
+  }
+
+  /**
+   * Determines the shape of output tensor y = unsqueeze(x, axes)
+   * @param dims - shape of input tensor
+   * @param axes - unsqueeze axes
+   */
+  static unsqueezeShape(dims: ReadonlyArray<number>, axes: ReadonlyArray<number>): ReadonlyArray<number> {
+    const outputDims = new Array<number>(dims.length + axes.length);
+
+    // initialize the array elements to 0
+    outputDims.fill(0);
+
+    // set all axes indices to 1 in outputDims and check for duplicates
+    for (let i = 0; i < axes.length; i++) {
+      const axis = axes[i];
+      if (axis >= outputDims.length) {
+        throw new Error(`'axes' has an out of range axis`);
+      }
+      if (outputDims[axis] !== 0) {
+        throw new Error(`'axes' has a duplicate axis`);
+      }
+
+      outputDims[axis] = 1;
+    }
+
+    // fill in the zero entries of outputDims with the input tensor's shape
+    let inputDimsIterator = 0;
+    for (let i = 0; i < outputDims.length; i++) {
+      if (outputDims[i] === 0) {
+        outputDims[i] = dims[inputDimsIterator++];
+      }
+    }
+
+    // sanity check assertion. 'inputDimsIterator'
+    // should be equal to the length of 'dims'
+    if (inputDimsIterator !== dims.length) {
+      throw new Error('the unsqueezed dimension could not be established');
+    }
+
+    return outputDims;
   }
 }
 

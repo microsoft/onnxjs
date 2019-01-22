@@ -33,6 +33,7 @@ import {WebGLReshape} from './ops/reshape';
 import {WebGLSlice} from './ops/slice';
 import {WebGLSoftmax} from './ops/softmax';
 import {WebGLSplit} from './ops/split';
+import {WebGLSqueeze} from './ops/squeeze';
 import {WebGLSum} from './ops/sum';
 import {WebGLTile} from './ops/tile';
 import {WebGLTranspose} from './ops/transpose';
@@ -192,6 +193,8 @@ export class WebGLSessionHandler implements SessionHandler {
         // is split. When the attribute is missing, we need the count of number of outputs
         // so that we can determine the 'split' attribute from the runtime input to the Operator
         return new WebGLSplit(node.outputs.length);
+      case 'Squeeze':
+        return new WebGLSqueeze();
       case 'Sqrt':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSqrt());
       case 'Sub':

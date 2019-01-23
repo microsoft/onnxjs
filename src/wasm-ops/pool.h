@@ -31,7 +31,7 @@ void pool1D_f32(bool isGlobalPool, float *X, int *X_shape, float *Y,
         int hstart = ph * stride_h - pads[0];
         int hend = std::min(hstart + kernel_shape[0], height);
         hstart =
-            std::max(static_cast<int64_t>(hstart), static_cast<int64_t>(0));
+            std::max(hstart, 0);
         float Yh = PoolType::Initialize();
         for (int h = hstart; h < hend; ++h) {
           PoolType::Process(X[h], Yh);
@@ -71,12 +71,12 @@ void pool2D_f32(bool isGlobalPool, float *X, int *X_shape, float *Y,
         int hstart = ph * stride_h - pads[0];
         int hend = std::min(hstart + kernel_shape[0], height);
         hstart =
-            std::max(static_cast<int64_t>(hstart), static_cast<int64_t>(0));
+            std::max(hstart, 0);
         for (int pw = 0; pw < pooled_width; ++pw) {
           int wstart = pw * stride_w - pads[1];
           int wend = std::min(wstart + kernel_shape[1], width);
           wstart =
-              std::max(static_cast<int64_t>(wstart), static_cast<int64_t>(0));
+              std::max(wstart, 0);
           const int pool_index = ph * pooled_width + pw;
           float Yh = PoolType::Initialize();
           for (int h = hstart; h < hend; ++h) {
@@ -124,17 +124,17 @@ void pool3D_f32(bool isGlobalPool, float *X, int *X_shape, float *Y,
         int hstart = ph * stride_h - pads[0];
         int hend = std::min(hstart + kernel_shape[0], height);
         hstart =
-            std::max(static_cast<int64_t>(hstart), static_cast<int64_t>(0));
+            std::max(hstart, 0);
         for (int pw = 0; pw < pooled_width; ++pw) {
           int wstart = pw * stride_w - pads[1];
           int wend = std::min(wstart + kernel_shape[1], width);
           wstart =
-              std::max(static_cast<int64_t>(wstart), static_cast<int64_t>(0));
+              std::max(wstart, 0);
           for (int pd = 0; pd < pooled_depth; ++pd) {
             int dstart = pd * stride_d - pads[2];
             int dend = std::min(dstart + kernel_shape[2], depth);
             dstart =
-                std::max(static_cast<int64_t>(dstart), static_cast<int64_t>(0));
+                std::max(dstart, 0);
             const int pool_index =
                 ph * pooled_width * pooled_depth + pw * pooled_depth + pd;
             float Yh = PoolType::Initialize();

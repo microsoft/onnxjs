@@ -1,6 +1,6 @@
 import {ArgMax} from '../../../ops/argMax';
 import {Tensor} from '../../../tensor';
-import {BroadcastUtil, getActualAxisFromNegativeValue, ReduceUtil, ShapeUtil} from '../../../util';
+import {BroadcastUtil, ReduceUtil, ShapeUtil} from '../../../util';
 import {CpuInferenceHandler} from '../inference-handler';
 
 export class CpuArgMax extends ArgMax {
@@ -12,17 +12,18 @@ export class CpuArgMax extends ArgMax {
 
 export function argMax(x: Tensor, axis: number, keepdims: number): Tensor {
   const rank = x.dims ? x.dims.length : 1;
-  axis = getActualAxisFromNegativeValue(axis, rank);
+  axis = ShapeUtil.parseAxis(axis, rank);
   const outputDims = ReduceUtil.calcReduceShape(x.dims.slice(0), [axis], 1);
   const X = x.data;
   const Y = new Int32Array(ShapeUtil.size(outputDims));
   const blockSize = axis >= x.dims.length ? 1 : ShapeUtil.size(x.dims.slice(axis + 1));
   const strides = ShapeUtil.computeStrides(outputDims);
   const inputStrides = ShapeUtil.computeStrides(x.dims);
+  const indicesY = new Array(x.dims.length);
   for (let i = 0; i < Y.length; i++) {
     const indices = ShapeUtil.offsetToIndices(i, strides);
     // map index
-    const indicesY = BroadcastUtil.index(indices, x.dims);
+    BroadcastUtil.fillIndex(indices, x.dims, indicesY);
     const offset = ShapeUtil.indicesToOffset(indicesY, inputStrides);
     let max = x.data[offset];
     let index = 0;

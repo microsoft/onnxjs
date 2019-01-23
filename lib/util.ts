@@ -84,24 +84,35 @@ export class BroadcastUtil {
 
   /**
    * Given the indices of a broadcasted tensor, calculate the original indices
-   * @param indices The given indices of the broadcasted tensor.
-   * @param originalShape The original shape of the tensor before broadcast
-   * @param isMatMul Whether the operation is MatMul
-   * @returns The calculated indices that maps to the original tensor. If the
-   * operation is MatMul, the indices of last 2 dimensions will keep as same as
-   * input indices
+   * @param broadcastedIndices The given indices of the broadcasted tensor.
+   * @param originalShape The original shape of the tensor before broadcas
+   * @returns The calculated indices that maps to the original tensor.
    */
-  static index(indices: ReadonlyArray<number>, originalShape: ReadonlyArray<number>, isMatMul = false): number[] {
-    // we assume the parameter indices is valid. ie. it should have the same
+  static index(broadcastedIndices: ReadonlyArray<number>, originalShape: ReadonlyArray<number>): number[] {
+    // NOTE 1: we assume the parameter broadcastedIndices is valid. ie. it should have the same
     // length as the broadcasted shape, and for each dimension the index should
     // not be out of range.
-    const dimOffset = indices.length - originalShape.length;
-    const indicesOriginal = indices.slice(dimOffset);
-    const dimLen = isMatMul ? indicesOriginal.length - 2 : indicesOriginal.length;
-    for (let i = 0; i < dimLen; i++) {
-      indicesOriginal[i] = indices[dimOffset + i] % originalShape[i];
+    const originalIndices = new Array(originalShape.length);
+    BroadcastUtil.fillIndex(broadcastedIndices, originalShape, originalIndices);
+    return originalIndices;
+  }
+
+  /**
+   * Given the indices of a broadcasted tensor, calculate the original indices
+   * @param broadcastedIndices The given indices of the broadcasted tensor.
+   * @param originalShape The original shape of the tensor before broadcast
+   * @param originalIndices The mapping of broadcastedIndices to the originalIndices (output parameter - will be
+   *     mutated).
+   */
+  static fillIndex(
+      broadcastedIndices: ReadonlyArray<number>, originalShape: ReadonlyArray<number>, originalIndices: number[]) {
+    // NOTE 1: we assume the parameter broadcastedIndices is valid. ie. it should have the same length as the
+    // broadcasted shape, and for each dimension the index should not be out of range.
+    // NOTE 2: we assume the parameter originalIndices has the same length as the originalShape
+    const dimOffset = broadcastedIndices.length - originalShape.length;
+    for (let i = 0; i < originalShape.length; i++) {
+      originalIndices[i] = broadcastedIndices[dimOffset + i] % originalShape[i];
     }
-    return indicesOriginal;
   }
 
   /**
@@ -112,31 +123,61 @@ export class BroadcastUtil {
    * @returns The result tensor, or undefined if input not broadcastable.
    */
   static calc(a: ndarray, b: ndarray, op: (a: number, b: number) => number): ndarray|undefined {
-    const shape = BroadcastUtil.calcShape(a.shape, b.shape);
-    if (shape) {
-      const size = ShapeUtil.size(shape);
+    const outputShape = BroadcastUtil.calcShape(a.shape, b.shape);
+
+    if (outputShape) {
+      const size = ShapeUtil.size(outputShape);
       const c = ndarray(
           new (
               a.data.constructor as Int8ArrayConstructor | Int16ArrayConstructor | Int32ArrayConstructor |
               Uint8ArrayConstructor | Uint16ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor |
               Float64ArrayConstructor | Uint8ClampedArrayConstructor)(size),
-          shape as number[]);
+          outputShape as number[]);
 
-      const indices = new Array<number>(shape.length);
-      for (let i = 0; i < size; i++) {
-        // traversal indices
-        let rest = i;
-        for (let j = shape.length - 1; j >= 0; j--) {
-          indices[j] = rest % shape[j];
-          rest = Math.floor(rest / shape[j]);
+      // both inputs are scalars
+      if (outputShape.length === 0) {
+        c.set(op(a.get(), b.get()));
+      }
+
+      // atleast one input is a non-scalar
+      else {
+        const outputIndices = new Array<number>(outputShape.length);
+        const originalIndicesA = new Array(a.shape.length);
+        const originalIndicesB = new Array(b.shape.length);
+        let valA = 0;
+        let valB = 0;
+        let isAScalar = false;
+        let isBScalar = false;
+        if (a.shape.length === 0) {
+          valA = a.get();
+          isAScalar = true;
         }
+        if (b.shape.length === 0) {
+          valB = b.get();
+          isBScalar = true;
+        }
+        let rest: number;
+        for (let i = 0; i < size; i++) {
+          // traversal indices
+          rest = i;
+          for (let j = outputShape.length - 1; j >= 0; j--) {
+            outputIndices[j] = rest % outputShape[j];
+            rest = Math.floor(rest / outputShape[j]);
+          }
 
-        // map index
-        const indicesA = BroadcastUtil.index(indices, a.shape);
-        const indicesB = BroadcastUtil.index(indices, b.shape);
+          if (!isAScalar) {
+            // map outputIndices (which is actually broadcasted) to the originalIndices
+            BroadcastUtil.fillIndex(outputIndices, a.shape, originalIndicesA);
+            valA = a.get(...originalIndicesA);
+          }
+          if (!isBScalar) {
+            BroadcastUtil.fillIndex(outputIndices, b.shape, originalIndicesB);
+            valB = b.get(...originalIndicesB);
+          }
 
-        // assign value
-        c.set(...indices.concat(op(a.get(...indicesA), b.get(...indicesB))));
+          // assign value to output ndarray
+          c.set(...outputIndices, op(valA, valB));
+        }
       }
 
       return c;
@@ -808,10 +849,11 @@ export class ReduceUtil {
     const ndY = ndarray(new Array<number>(size), outputDims);
     const strides = ShapeUtil.computeStrides(outputDims);
     const inputStrides = ShapeUtil.computeStrides(dims);
+    const indicesY = new Array(dims.length);
     for (let i = 0; i < size; i++) {
       const indices = ShapeUtil.offsetToIndices(i, strides);
       // map index
-      const indicesY = BroadcastUtil.index(indices, dims);
+      BroadcastUtil.fillIndex(indices, dims, indicesY);
       ndY.set(
           ...indices,
           ReduceUtil.calcReduceByAxis(

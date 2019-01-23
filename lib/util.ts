@@ -149,11 +149,11 @@ export class BroadcastUtil {
         let isAScalar = false;
         let isBScalar = false;
         if (a.shape.length === 0) {
-          valA = a.get(...[]);
+          valA = a.get();
           isAScalar = true;
         }
         if (b.shape.length === 0) {
-          valB = b.get(...[]);
+          valB = b.get();
           isBScalar = true;
         }
         let rest: number;

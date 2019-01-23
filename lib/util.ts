@@ -109,8 +109,7 @@ export class BroadcastUtil {
     // NOTE 1: we assume the parameter broadcastedIndices is valid. ie. it should have the same
     // length as the broadcasted shape, and for each dimension the index should
     // not be out of range.
-    // NOTE 2: we assume the parameter originalIndices has the same
-    // length as the originalShape
+    // NOTE 2: we assume the parameter originalIndices has the same length as the originalShape
     const dimOffset = broadcastedIndices.length - originalShape.length;
     for (let i = 0; i < originalShape.length; i++) {
       originalIndices[i] = broadcastedIndices[dimOffset + i] % originalShape[i];
@@ -138,7 +137,7 @@ export class BroadcastUtil {
 
       // both inputs are scalars
       if (outputShape.length === 0) {
-        c.set(...[], op(a.get(...[]), b.get(...[])));
+        c.set(op(a.get(), b.get()));
       }
 
       // atleast one input is a non-scalar
@@ -170,12 +169,10 @@ export class BroadcastUtil {
           if (!isAScalar) {
             // map outputIndices (which is actually broadcasted) to the originalIndices
             BroadcastUtil.fillIndex(outputIndices, a.shape, originalIndicesA);
-            // get value
             valA = a.get(...originalIndicesA);
           }
           if (!isBScalar) {
             BroadcastUtil.fillIndex(outputIndices, b.shape, originalIndicesB);
-            // get value
             valB = b.get(...originalIndicesB);
           }
 

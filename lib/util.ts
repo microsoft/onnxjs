@@ -106,9 +106,8 @@ export class BroadcastUtil {
    */
   static fillIndex(
       broadcastedIndices: ReadonlyArray<number>, originalShape: ReadonlyArray<number>, originalIndices: number[]) {
-    // NOTE 1: we assume the parameter broadcastedIndices is valid. ie. it should have the same
-    // length as the broadcasted shape, and for each dimension the index should
-    // not be out of range.
+    // NOTE 1: we assume the parameter broadcastedIndices is valid. ie. it should have the same length as the
+    // broadcasted shape, and for each dimension the index should not be out of range.
     // NOTE 2: we assume the parameter originalIndices has the same length as the originalShape
     const dimOffset = broadcastedIndices.length - originalShape.length;
     for (let i = 0; i < originalShape.length; i++) {

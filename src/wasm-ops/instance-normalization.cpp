@@ -23,35 +23,32 @@ void instance_normalization_f32_imp(float *X, float *Y, int32_t batch_size,
   float temp;
   float mean;
   float variance;
-  size_t sampleOffset;
   size_t physicalOffset;
   size_t iterEnd;
-  size_t sample_size = channel_size * num_channels;
+  size_t currentChannel;
 
-  for (size_t n = 0; n < batch_size; ++n) {
-    sampleOffset = n * sample_size;
-    for (size_t c = 0; c < num_channels; ++c) {
-      physicalOffset = sampleOffset + c * channel_size;
-      iterEnd = physicalOffset + channel_size;
+  for (size_t nc = 0; nc < batch_size * channel_size; nc++) {
+    physicalOffset = nc * channel_size;
+    iterEnd = physicalOffset + channel_size;
+    currentChannel = nc % num_channels;
 
-      // compute mean for this channel
-      temp = 0;
-      for (int32_t i = physicalOffset; i < iterEnd; ++i) {
-        temp += X[i];
-      }
-      mean = temp / channel_size;
+    // compute mean for this channel
+    temp = 0;
+    for (size_t i = physicalOffset; i < iterEnd; ++i) {
+      temp += X[i];
+    }
+    mean = temp / channel_size;
 
-      // compute variance for this channel
-      temp = 0;
-      for (size_t i = physicalOffset; i < iterEnd; ++i) {
-        temp += pow(X[i] - mean, 2);
-      }
-      variance = temp / channel_size;
+    // compute variance for this channel
+    temp = 0;
+    for (size_t i = physicalOffset; i < iterEnd; ++i) {
+      temp += pow(X[i] - mean, 2);
+    }
+    variance = temp / channel_size;
 
-      // compute normalized value for data in this channel
-      for (size_t i = physicalOffset; i < iterEnd; ++i) {
-        Y[i] = scale[c] * ((X[i] - mean) / sqrt(variance + epsilon)) + bias[c];
-      }
+    // compute normalized value for data in this channel
+    for (size_t i = physicalOffset; i < iterEnd; ++i) {
+      Y[i] = scale[currentChannel] * ((X[i] - mean) / sqrt(variance + epsilon)) + bias[currentChannel];
     }
   }
 }

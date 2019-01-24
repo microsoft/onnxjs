@@ -22,8 +22,6 @@ export function instanceNormalization(x: Tensor, scale: Tensor, b: Tensor, epsil
   for (let i = 2; i < inputDimensions.length; i++) {
     channelSize *= inputDimensions[i];
   }
-  const sampleSize = C * channelSize;
-
   const output = new Tensor(x.dims, x.type);
 
   const X = x.floatData;
@@ -34,34 +32,32 @@ export function instanceNormalization(x: Tensor, scale: Tensor, b: Tensor, epsil
   let temp: number;
   let mean: number;
   let variance: number;
-  let sampleOffset: number;
   let physicalOffset: number;
   let iterEnd: number;
+  let currentChannel: number;
 
-  for (let n = 0; n < N; ++n) {
-    sampleOffset = n * sampleSize;
-    for (let c = 0; c < C; ++c) {
-      physicalOffset = sampleOffset + c * channelSize;
-      iterEnd = physicalOffset + channelSize;
+  for (let nc = 0; nc < N * C; nc++) {
+    physicalOffset = nc * channelSize;
+    iterEnd = physicalOffset + channelSize;
+    currentChannel = nc % C;
 
-      // compute mean for this channel
-      temp = 0;
-      for (let i = physicalOffset; i < iterEnd; ++i) {
-        temp += X[i];
-      }
-      mean = temp / channelSize;
+    // compute mean for this channel
+    temp = 0;
+    for (let i = physicalOffset; i < iterEnd; ++i) {
+      temp += X[i];
+    }
+    mean = temp / channelSize;
 
-      // compute variance for this channel
-      temp = 0;
-      for (let i = physicalOffset; i < iterEnd; ++i) {
-        temp += Math.pow(X[i] - mean, 2);
-      }
-      variance = temp / channelSize;
+    // compute variance for this channel
+    temp = 0;
+    for (let i = physicalOffset; i < iterEnd; ++i) {
+      temp += Math.pow(X[i] - mean, 2);
+    }
+    variance = temp / channelSize;
 
-      // compute normalized value for data in this channel
-      for (let i = physicalOffset; i < iterEnd; ++i) {
-        Y[i] = scaleData[c] * ((X[i] - mean) / Math.sqrt(variance + epsilon)) + bData[c];
-      }
+    // compute normalized value for data in this channel
+    for (let i = physicalOffset; i < iterEnd; ++i) {
+      Y[i] = scaleData[currentChannel] * ((X[i] - mean) / Math.sqrt(variance + epsilon)) + bData[currentChannel];
     }
   }
 

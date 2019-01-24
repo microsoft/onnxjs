@@ -20,6 +20,7 @@ import * as cpuReduce from './ops/reduce';
 import {CpuReshape} from './ops/reshape';
 import {CpuSlice} from './ops/slice';
 import {CpuSoftmax} from './ops/softmax';
+import {CpuSqueeze} from './ops/squeeze';
 import {CpuSum} from './ops/sum';
 import {CpuTile} from './ops/tile';
 import {CpuTranspose} from './ops/transpose';
@@ -140,6 +141,8 @@ function createOperator(node: Graph.Node, domain: string, version: number): Oper
       return new CpuSlice();
     case 'Softmax':
       return new CpuSoftmax();
+    case 'Squeeze':
+      return new CpuSqueeze();
     case 'Sum':
       return new CpuSum();
     case 'Tile':

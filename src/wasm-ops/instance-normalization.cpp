@@ -48,7 +48,9 @@ void instance_normalization_f32_imp(float *X, float *Y, int32_t batch_size,
 
     // compute normalized value for data in this channel
     for (size_t i = physicalOffset; i < iterEnd; ++i) {
-      Y[i] = scale[currentChannel] * ((X[i] - mean) / sqrt(variance + epsilon)) + bias[currentChannel];
+      Y[i] =
+          scale[currentChannel] * ((X[i] - mean) / sqrt(variance + epsilon)) +
+          bias[currentChannel];
     }
   }
 }

@@ -328,16 +328,14 @@ class GraphImpl implements Graph, Graph.Transformer {
     // Iterative DFS to check for cycles
     const nodesStack = Array.from(starters);
     const nodesState = new Array<string>(this._nodes.length).fill('white');
-    const nodesProcessed = new Set<number>();
 
     while (nodesStack.length > 0) {
       const nodeIndex = nodesStack.pop()!;
       // this node has now been processed completely. Mark this node 'black' to denote this.
-      if (nodesProcessed.has(nodeIndex)) {
+      if (nodesState[nodeIndex] === 'gray') {
         nodesState[nodeIndex] = 'black';
       } else {
         // this node is under processing stage. mark this node 'gray' to denote this.
-        nodesProcessed.add(nodeIndex);
         nodesStack.push(nodeIndex);
         nodesState[nodeIndex] = 'gray';
 

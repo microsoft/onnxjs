@@ -44,6 +44,8 @@ export function matMul(a: Tensor, b: Tensor) {
 
   let curPos = 0;
   const indices = new Array<number>(shape.length);
+  const indicesA = new Array(ndA.shape.length);
+  const indicesB = new Array(ndB.shape.length);
   for (let i = 0; i < num2dMatrices; i++) {
     // traverse nd array at 2d level
     let rest = i;
@@ -52,8 +54,8 @@ export function matMul(a: Tensor, b: Tensor) {
       rest = Math.floor(rest / shape[j]);
     }
     // map the "broadcasted" index to original ndarray index
-    const indicesA = BroadcastUtil.index(indices, ndA.shape);
-    const indicesB = BroadcastUtil.index(indices, ndB.shape);
+    BroadcastUtil.fillIndex(indices, ndA.shape, indicesA);
+    BroadcastUtil.fillIndex(indices, ndB.shape, indicesB);
     // slice and get 2d subarrays
     const subarrayA = shape.length === 2 ? ndA : ndA.pick(...indicesA);
     const subarrayB = shape.length === 2 ? ndB : ndB.pick(...indicesB);

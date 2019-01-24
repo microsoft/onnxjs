@@ -13,6 +13,7 @@ import {CpuDropout} from './ops/dropout';
 import {CpuGather} from './ops/gather';
 import {CpuGemm} from './ops/gemm';
 import {CpuImageScaler} from './ops/image-scaler';
+import {CpuInstanceNormalization} from './ops/instance-normalization';
 import {CpuLrn} from './ops/lrn';
 import {CpuMatMul} from './ops/matmul';
 import {CpuAveragePool, CpuGlobalAveragePool, CpuGlobalMaxPool, CpuMaxPool} from './ops/pool';
@@ -118,6 +119,8 @@ function createOperator(node: Graph.Node, domain: string, version: number): Oper
       return new CpuGlobalMaxPool();
     case 'GlobalAveragePool':
       return new CpuGlobalAveragePool();
+    case 'InstanceNormalization':
+      return new CpuInstanceNormalization();
     case 'PRelu':
       return new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 >= 0 ? e1 : e1 * e2));
     case 'Reshape':

@@ -10,6 +10,7 @@ import {WasmInferenceHandler} from './inference-handler';
 import {WasmBatchNormalization} from './ops/batch-normalization';
 import {WasmConv} from './ops/conv';
 import {WasmGemm} from './ops/gemm';
+import {WasmInstanceNormalization} from './ops/instance-normalization';
 import {WasmAveragePool, WasmGlobalAveragePool, WasmGlobalMaxPool, WasmMaxPool} from './ops/pool';
 import {WasmSoftmax} from './ops/softmax';
 import {WasmSum} from './ops/sum';
@@ -50,6 +51,8 @@ export class WasmSessionHandler implements SessionHandler {
         return new WasmGlobalMaxPool();
       case 'GlobalAveragePool':
         return new WasmGlobalAveragePool();
+      case 'InstanceNormalization':
+        return new WasmInstanceNormalization();
       default:
         if (this.fallbackToCpuOps) {
           return resolve(node, domain, version);

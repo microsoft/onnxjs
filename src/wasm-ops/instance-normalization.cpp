@@ -18,8 +18,8 @@ void instance_normalization_f32(void *data) {
 
 // Core operator implementation
 void instance_normalization_f32_imp(float *X, float *Y, int32_t batch_size,
-                                 int32_t num_channels, int32_t channel_size,
-                                 float *scale, float *bias, float epsilon) {
+                                    int32_t num_channels, int32_t channel_size,
+                                    float *scale, float *bias, float epsilon) {
   float temp;
   float mean;
   float variance;

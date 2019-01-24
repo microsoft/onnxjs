@@ -8,5 +8,5 @@
 extern "C" {
 void instance_normalization_f32(void *);
 void instance_normalization_f32_imp(float *, float *, int32_t, int32_t, int32_t,
-                                 float *, float *, float);
+                                    float *, float *, float);
 }

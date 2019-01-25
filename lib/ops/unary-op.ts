@@ -10,7 +10,10 @@ export abstract class UnaryOp implements Operator {
   constructor(protected typeConstraint: ReadonlyArray<Tensor.DataType>, protected resultType?: Tensor.DataType) {}
 
   abstract run(inferenceHandler: InferenceHandler, inputs: Tensor[]): Tensor[]|Promise<Tensor[]>;
-  abstract initialize(attributes: Attribute): void;
+
+  initialize(attributes: Attribute): void {
+    this.attributes = attributes;
+  }
 
   checkInputs(inputs: Tensor[]): boolean {
     if (!inputs || inputs.length !== 1) {
@@ -27,4 +30,6 @@ export abstract class UnaryOp implements Operator {
 
     return true;
   }
+
+  protected attributes: Attribute;
 }

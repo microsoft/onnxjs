@@ -12,7 +12,8 @@ export abstract class BinaryOp implements Operator {
       protected resultType?: Tensor.DataType) {}
 
   abstract run(inferenceHandler: InferenceHandler, inputs: Tensor[]): Tensor[]|Promise<Tensor[]>;
-  abstract initialize(attributes: Attribute): void;
+
+  initialize(attributes: Attribute): void {}
 
   checkInputs(inputs: Tensor[]): boolean {
     if (!inputs || inputs.length !== 2) {

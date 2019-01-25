@@ -68,16 +68,14 @@ export class WasmBinaryOp extends BinaryOp {
     }
     let result: Tensor;
     if (binaryOpType === 'float32InFloat32Out') {
-      const outputType = this.resultType ? this.resultType : 'float32';
-      result = new Tensor(outputShape, outputType);
+      result = new Tensor(outputShape, 'float32');
       WasmBinding.getInstance().ccall(
           fun, [inputs[0].floatData, 'float32ptr'], [inputs[0].dims.length, 'int32'], [inputs[0].dims, 'int32ptr'],
           [inputs[1].floatData, 'float32ptr'], [inputs[1].dims.length, 'int32'], [inputs[1].dims, 'int32ptr'],
           [result.floatData, 'float32ptr', 'out'], [result.floatData.length, 'int32'], [outputShape.length, 'int32'],
           [outputShape, 'int32ptr']);
     } else if (binaryOpType === 'boolInBoolOut') {
-      const outputType = this.resultType ? this.resultType : 'bool';
-      result = new Tensor(outputShape, outputType);
+      result = new Tensor(outputShape, 'bool');
       WasmBinding.getInstance().ccall(
           fun, [inputs[0].integerData as Uint8Array, 'boolptr'], [inputs[0].dims.length, 'int32'],
           [inputs[0].dims, 'int32ptr'], [inputs[1].integerData as Uint8Array, 'boolptr'],

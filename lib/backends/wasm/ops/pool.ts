@@ -99,6 +99,18 @@ async function globalMaxPool(input: Tensor): Promise<Tensor[]> {
 async function pool(
     isGlobalOperator: boolean, poolType: number, input: Tensor, autoPad: string, countIncludePad: boolean,
     kernelShape: number[], pads: number[], strides: number[]): Promise<Tensor[]> {
+  // determine pool function name in wasm
+  let poolFunc = '';
+  switch (poolType) {
+    case 1:
+      poolFunc = '_average_pool_f32';
+      break;
+    case 2:
+      poolFunc = '_max_pool_f32';
+      break;
+    default:
+      throw new Error(`unknown pool type`);
+  }
   // adjust the shapes of input attributes
   PoolConvUtil.adjustPoolAttributes(isGlobalOperator, input.dims, kernelShape, strides, pads);
 
@@ -115,10 +127,9 @@ async function pool(
   // no multi-threading
   if (numThreads === 1) {
     WasmBinding.getInstance().ccall(
-        '_pool_f32', [kernelShape.length, 'int32'], [isGlobalOperator, 'bool'], [poolType, 'int32'],
-        [input.floatData, 'float32ptr'], [input.dims, 'int32ptr'], [y.floatData, 'float32ptr', 'out'],
-        [y.dims, 'int32ptr'], [kernelShape, 'int32ptr'], [pads, 'int32ptr'], [strides, 'int32ptr'],
-        [countIncludePad, 'bool']);
+        poolFunc, [kernelShape.length, 'int32'], [isGlobalOperator, 'bool'], [input.floatData, 'float32ptr'],
+        [input.dims, 'int32ptr'], [y.floatData, 'float32ptr', 'out'], [y.dims, 'int32ptr'], [kernelShape, 'int32ptr'],
+        [pads, 'int32ptr'], [strides, 'int32ptr'], [countIncludePad, 'bool']);
   }
 
   // multi-threaded using web-workers
@@ -147,13 +158,13 @@ async function pool(
     for (let i = 0; i < numThreads; ++i) {
       if (i !== numThreads - 1) {
         workerTasks[i] = WasmBinding.getInstance().ccallRemote(
-            i, '_pool_f32', [kernelShape.length, 'int32'], [isGlobalOperator, 'bool'], [poolType, 'int32'],
+            i, poolFunc, [kernelShape.length, 'int32'], [isGlobalOperator, 'bool'],
             [X.subarray(i * xSizeSp, (i + 1) * xSizeSp), 'float32ptr'], [xDimsSp, 'int32ptr'],
             [Y.subarray(i * ySizeSp, (i + 1) * ySizeSp), 'float32ptr', 'out'], [yDimsSp, 'int32ptr'],
             [kernelShape, 'int32ptr'], [pads, 'int32ptr'], [strides, 'int32ptr'], [countIncludePad, 'bool']);
       } else {
         WasmBinding.getInstance().ccall(
-            '_pool_f32', [kernelShape.length, 'int32'], [isGlobalOperator, 'bool'], [poolType, 'int32'],
+            poolFunc, [kernelShape.length, 'int32'], [isGlobalOperator, 'bool'],
             [X.subarray((numThreads - 1) * xSizeSp), 'float32ptr'], [xDimsFinal, 'int32ptr'],
             [Y.subarray((numThreads - 1) * ySizeSp), 'float32ptr', 'out'], [yDimsFinal, 'int32ptr'],
             [kernelShape, 'int32ptr'], [pads, 'int32ptr'], [strides, 'int32ptr'], [countIncludePad, 'bool']);

@@ -246,19 +246,9 @@ export class WasmBinding {
           heapF32[offset32] = paramData as number;
           break;
         case 'boolptr':
-          const boolArray = (paramData as WasmCallArgumentTypeMap['boolptr']);
-          // ReadonlyArray<boolean>
-          if (Array.isArray(paramData)) {
-            const data = heapU8.subarray(offset8, offset8 + boolArray.length);
-            for (let i = 0; i < boolArray.length; ++i) {
-              data[i] = boolArray[i] === true ? 1 : 0;
-            }
-          }
-          // Uint8Array
-          else {
-            const boolArray = paramData as Uint8Array;
-            heapU8.subarray(offset8, offset8 + boolArray.length).set(boolArray);
-          }
+          const boolArray = paramData as WasmCallArgumentTypeMap['boolptr'];
+          // This will work for both Uint8Array as well as ReadonlyArray<boolean>
+          heapU8.subarray(offset8, offset8 + boolArray.length).set(paramData as Uint8Array);
           break;
         case 'int32ptr':
           const int32Array = (paramData as WasmCallArgumentTypeMap['int32ptr'])!;

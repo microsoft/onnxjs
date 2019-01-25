@@ -20,12 +20,13 @@ export function matMul(a: Tensor, b: Tensor) {
   let dimsB: number[];
   [dimsA, dimsB] = MatMulUtil.preprocessInputShapes(a.dims.slice(), b.dims.slice());
   const mat2dShape = [dimsA[dimsA.length - 2], dimsB[dimsB.length - 1]];
-  const shape = BroadcastUtil.calcShape(dimsA, dimsB, true);
+  let shape = BroadcastUtil.calcShape(dimsA, dimsB, true);
   if (!shape) {
     // the inputs cannot broadcast or cannot multiply
     throw new Error(`input dimensions do not match the requirement`);
   }
-
+  // make a copy and re-assign because this can be modified later
+  shape = shape.slice(0);
   const size = ShapeUtil.size(shape);
   const num2dMatrices = size / (mat2dShape[0] * mat2dShape[1]);
 

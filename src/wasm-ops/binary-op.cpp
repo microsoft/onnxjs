@@ -40,21 +40,21 @@ void prelu_f32(void *data) {
   float *output = PARAM_FLOAT_PTR(data, dataIndex[7]);
   binary_imp<float, PRelu>(data, input_1, input_2, output);
 }
-void xor_(void *data) {
+void xor_u8(void *data) {
   uint32_t *dataIndex = static_cast<uint32_t *>(data);
   const uint8_t *input_1 = PARAM_BOOL_PTR(data, dataIndex[1]);
   const uint8_t *input_2 = PARAM_BOOL_PTR(data, dataIndex[4]);
   uint8_t *output = PARAM_BOOL_PTR(data, dataIndex[7]);
   binary_imp<uint8_t, Xor>(data, input_1, input_2, output);
 }
-void or_(void *data) {
+void or_u8(void *data) {
   uint32_t *dataIndex = static_cast<uint32_t *>(data);
   const uint8_t *input_1 = PARAM_BOOL_PTR(data, dataIndex[1]);
   const uint8_t *input_2 = PARAM_BOOL_PTR(data, dataIndex[4]);
   uint8_t *output = PARAM_BOOL_PTR(data, dataIndex[7]);
   binary_imp<uint8_t, Or>(data, input_1, input_2, output);
 }
-void and_(void *data) {
+void and_u8(void *data) {
   uint32_t *dataIndex = static_cast<uint32_t *>(data);
   const uint8_t *input_1 = PARAM_BOOL_PTR(data, dataIndex[1]);
   const uint8_t *input_2 = PARAM_BOOL_PTR(data, dataIndex[4]);

@@ -18,9 +18,9 @@ void div_f32(void *);
 void prelu_f32(void *);
 
 // Logical ops
-void xor_(void *);
-void or_(void *);
-void and_(void *);
+void xor_u8(void *);
+void or_u8(void *);
+void and_u8(void *);
 }
 
 // Binary operator (with broadcasting)

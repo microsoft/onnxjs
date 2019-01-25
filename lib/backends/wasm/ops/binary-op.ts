@@ -18,6 +18,7 @@ export class WasmBinaryOp extends BinaryOp {
       throw new Error('not broadcastable');
     }
     let fun = '';
+    // TODO: Explore better ways to deal with types than current `binaryOpType` approach
     let binaryOpType = '';
     switch (this.opType) {
       case 'Add':
@@ -51,15 +52,15 @@ export class WasmBinaryOp extends BinaryOp {
         }
         break;
       case 'Xor':
-        fun = '_xor_';
+        fun = '_xor_u8';
         binaryOpType = 'boolInBoolOut';
         break;
       case 'Or':
-        fun = '_or_';
+        fun = '_or_u8';
         binaryOpType = 'boolInBoolOut';
         break;
       case 'And':
-        fun = '_and_';
+        fun = '_and_u8';
         binaryOpType = 'boolInBoolOut';
         break;
       default:

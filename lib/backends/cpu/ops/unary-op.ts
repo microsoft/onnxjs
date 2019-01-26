@@ -14,10 +14,6 @@ export class CpuUnaryOp extends UnaryOp {
     super(typeConstraint, resultType);
   }
 
-  initialize(attributes: Attribute): void {
-    this.attributes = attributes;
-  }
-
   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
     // TODO:  use webpack + ts-loader + CustomTransformer
     // tslint:disable-next-line:max-line-length
@@ -25,8 +21,6 @@ export class CpuUnaryOp extends UnaryOp {
     const output = unaryOp(inputs[0], this.func, this.attributes, this.resultType);
     return [output];
   }
-
-  private attributes: Attribute;
 }
 
 export function unaryOp(

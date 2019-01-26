@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {Attribute} from '../../../attribute';
 import {BinaryOp} from '../../../ops/binary-op';
 import {Tensor} from '../../../tensor';
 import {BroadcastUtil, ShapeUtil} from '../../../util';
@@ -14,11 +13,10 @@ import {WebGLOperatorHelper} from '../webgl-operator-utils';
 
 export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
   constructor(
-      protected typeConstraint: ReadonlyArray<Tensor.DataType>, protected glslFunc: GlslValueFunction,
-      protected outputType?: Tensor.DataType) {
-    super(typeConstraint);
+      typeConstraint: ReadonlyArray<Tensor.DataType>, protected glslFunc: GlslValueFunction, opType?: string,
+      resultType?: Tensor.DataType) {
+    super(typeConstraint, opType, resultType);
   }
-  initialize(attributes: Attribute): void {}
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
   }
@@ -76,7 +74,7 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
     return {
       inputTextureDatas: inputTDs,
       outputTextureData: handler.createTextureDataFromLayout(
-          programInfo.outputLayout, this.outputType ? this.outputType : inputs[0].type),
+          programInfo.outputLayout, this.resultType ? this.resultType : inputs[0].type),
       uniformData: {}
     };
   }

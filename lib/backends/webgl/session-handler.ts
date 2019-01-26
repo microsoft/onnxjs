@@ -120,7 +120,7 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'Dropout':
         return new WebGLDropout();
       case 'Equal':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslEqual(), 'bool');
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslEqual(), undefined, 'bool');
       case 'Exp':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslExp());
       case 'Floor':
@@ -134,7 +134,7 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'GlobalMaxPool':
         return new WebGLGlobalMaxPool();
       case 'Greater':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslGreater(), 'bool');
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslGreater(), undefined, 'bool');
       case 'Identity':
         return new unaryOps.WebGLUnaryOp(NUMBER_TYPES, unaryOps.glslIdentity());
       case 'ImageScaler':
@@ -142,7 +142,7 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'LeakyRelu':
         return new WebGLLeakyRelu();
       case 'Less':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslLess(), 'bool');
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslLess(), undefined, 'bool');
       case 'Log':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslLog());
       case 'MatMul':

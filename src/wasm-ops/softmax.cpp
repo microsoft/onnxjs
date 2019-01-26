@@ -15,7 +15,7 @@ void softmax_f32(void *data) {
 }
 
 // Core operator implementation
-void softmax_f32_imp(float *X, float *Y, int N, int D) {
+void softmax_f32_imp(float *X, float *Y, int32_t N, int32_t D) {
   for (size_t i = 0; i < N; i++) {
     // find row offset
     int offset = i * D;

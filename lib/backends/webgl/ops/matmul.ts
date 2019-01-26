@@ -15,15 +15,15 @@ export class WebGLMatMul extends MatMul implements WebGLOperator {
     return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
-    const aShape = inputs[0].dims.slice();
-    const bShape = inputs[1].dims.slice();
+    const aShape = inputs[0].dims;
+    const bShape = inputs[1].dims;
     const outputShape = BroadcastUtil.calcShape(aShape, bShape, true);
     if (!outputShape) {
       throw new Error('Can\'t use matmul on the given tensors');
     }
     const rank = outputShape.length;
-    const arank = inputs[0].dims.slice().length;
-    const brank = inputs[1].dims.slice().length;
+    const arank = aShape.length;
+    const brank = bShape.length;
     const sharedDim = aShape[aShape.length - 1];
     const shaderSource = `
       uniform sampler2D A;

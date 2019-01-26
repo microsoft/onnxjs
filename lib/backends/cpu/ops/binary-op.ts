@@ -16,6 +16,7 @@ export class CpuBinaryOp extends BinaryOp {
     super(typeConstraint, opType, resultType);
   }
 
+  // overriding the initialize() in the base class
   initialize(attributes: Attribute): void {
     if (!this.opType && !this.opLambda) {
       throw new Error(`Both opType and opLambda cannot be missing for a binary op`);

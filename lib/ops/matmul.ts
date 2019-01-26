@@ -32,6 +32,10 @@ export abstract class MatMul implements Operator {
       return false;
     }
 
+    if (inputs[0].type !== inputs[1].type) {
+      return false;
+    }
+
     return true;
   }
 }

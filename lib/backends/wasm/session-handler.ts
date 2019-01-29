@@ -8,8 +8,10 @@ import {Session} from '../../session';
 import {resolve} from '../cpu/ops-resolve';
 import {WasmInferenceHandler} from './inference-handler';
 import {WasmBatchNormalization} from './ops/batch-normalization';
+import {WasmBinaryOp} from './ops/binary-op';
 import {WasmConv} from './ops/conv';
 import {WasmGemm} from './ops/gemm';
+import {WasmMatMul} from './ops/matmul';
 import {WasmAveragePool, WasmGlobalAveragePool, WasmGlobalMaxPool, WasmMaxPool} from './ops/pool';
 import {WasmSoftmax} from './ops/softmax';
 import {WasmSum} from './ops/sum';
@@ -32,12 +34,32 @@ export class WasmSessionHandler implements SessionHandler {
   private createOperator(node: Graph.Node, domain: string, version: number): Operator {
     // assume domain=ai.onnx, version=v7
     switch (node.opType) {
+      // Binary arithmetic ops
+      case 'Add':
+        return new WasmBinaryOp(['float32'], 'Add');
+      case 'Sub':
+        return new WasmBinaryOp(['float32'], 'Sub');
+      case 'Mul':
+        return new WasmBinaryOp(['float32'], 'Mul');
+      case 'Div':
+        // TODO: Handle division by zero
+        return new WasmBinaryOp(['float32'], 'Div');
+      // Binary logical ops
+      case 'Xor':
+        return new WasmBinaryOp(['bool'], 'Xor');
+      case 'Or':
+        return new WasmBinaryOp(['bool'], 'Or');
+      case 'And':
+        return new WasmBinaryOp(['bool'], 'And');
+      // Misc ops
       case 'Conv':
         return new WasmConv();
       case 'BatchNormalization':
         return new WasmBatchNormalization();
       case 'Gemm':
         return new WasmGemm();
+      case 'MatMul':
+        return new WasmMatMul();
       case 'Softmax':
         return new WasmSoftmax();
       case 'Sum':
@@ -50,6 +72,8 @@ export class WasmSessionHandler implements SessionHandler {
         return new WasmGlobalMaxPool();
       case 'GlobalAveragePool':
         return new WasmGlobalAveragePool();
+      case 'PRelu':
+        return new WasmBinaryOp(['float32'], 'PRelu');
       default:
         if (this.fallbackToCpuOps) {
           return resolve(node, domain, version);

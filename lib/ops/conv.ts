@@ -34,7 +34,7 @@ export abstract class Conv implements Operator {
 
     // FILTER_IN_CHANNEL should be equal to DATA_CHANNEL
     const dataChannel = inputs[0].dims[1];
-    const filterInChannel = inputs[1].dims[1] / this.group;
+    const filterInChannel = inputs[1].dims[1] * this.group;
     if (dataChannel !== filterInChannel) {
       return false;
     }

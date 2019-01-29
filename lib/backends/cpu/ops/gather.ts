@@ -1,6 +1,6 @@
 import {Gather} from '../../../ops/gather';
 import {Tensor} from '../../../tensor';
-import {getActualAxisFromNegativeValue, ShapeUtil} from '../../../util';
+import {ShapeUtil} from '../../../util';
 import {CpuInferenceHandler} from '../inference-handler';
 
 export class CpuGather extends Gather {
@@ -11,7 +11,7 @@ export class CpuGather extends Gather {
 }
 
 export function gather(x: Tensor, indices: Tensor, axis: number): Tensor {
-  axis = getActualAxisFromNegativeValue(axis, x.dims.length);
+  axis = ShapeUtil.parseAxis(axis, x.dims.length);
   const dims = x.dims.slice();
   const newDims = dims.slice();
   const indicesData = indices.data;

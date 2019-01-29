@@ -15,6 +15,7 @@ import * as binaryOps from './ops/binary-op';
 import {WebGLConcat} from './ops/concat';
 import {WebGLConv} from './ops/conv';
 import {WebGLDropout} from './ops/dropout';
+import {WebGLGather} from './ops/gather';
 import {WebGLGemm} from './ops/gemm';
 import {WebGLImageScaler} from './ops/image-scaler';
 import {WebGLLeakyRelu} from './ops/leaky-relu';
@@ -32,10 +33,12 @@ import {WebGLReshape} from './ops/reshape';
 import {WebGLSlice} from './ops/slice';
 import {WebGLSoftmax} from './ops/softmax';
 import {WebGLSplit} from './ops/split';
+import {WebGLSqueeze} from './ops/squeeze';
 import {WebGLSum} from './ops/sum';
 import {WebGLTile} from './ops/tile';
 import {WebGLTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
+import {WebGLUnsqueeze} from './ops/unsqueeze';
 import {ProgramManager} from './program-manager';
 import {TextureData} from './texture-data';
 import {TextureHelper} from './texture-helper';
@@ -117,11 +120,13 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'Dropout':
         return new WebGLDropout();
       case 'Equal':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslEqual(), 'bool');
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslEqual(), undefined, 'bool');
       case 'Exp':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslExp());
       case 'Floor':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslFloor());
+      case 'Gather':
+        return new WebGLGather();
       case 'Gemm':
         return new WebGLGemm();
       case 'GlobalAveragePool':
@@ -129,7 +134,7 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'GlobalMaxPool':
         return new WebGLGlobalMaxPool();
       case 'Greater':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslGreater(), 'bool');
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslGreater(), undefined, 'bool');
       case 'Identity':
         return new unaryOps.WebGLUnaryOp(NUMBER_TYPES, unaryOps.glslIdentity());
       case 'ImageScaler':
@@ -137,7 +142,7 @@ export class WebGLSessionHandler implements SessionHandler {
       case 'LeakyRelu':
         return new WebGLLeakyRelu();
       case 'Less':
-        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslLess(), 'bool');
+        return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslLess(), undefined, 'bool');
       case 'Log':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslLog());
       case 'MatMul':
@@ -188,6 +193,8 @@ export class WebGLSessionHandler implements SessionHandler {
         // is split. When the attribute is missing, we need the count of number of outputs
         // so that we can determine the 'split' attribute from the runtime input to the Operator
         return new WebGLSplit(node.outputs.length);
+      case 'Squeeze':
+        return new WebGLSqueeze();
       case 'Sqrt':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSqrt());
       case 'Sub':
@@ -204,6 +211,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new WebGLTranspose();
       case 'Tile':
         return new WebGLTile();
+      case 'Unsqueeze':
+        return new WebGLUnsqueeze();
       case 'Xor':
         return new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslXor());
       default:

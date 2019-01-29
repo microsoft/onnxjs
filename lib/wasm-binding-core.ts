@@ -25,8 +25,9 @@ export interface WasmCallArgumentTypeMap {
   int32: number;
   float32: number;
   float64: number;
-  int32ptr: ReadonlyArray<number>|Int32Array|null;
-  float32ptr: ReadonlyArray<number>|Float32Array|null;
+  boolptr: ReadonlyArray<boolean>|Uint8Array;
+  int32ptr: ReadonlyArray<number>|Uint32Array|Int32Array|null;
+  float32ptr: ReadonlyArray<number>|Int32Array|Uint32Array|Float32Array|null;
   float64ptr: ReadonlyArray<number>|Float64Array|null;
 }
 
@@ -173,6 +174,17 @@ export class WasmBinding {
         case 'float64':
           len = 8;
           break;
+        case 'boolptr':
+          if (!paramData) {
+            // deal with nullptr
+            offset.push(0);
+            continue;
+          } else if (Array.isArray(paramData) || ArrayBuffer.isView(paramData)) {
+            len = 4 * Math.ceil(paramData.length / 4);
+          } else {
+            throw new Error(`boolptr requires boolean array or Uint8Array`);
+          }
+          break;
         case 'int32ptr':
         case 'float32ptr':
           if (!paramData) {
@@ -233,6 +245,11 @@ export class WasmBinding {
         case 'float32':
           heapF32[offset32] = paramData as number;
           break;
+        case 'boolptr':
+          const boolArray = paramData as WasmCallArgumentTypeMap['boolptr'];
+          // This will work for both Uint8Array as well as ReadonlyArray<boolean>
+          heapU8.subarray(offset8, offset8 + boolArray.length).set(paramData as Uint8Array);
+          break;
         case 'int32ptr':
           const int32Array = (paramData as WasmCallArgumentTypeMap['int32ptr'])!;
           heap32.subarray(offset32, offset32 + int32Array.length).set(int32Array);
@@ -250,6 +267,7 @@ export class WasmBinding {
   // retrieve data parameters (in/inout) from emscripten heap after ccall()
   static ccallDeserialize(buffer: Uint8Array, offset: number[], params: WasmCallArgument[]) {
     const heapF32 = new Float32Array(buffer.buffer, buffer.byteOffset);
+    const heapU8 = new Uint8Array(buffer.buffer, buffer.byteOffset);
 
     for (let i = 0; i < params.length; i++) {
       const param = params[i];
@@ -269,6 +287,10 @@ export class WasmBinding {
         case 'float32ptr':
           const float32Array = (paramData as Float32Array);
           float32Array.set(heapF32.subarray(offset32, offset32 + float32Array.length));
+          break;
+        case 'boolptr':
+          const boolArray = (paramData as Uint8Array);
+          boolArray.set(heapU8.subarray(offset8, offset8 + boolArray.length));
           break;
         default:
           throw new Error(`not supported parameter type: ${paramType}`);

@@ -148,7 +148,7 @@ Learn more about ONNX
 | OS/Browser | Chrome | Edge | FireFox | Safari | Opera | Electron | Node.js |
 |:----------:|:------:|:----:|:-------:|:------:|:-----:|:-----:|:-----:|
 | Windows 10 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | - | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| macOS | :heavy_check_mark: | - | :heavy_check_mark: | Coming soon | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| macOS | :heavy_check_mark: | - | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 | Ubuntu LTS 18.04 | :heavy_check_mark: | - | :heavy_check_mark: | - | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
 #### Mobile Platforms

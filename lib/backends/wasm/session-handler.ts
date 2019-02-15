@@ -11,6 +11,7 @@ import {WasmBatchNormalization} from './ops/batch-normalization';
 import {WasmBinaryOp} from './ops/binary-op';
 import {WasmConv} from './ops/conv';
 import {WasmGemm} from './ops/gemm';
+import {WasmInstanceNormalization} from './ops/instance-normalization';
 import {WasmMatMul} from './ops/matmul';
 import {WasmAveragePool, WasmGlobalAveragePool, WasmGlobalMaxPool, WasmMaxPool} from './ops/pool';
 import {WasmSoftmax} from './ops/softmax';
@@ -72,6 +73,8 @@ export class WasmSessionHandler implements SessionHandler {
         return new WasmGlobalMaxPool();
       case 'GlobalAveragePool':
         return new WasmGlobalAveragePool();
+      case 'InstanceNormalization':
+        return new WasmInstanceNormalization();
       case 'PRelu':
         return new WasmBinaryOp(['float32'], 'PRelu');
       default:

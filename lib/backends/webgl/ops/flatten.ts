@@ -3,14 +3,14 @@
 
 import {Flatten} from '../../../ops/flatten';
 import {Tensor} from '../../../tensor';
+import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
+
 import {reshape} from './reshape';
 
 export class WebGLFlatten extends Flatten {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const total = inputs[0].dims.reduce((x, y) => x * y, 1);
-    const right = inputs[0].dims.slice(this.axis).reduce((x, y) => x * y, 1);
-    const outputDims = [total / right, right];
+    const outputDims = ShapeUtil.flattenShape(inputs[0].dims, this.axis);
 
     return [reshape(inferenceHandler, inputs[0], outputDims)];
   }

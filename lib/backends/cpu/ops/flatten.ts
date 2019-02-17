@@ -3,6 +3,7 @@
 
 import {Flatten} from '../../../ops/flatten';
 import {Tensor} from '../../../tensor';
+import {ShapeUtil} from '../../../util';
 import {CpuInferenceHandler} from '../inference-handler';
 
 export class CpuFlatten extends Flatten {
@@ -13,9 +14,7 @@ export class CpuFlatten extends Flatten {
 }
 
 export function flatten(x: Tensor, axis: number): Tensor {
-  const total = x.dims.reduce((x, y) => x * y, 1);
-  const right = x.dims.slice(axis).reduce((x, y) => x * y, 1);
-  const outputDims = [total / right, right];
+  const outputDims = ShapeUtil.flattenShape(x.dims, axis);
   const output = new Tensor(outputDims, x.type);
 
   const X = x.numberData;

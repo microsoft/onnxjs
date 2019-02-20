@@ -121,6 +121,7 @@ export class ExecutionPlan {
         });
 
         // resolve downstream nodes
+        const downstreamNodes = new Set<number>();
         outputList.forEach((output, i) => {
           const j = thisOp.node.outputs[i];
           for (const currentDownstreamNodeIndex of graphValues[j].to) {
@@ -133,10 +134,11 @@ export class ExecutionPlan {
               }
             }
             if (resolved) {
-              sequence.push(currentDownstreamNodeIndex);
+              downstreamNodes.add(currentDownstreamNodeIndex);
             }
           }
         });
+        sequence.push(...downstreamNodes);
       }
 
       const output: Tensor[] = [];

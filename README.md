@@ -121,6 +121,11 @@ ONNX.js can run in Node.js as well. This is usually for testing purpose. Use the
 ```js
 require('onnxjs');
 ```
+You can also use NPM package [`onnxjs-node`](https://github.com/fs-eire/onnxjs-node), which offers a Node.js binding of [ONNXRuntime](https://github.com/Microsoft/onnxruntime).
+```js
+require('onnxjs-node');
+```
+See [usage](https://github.com/fs-eire/onnxjs-node#usage) of onnxjs-node.
 
 Refer to [node/Add](./examples/node/add) for a detailed example.
 

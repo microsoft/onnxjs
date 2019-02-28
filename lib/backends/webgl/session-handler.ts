@@ -15,6 +15,7 @@ import * as binaryOps from './ops/binary-op';
 import {WebGLConcat} from './ops/concat';
 import {WebGLConv} from './ops/conv';
 import {WebGLDropout} from './ops/dropout';
+import {WebGLFlatten} from './ops/flatten';
 import {WebGLGather} from './ops/gather';
 import {WebGLGemm} from './ops/gemm';
 import {WebGLImageScaler} from './ops/image-scaler';
@@ -123,6 +124,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslEqual(), undefined, 'bool');
       case 'Exp':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslExp());
+      case 'Flatten':
+        return new WebGLFlatten();
       case 'Floor':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslFloor());
       case 'Gather':

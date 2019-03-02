@@ -10,6 +10,7 @@ import {CpuBinaryOp} from './ops/binary-op';
 import {CpuConcat} from './ops/concat';
 import {CpuConv} from './ops/conv';
 import {CpuDropout} from './ops/dropout';
+import {CpuFlatten} from './ops/flatten';
 import {CpuGather} from './ops/gather';
 import {CpuGemm} from './ops/gemm';
 import {CpuImageScaler} from './ops/image-scaler';
@@ -98,6 +99,8 @@ function createOperator(node: Graph.Node, domain: string, version: number): Oper
       return new CpuConv();
     case 'Dropout':
       return new CpuDropout();
+    case 'Flatten':
+      return new CpuFlatten();
     case 'Gemm':
       return new CpuGemm();
     case 'ImageScaler':

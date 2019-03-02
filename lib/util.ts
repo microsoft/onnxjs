@@ -668,6 +668,19 @@ export class ShapeUtil {
   }
 
   /**
+   * Determines the shape of output tensor y = flatten(x, axis)
+   * @param dims - shape of input tensor
+   * @param axis - flatten axis
+   */
+  static flattenShape(dims: ReadonlyArray<number>, axis: number): ReadonlyArray<number> {
+    const total = dims.reduce((x, y) => x * y, 1);
+    const right = dims.slice(axis).reduce((x, y) => x * y, 1);
+    const outputDims = [total / right, right];
+
+    return outputDims;
+  }
+
+  /**
    * Determines the shape of output tensor y = squeeze(x, axes)
    * @param dims - shape of input tensor
    * @param axes - squeeze axes

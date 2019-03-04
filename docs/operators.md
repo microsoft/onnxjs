@@ -23,6 +23,7 @@ See [Compatibility](../README.md#Compatibility) for a list of the supported plat
 |              [Equal](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Equal)              |             |              |      :heavy_check_mark:      |
 |                [Exp](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Exp)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |              [Floor](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Floor)              |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
+|              [Flatten](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Flatten)              |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |               [Gather](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Gather)           |     :heavy_check_mark:     |           |    :heavy_check_mark:        |
 |               [Gemm](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Gemm)               |             |      :heavy_check_mark:     |      :heavy_check_mark:      |
 |  [GlobalAveragePool](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#GlobalAveragePool)  |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
@@ -30,6 +31,7 @@ See [Compatibility](../README.md#Compatibility) for a list of the supported plat
 |            [Greater](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Greater)            |             |              |      :heavy_check_mark:      |
 |           [Identity](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Identity)           |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
 |        [ImageScaler](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ImageScaler)        |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
+|        [InstanceNormalization](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#InstanceNormalization)        |     :heavy_check_mark:     |   :heavy_check_mark:   |      |
 |          [LeakyRelu](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#LeakyRelu)          |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |               [Less](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Less)               |             |              |      :heavy_check_mark:      |
 |                [Log](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Log)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |

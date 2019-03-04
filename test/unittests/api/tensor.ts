@@ -191,6 +191,6 @@ describe('#UnitTest# - API - Tensor Data Setter', () => {
 // by-pass unused variable check
 t = unused();
 unused(t);
-function unused<U>(...t: Array<unknown>) {
+function unused<U>(...t: unknown[]) {
   return t as unknown as U;
 }

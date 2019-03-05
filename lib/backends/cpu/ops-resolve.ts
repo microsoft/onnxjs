@@ -112,7 +112,6 @@ function createOperator(node: Graph.Node, domain: string, version: number): Oper
       // 'alpha'
       return new unaryOps.CpuUnaryOp(FLOAT_TYPES, unaryOps.leakyRelu);
     case 'Elu':
-      // 'alpha'
       return new unaryOps.CpuUnaryOp(FLOAT_TYPES, unaryOps.elu);
     case 'MatMul':
       return new CpuMatMul();

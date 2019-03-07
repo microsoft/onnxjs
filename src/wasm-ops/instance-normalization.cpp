@@ -27,7 +27,7 @@ void instance_normalization_f32_imp(float *X, float *Y, int32_t batch_size,
   size_t iterEnd;
   size_t currentChannel;
 
-  for (size_t nc = 0; nc < batch_size * channel_size; nc++) {
+  for (size_t nc = 0; nc < batch_size * num_channels; nc++) {
     physicalOffset = nc * channel_size;
     iterEnd = physicalOffset + channel_size;
     currentChannel = nc % num_channels;

@@ -49,6 +49,6 @@ n = unused() as I15 | I16;
 // by-pass unused variable check
 const u: I1|I2|I3|I4|I5|I6|I7|I8|{} = {};
 unused(u, n);
-function unused<U>(...t: Array<unknown>) {
+function unused<U>(...t: unknown[]) {
   return t as unknown as U;
 }

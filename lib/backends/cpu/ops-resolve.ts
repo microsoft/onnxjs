@@ -49,6 +49,8 @@ function createOperator(node: Graph.Node, domain: string, version: number): Oper
       return new unaryOps.CpuUnaryOp(FLOAT_TYPES, unaryOps.ceil);
     case 'Cos':
       return new unaryOps.CpuUnaryOp(FLOAT_TYPES, unaryOps.cos);
+    case 'Clip':
+      return new unaryOps.CpuUnaryOp(FLOAT_TYPES, unaryOps.clip);
     case 'Sin':
       return new unaryOps.CpuUnaryOp(FLOAT_TYPES, unaryOps.sin);
     case 'Tan':

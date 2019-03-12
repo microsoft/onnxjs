@@ -67,6 +67,15 @@ export function cos(input: Tensor.NumberType, output: Tensor.NumberType, attribu
   }
 }
 
+export function clip(input: Tensor.NumberType, output: Tensor.NumberType, attributes: Attribute) {
+  const min = attributes.getFloat('min', -3.4028234663852886e+38);
+  const max = attributes.getFloat('max', 3.4028234663852886e+38);
+  for (let i = 0; i < input.length; i++) {
+    const value = input[i];
+    output[i] = (value < min) ? min : (value > max) ? max : value;
+  }
+}
+
 export function sin(input: Tensor.NumberType, output: Tensor.NumberType, attributes: Attribute) {
   for (let i = 0; i < input.length; i++) {
     output[i] = Math.sin(input[i]);

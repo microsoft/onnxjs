@@ -111,6 +111,8 @@ function createOperator(node: Graph.Node, domain: string, version: number): Oper
       // opLambda will be resolved when the op is initialized at which time it will have context of the attribute
       // 'alpha'
       return new unaryOps.CpuUnaryOp(FLOAT_TYPES, unaryOps.leakyRelu);
+    case 'Elu':
+      return new unaryOps.CpuUnaryOp(FLOAT_TYPES, unaryOps.elu);
     case 'MatMul':
       return new CpuMatMul();
     case 'AveragePool':

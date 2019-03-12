@@ -15,6 +15,7 @@ import * as binaryOps from './ops/binary-op';
 import {WebGLConcat} from './ops/concat';
 import {WebGLConv} from './ops/conv';
 import {WebGLDropout} from './ops/dropout';
+import {WebGLElu} from './ops/elu';
 import {WebGLFlatten} from './ops/flatten';
 import {WebGLGather} from './ops/gather';
 import {WebGLGemm} from './ops/gemm';
@@ -144,6 +145,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new WebGLImageScaler();
       case 'LeakyRelu':
         return new WebGLLeakyRelu();
+      case 'Elu':
+        return new WebGLElu();
       case 'Less':
         return new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslLess(), undefined, 'bool');
       case 'Log':

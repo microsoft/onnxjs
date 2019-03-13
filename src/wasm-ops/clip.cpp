@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-#include "unary-op.h"
+#include "clip.h"
 
 // Wasm interop methods
 void clip_f32(void *data) {

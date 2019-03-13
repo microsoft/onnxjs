@@ -7,8 +7,10 @@
 
 extern "C" {
 void clip_f32(void *);
+// Expand for other supported data types for `clip`
 }
 
+// Core implementation of the op
 template <typename T>
 void clip_imp(const T *input, T *output, const int32_t length, const float min,
               const float max) {

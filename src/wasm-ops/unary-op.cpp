@@ -13,4 +13,3 @@ void clip_f32(void *data) {
   const float max = PARAM_FLOAT(data, dataIndex[5]);
   clip_imp<float>(input, output, length, min, max);
 }
-

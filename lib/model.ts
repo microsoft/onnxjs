@@ -4,12 +4,8 @@
 import {onnx} from 'onnx-proto';
 
 import {Graph} from './graph';
+import {OpSet} from './opset';
 import {LongUtil} from './util';
-
-interface OpSet {
-  domain: string;
-  version: number;
-}
 
 export class Model {
   // empty model
@@ -18,8 +14,8 @@ export class Model {
   load(buf: Buffer, graphInitializer?: Graph.Initializer): void {
     const modelProto = onnx.ModelProto.decode(buf);
     const irVersion = LongUtil.longToNumber(modelProto.irVersion);
-    if (irVersion !== 3) {
-      throw new Error('only support ONNX model with IR_VERSION=3');
+    if (irVersion < 3) {
+      throw new Error('only support ONNX model with IR_VERSION>=3');
     }
 
     this._opsets = modelProto.opsetImport.map(i => {

@@ -256,7 +256,7 @@ function initializeOperator(
     sessionHandler: SessionHandler, opType: string, attributeValues: ReadonlyArray<Test.AttributeValue>): Operator {
   const attributes = new Attribute(undefined);
   attributeValues.forEach(value => attributes.set(value.name, value.type, value.data));
-  return sessionHandler.resolve({name: '', opType, inputs: [], outputs: [], attributes}, '', 0);
+  return sessionHandler.resolve({name: '', opType, inputs: [], outputs: [], attributes}, [{domain: '', version: 7}]);
 }
 
 /**

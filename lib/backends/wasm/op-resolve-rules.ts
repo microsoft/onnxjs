@@ -1,0 +1,36 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+
+import {OpSet} from '../../opset';
+
+import {WasmBatchNormalization} from './ops/batch-normalization';
+import {WasmBinaryOp} from './ops/binary-op';
+import {WasmConv} from './ops/conv';
+import {WasmGemm} from './ops/gemm';
+import {WasmInstanceNormalization} from './ops/instance-normalization';
+import {WasmMatMul} from './ops/matmul';
+import {WasmAveragePool, WasmGlobalAveragePool, WasmGlobalMaxPool, WasmMaxPool} from './ops/pool';
+import {WasmSoftmax} from './ops/softmax';
+import {WasmSum} from './ops/sum';
+
+export const WASM_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
+  ['Add', '', '7+', () => new WasmBinaryOp(['float32'], 'Add')],
+  ['And', '', '7+', () => new WasmBinaryOp(['bool'], 'And')],
+  ['AveragePool', '', '7+', () => new WasmAveragePool()],
+  ['BatchNormalization', '', '7+', () => new WasmBatchNormalization()],
+  ['Conv', '', '1+', () => new WasmConv()],
+  ['Div', '', '7+', () => new WasmBinaryOp(['float32'], 'Div')],
+  ['Gemm', '', '7+', () => new WasmGemm()],
+  ['GlobalAveragePool', '', '1+', () => new WasmGlobalAveragePool()],
+  ['GlobalMaxPool', '', '1+', () => new WasmGlobalMaxPool()],
+  ['InstanceNormalization', '', '6+', () => new WasmInstanceNormalization()],
+  ['MatMul', '', '1+', () => new WasmMatMul()],
+  ['MaxPool', '', '1+', () => new WasmMaxPool()],
+  ['Mul', '', '7+', () => new WasmBinaryOp(['float32'], 'Mul')],
+  ['Or', '', '7+', () => new WasmBinaryOp(['bool'], 'Or')],
+  ['PRelu', '', '7+', () => new WasmBinaryOp(['float32'], 'PRelu')],
+  ['Softmax', '', '1+', () => new WasmSoftmax()],
+  ['Sub', '', '7+', () => new WasmBinaryOp(['float32'], 'Sub')],
+  ['Sum', '', '7+', () => new WasmSum()],
+  ['Xor', '', '7+', () => new WasmBinaryOp(['bool'], 'Xor')],
+];

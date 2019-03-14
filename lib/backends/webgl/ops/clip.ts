@@ -21,7 +21,7 @@ export class WebGLClip extends Clip implements WebGLOperator {
       uniform sampler2D A;
       void main() {
         float v = texture2D(A, TexCoords).r;
-        gl_FragColor = vec4(v < min ? min : (v > max) ? max : v);
+        gl_FragColor = vec4(clamp(v, min, max));
       }
       `;
     return {

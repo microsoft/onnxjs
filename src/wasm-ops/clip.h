@@ -16,6 +16,6 @@ void clip_imp(const T *input, T *output, const int32_t length, const float min,
               const float max) {
   for (size_t i = 0; i < length; ++i) {
     const auto &val = input[i];
-    output[i] = (val < min) ? min : (val > max) ? val : val;
+    output[i] = (val < min) ? min : (val > max) ? max : val;
   }
 }

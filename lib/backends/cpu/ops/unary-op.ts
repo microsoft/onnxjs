@@ -117,6 +117,14 @@ export function leakyRelu(input: Tensor.NumberType, output: Tensor.NumberType, a
   }
 }
 
+export function elu(input: Tensor.NumberType, output: Tensor.NumberType, attributes: Attribute) {
+  const alpha = attributes.getFloat('alpha', 1.0);
+  for (let i = 0; i < input.length; i++) {
+    const value = input[i];
+    output[i] = value >= 0 ? value : alpha * (Math.exp(value) - 1.0);
+  }
+}
+
 export function log(input: Tensor.NumberType, output: Tensor.NumberType, attributes: Attribute) {
   for (let i = 0; i < input.length; i++) {
     output[i] = Math.log(input[i]);

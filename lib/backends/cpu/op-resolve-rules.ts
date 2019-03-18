@@ -45,6 +45,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Cos', '', '7+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.cos)],
   ['Div', '', '7+', () => new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 / e2))],
   ['Dropout', '', '7+', () => new CpuDropout()],
+  ['Elu', '', '6+', () => new unaryOps.CpuUnaryOp(FLOAT_TYPES, unaryOps.elu)],
   ['Exp', '', '6+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.exp)],
   ['Flatten', '', '1+', () => new CpuFlatten()],
   ['Floor', '', '6+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.floor)],

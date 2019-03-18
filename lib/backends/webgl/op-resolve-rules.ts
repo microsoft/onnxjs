@@ -9,6 +9,7 @@ import * as binaryOps from './ops/binary-op';
 import {WebGLConcat} from './ops/concat';
 import {WebGLConv} from './ops/conv';
 import {WebGLDropout} from './ops/dropout';
+import {WebGLElu} from './ops/elu';
 import {WebGLFlatten} from './ops/flatten';
 import {WebGLGather} from './ops/gather';
 import {WebGLGemm} from './ops/gemm';
@@ -45,6 +46,7 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Div', '', '7+', () => new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslDiv())],
   ['Dropout', '', '7+', () => new WebGLDropout()],
   ['Equal', '', '7+', () => new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslEqual(), undefined, 'bool')],
+  ['Elu', '', '6+', () => new WebGLElu()],
   ['Exp', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslExp())],
   ['Flatten', '', '1+', () => new WebGLFlatten()],
   ['Floor', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslFloor())],

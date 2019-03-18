@@ -19,7 +19,7 @@ export class WebGLLeakyRelu extends LeakyRelu implements WebGLOperator {
       uniform sampler2D A;
       void main() {
         float v = texture2D(A, TexCoords).r;
-        gl_FragColor = vec4(v < 0.0 ? v * ${this.alpha} : v);
+        gl_FragColor = vec4(v < 0.0 ? v * float(${this.alpha}) : v);
       }
       `;
     return {

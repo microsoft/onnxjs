@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {LeakyRelu} from '../../../ops/leaky-relu';
+import {Elu} from '../../../ops/elu';
 import {Tensor} from '../../../tensor';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo} from '../program-info';
@@ -9,7 +9,7 @@ import {RunData} from '../program-manager';
 import {WebGLOperator} from '../webgl-operator';
 import {WebGLOperatorHelper} from '../webgl-operator-utils';
 
-export class WebGLLeakyRelu extends LeakyRelu implements WebGLOperator {
+export class WebGLElu extends Elu implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
   }
@@ -19,7 +19,7 @@ export class WebGLLeakyRelu extends LeakyRelu implements WebGLOperator {
       uniform sampler2D A;
       void main() {
         float v = texture2D(A, TexCoords).r;
-        gl_FragColor = vec4(v < 0.0 ? v * float(${this.alpha}) : v);
+        gl_FragColor = vec4(v >= 0.0 ? v: (exp(v) - 1.0) * ${this.alpha.toExponential()}); /* float number format */
       }
       `;
     return {

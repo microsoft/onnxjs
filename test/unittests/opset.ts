@@ -26,16 +26,32 @@ describe('#UnitTest# - resolveOperator', () => {
       resolveOperator(nodeAbs, opset7, [['Abs', '', '6', dummyOpConstructor]]);
     }).to.throw(TypeError);
   });
-  it('ExpectFail - version not match (range match)', () => {
+  it('ExpectFail - version not match (minimum version match)', () => {
     expect(() => {
       resolveOperator(nodeAbs, opset7, [['Abs', '', '8+', dummyOpConstructor]]);
+    }).to.throw(TypeError);
+  });
+  it('ExpectFail - version not match (range match 1)', () => {
+    expect(() => {
+      resolveOperator(nodeAbs, opset7, [['Abs', '', '4-6', dummyOpConstructor]]);
+    }).to.throw(TypeError);
+  });
+  it('ExpectFail - version not match (range match 2)', () => {
+    expect(() => {
+      resolveOperator(nodeAbs, opset7, [['Abs', '', '8-10', dummyOpConstructor]]);
     }).to.throw(TypeError);
   });
   it('ExpectPass - version match (exact match)', () => {
     resolveOperator(nodeAbs, opset7, [['Abs', '', '7', dummyOpConstructor]]);
   });
-  it('ExpectPass - version match (range match)', () => {
+  it('ExpectPass - version match (minimum version match)', () => {
     resolveOperator(nodeAbs, opset7, [['Abs', '', '5+', dummyOpConstructor]]);
+  });
+  it('ExpectPass - version match (range match 1)', () => {
+    resolveOperator(nodeAbs, opset7, [['Abs', '', '5-7', dummyOpConstructor]]);
+  });
+  it('ExpectPass - version match (range match 2)', () => {
+    resolveOperator(nodeAbs, opset7, [['Abs', '', '6-9', dummyOpConstructor]]);
   });
 });
 

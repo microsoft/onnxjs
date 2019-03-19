@@ -51,9 +51,17 @@ export function resolveOperator(
 
 function matchSelector(version: number, selector: string): boolean {
   if (selector.endsWith('+')) {
-    const rangeStart = parseInt(selector.substring(0, selector.length - 1), 10);
+    // minimum version match ('7+' expects version>=7)
+    const rangeStart = Number.parseInt(selector.substring(0, selector.length - 1), 10);
     return !isNaN(rangeStart) && rangeStart <= version;
+  } else if (selector.split('-').length === 2) {
+    // range match ('6-8' expects 6<=version<=8)
+    const pair = selector.split('-');
+    const rangeStart = Number.parseInt(pair[0], 10);
+    const rangeEnd = Number.parseInt(pair[1], 10);
+    return !isNaN(rangeStart) && !isNaN(rangeEnd) && rangeStart <= version && version <= rangeEnd;
   } else {
-    return parseInt(selector, 10) === version;
+    // exact match ('7' expects version===7)
+    return Number.parseInt(selector, 10) === version;
   }
 }

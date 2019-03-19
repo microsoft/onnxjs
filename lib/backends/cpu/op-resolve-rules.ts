@@ -30,7 +30,7 @@ import * as unaryOps from './ops/unary-op';
 import {CpuUnsqueeze} from './ops/unsqueeze';
 
 export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
-  ['Abs', '', '7+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.abs)],
+  ['Abs', '', '6+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.abs)],
   ['Acos', '', '7+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.acos)],
   ['Add', '', '7+', () => new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 + e2))],
   ['And', '', '7+', () => new CpuBinaryOp(['bool'], (e1, e2) => (e1 && e2))],
@@ -61,7 +61,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['MatMul', '', '1+', () => new CpuMatMul()],
   ['MaxPool', '', '1+', () => new CpuMaxPool()],
   ['Mul', '', '7+', () => new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 * e2))],
-  ['Neg', '', '1+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.neg)],
+  ['Neg', '', '6+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.neg)],
   ['Or', '', '7+', () => new CpuBinaryOp(['bool'], (e1, e2) => (e1 || e2))],
   ['PRelu', '', '7+', () => new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 >= 0 ? e1 : e1 * e2))],
   ['ReduceLogSum', '', '1+', () => new cpuReduce.CpuReduceLogSum()],

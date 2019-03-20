@@ -25,12 +25,12 @@ export const WASM_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['GlobalMaxPool', '', '1+', () => new WasmGlobalMaxPool()],
   ['InstanceNormalization', '', '6+', () => new WasmInstanceNormalization()],
   ['MatMul', '', '1+', () => new WasmMatMul()],
-  ['MaxPool', '', '1+', () => new WasmMaxPool()],
+  ['MaxPool', '', '1-7', () => new WasmMaxPool()],  // TODO: support new attributes for MaxPool-8 and MaxPool-10
   ['Mul', '', '7+', () => new WasmBinaryOp(['float32'], 'Mul')],
   ['Or', '', '7+', () => new WasmBinaryOp(['bool'], 'Or')],
   ['PRelu', '', '7+', () => new WasmBinaryOp(['float32'], 'PRelu')],
   ['Softmax', '', '1+', () => new WasmSoftmax()],
   ['Sub', '', '7+', () => new WasmBinaryOp(['float32'], 'Sub')],
-  ['Sum', '', '7+', () => new WasmSum()],
+  ['Sum', '', '6-7', () => new WasmSum()],  // TODO: support multidirectional broadcast for Sum-8
   ['Xor', '', '7+', () => new WasmBinaryOp(['bool'], 'Xor')],
 ];

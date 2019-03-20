@@ -59,7 +59,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Log', '', '6+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.log)],
   ['LRN', '', '1+', () => new CpuLrn()],
   ['MatMul', '', '1+', () => new CpuMatMul()],
-  ['MaxPool', '', '1+', () => new CpuMaxPool()],
+  ['MaxPool', '', '1-7', () => new CpuMaxPool()],  // TODO: support new attributes for MaxPool-8 and MaxPool-10
   ['Mul', '', '7+', () => new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 * e2))],
   ['Neg', '', '6+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.neg)],
   ['Or', '', '7+', () => new CpuBinaryOp(['bool'], (e1, e2) => (e1 || e2))],
@@ -80,7 +80,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Sqrt', '', '6+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.sqrt)],
   ['Squeeze', '', '1+', () => new CpuSqueeze()],
   ['Sub', '', '7+', () => new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 - e2))],
-  ['Sum', '', '6+', () => new CpuSum()],
+  ['Sum', '', '6-7', () => new CpuSum()],  // TODO: support multidirectional broadcast for Sum-8
   ['Tan', '', '7+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.tan)],
   ['Tanh', '', '6+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.tanh)],
   ['Tile', '', '6+', () => new CpuTile()],

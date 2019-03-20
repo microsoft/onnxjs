@@ -4,9 +4,12 @@
 import {expect} from 'chai';
 
 import {Attribute} from '../../lib/attribute';
+import {CPU_OP_RESOLVE_RULES} from '../../lib/backends/cpu/op-resolve-rules';
+import {WASM_OP_RESOLVE_RULES} from '../../lib/backends/wasm/op-resolve-rules';
+import {WEBGL_OP_RESOLVE_RULES} from '../../lib/backends/webgl/op-resolve-rules';
 import {Graph} from '../../lib/graph';
 import {Operator} from '../../lib/operators';
-import {resolveOperator} from '../../lib/opset';
+import {OpSet, resolveOperator} from '../../lib/opset';
 
 describe('#UnitTest# - resolveOperator', () => {
   const nodeAbs = createTestGraphNode('Abs_1', 'Abs');
@@ -55,6 +58,24 @@ describe('#UnitTest# - resolveOperator', () => {
   });
 });
 
+describe('#UnitTest# - resolve rules', () => {
+  const cpuCheckOnlyRules =
+      CPU_OP_RESOLVE_RULES.map(rule => [rule[0], rule[1], rule[2], dummyOpConstructor] as OpSet.ResolveRule);
+  const wasmCheckOnlyRules =
+      WASM_OP_RESOLVE_RULES.map(rule => [rule[0], rule[1], rule[2], dummyOpConstructor] as OpSet.ResolveRule);
+  const webglCheckOnlyRules =
+      WEBGL_OP_RESOLVE_RULES.map(rule => [rule[0], rule[1], rule[2], dummyOpConstructor] as OpSet.ResolveRule);
+  it('Consistency check - onnx.ai - cpu', () => {
+    checkConsistency(cpuCheckOnlyRules);
+  });
+  it('Consistency check - onnx.ai - wasm', () => {
+    checkConsistency(wasmCheckOnlyRules);
+  });
+  it('Consistency check - onnx.ai - webgl', () => {
+    checkConsistency(webglCheckOnlyRules);
+  });
+});
+
 function createTestGraphNode(name: string, opType: string): Graph.Node {
   return {name, opType, inputs: [], outputs: [], attributes: new Attribute(null)};
 }
@@ -62,4 +83,32 @@ function createTestGraphNode(name: string, opType: string): Graph.Node {
 function dummyOpConstructor(): Operator {
   // tslint:disable-next-line:no-any
   return {} as any as Operator;
+}
+
+function checkConsistency(rules: ReadonlyArray<OpSet.ResolveRule>) {
+  const VERSION_MIN = 1, VERSION_MAX = 10;
+  const typeRules = new Map<string, OpSet.ResolveRule[]>();
+  rules.forEach(rule => {
+    let ruleSet = typeRules.get(rule[0]);
+    if (!ruleSet) {
+      ruleSet = [];
+      typeRules.set(rule[0], ruleSet);
+    }
+    ruleSet.push(rule);
+  });
+
+  typeRules.forEach((rules, type) => {
+    for (let i = VERSION_MIN; i < VERSION_MAX; i++) {
+      let match = false;
+      for (const r of rules) {
+        try {
+          resolveOperator(createTestGraphNode('', type), [{domain: '', version: i}], [r]);
+        } catch {
+          continue;
+        }
+        expect(match, `multiple rules overlapped: opType='${type}', domain='', version=${i}`).to.be.false;
+        match = true;
+      }
+    }
+  });
 }

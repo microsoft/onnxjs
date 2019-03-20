@@ -5,6 +5,7 @@ import {OpSet} from '../../opset';
 
 import {WasmBatchNormalization} from './ops/batch-normalization';
 import {WasmBinaryOp} from './ops/binary-op';
+import {WasmClip} from './ops/clip';
 import {WasmConv} from './ops/conv';
 import {WasmGemm} from './ops/gemm';
 import {WasmInstanceNormalization} from './ops/instance-normalization';
@@ -18,6 +19,7 @@ export const WASM_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['And', '', '7+', () => new WasmBinaryOp(['bool'], 'And')],
   ['AveragePool', '', '7+', () => new WasmAveragePool()],
   ['BatchNormalization', '', '7+', () => new WasmBatchNormalization()],
+  ['Clip', '', '6+', () => new WasmClip()],
   ['Conv', '', '1+', () => new WasmConv()],
   ['Div', '', '7+', () => new WasmBinaryOp(['float32'], 'Div')],
   ['Gemm', '', '7+', () => new WasmGemm()],

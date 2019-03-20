@@ -6,6 +6,7 @@ import {OpSet} from '../../opset';
 
 import {WebGLBatchNormalization} from './ops/batch-normalization';
 import * as binaryOps from './ops/binary-op';
+import {WebGLClip} from './ops/clip';
 import {WebGLConcat} from './ops/concat';
 import {WebGLConv} from './ops/conv';
 import {WebGLDropout} from './ops/dropout';
@@ -40,6 +41,7 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['AveragePool', '', '7+', () => new WebGLAveragePool()],
   ['BatchNormalization', '', '7+', () => new WebGLBatchNormalization()],
   ['Ceil', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslCeil())],
+  ['Clip', '', '6+', () => new WebGLClip()],
   ['Concat', '', '4+', () => new WebGLConcat()],
   ['Conv', '', '1+', () => new WebGLConv()],
   ['Cos', '', '7+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslCos())],

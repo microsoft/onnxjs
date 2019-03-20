@@ -40,6 +40,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['AveragePool', '', '7+', () => new CpuAveragePool()],  // TODO: support new attributes for AveragePool-10
   ['BatchNormalization', '', '7+', () => new CpuBatchNormalization()],
   ['Ceil', '', '6+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.ceil)],
+  ['Clip', '', '6+', () => new unaryOps.CpuUnaryOp(FLOAT_TYPES, unaryOps.clip)],
   ['Concat', '', '4+', () => new CpuConcat()],
   ['Conv', '', '1+', () => new CpuConv()],
   ['Cos', '', '7+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.cos)],

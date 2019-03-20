@@ -19,6 +19,7 @@
     "_gemm_f32",
     "_matmul_f32",
     "_batch_normalization_f32",
+    "_clip_f32",
     "_instance_normalization_f32",
     "_sum_f32",
     "_softmax_f32"

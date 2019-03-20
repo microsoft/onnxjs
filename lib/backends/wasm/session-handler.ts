@@ -6,9 +6,11 @@ import {Graph} from '../../graph';
 import {Operator} from '../../operators';
 import {Session} from '../../session';
 import {resolve} from '../cpu/ops-resolve';
+
 import {WasmInferenceHandler} from './inference-handler';
 import {WasmBatchNormalization} from './ops/batch-normalization';
 import {WasmBinaryOp} from './ops/binary-op';
+import {WasmClip} from './ops/clip';
 import {WasmConv} from './ops/conv';
 import {WasmGemm} from './ops/gemm';
 import {WasmInstanceNormalization} from './ops/instance-normalization';
@@ -55,6 +57,8 @@ export class WasmSessionHandler implements SessionHandler {
       // Misc ops
       case 'Conv':
         return new WasmConv();
+      case 'Clip':
+        return new WasmClip();
       case 'BatchNormalization':
         return new WasmBatchNormalization();
       case 'Gemm':

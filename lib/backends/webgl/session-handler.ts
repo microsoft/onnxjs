@@ -12,6 +12,7 @@ import {SessionHandler} from './../../backend';
 import {WebGLInferenceHandler} from './inference-handler';
 import {WebGLBatchNormalization} from './ops/batch-normalization';
 import * as binaryOps from './ops/binary-op';
+import {WebGLClip} from './ops/clip';
 import {WebGLConcat} from './ops/concat';
 import {WebGLConv} from './ops/conv';
 import {WebGLDropout} from './ops/dropout';
@@ -111,6 +112,8 @@ export class WebGLSessionHandler implements SessionHandler {
         return new WebGLBatchNormalization();
       case 'Ceil':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslCeil());
+      case 'Clip':
+        return new WebGLClip();
       case 'Cos':
         return new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslCos());
       case 'Concat':

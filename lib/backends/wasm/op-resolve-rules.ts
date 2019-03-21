@@ -17,7 +17,7 @@ import {WasmSum} from './ops/sum';
 export const WASM_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Add', '', '7+', () => new WasmBinaryOp(['float32'], 'Add')],
   ['And', '', '7+', () => new WasmBinaryOp(['bool'], 'And')],
-  ['AveragePool', '', '7+', () => new WasmAveragePool()],
+  ['AveragePool', '', '7+', () => new WasmAveragePool()],  // TODO: support new attributes for AveragePool-10
   ['BatchNormalization', '', '7+', () => new WasmBatchNormalization()],
   ['Clip', '', '6+', () => new WasmClip()],
   ['Conv', '', '1+', () => new WasmConv()],
@@ -27,12 +27,12 @@ export const WASM_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['GlobalMaxPool', '', '1+', () => new WasmGlobalMaxPool()],
   ['InstanceNormalization', '', '6+', () => new WasmInstanceNormalization()],
   ['MatMul', '', '1+', () => new WasmMatMul()],
-  ['MaxPool', '', '1-7', () => new WasmMaxPool()],  // TODO: support new attributes for MaxPool-8 and MaxPool-10
+  ['MaxPool', '', '1+', () => new WasmMaxPool()],  // TODO: support new attributes for MaxPool-8 and MaxPool-10
   ['Mul', '', '7+', () => new WasmBinaryOp(['float32'], 'Mul')],
   ['Or', '', '7+', () => new WasmBinaryOp(['bool'], 'Or')],
   ['PRelu', '', '7+', () => new WasmBinaryOp(['float32'], 'PRelu')],
   ['Softmax', '', '1+', () => new WasmSoftmax()],
   ['Sub', '', '7+', () => new WasmBinaryOp(['float32'], 'Sub')],
-  ['Sum', '', '6-7', () => new WasmSum()],  // TODO: support multidirectional broadcast for Sum-8
+  ['Sum', '', '6+', () => new WasmSum()],  // TODO: support multidirectional broadcast for Sum-8
   ['Xor', '', '7+', () => new WasmBinaryOp(['bool'], 'Xor')],
 ];

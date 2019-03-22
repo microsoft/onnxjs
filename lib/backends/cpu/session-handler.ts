@@ -4,10 +4,11 @@
 import {Backend, InferenceHandler, SessionHandler} from '../../backend';
 import {Graph} from '../../graph';
 import {Operator} from '../../operators';
+import {OpSet, resolveOperator} from '../../opset';
 import {Session} from '../../session';
 
 import {CpuInferenceHandler} from './inference-handler';
-import {resolve} from './ops-resolve';
+import {CPU_OP_RESOLVE_RULES} from './op-resolve-rules';
 
 export class CpuSessionHandler implements SessionHandler {
   constructor(readonly backend: Backend, readonly context: Session.Context) {}
@@ -18,9 +19,9 @@ export class CpuSessionHandler implements SessionHandler {
 
   dispose(): void {}
 
-  resolve(node: Graph.Node, domain: string, version: number): Operator {
-    // We have kept the ops resolve logic separately to be leveraged by other components (if needed)
-    // This is valid only if there is no statefulness associated with the op resolution logic (which is currently true)
-    return resolve(node, domain, version);
+  resolve(node: Graph.Node, opsets: ReadonlyArray<OpSet>): Operator {
+    const op = resolveOperator(node, opsets, CPU_OP_RESOLVE_RULES);
+    op.initialize(node.attributes);
+    return op;
   }
 }

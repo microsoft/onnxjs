@@ -247,9 +247,7 @@ export class Session {
     this._ops = new Array(nodes.length);
 
     for (let i = 0; i < nodes.length; i++) {
-      const domain = this._model.opsets[0].domain;
-      const version = this._model.opsets[0].version;
-      this._ops[i] = this.sessionHandler.resolve(nodes[i], domain, version);
+      this._ops[i] = this.sessionHandler.resolve(nodes[i], this._model.opsets);
     }
   }
 

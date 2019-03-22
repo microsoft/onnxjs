@@ -25,7 +25,8 @@ function webglConv(
     attributes.set('pads', 'ints', pads);
   }
   attributes.set('strides', 'ints', strides);
-  const op = sessionhandler!.resolve({opType: 'Conv', attributes, inputs: [], outputs: [], name: `Conv`}, '', 0);
+  const op = sessionhandler!.resolve(
+      {opType: 'Conv', attributes, inputs: [], outputs: [], name: `Conv`}, [{domain: '', version: 7}]);
   if (!op.checkInputs([inputTensor, kernelTensor])) {
     throw new Error('Invalid inputs');
   }

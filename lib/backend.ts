@@ -3,6 +3,7 @@
 
 import {Graph} from './graph';
 import {Operator} from './operators';
+import {OpSet} from './opset';
 import {Session} from './session';
 
 export interface InferenceHandler {
@@ -30,12 +31,11 @@ export interface SessionHandler {
   dispose(): void;
 
   /**
-   * Resolves the operator from the name; backend specific
+   * Resolves the operator from the name and opset version; backend specific
    * @param node
-   * @param domain
-   * @param version
+   * @param opsets
    */
-  resolve(node: Graph.Node, domain: string, version: number): Operator;
+  resolve(node: Graph.Node, opsets: ReadonlyArray<OpSet>): Operator;
   /**
    * This method let's the sessionHandler know that the graph initialization is complete
    * @param graph the completely initialized graph

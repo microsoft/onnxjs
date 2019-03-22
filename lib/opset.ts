@@ -42,7 +42,8 @@ export function resolveOperator(
           }
         }
       }
-      throw new TypeError(`cannot resolve operator '${opType}'`);
+      throw new TypeError(`cannot resolve operator '${opType}' with opsets: ${
+          opsets.map(set => `${set.domain || 'ai.onnx'} v${set.version}`).join(', ')}`);
     }
   }
 

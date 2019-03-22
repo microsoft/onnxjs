@@ -31,7 +31,7 @@ export interface SessionHandler {
   dispose(): void;
 
   /**
-   * Resolves the operator from the name; backend specific
+   * Resolves the operator from the name and opset version; backend specific
    * @param node
    * @param opsets
    */

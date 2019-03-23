@@ -14,12 +14,14 @@ See [Compatibility](../README.md#Compatibility) for a list of the supported plat
 |        [AveragePool](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AveragePool)        |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
 | [BatchNormalization](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#BatchNormalization) |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
 |               [Ceil](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Ceil)               |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
+|             [Clip](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Clip)             |     :heavy_check_mark:     |        :heavy_check_mark:      |      :heavy_check_mark:      |
 |             [Concat](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Concat)             |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |             [Constant](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Constant)         |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
 |               [Conv](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Conv)               |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
 |                [Cos](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Cos)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |                [Div](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Div)                |     :heavy_check_mark:     |     :heavy_check_mark: |    :heavy_check_mark:      |
 |            [Dropout](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Dropout)            |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
+|              [Elu](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Elu)                  |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |              [Equal](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Equal)              |             |              |      :heavy_check_mark:      |
 |                [Exp](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Exp)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
 |              [Floor](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Floor)              |     :heavy_check_mark:     |              |      :heavy_check_mark:      |

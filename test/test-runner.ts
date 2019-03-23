@@ -3,7 +3,7 @@
 
 import {expect} from 'chai';
 import {readFile} from 'fs';
-import {onnx} from 'onnx-proto';
+import {onnx as onnxProto} from 'onnx-proto';
 import {extname} from 'path';
 import {inspect, promisify} from 'util';
 
@@ -25,6 +25,8 @@ const WEBGL_THRESHOLD_ABSOLUTE_ERROR = 1.0e-3;
 const WEBGL_THRESHOLD_RELATIVE_ERROR = 1.00001;
 const WASM_THRESHOLD_ABSOLUTE_ERROR = 1.0e-4;
 const WASM_THRESHOLD_RELATIVE_ERROR = 1.000001;
+const ONNXRUNTIME_THRESHOLD_ABSOLUTE_ERROR = 1.0e-3;
+const ONNXRUNTIME_THRESHOLD_RELATIVE_ERROR = 1.00001;
 
 /**
  * returns a number to represent the current timestamp in a resolution as high as possible.
@@ -139,7 +141,7 @@ async function loadTensors(testCase: Test.ModelTestCase) {
 
 async function loadTensorProto(uri: string): Promise<Test.NamedTensor> {
   const buf = await loadFile(uri);
-  const tensorProto = onnx.TensorProto.decode(Buffer.from(buf));
+  const tensorProto = onnxProto.TensorProto.decode(Buffer.from(buf));
   const tensor = Tensor.fromProto(tensorProto);
   // add property 'name' to the tensor object.
   const namedTensor = fromInternalTensor(tensor) as unknown as Test.NamedTensor;
@@ -167,7 +169,7 @@ async function initializeSession(modelFilePath: string, backendHint: string, pro
 
   const profilerConfig = profile ? {maxNumberEvents: 65536} : undefined;
   const sessionConfig: api.InferenceSession.Config = {backendHint, profiler: profilerConfig};
-  const session = new api.InferenceSession(sessionConfig);
+  const session = new onnx.InferenceSession(sessionConfig);
 
   if (profile) {
     session.startProfiling();
@@ -308,6 +310,9 @@ export class TensorResultValidator {
     } else if (backend === 'wasm') {
       this.absoluteThreshold = WASM_THRESHOLD_ABSOLUTE_ERROR;
       this.relativeThreshold = WASM_THRESHOLD_RELATIVE_ERROR;
+    } else if (backend === 'onnxruntime') {
+      this.absoluteThreshold = ONNXRUNTIME_THRESHOLD_ABSOLUTE_ERROR;
+      this.relativeThreshold = ONNXRUNTIME_THRESHOLD_RELATIVE_ERROR;
     } else {
       throw new Error(`backend not supported: ${backend}`);
     }

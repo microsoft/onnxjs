@@ -36,7 +36,9 @@ for (const group of ONNX_JS_TEST_CONFIG.model) {
         });
 
         after('release session', () => {
-          context.release();
+          if (context) {
+            context.release();
+          }
         });
 
         for (const testCase of test.cases) {

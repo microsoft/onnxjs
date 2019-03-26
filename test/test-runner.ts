@@ -77,21 +77,33 @@ export class ModelTestContext {
    * create a ModelTestContext object that used in every test cases in the given ModelTest.
    */
   static async create(modelTest: Test.ModelTest, profile: boolean): Promise<ModelTestContext> {
-    const initStart = now();
-    const session = await initializeSession(modelTest.modelUrl, modelTest.backend!, profile);
-    const initEnd = now();
-
-    for (const testCase of modelTest.cases) {
-      await loadTensors(testCase);
+    if (this.initializing) {
+      throw new Error(`cannot create a ModelTestContext object when the previous creation is not done`);
     }
 
-    return new ModelTestContext(
-        session,
-        modelTest.backend!,
-        {init: initEnd - initStart, firstRun: -1, runs: [], count: 0},
-        profile,
-    );
+    try {
+      this.initializing = true;
+
+      const initStart = now();
+      const session = await initializeSession(modelTest.modelUrl, modelTest.backend!, profile);
+      const initEnd = now();
+
+      for (const testCase of modelTest.cases) {
+        await loadTensors(testCase);
+      }
+
+      return new ModelTestContext(
+          session,
+          modelTest.backend!,
+          {init: initEnd - initStart, firstRun: -1, runs: [], count: 0},
+          profile,
+      );
+    } finally {
+      this.initializing = false;
+    }
   }
+
+  private static initializing = false;
 }
 
 export declare namespace ModelTestContext {

@@ -33,3 +33,33 @@ export abstract class Slice implements Operator {
   protected ends: number[];
   protected starts: number[];
 }
+
+export abstract class SliceV10 implements Operator {
+  abstract run(inferenceHandler: InferenceHandler, inputs: Tensor[]): Tensor[]|Promise<Tensor[]>;
+
+  initialize(attributes: Attribute): void {}
+
+  checkInputs(inputs: Tensor[]): boolean {
+    if (!inputs || inputs.length < 3 || inputs.length > 5) {
+      return false;
+    }
+    return this.checkInputTypes(inputs);
+  }
+
+  protected checkInputTypes(inputs: Tensor[]): boolean {
+    if (inputs[1].type !== 'int32' || inputs[1].dims.length !== 1) {
+      return false;
+    }
+    if (inputs[2].type !== 'int32' || inputs[2].dims.length !== 1) {
+      return false;
+    }
+    if (inputs.length >= 4 && (inputs[3].type !== 'int32' || inputs[3].dims.length !== 1)) {
+      return false;
+    }
+    if (inputs.length >= 5 && (inputs[4].type !== 'int32' || inputs[4].dims.length !== 1)) {
+      return false;
+    }
+
+    return true;
+  }
+}

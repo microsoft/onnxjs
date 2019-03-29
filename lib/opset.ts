@@ -42,12 +42,11 @@ export function resolveOperator(
           }
         }
       }
-      throw new TypeError(`cannot resolve operator '${opType}' with opsets: ${
-          opsets.map(set => `${set.domain || 'ai.onnx'} v${set.version}`).join(', ')}`);
     }
   }
 
-  throw new TypeError(`unrecognized operator '${node.opType}'`);
+  throw new TypeError(`cannot resolve operator '${node.opType}' with opsets: ${
+      opsets.map(set => `${set.domain || 'ai.onnx'} v${set.version}`).join(', ')}`);
 }
 
 function matchSelector(version: number, selector: string): boolean {

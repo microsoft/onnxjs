@@ -52,27 +52,45 @@ export function abs(input: Tensor.NumberType, output: Tensor.NumberType) {
   }
 }
 
-export function neg(input: Tensor.NumberType, output: Tensor.NumberType) {
-  for (let i = 0; i < input.length; i++) {
-    output[i] = -input[i];
-  }
-}
-
 export function acos(input: Tensor.NumberType, output: Tensor.NumberType) {
   for (let i = 0; i < input.length; i++) {
     output[i] = Math.acos(input[i]);
   }
 }
 
-export function ceil(input: Tensor.NumberType, output: Tensor.NumberType) {
+export function acosh(input: Tensor.NumberType, output: Tensor.NumberType) {
   for (let i = 0; i < input.length; i++) {
-    output[i] = Math.ceil(input[i]);
+    output[i] = Math.acosh(input[i]);
   }
 }
 
-export function cos(input: Tensor.NumberType, output: Tensor.NumberType) {
+export function asin(input: Tensor.NumberType, output: Tensor.NumberType) {
   for (let i = 0; i < input.length; i++) {
-    output[i] = Math.cos(input[i]);
+    output[i] = Math.asin(input[i]);
+  }
+}
+
+export function asinh(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = Math.asinh(input[i]);
+  }
+}
+
+export function atan(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = Math.atan(input[i]);
+  }
+}
+
+export function atanh(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = Math.atanh(input[i]);
+  }
+}
+
+export function ceil(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = Math.ceil(input[i]);
   }
 }
 
@@ -92,57 +110,15 @@ export function clip(input: Tensor.NumberType, output: Tensor.NumberType, attrib
   }
 }
 
-export function sin(input: Tensor.NumberType, output: Tensor.NumberType) {
+export function cos(input: Tensor.NumberType, output: Tensor.NumberType) {
   for (let i = 0; i < input.length; i++) {
-    output[i] = Math.sin(input[i]);
+    output[i] = Math.cos(input[i]);
   }
 }
 
-export function tan(input: Tensor.NumberType, output: Tensor.NumberType) {
+export function cosh(input: Tensor.NumberType, output: Tensor.NumberType) {
   for (let i = 0; i < input.length; i++) {
-    output[i] = Math.tan(input[i]);
-  }
-}
-
-export function tanh(input: Tensor.NumberType, output: Tensor.NumberType) {
-  for (let i = 0; i < input.length; i++) {
-    output[i] = Math.tanh(input[i]);
-  }
-}
-
-export function exp(input: Tensor.NumberType, output: Tensor.NumberType) {
-  for (let i = 0; i < input.length; i++) {
-    output[i] = Math.exp(input[i]);
-  }
-}
-
-export function floor(input: Tensor.NumberType, output: Tensor.NumberType) {
-  for (let i = 0; i < input.length; i++) {
-    output[i] = Math.floor(input[i]);
-  }
-}
-
-export function atan(input: Tensor.NumberType, output: Tensor.NumberType) {
-  for (let i = 0; i < input.length; i++) {
-    output[i] = Math.atan(input[i]);
-  }
-}
-
-export function relu(input: Tensor.NumberType, output: Tensor.NumberType) {
-  for (let i = 0; i < input.length; i++) {
-    output[i] = Math.max(0, input[i]);
-  }
-}
-
-export function leakyReluInitializer(attributes: Attribute) {
-  return attributes.getFloat('alpha', 0.01);
-}
-
-export function leakyRelu(input: Tensor.NumberType, output: Tensor.NumberType, attributes: number) {
-  const alpha = attributes;
-  for (let i = 0; i < input.length; i++) {
-    const value = input[i];
-    output[i] = value >= 0 ? value : alpha * value;
+    output[i] = Math.cosh(input[i]);
   }
 }
 
@@ -158,9 +134,87 @@ export function elu(input: Tensor.NumberType, output: Tensor.NumberType, attribu
   }
 }
 
+export function exp(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = Math.exp(input[i]);
+  }
+}
+
+export function floor(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = Math.floor(input[i]);
+  }
+}
+
+export function isNan(input: Tensor.NumberType, output: Tensor.BooleanType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = Number.isNaN(input[i]) ? 1 : 0;
+  }
+}
+
+export function leakyReluInitializer(attributes: Attribute) {
+  return attributes.getFloat('alpha', 0.01);
+}
+
+export function leakyRelu(input: Tensor.NumberType, output: Tensor.NumberType, attributes: number) {
+  const alpha = attributes;
+  for (let i = 0; i < input.length; i++) {
+    const value = input[i];
+    output[i] = value >= 0 ? value : alpha * value;
+  }
+}
+
 export function log(input: Tensor.NumberType, output: Tensor.NumberType) {
   for (let i = 0; i < input.length; i++) {
     output[i] = Math.log(input[i]);
+  }
+}
+
+export function neg(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = -input[i];
+  }
+}
+
+export function not(input: Tensor.BooleanType, output: Tensor.BooleanType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = input[i] ? 0 : 1;
+  }
+}
+
+export function reciprocal(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = 1.0 / input[i];
+  }
+}
+
+export function relu(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = Math.max(0, input[i]);
+  }
+}
+
+export function sigmoid(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = (1 / (1 + Math.exp(-input[i])));
+  }
+}
+
+export function sign(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = input[i] > 0 ? 1 : input[i] < 0 ? -1 : 0;
+  }
+}
+
+export function sin(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = Math.sin(input[i]);
+  }
+}
+
+export function sinh(input: Tensor.NumberType, output: Tensor.NumberType) {
+  for (let i = 0; i < input.length; i++) {
+    output[i] = Math.sinh(input[i]);
   }
 }
 
@@ -170,14 +224,14 @@ export function sqrt(input: Tensor.NumberType, output: Tensor.NumberType) {
   }
 }
 
-export function asin(input: Tensor.NumberType, output: Tensor.NumberType) {
+export function tan(input: Tensor.NumberType, output: Tensor.NumberType) {
   for (let i = 0; i < input.length; i++) {
-    output[i] = Math.asin(input[i]);
+    output[i] = Math.tan(input[i]);
   }
 }
 
-export function sigmoid(input: Tensor.NumberType, output: Tensor.NumberType) {
+export function tanh(input: Tensor.NumberType, output: Tensor.NumberType) {
   for (let i = 0; i < input.length; i++) {
-    output[i] = (1 / (1 + Math.exp(-input[i])));
+    output[i] = Math.tanh(input[i]);
   }
 }

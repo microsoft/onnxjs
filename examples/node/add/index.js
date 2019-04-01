@@ -1,4 +1,8 @@
 require('onnxjs');
+
+// uncomment the following line to enable ONNXRuntime node binding
+// require('onnxjs-node');
+
 const assert = require('assert');
 
 async function main() {

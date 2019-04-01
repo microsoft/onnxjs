@@ -35,6 +35,7 @@ Options:
                                  cpu
                                  webgl
                                  wasm
+                                 onnxruntime  (only works in Node.js)
  -e=<...>, --env=<...>       Specify the environment to run the test. Should be one of the following:
                                chrome     (default)
                                edge       (Windows only)
@@ -90,15 +91,21 @@ Examples:
  > test-runner-cli model resnet50 --profile --backend=webgl
  `;
 
+export declare namespace TestRunnerCliArgs {
+  type Mode = 'suite0'|'suite1'|'model'|'unittest'|'op';
+  type Backend = 'cpu'|'webgl'|'wasm'|'onnxruntime';
+  type Environment = 'chrome'|'edge'|'firefox'|'electron'|'safari'|'node'|'bs';
+}
+
 export interface TestRunnerCliArgs {
   debug: boolean;
-  mode: 'suite0'|'suite1'|'model'|'unittest'|'op';
+  mode: TestRunnerCliArgs.Mode;
   /**
    * The parameter that used when in mode 'model' or 'op', specifying the search string for the model or op test
    */
   param?: string;
-  backend: ['cpu'|'webgl'|'wasm'];
-  env: 'chrome'|'edge'|'firefox'|'electron'|'safari'|'node'|'bs';
+  backends: [TestRunnerCliArgs.Backend];
+  env: TestRunnerCliArgs.Environment;
 
   /**
    * Bundle Mode
@@ -159,7 +166,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
   const backendArgs = args.b || args.backend;
   const backend = (typeof backendArgs !== 'string') ? ['cpu', 'webgl', 'wasm'] : backendArgs.split(',');
   for (const b of backend) {
-    if (b !== 'cpu' && b !== 'webgl' && b !== 'wasm') {
+    if (b !== 'cpu' && b !== 'webgl' && b !== 'wasm' && b !== 'onnxruntime') {
       throw new Error(`not supported backend ${b}`);
     }
   }
@@ -169,6 +176,9 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
   const env = (typeof envArg !== 'string') ? 'chrome' : envArg;
   if (['chrome', 'edge', 'firefox', 'electron', 'safari', 'node', 'bs'].indexOf(env) === -1) {
     throw new Error(`not supported env ${env}`);
+  }
+  if (env !== 'node' && backend.indexOf('onnxruntime') !== -1) {
+    throw new Error(`backend onnxruntime is not supported in env ${env}`);
   }
 
   // Options:
@@ -223,7 +233,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
     debug,
     mode: mode as TestRunnerCliArgs['mode'],
     param: args._.length > 1 ? args._[1] : undefined,
-    backend: backend as TestRunnerCliArgs['backend'],
+    backends: backend as TestRunnerCliArgs['backends'],
     bundleMode: perf ? 'perf' : 'dev',
     env: env as TestRunnerCliArgs['env'],
     logConfig,

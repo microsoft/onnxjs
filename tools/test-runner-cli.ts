@@ -34,22 +34,22 @@ const json = stripJsonComments(jsonWithComments, {whitespace: true});
 const whitelist = JSON.parse(json) as Test.WhiteList;
 logger.verbose('TestRunnerCli.Init', `Loading whitelist... DONE`);
 
+const DEFAULT_BACKENDS: ReadonlyArray<TestRunnerCliArgs.Backend> = ['cpu', 'wasm', 'webgl'];
+
+const nodeTests = new Map<string, Test.ModelTestGroup>();
+const onnxTests = new Map<string, Test.ModelTestGroup>();
+const opTests = new Map<string, Test.OperatorTestGroup[]>();
+
 const shouldLoadSuiteTestData = (args.mode === 'suite0' || args.mode === 'suite1');
 if (shouldLoadSuiteTestData) {
   logger.verbose('TestRunnerCli.Init', `Loading test groups for suite test...`);
+
+  for (const backend of DEFAULT_BACKENDS) {
+    nodeTests.set(backend, loadNodeTests(backend));
+    onnxTests.set(backend, loadOnnxTests(backend));
+    opTests.set(backend, loadOpTests(backend));
+  }
 }
-
-const nodeTestsCpu = shouldLoadSuiteTestData ? nodeTests('cpu') : null;
-const nodeTestsWebGL = shouldLoadSuiteTestData ? nodeTests('webgl') : null;
-const nodeTestsWasm = shouldLoadSuiteTestData ? nodeTests('wasm') : null;
-
-const onnxTestsCpu = shouldLoadSuiteTestData ? onnxTests('cpu') : null;
-const onnxTestsWebGL = shouldLoadSuiteTestData ? onnxTests('webgl') : null;
-const onnxTestsWasm = shouldLoadSuiteTestData ? onnxTests('wasm') : null;
-
-const opTestsCpu = shouldLoadSuiteTestData ? opTests('cpu') : null;
-const opTestsWebGL = shouldLoadSuiteTestData ? opTests('webgl') : null;
-const opTestsWasm = shouldLoadSuiteTestData ? opTests('wasm') : null;
 
 if (shouldLoadSuiteTestData) {
   logger.verbose('TestRunnerCli.Init', `Loading test groups for suite test... DONE`);
@@ -66,28 +66,18 @@ let unittest = false;
 logger.verbose('TestRunnerCli.Init', `Preparing test config...`);
 switch (args.mode) {
   case 'suite1':
-    if (args.backend.indexOf('cpu') !== -1) {
-      modelTestGroups.push(onnxTestsCpu!);  // model test : ONNX model (CPU)
-    }
-    if (args.backend.indexOf('webgl') !== -1) {
-      modelTestGroups.push(onnxTestsWebGL!);  // model test : ONNX model (WebGL)
-    }
-    if (args.backend.indexOf('wasm') !== -1) {
-      modelTestGroups.push(onnxTestsWasm!);  // model test : ONNX model (Wasm)
+    for (const backend of DEFAULT_BACKENDS) {
+      if (args.backends.indexOf(backend) !== -1) {
+        modelTestGroups.push(onnxTests.get(backend)!);  // model test : ONNX model
+      }
     }
 
   case 'suite0':
-    if (args.backend.indexOf('cpu') !== -1) {
-      modelTestGroups.push(nodeTestsCpu!);  // model test : node (CPU)
-      opTestGroups.push(...opTestsCpu!);    // operator test (CPU)
-    }
-    if (args.backend.indexOf('webgl') !== -1) {
-      modelTestGroups.push(nodeTestsWebGL!);  // model test : node (WebGL)
-      opTestGroups.push(...opTestsWebGL!);    // operator test (WebGL)
-    }
-    if (args.backend.indexOf('wasm') !== -1) {
-      modelTestGroups.push(nodeTestsWasm!);  // model test : node (Wasm)
-      opTestGroups.push(...opTestsWasm!);    // operator test (Wasm)
+    for (const backend of DEFAULT_BACKENDS) {
+      if (args.backends.indexOf(backend) !== -1) {
+        modelTestGroups.push(nodeTests.get(backend)!);  // model test : node
+        opTestGroups.push(...opTests.get(backend)!);    // operator test
+      }
     }
     unittest = true;
     break;
@@ -98,7 +88,7 @@ switch (args.mode) {
     }
     const testFolderSearchPattern = args.param;
     const testFolder = tryLocateModelTestFolder(testFolderSearchPattern);
-    for (const b of args.backend) {
+    for (const b of args.backends) {
       modelTestGroups.push({name: testFolder, tests: [modelTestFromFolder(testFolder, b, args.times)]});
     }
     break;
@@ -113,7 +103,7 @@ switch (args.mode) {
     }
     const manifestFileSearchPattern = args.param;
     const manifestFile = tryLocateOpTestManifest(manifestFileSearchPattern);
-    for (const b of args.backend) {
+    for (const b of args.backends) {
       opTestGroups.push(opTestFromManifest(manifestFile, b));
     }
     break;
@@ -137,87 +127,44 @@ logger.info('TestRunnerCli', 'Tests completed successfully');
 process.exit();
 
 function validateWhiteList() {
-  if (nodeTestsCpu) {
-    const nodeModelTestsCpuNames = nodeTestsCpu.tests.map(i => i.name);
-    for (const testCase of whitelist.cpu.node) {
-      if (nodeModelTestsCpuNames.indexOf(testCase) === -1) {
-        throw new Error(`node model test case '${testCase}' in white list does not exist.`);
+  for (const backend of DEFAULT_BACKENDS) {
+    const nodeTest = nodeTests.get(backend);
+    if (nodeTest) {
+      const nodeModelTests = nodeTest.tests.map(i => i.name);
+      for (const testCase of whitelist[backend].node) {
+        if (nodeModelTests.indexOf(testCase) === -1) {
+          throw new Error(`node model test case '${testCase}' in white list does not exist.`);
+        }
       }
     }
-  }
-  if (nodeTestsWebGL) {
-    const nodeModelTestsWebGLNames = nodeTestsWebGL.tests.map(i => i.name);
-    for (const testCase of whitelist.webgl.node) {
-      if (nodeModelTestsWebGLNames.indexOf(testCase) === -1) {
-        throw new Error(`node model test case '${testCase}' in white list does not exist.`);
-      }
-    }
-  }
-  if (nodeTestsWasm) {
-    const nodeModelTestsWasmNames = nodeTestsWasm.tests.map(i => i.name);
-    for (const testCase of whitelist.wasm.node) {
-      if (nodeModelTestsWasmNames.indexOf(testCase) === -1) {
-        throw new Error(`node model test case '${testCase}' in white list does not exist.`);
-      }
-    }
-  }
 
-  if (onnxTestsCpu) {
-    const onnxModelTestsCpuNames = onnxTestsCpu.tests.map(i => i.name);
-    for (const testCase of whitelist.cpu.onnx) {
-      if (onnxModelTestsCpuNames.indexOf(testCase) === -1) {
-        throw new Error(`onnx model test case '${testCase}' in white list does not exist.`);
+    const onnxTest = onnxTests.get(backend);
+    if (onnxTest) {
+      const onnxModelTests = onnxTest.tests.map(i => i.name);
+      for (const testCase of whitelist[backend].onnx) {
+        if (onnxModelTests.indexOf(testCase) === -1) {
+          throw new Error(`onnx model test case '${testCase}' in white list does not exist.`);
+        }
       }
     }
-  }
-  if (onnxTestsWebGL) {
-    const onnxModelTestsWebGLNames = onnxTestsWebGL.tests.map(i => i.name);
-    for (const testCase of whitelist.webgl.onnx) {
-      if (onnxModelTestsWebGLNames.indexOf(testCase) === -1) {
-        throw new Error(`onnx model test case '${testCase}' in white list does not exist.`);
-      }
-    }
-  }
-  if (onnxTestsWasm) {
-    const onnxModelTestsWasmNames = onnxTestsWasm.tests.map(i => i.name);
-    for (const testCase of whitelist.wasm.onnx) {
-      if (onnxModelTestsWasmNames.indexOf(testCase) === -1) {
-        throw new Error(`onnx model test case '${testCase}' in white list does not exist.`);
-      }
-    }
-  }
 
-  if (opTestsCpu) {
-    const opTestsCpuNames = opTestsCpu.map(i => i.name);
-    for (const testCase of whitelist.cpu.ops) {
-      if (opTestsCpuNames.indexOf(testCase) === -1) {
-        throw new Error(`operator test case '${testCase}' in white list does not exist.`);
-      }
-    }
-  }
-  if (opTestsWebGL) {
-    const opTestsWebGLNames = opTestsWebGL.map(i => i.name);
-    for (const testCase of whitelist.webgl.ops) {
-      if (opTestsWebGLNames.indexOf(testCase) === -1) {
-        throw new Error(`operator test case '${testCase}' in white list does not exist.`);
-      }
-    }
-  }
-  if (opTestsWasm) {
-    const opTestsWasmNames = opTestsWasm.map(i => i.name);
-    for (const testCase of whitelist.wasm.ops) {
-      if (opTestsWasmNames.indexOf(testCase) === -1) {
-        throw new Error(`operator test case '${testCase}' in white list does not exist.`);
+    const opTest = opTests.get(backend);
+    if (opTest) {
+      const opTests = opTest.map(i => i.name);
+      for (const testCase of whitelist[backend].ops) {
+        if (opTests.indexOf(testCase) === -1) {
+          throw new Error(`operator test case '${testCase}' in white list does not exist.`);
+        }
       }
     }
   }
 }
 
-function nodeTests(backend: string): Test.ModelTestGroup {
+function loadNodeTests(backend: string): Test.ModelTestGroup {
   return suiteFromFolder(`node-${backend}`, TEST_DATA_MODEL_NODE_ROOT, backend, whitelist[backend].node);
 }
 
-function onnxTests(backend: string): Test.ModelTestGroup {
+function loadOnnxTests(backend: string): Test.ModelTestGroup {
   return suiteFromFolder(`onnx-${backend}`, TEST_DATA_MODEL_ONNX_ROOT, backend, whitelist[backend].onnx);
 }
 
@@ -304,12 +251,16 @@ function modelTestFromFolder(testDataRootFolder: string, backend: string, times?
 }
 
 function tryLocateModelTestFolder(searchPattern: string): string {
-  for (const folderCandidate of globby.sync(
-           [
-             searchPattern, path.join(TEST_DATA_MODEL_ONNX_ROOT, '**', searchPattern),
-             path.join(TEST_DATA_MODEL_NODE_ROOT, '**', searchPattern)
-           ],
-           {onlyDirectories: true, absolute: true})) {
+  const folderCandidates = globby.sync(
+      [
+        searchPattern, path.join(TEST_DATA_MODEL_ONNX_ROOT, '**', searchPattern),
+        path.join(TEST_DATA_MODEL_NODE_ROOT, '**', searchPattern)
+      ],
+      {onlyDirectories: true, absolute: true});
+  if (fs.existsSync(searchPattern) && fs.lstatSync(searchPattern).isDirectory()) {
+    folderCandidates.unshift(searchPattern);
+  }
+  for (const folderCandidate of folderCandidates) {
     const modelCandidates = globby.sync('*.onnx', {onlyFiles: true, cwd: folderCandidate});
     if (modelCandidates && modelCandidates.length === 1) {
       return folderCandidate;
@@ -319,7 +270,7 @@ function tryLocateModelTestFolder(searchPattern: string): string {
   throw new Error(`no model folder found: ${searchPattern}`);
 }
 
-function opTests(backend: string): Test.OperatorTestGroup[] {
+function loadOpTests(backend: string): Test.OperatorTestGroup[] {
   const groups: Test.OperatorTestGroup[] = [];
   for (const thisPath of fs.readdirSync(TEST_DATA_OP_ROOT)) {
     const thisFullPath = path.join(TEST_DATA_OP_ROOT, thisPath);
@@ -490,6 +441,9 @@ function saveConfig(config: Test.Config) {
   }
   if (config.options.wasm && config.options.wasm.cpuFallback !== undefined) {
     setOptions += `onnx.backend.wasm.cpuFallback = ${JSON.stringify(config.options.wasm.cpuFallback)};`;
+  }
+  if (config.model.some(testGroup => testGroup.tests.some(test => test.backend === 'onnxruntime'))) {
+    setOptions += `require('onnxjs-node');`;
   }
 
   fs.writeFileSync(path.join(TEST_ROOT, './testdata.js'), `${setOptions}

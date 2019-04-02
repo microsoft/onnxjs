@@ -493,7 +493,7 @@ function getBrowserNameFromEnv(env: TestRunnerCliArgs['env'], debug?: boolean) {
     case 'safari':
       return 'Safari';
     case 'bs':
-      return 'BS_WIN_Chrome,BS_WIN_Edge,BS_WIN_Firefox,BS_MAC_Chrome,BS_MAC_Safari';
+      return process.env.ONNXJS_TEST_BS_BROWSERS!;
     default:
       throw new Error(`env "${env}" not supported.`);
   }

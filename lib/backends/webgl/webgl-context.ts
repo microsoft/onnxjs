@@ -2,8 +2,8 @@
 // Licensed under the MIT license.
 
 import {env} from '../../env';
-import * as DataEncoders from './texture-data-encoder';
 
+import * as DataEncoders from './texture-data-encoder';
 import {DataEncoder, Encoder} from './texture-data-encoder';
 import {Disposable} from './utils';
 

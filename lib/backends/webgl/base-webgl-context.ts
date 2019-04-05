@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {env} from '../../env';
+
 import {DataEncoder, Encoder, RGBAFloat32DataEncoder, Uint8DataEncoder} from './texture-data-encoder';
 import {Disposable} from './utils';
 import {WebGLContext} from './webgl-context';
@@ -164,7 +166,36 @@ export abstract class BaseWebGLContext implements WebGLContext, Disposable {
     return this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING);
   }
   checkError(): void {
-    // TODO: Implement WebGL error checks
+    if (env.debug) {
+      const gl = this.gl;
+      const error = gl.getError();
+      let label = '';
+      switch (error) {
+        case (gl.NO_ERROR):
+          return;
+        case (gl.INVALID_ENUM):
+          label = 'INVALID_ENUM';
+          break;
+        case (gl.INVALID_VALUE):
+          label = 'INVALID_VALUE';
+          break;
+        case (gl.INVALID_OPERATION):
+          label = 'INVALID_OPERATION';
+          break;
+        case (gl.INVALID_FRAMEBUFFER_OPERATION):
+          label = 'INVALID_FRAMEBUFFER_OPERATION';
+          break;
+        case (gl.OUT_OF_MEMORY):
+          label = 'OUT_OF_MEMORY';
+          break;
+        case (gl.CONTEXT_LOST_WEBGL):
+          label = 'CONTEXT_LOST_WEBGL';
+          break;
+        default:
+          label = 'Unknown WebGL Error: ' + error.toString(16);
+      }
+      throw new Error(label);
+    }
   }
   setVertexAttributes(positionHandle: number, textureCoordHandle: number): void {
     const gl = this.gl;

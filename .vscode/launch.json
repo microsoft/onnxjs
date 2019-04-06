@@ -29,6 +29,15 @@
       "internalConsoleOptions": "openOnSessionStart",
       "sourceMaps": true,
       "smartStep": true
+    },
+    {
+      "name": "Remote Browser via Webkit Adaptor",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9000,
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "smartStep": true
     }
   ]
 }

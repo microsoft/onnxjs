@@ -39,7 +39,7 @@ export class WebGLContext implements Disposable {
   textureHalfFloatExtension: OES_texture_half_float|null;
 
   // WebGL2 extensions
-  colorBufferFloatExtension: {};
+  colorBufferFloatExtension: {}|null;
 
   private disposed: boolean;
   private frameBufferBound = false;
@@ -48,7 +48,7 @@ export class WebGLContext implements Disposable {
     this.gl = gl;
     this.version = version;
 
-    this.getExtensions(version);
+    this.getExtensions();
     this.vertexbuffer = this.createVertexbuffer();
     this.framebuffer = this.createFramebuffer();
     this.queryVitalParameters();
@@ -299,6 +299,9 @@ export class WebGLContext implements Disposable {
 
   private queryVitalParameters(): void {
     const gl = this.gl;
+
+    this.floatDownloadEnabled = this.isFloatDownloadEnabled();
+    this.renderFloat32Enabled = this.isRenderFloat32Enabled();
     // this.maxCombinedTextureImageUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
     this.maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
     this.maxTextureImageUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
@@ -314,12 +317,61 @@ export class WebGLContext implements Disposable {
       // this.maxDrawBuffers = gl.getParameter(WebGL2RenderingContext.MAX_DRAW_BUFFERS);
     }
   }
-  private getExtensions(version: 1|2): void {
-    if (version === 2) {
+  private getExtensions(): void {
+    if (this.version === 2) {
       this.colorBufferFloatExtension = this.gl.getExtension('EXT_color_buffer_float');
     } else {
       this.textureFloatExtension = this.gl.getExtension('OES_texture_float');
       this.textureHalfFloatExtension = this.gl.getExtension('OES_texture_half_float');
     }
+  }
+
+  private isRenderFloat32Enabled(): boolean {
+    if (this.version === 2) {
+      if (!this.colorBufferFloatExtension) {
+        return false;
+      }
+    } else {
+      if (!this.textureFloatExtension) {
+        return false;
+      }
+    }
+    return this.isFloatTextureAttachableToFrameBuffer();
+  }
+  private isFloatDownloadEnabled(): boolean {
+    if (this.version === 2) {
+      if (!this.colorBufferFloatExtension) {
+        return false;
+      }
+    } else {
+      if (!this.textureFloatExtension) {
+        return false;
+      }
+      if (!this.gl.getExtension('WEBGL_color_buffer_float')) {
+        return false;
+      }
+    }
+    return this.isFloatTextureAttachableToFrameBuffer();
+  }
+  private isFloatTextureAttachableToFrameBuffer(): boolean {
+    // test whether it is supported:
+    // STEP.1 create a float texture
+    const gl = this.gl;
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    const internalFormat = this.version === 2 ? (gl as unknown as {RGBA32F: number}).RGBA32F : gl.RGBA;
+    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, 1, 1, 0, gl.RGBA, gl.FLOAT, null);
+    // STEP.2 bind a frame buffer
+    const frameBuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+    // STEP.3 attach texture to framebuffer
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+    // STEP.4 test whether framebuffer is complete
+    const isComplete = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.deleteTexture(texture);
+    gl.deleteFramebuffer(frameBuffer);
+    return isComplete;
   }
 }

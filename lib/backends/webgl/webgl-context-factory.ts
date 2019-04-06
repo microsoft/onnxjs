@@ -4,9 +4,6 @@
 import {Logger} from '../../instrument';
 
 import {WebGLContext} from './webgl-context';
-import {WebGLExperimentalContext} from './webgl-experimental-context';
-import {WebGL1Context} from './webgl1-context';
-import {WebGL2Context} from './webgl2-context';
 
 /**
  * This factory class creates proper WebGLRenderingContext based on
@@ -14,8 +11,7 @@ import {WebGL2Context} from './webgl2-context';
  * The order is from higher/most recent versions to most basic
  */
 export class WebGLContextFactory {
-  static create(contextId?: 'webgl'|'webgl2'|'experimental-webgl', contextAttributes?: WebGLContextAttributes):
-      WebGLContext {
+  static create(contextId?: 'webgl'|'webgl2', contextAttributes?: WebGLContextAttributes): WebGLContext {
     const canvas = this.createCanvas();
     if (contextAttributes == null) {
       contextAttributes = {
@@ -34,29 +30,21 @@ export class WebGLContextFactory {
       gl = canvas.getContext('webgl2', ca);
       if (gl) {
         try {
-          return new WebGL2Context(canvas, gl, ca);
+          return new WebGLContext(gl, 2);
         } catch (err) {
-          Logger.warning('GlContextFactory', `failed to create WebGL2Context. Error: ${err}`);
+          Logger.warning('GlContextFactory', `failed to create WebGLContext using contextId 'webgl2'. Error: ${err}`);
         }
       }
     }
     if (!contextId || contextId === 'webgl') {
-      gl = canvas.getContext('webgl', ca);
+      gl = canvas.getContext('webgl', ca) || canvas.getContext('experimental-webgl', ca);
       if (gl) {
         try {
-          return new WebGL1Context(canvas, gl, ca);
+          return new WebGLContext(gl, 1);
         } catch (err) {
-          Logger.warning('GlContextFactory', `failed to create WebGL1Context. Error: ${err}`);
-        }
-      }
-    }
-    if (!contextId || contextId === 'experimental-webgl') {
-      gl = canvas.getContext('experimental-webgl', ca);
-      if (gl) {
-        try {
-          return new WebGLExperimentalContext(canvas, gl, ca);
-        } catch (err) {
-          Logger.warning('GlContextFactory', `failed to create WebGLExperimentalContext. Error: ${err}`);
+          Logger.warning(
+              'GlContextFactory',
+              `failed to create WebGLContext using contextId 'webgl' or 'experimental-webgl'. Error: ${err}`);
         }
       }
     }

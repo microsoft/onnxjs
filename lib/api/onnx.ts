@@ -23,9 +23,9 @@ export declare namespace Backend {
    */
   interface WebGLOptions extends BackendOptions {
     /**
-     * set or get the WebGL Context ID (webgl vs webgl2,...)
+     * set or get the WebGL Context ID (webgl or webgl2)
      */
-    contextId?: 'webgl'|'webgl2'|'experimental-webgl';
+    contextId?: 'webgl'|'webgl2';
   }
   /**
    * set options for the WebAssembly backend

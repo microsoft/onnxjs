@@ -12,7 +12,7 @@ import {Disposable} from './utils';
  */
 export class WebGLContext implements Disposable {
   gl: WebGLRenderingContext;
-  private version: 1|2;
+  version: 1|2;
 
   private vertexbuffer: WebGLBuffer;
   private framebuffer: WebGLFramebuffer;
@@ -54,13 +54,8 @@ export class WebGLContext implements Disposable {
     this.queryVitalParameters();
   }
 
-  allocateTexture(
-      width: number, height: number, dataType: Encoder.DataType, channels: number,
-      data?: Encoder.DataArrayType): WebGLTexture {
+  allocateTexture(width: number, height: number, encoder: DataEncoder, data?: Encoder.DataArrayType): WebGLTexture {
     const gl = this.gl;
-    if (!channels) {
-      channels = 1;
-    }
     // create the texture
     const texture = gl.createTexture();
     // bind the texture so the following methods effect this texture.
@@ -69,14 +64,13 @@ export class WebGLContext implements Disposable {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    const encoder = this.getEncoder(dataType, channels);
     const buffer = data ? encoder.encode(data, width * height) : null;
     gl.texImage2D(
         gl.TEXTURE_2D,
         0,  // Level of detail.
         encoder.internalFormat, width, height,
         0,  // Always 0 in OpenGL ES.
-        encoder.format, encoder.channelType, buffer);
+        encoder.format, encoder.textureType, buffer);
     this.checkError();
     return texture as WebGLTexture;
   }
@@ -92,7 +86,7 @@ export class WebGLContext implements Disposable {
         0,  // level
         0,  // xoffset
         0,  // yoffset
-        width, height, encoder.format, encoder.channelType, buffer);
+        width, height, encoder.format, encoder.textureType, buffer);
     this.checkError();
   }
   attachFramebuffer(texture: WebGLTexture, width: number, height: number): void {
@@ -105,6 +99,7 @@ export class WebGLContext implements Disposable {
         0);  // 0, we aren't using MIPMAPs
     this.checkError();
     gl.viewport(0, 0, width, height);
+    gl.scissor(0, 0, width, height);
   }
   readTexture(
       texture: WebGLTexture, width: number, height: number, dataSize: number, dataType: Encoder.DataType,
@@ -124,7 +119,7 @@ export class WebGLContext implements Disposable {
         gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture,
         0);  // 0, we aren't using MIPMAPs
     // TODO: Check if framebuffer is ready
-    gl.readPixels(0, 0, width, height, gl.RGBA, encoder.channelType, buffer);
+    gl.readPixels(0, 0, width, height, gl.RGBA, encoder.textureType, buffer);
     this.checkError();
     // unbind FB
     return encoder.decode(buffer, dataSize);
@@ -231,14 +226,18 @@ export class WebGLContext implements Disposable {
   deleteProgram(program: WebGLProgram): void {
     this.gl.deleteProgram(program);
   }
-  getEncoder(dataType: Encoder.DataType, channels: number): DataEncoder {
+  getEncoder(dataType: Encoder.DataType, channels: number, usage: Encoder.Usage = Encoder.Usage.Default): DataEncoder {
     if (this.version === 2) {
       return new DataEncoders.RedFloat32DataEncoder(channels);
     }
 
     switch (dataType) {
       case 'float':
-        return new DataEncoders.RGBAFloat32DataEncoder(channels);
+        if (usage === Encoder.Usage.UploadOnly || this.renderFloat32Enabled) {
+          return new DataEncoders.RGBAFloatDataEncoder(channels);
+        } else {
+          return new DataEncoders.RGBAFloatDataEncoder(channels, this.textureHalfFloatExtension!.HALF_FLOAT_OES);
+        }
       case 'int':
         throw new Error('not implemented');
       case 'byte':
@@ -302,6 +301,11 @@ export class WebGLContext implements Disposable {
 
     this.floatDownloadEnabled = this.isFloatDownloadEnabled();
     this.renderFloat32Enabled = this.isRenderFloat32Enabled();
+
+    if (this.version === 1 && !this.textureHalfFloatExtension && !this.renderFloat32Enabled) {
+      throw new Error(`both float32 and float16 TextureType are not supported`);
+    }
+
     // this.maxCombinedTextureImageUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
     this.maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
     this.maxTextureImageUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);

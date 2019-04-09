@@ -78,8 +78,9 @@ export class WebGLUint8Encode {
     };
     const artifact = inferenceHandler.programManager.build(programInfo);
 
+    const encoder = inferenceHandler.backend.glContext.getEncoder('byte', 4);
     const texture =
-        inferenceHandler.backend.glContext.allocateTexture(outputLayout.width, outputLayout.height, 'byte', 4);
+        inferenceHandler.backend.glContext.allocateTexture(outputLayout.width, outputLayout.height, encoder);
     const outputTextureData: TextureData = {...outputLayout, dataType: 'uint8', texture};
     const runData = {inputTextureDatas: [input], outputTextureData, uniformData: {}};
 

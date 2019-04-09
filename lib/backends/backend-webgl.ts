@@ -10,7 +10,7 @@ import {Session} from '../session';
 
 import {WebGLSessionHandler} from './webgl/session-handler';
 import {WebGLContext} from './webgl/webgl-context';
-import {WebGLContextFactory} from './webgl/webgl-context-factory';
+import {createWebGLContext} from './webgl/webgl-context-factory';
 
 type WebGLOptions = BackendInterface.WebGLOptions;
 
@@ -30,7 +30,7 @@ export class WebGLBackend implements Backend, WebGLOptions {
       if (platform.name === 'Safari') {
         this.forceUint8Reads = true;
       }
-      this.glContext = WebGLContextFactory.create(this.contextId);
+      this.glContext = createWebGLContext(this.contextId);
       Logger.verbose('WebGLBackend', `Created WebGLContext: ${typeof this.glContext}`);
       return true;
     } catch (e) {

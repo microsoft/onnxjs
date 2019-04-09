@@ -9,6 +9,7 @@ import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo} from '../program-info';
 import {Artifact, RunData} from '../program-manager';
 import {TextureLayout} from '../texture-data';
+import {Encoder} from '../texture-data-encoder';
 import {WebGLContext} from '../webgl-context';
 
 export class WebGLConv extends Conv {
@@ -56,7 +57,8 @@ export class WebGLConv extends Conv {
       Logger.verbose('Conv', 'Did not find the adjustedKernel texture in the cache. Creating rew.');
       const newKernelData =
           WebGLConv.prepKernelForDotProduct(k.dims.slice(), this.group, 4, k.floatData as Float32Array);
-      kTD = inferenceHandler.createTextureDataFromLayout(programInfos[1].inputLayouts[1], k.type, newKernelData);
+      kTD = inferenceHandler.createTextureDataFromLayout(
+          programInfos[1].inputLayouts[1], k.type, newKernelData, Encoder.Usage.UploadOnly);
       inferenceHandler.setTextureData(k, kTD);
     }
     const runtDataIm2Col = {

@@ -11,6 +11,7 @@ import {WebGLUint8Encode} from './ops/uint8-encode';
 import {ProgramManager} from './program-manager';
 import {WebGLSessionHandler} from './session-handler';
 import {TextureData, TextureLayout} from './texture-data';
+import {Encoder} from './texture-data-encoder';
 import {TextureHelper} from './texture-helper';
 import {WidthHeightPrefs} from './texture-layout-strategy';
 import {getPackedShape} from './utils';
@@ -43,7 +44,8 @@ export class WebGLInferenceHandler implements InferenceHandler {
       if (!layout) {
         layout = this.createBasicTextureLayout(tensor.dims.slice());
       }
-      td = this.createTextureDataFromLayout(layout, tensor.type, tensor.numberData);
+      // graph inputs or initializers
+      td = this.createTextureDataFromLayout(layout, tensor.type, tensor.numberData, Encoder.Usage.UploadOnly);
       this.setTextureData(tensor, td);
     } else {
       Logger.verbose('InferenceHandler', `Retrieving TextureData from cache: [${tensor.dims}]`);
@@ -95,16 +97,10 @@ export class WebGLInferenceHandler implements InferenceHandler {
     this.tensorToTexture = new Map();
     this.textureToTensor = new Map();
   }
-  createTextureData(
-      dataType: Tensor.DataType, shape: ReadonlyArray<number>, strides?: ReadonlyArray<number>,
-      data?: Tensor.NumberType, channels?: number, width?: number, height?: number): TextureData {
-    Logger.verbose('InferenceHandler', `Creating TextureData: shape:[${shape}], channels:${channels ? channels : 1}`);
-    const td = this.textureHelper.createTexture(dataType, shape, strides, data, channels, width, height);
-    return td;
-  }
-  createTextureDataFromLayout(layout: TextureLayout, dataType: Tensor.DataType, data?: Tensor.NumberType): TextureData {
+  createTextureDataFromLayout(
+      layout: TextureLayout, dataType: Tensor.DataType, data?: Tensor.NumberType, usage?: Encoder.Usage): TextureData {
     Logger.verbose('InferenceHandler', `Creating TextureData: layout:[${JSON.stringify(layout)}]`);
-    const td = this.textureHelper.createTextureFromLayout(dataType, layout, data);
+    const td = this.textureHelper.createTextureFromLayout(dataType, layout, data, usage);
     return td;
   }
   createBasicTextureLayout(

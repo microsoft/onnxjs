@@ -23,6 +23,9 @@ if (ONNX_JS_TEST_CONFIG.unittest) {
   require('./unittests');
 }
 
+// Set file cache
+ModelTestContext.setCache(ONNX_JS_TEST_CONFIG.fileCache);
+
 // ModelTests
 for (const group of ONNX_JS_TEST_CONFIG.model) {
   describe(`#ModelTest# - ${group.name}`, () => {

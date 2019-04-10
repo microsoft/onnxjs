@@ -87,12 +87,22 @@ export declare namespace Test {
   }
 
   /**
+   * Represent a file cache map that preload the files in prepare stage.
+   * The key is the file path and the value is the file content in BASE64.
+   */
+  export interface FileCache {
+    [filePath: string]: string;
+  }
+
+  /**
    * The data schema of a test config.
    */
   export interface Config {
     unittest: boolean;
     op: ReadonlyArray<OperatorTestGroup>;
     model: ReadonlyArray<ModelTestGroup>;
+
+    fileCache: FileCache;
 
     log: ReadonlyArray<{category: string, config: Logger.Config}>;
     profile: boolean;

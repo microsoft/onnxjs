@@ -9,6 +9,7 @@ import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
 import {inspect} from 'util';
 
+import {bufferToBase64} from '../test/test-shared';
 import {Test} from '../test/test-types';
 import {parseTestRunnerCliArgs, TestRunnerCliArgs} from './test-runner-cli-args';
 
@@ -35,6 +36,8 @@ const whitelist = JSON.parse(json) as Test.WhiteList;
 logger.verbose('TestRunnerCli.Init', `Loading whitelist... DONE`);
 
 const DEFAULT_BACKENDS: ReadonlyArray<TestRunnerCliArgs.Backend> = ['cpu', 'wasm', 'webgl'];
+
+const fileCache: Test.FileCache = {};
 
 const nodeTests = new Map<string, Test.ModelTestGroup>();
 const onnxTests = new Map<string, Test.ModelTestGroup>();
@@ -89,7 +92,7 @@ switch (args.mode) {
     const testFolderSearchPattern = args.param;
     const testFolder = tryLocateModelTestFolder(testFolderSearchPattern);
     for (const b of args.backends) {
-      modelTestGroups.push({name: testFolder, tests: [modelTestFromFolder(testFolder, b, args.times)]});
+      modelTestGroups.push({name: testFolder, tests: [modelTestFromFolder(testFolder, b, false, args.times)]});
     }
     break;
 
@@ -118,6 +121,7 @@ run({
   unittest,
   model: modelTestGroups,
   op: opTestGroups,
+  fileCache,
   log: args.logConfig,
   profile: args.profile,
   options: {debug: args.debug, cpu: args.cpuOptions, webgl: args.webglOptions, wasm: args.wasmOptions}
@@ -161,25 +165,27 @@ function validateWhiteList() {
 }
 
 function loadNodeTests(backend: string): Test.ModelTestGroup {
-  return suiteFromFolder(`node-${backend}`, TEST_DATA_MODEL_NODE_ROOT, backend, whitelist[backend].node);
+  return suiteFromFolder(`node-${backend}`, TEST_DATA_MODEL_NODE_ROOT, backend, true, whitelist[backend].node);
 }
 
 function loadOnnxTests(backend: string): Test.ModelTestGroup {
-  return suiteFromFolder(`onnx-${backend}`, TEST_DATA_MODEL_ONNX_ROOT, backend, whitelist[backend].onnx);
+  return suiteFromFolder(`onnx-${backend}`, TEST_DATA_MODEL_ONNX_ROOT, backend, false, whitelist[backend].onnx);
 }
 
 function suiteFromFolder(
-    name: string, suiteRootFolder: string, backend: string, whitelist?: ReadonlyArray<string>): Test.ModelTestGroup {
+    name: string, suiteRootFolder: string, backend: string, preload: boolean,
+    whitelist?: ReadonlyArray<string>): Test.ModelTestGroup {
   const sessions: Test.ModelTest[] = [];
   const tests = fs.readdirSync(suiteRootFolder);
   for (const test of tests) {
     const skip = whitelist && whitelist.indexOf(test) === -1;
-    sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, skip ? 0 : undefined));
+    sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, preload, skip ? 0 : undefined));
   }
   return {name, tests: sessions};
 }
 
-function modelTestFromFolder(testDataRootFolder: string, backend: string, times?: number): Test.ModelTest {
+function modelTestFromFolder(
+    testDataRootFolder: string, backend: string, preload: boolean, times?: number): Test.ModelTest {
   if (times === 0) {
     logger.verbose('TestRunnerCli.Init.Model', `Skip test data from folder: ${testDataRootFolder}`);
     return {name: path.basename(testDataRootFolder), backend, modelUrl: '', cases: []};
@@ -199,6 +205,9 @@ function modelTestFromFolder(testDataRootFolder: string, backend: string, times?
         if (ext.toLowerCase() === '.onnx') {
           if (modelUrl === null) {
             modelUrl = path.join(TEST_DATA_BASE, path.relative(TEST_ROOT, thisFullPath));
+            if (preload && !fileCache[modelUrl]) {
+              fileCache[modelUrl] = bufferToBase64(fs.readFileSync(thisFullPath));
+            }
           } else {
             throw new Error('there are multiple model files under the folder specified');
           }
@@ -210,7 +219,11 @@ function modelTestFromFolder(testDataRootFolder: string, backend: string, times?
           const ext = path.extname(dataFile);
 
           if (ext.toLowerCase() === '.pb') {
-            dataFiles.push(path.join(TEST_DATA_BASE, path.relative(TEST_ROOT, dataFileFullPath)));
+            const dataFileUrl = path.join(TEST_DATA_BASE, path.relative(TEST_ROOT, dataFileFullPath));
+            dataFiles.push(dataFileUrl);
+            if (preload && !fileCache[dataFileUrl]) {
+              fileCache[dataFileUrl] = bufferToBase64(fs.readFileSync(dataFileFullPath));
+            }
           }
         }
         if (dataFiles.length > 0) {
@@ -464,7 +477,7 @@ function getBrowserNameFromEnv(env: TestRunnerCliArgs['env'], debug?: boolean) {
     case 'safari':
       return 'Safari';
     case 'bs':
-      return 'BS_WIN_Chrome,BS_WIN_Edge,BS_WIN_Firefox,BS_MAC_Chrome,BS_MAC_Safari';
+      return process.env.ONNXJS_TEST_BS_BROWSERS!;
     default:
       throw new Error(`env "${env}" not supported.`);
   }

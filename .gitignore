@@ -2,6 +2,8 @@ dist/
 node_modules/
 types/
 
+test/data/node/
+
 lib/**/*.js
 lib/**/*.js.map
 test/**/*.js

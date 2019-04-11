@@ -2,11 +2,10 @@
 // Licensed under the MIT license.
 
 import {execSync, spawnSync} from 'child_process';
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import * as globby from 'globby';
 import logger from 'npmlog';
 import * as path from 'path';
-import * as rimraf from 'rimraf';
 
 logger.info('Build', 'Initializing...');
 
@@ -24,9 +23,13 @@ const DEPS = path.join(ROOT, 'deps');
 const DEPS_EIGEN = path.join(DEPS, 'eigen');
 const DEPS_EMSDK = path.join(DEPS, 'emsdk');
 const DEPS_EMSDK_EMSCRIPTEN = path.join(DEPS_EMSDK, 'emscripten');
+const DEPS_ONNX = path.join(DEPS, 'onnx');
 const EMSDK_BIN = path.join(DEPS_EMSDK, 'emsdk');
 const SRC = path.join(ROOT, 'src');
 const SRC_WASM_BUILD_CONFIG = path.join(SRC, 'wasm-build-config.json');
+const TEST = path.join(ROOT, 'test');
+const TEST_DATA = path.join(TEST, 'data');
+const TEST_DATA_NODE = path.join(TEST_DATA, 'node');
 const OUT = path.join(ROOT, 'dist');
 const OUT_WASM_JS = path.join(OUT, 'onnx-wasm.js');
 const OUT_WASM = path.join(OUT, 'onnx-wasm.wasm');
@@ -54,16 +57,14 @@ const BUILD_OPTIONS = [
 
 logger.info('Build', 'Initialization completed. Start to build...');
 
-if (!fs.existsSync(OUT)) {
-  logger.info('Build', `Creating output folder: ${OUT}`);
-  fs.mkdirSync(OUT);
-}
+logger.info('Build', `Ensure output folder: ${OUT}`);
+fs.ensureDirSync(OUT);
 
 logger.info('Build', 'Updating submodules...');
 // Step 1: Clean folders if needed
 logger.info('Build.SubModules', '(1/2) Cleaning dependencies folder...');
 if (cleanInstall) {
-  rimraf.sync(DEPS);
+  fs.removeSync(DEPS);
 }
 logger.info('Build.SubModules', `(1/2) Cleaning dependencies folder... ${cleanInstall ? 'DONE' : 'SKIPPED'}`);
 
@@ -79,6 +80,51 @@ if (update.status !== 0) {
 logger.info('Build.SubModules', '(2/2) Fetching submodules... DONE');
 
 logger.info('Build', 'Updating submodules... DONE');
+
+logger.info('Build', 'Preparing test data...');
+const prepareTestData = cleanInstall || !fs.existsSync(TEST_DATA_NODE);
+if (prepareTestData) {
+  // Step 1: Clean folders if needed
+  logger.info('Build.TestData', '(1/3) Cleaning folder...');
+  if (cleanInstall) {
+    fs.emptyDirSync(TEST_DATA_NODE);
+  }
+  logger.info('Build.TestData', `(1/3) Cleaning folder... ${cleanInstall ? 'DONE' : 'SKIPPED'}`);
+  // Step 2: copy node tests for different version
+  logger.info('Build.TestData', '(2/3) Copy tests...');
+  [['v7', '5af210ca8a1c73aa6bae8754c9346ec54d0a756e'],   // rel-1.2.3
+   ['v8', '5cc146270945f0d007b140fb59a892a60ba69f49'],   // rel-1.3.0
+   ['v9', '4e67414849122d3df78bd72cee5717f90e715d12'],   // rel-1.4.1
+   ['v10', 'b22041c3f16cf8bcca9ed93982d6ffdf6ebf3746'],  // master
+  ].forEach(v => {
+    const version = v[0];
+    const commit = v[1];
+    logger.info('Build.TestData', `Checking out deps/onnx ${commit}...`);
+    const checkout = spawnSync(`git checkout -q -f ${commit}`, {shell: true, stdio: 'inherit', cwd: DEPS_ONNX});
+    if (checkout.status !== 0) {
+      if (checkout.error) {
+        console.error(checkout.error);
+      }
+      process.exit(checkout.status);
+    }
+    const from = path.join(DEPS_ONNX, 'onnx/backend/test/data/node');
+    const to = path.join(TEST_DATA_NODE, version);
+    logger.info('Build.TestData', `Copying folders from "${from}" to "${to}"...`);
+    fs.copySync(from, to);
+  });
+  logger.info('Build.TestData', '(2/3) Copy tests... DONE');
+  // Step 3: revert git index
+  logger.info('Build.TestData', '(3/3) Revert git index...');
+  const update = spawnSync(`git submodule update ${DEPS_ONNX}`, {shell: true, stdio: 'inherit', cwd: ROOT});
+  if (update.status !== 0) {
+    if (update.error) {
+      console.error(update.error);
+    }
+    process.exit(update.status);
+  }
+  logger.info('Build.TestData', '(3/3) Revert git index... DONE');
+}
+logger.info('Build', `Preparing test data... ${prepareTestData ? 'DONE' : 'SKIPPED'}`);
 
 logger.info('Build', 'Building WebAssembly sources...');
 if (!buildWasm) {

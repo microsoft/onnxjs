@@ -16,6 +16,7 @@ import {Logger, Profiler} from '../lib/instrument';
 import {Operator} from '../lib/operators';
 import {Tensor} from '../lib/tensor';
 
+import {base64toBuffer} from './test-shared';
 import {Test} from './test-types';
 
 // the threshold that used to compare 2 float numbers. See above for TensorResultValidator.floatEqual().
@@ -87,11 +88,11 @@ export class ModelTestContext {
       this.initializing = true;
 
       const initStart = now();
-      const session = await initializeSession(modelTest.modelUrl, modelTest.backend!, profile);
+      const session = await initializeSession(modelTest.modelUrl, modelTest.backend!, profile, this.cache);
       const initEnd = now();
 
       for (const testCase of modelTest.cases) {
-        await loadTensors(testCase);
+        await loadTensors(testCase, this.cache);
       }
 
       return new ModelTestContext(
@@ -105,7 +106,16 @@ export class ModelTestContext {
     }
   }
 
+  /**
+   * set the global file cache for looking up model and tensor protobuf files.
+   */
+  static setCache(cache: Test.FileCache) {
+    Logger.info('TestRunner', `File cache set up. Entry count: ${Object.keys(cache).length}.`);
+    this.cache = cache;
+  }
+
   private static initializing = false;
+  private static cache: Test.FileCache = {};
 }
 
 export declare namespace ModelTestContext {
@@ -116,8 +126,7 @@ export declare namespace ModelTestContext {
     count: number;
   }
 }
-
-async function loadTensors(testCase: Test.ModelTestCase) {
+async function loadTensors(testCase: Test.ModelTestCase, fileCache?: Test.FileCache) {
   const inputs: Test.NamedTensor[] = [];
   const outputs: Test.NamedTensor[] = [];
   let dataFileType: 'none'|'pb'|'npy' = 'none';
@@ -132,8 +141,9 @@ async function loadTensors(testCase: Test.ModelTestCase) {
         throw new Error(`cannot load data from test case "${testCase.name}", multiple types of files detected`);
       }
 
-      const t = ext.toLowerCase() === '.pb' ? await loadTensorProto(dataFile) :  // onnx.TensorProto
-          await loadMlProto(dataFile);                                           // (TBD)
+      const uriOrData = fileCache && fileCache[dataFile] ? base64toBuffer(fileCache[dataFile]) : dataFile;
+      const t = ext.toLowerCase() === '.pb' ? await loadTensorProto(uriOrData) :  // onnx.TensorProto
+          await loadMlProto(uriOrData);                                           // (TBD)
 
       const dataFileBasename = dataFile.split(/[/\\]/).pop()!;
 
@@ -151,8 +161,8 @@ async function loadTensors(testCase: Test.ModelTestCase) {
   testCase.outputs = outputs;
 }
 
-async function loadTensorProto(uri: string): Promise<Test.NamedTensor> {
-  const buf = await loadFile(uri);
+async function loadTensorProto(uriOrData: string|Uint8Array): Promise<Test.NamedTensor> {
+  const buf = (typeof uriOrData === 'string') ? await loadFile(uriOrData) : uriOrData;
   const tensorProto = onnxProto.TensorProto.decode(Buffer.from(buf));
   const tensor = Tensor.fromProto(tensorProto);
   // add property 'name' to the tensor object.
@@ -172,12 +182,18 @@ async function loadFile(uri: string): Promise<Uint8Array|ArrayBuffer> {
   }
 }
 
-function loadMlProto(uri: string): Promise<Test.NamedTensor> {
+function loadMlProto(uriOrData: string|Uint8Array): Promise<Test.NamedTensor> {
   return Promise.reject('not supported');
 }
 
-async function initializeSession(modelFilePath: string, backendHint: string, profile: boolean) {
-  Logger.verbose('TestRunner', `Start to load model from file: ${modelFilePath}`);
+async function initializeSession(
+    modelFilePath: string, backendHint: string, profile: boolean, fileCache?: Test.FileCache) {
+  const preloadModelData: Uint8Array|undefined =
+      fileCache && fileCache[modelFilePath] ? base64toBuffer(fileCache[modelFilePath]) : undefined;
+  Logger.verbose(
+      'TestRunner',
+      `Start to load model from file: ${modelFilePath}${
+          preloadModelData ? ` [preloaded(${preloadModelData.byteLength})]` : ''}`);
 
   const profilerConfig = profile ? {maxNumberEvents: 65536} : undefined;
   const sessionConfig: api.InferenceSession.Config = {backendHint, profiler: profilerConfig};
@@ -188,7 +204,11 @@ async function initializeSession(modelFilePath: string, backendHint: string, pro
   }
 
   try {
-    await session.loadModel(modelFilePath);
+    if (preloadModelData) {
+      await session.loadModel(preloadModelData);
+    } else {
+      await session.loadModel(modelFilePath);
+    }
   } catch (e) {
     Logger.error('TestRunner', `Failed to load model from file: ${modelFilePath}. Error: ${inspect(e)}`);
     throw e;

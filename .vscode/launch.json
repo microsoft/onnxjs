@@ -5,6 +5,15 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Test Runner CLI (node)",
+      "program": "${workspaceFolder}/tools/test-runner-cli",
+      "args": ["-e=node"],
+      "sourceMaps": true,
+      "smartStep": true
+    },
+    {
       "type": "chrome",
       "request": "attach",
       "name": "Attach to Chrome",

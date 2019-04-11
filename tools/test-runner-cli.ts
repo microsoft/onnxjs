@@ -4,6 +4,7 @@
 import {execSync, spawnSync} from 'child_process';
 import * as fs from 'fs';
 import * as globby from 'globby';
+import {default as minimatch} from 'minimatch';
 import logger from 'npmlog';
 import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
@@ -11,6 +12,7 @@ import {inspect} from 'util';
 
 import {bufferToBase64} from '../test/test-shared';
 import {Test} from '../test/test-types';
+
 import {parseTestRunnerCliArgs, TestRunnerCliArgs} from './test-runner-cli-args';
 
 logger.info('TestRunnerCli', 'Initializing...');
@@ -20,7 +22,7 @@ const args = parseTestRunnerCliArgs(process.argv.slice(2));
 logger.verbose('TestRunnerCli.Init.Config', inspect(args));
 
 const TEST_ROOT = path.join(__dirname, '..', 'test');
-const TEST_DATA_MODEL_NODE_ROOT = path.join(__dirname, '..', 'deps/onnx/onnx/backend/test/data/node');
+const TEST_DATA_MODEL_NODE_ROOT = path.join(TEST_ROOT, 'data', 'node');
 const TEST_DATA_MODEL_ONNX_ROOT = path.join(__dirname, '..', 'deps/data/data/test/onnx/v7');
 const TEST_DATA_OP_ROOT = path.join(TEST_ROOT, 'data', 'ops');
 
@@ -35,11 +37,14 @@ const json = stripJsonComments(jsonWithComments, {whitespace: true});
 const whitelist = JSON.parse(json) as Test.WhiteList;
 logger.verbose('TestRunnerCli.Init', `Loading whitelist... DONE`);
 
-const DEFAULT_BACKENDS: ReadonlyArray<TestRunnerCliArgs.Backend> = ['cpu', 'wasm', 'webgl'];
+// The default backends and opset version lists. Those will be used in suite tests.
+const DEFAULT_BACKENDS: ReadonlyArray<TestRunnerCliArgs.Backend> =
+    args.env === 'node' ? ['cpu', 'wasm'] : ['cpu', 'wasm', 'webgl'];
+const DEFAULT_OPSET_VERSIONS: ReadonlyArray<number> = [10, 9, 8, 7];
 
 const fileCache: Test.FileCache = {};
 
-const nodeTests = new Map<string, Test.ModelTestGroup>();
+const nodeTests = new Map<string, Test.ModelTestGroup[]>();
 const onnxTests = new Map<string, Test.ModelTestGroup>();
 const opTests = new Map<string, Test.OperatorTestGroup[]>();
 
@@ -48,7 +53,14 @@ if (shouldLoadSuiteTestData) {
   logger.verbose('TestRunnerCli.Init', `Loading test groups for suite test...`);
 
   for (const backend of DEFAULT_BACKENDS) {
-    nodeTests.set(backend, loadNodeTests(backend));
+    for (const version of DEFAULT_OPSET_VERSIONS) {
+      let nodeTest = nodeTests.get(backend);
+      if (!nodeTest) {
+        nodeTest = [];
+        nodeTests.set(backend, nodeTest);
+      }
+      nodeTest.push(loadNodeTests(backend, version));
+    }
     onnxTests.set(backend, loadOnnxTests(backend));
     opTests.set(backend, loadOpTests(backend));
   }
@@ -78,8 +90,8 @@ switch (args.mode) {
   case 'suite0':
     for (const backend of DEFAULT_BACKENDS) {
       if (args.backends.indexOf(backend) !== -1) {
-        modelTestGroups.push(nodeTests.get(backend)!);  // model test : node
-        opTestGroups.push(...opTests.get(backend)!);    // operator test
+        modelTestGroups.push(...nodeTests.get(backend)!);  // model test : node
+        opTestGroups.push(...opTests.get(backend)!);       // operator test
       }
     }
     unittest = true;
@@ -134,9 +146,12 @@ function validateWhiteList() {
   for (const backend of DEFAULT_BACKENDS) {
     const nodeTest = nodeTests.get(backend);
     if (nodeTest) {
-      const nodeModelTests = nodeTest.tests.map(i => i.name);
       for (const testCase of whitelist[backend].node) {
-        if (nodeModelTests.indexOf(testCase) === -1) {
+        let found = false;
+        for (const testGroup of nodeTest) {
+          found = found || testGroup.tests.some(test => minimatch(test.modelUrl, path.join('**', testCase, '*.onnx')));
+        }
+        if (!found) {
           throw new Error(`node model test case '${testCase}' in white list does not exist.`);
         }
       }
@@ -164,8 +179,10 @@ function validateWhiteList() {
   }
 }
 
-function loadNodeTests(backend: string): Test.ModelTestGroup {
-  return suiteFromFolder(`node-${backend}`, TEST_DATA_MODEL_NODE_ROOT, backend, true, whitelist[backend].node);
+function loadNodeTests(backend: string, version: number): Test.ModelTestGroup {
+  return suiteFromFolder(
+      `node-opset_v${version}-${backend}`, path.join(TEST_DATA_MODEL_NODE_ROOT, `v${version}`), backend, true,
+      whitelist[backend].node);
 }
 
 function loadOnnxTests(backend: string): Test.ModelTestGroup {
@@ -178,7 +195,7 @@ function suiteFromFolder(
   const sessions: Test.ModelTest[] = [];
   const tests = fs.readdirSync(suiteRootFolder);
   for (const test of tests) {
-    const skip = whitelist && whitelist.indexOf(test) === -1;
+    const skip = whitelist && !whitelist.some(p => minimatch(path.join(suiteRootFolder, test), path.join('**', p)));
     sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, preload, skip ? 0 : undefined));
   }
   return {name, tests: sessions};
@@ -264,15 +281,27 @@ function modelTestFromFolder(
 }
 
 function tryLocateModelTestFolder(searchPattern: string): string {
-  const folderCandidates = globby.sync(
+  const folderCandidates: string[] = [];
+  // 1 - check whether search pattern is a directory
+  if (fs.existsSync(searchPattern) && fs.lstatSync(searchPattern).isDirectory()) {
+    folderCandidates.push(searchPattern);
+  }
+
+  // 2 - check the globby result of searchPattern
+  // 3 - check the globby result of ONNX root combined with searchPattern
+  const globbyPattern = [searchPattern, path.join(TEST_DATA_MODEL_ONNX_ROOT, '**', searchPattern)];
+  // 4 - check the globby result of NODE root combined with opset versions and searchPattern
+  globbyPattern.push(
+      ...DEFAULT_OPSET_VERSIONS.map(v => path.join(TEST_DATA_MODEL_NODE_ROOT, `v${v}`, '**', searchPattern)));
+
+  folderCandidates.push(...globby.sync(
       [
         searchPattern, path.join(TEST_DATA_MODEL_ONNX_ROOT, '**', searchPattern),
         path.join(TEST_DATA_MODEL_NODE_ROOT, '**', searchPattern)
       ],
-      {onlyDirectories: true, absolute: true});
-  if (fs.existsSync(searchPattern) && fs.lstatSync(searchPattern).isDirectory()) {
-    folderCandidates.unshift(searchPattern);
-  }
+      {onlyDirectories: true, absolute: true}));
+
+  // pick the first folder that matches the pattern
   for (const folderCandidate of folderCandidates) {
     const modelCandidates = globby.sync('*.onnx', {onlyFiles: true, cwd: folderCandidate});
     if (modelCandidates && modelCandidates.length === 1) {

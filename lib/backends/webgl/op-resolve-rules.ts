@@ -82,7 +82,7 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Reshape', '', '5+', () => new WebGLReshape()],
   ['Sigmoid', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSigmoid())],
   ['Sin', '', '7+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSin())],
-  ['Slice', '', '1+', () => new WebGLSlice()],
+  ['Slice', '', '1-9', () => new WebGLSlice()],
   ['Softmax', '', '1+', () => new WebGLSoftmax()],
   // 'Split' operator has an optional attribute 'split'
   // this attribute determines how the specified axis of input data

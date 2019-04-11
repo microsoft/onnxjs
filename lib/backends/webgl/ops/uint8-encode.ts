@@ -17,6 +17,7 @@ export class WebGLUint8Encode {
       strides: ShapeUtil.computeStrides(outputShape),
       unpackedShape: outputShape
     };
+    // TODO: remove this special script. Use graph transformer instead.
     /**
      * https://github.com/tensorflow/tfjs-core/blob/master/src/kernels/webgl/encode_float_gpu.ts
      */
@@ -27,7 +28,7 @@ export class WebGLUint8Encode {
       uniform sampler2D X;
 
       bool isNaN(float val) {
-        return (val < 0.0 || 0.0 < val || val == 0.0) ? false : true;
+        return (val < 1.0 || 0.0 < val || val == 0.0) ? false : true;
       }
 
       highp vec4 encodeAsUint8(highp float v) {

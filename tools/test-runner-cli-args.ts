@@ -311,8 +311,7 @@ function parseWasmOptions(args: minimist.ParsedArgs): Backend.WasmOptions {
 
 function parseWebglOptions(args: minimist.ParsedArgs): Backend.WebGLOptions {
   const contextId = args['webgl-context-id'];
-  if (contextId !== undefined && contextId !== 'webgl' && contextId !== 'webgl2' &&
-      contextId !== 'experimental-webgl') {
+  if (contextId !== undefined && contextId !== 'webgl' && contextId !== 'webgl2') {
     throw new Error('Flag "webgl-context-id" is invalid');
   }
   return {contextId};

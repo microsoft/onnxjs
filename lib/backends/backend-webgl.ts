@@ -22,7 +22,7 @@ type WebGLOptions = BackendInterface.WebGLOptions;
 export class WebGLBackend implements Backend, WebGLOptions {
   disabled?: boolean;
   glContext: WebGLContext;
-  contextId?: 'webgl'|'webgl2'|'experimental-webgl';
+  contextId?: 'webgl'|'webgl2';
   forceUint8Reads = false;
 
   initialize(): boolean {

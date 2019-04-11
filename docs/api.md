@@ -40,7 +40,7 @@ The `onnx` object is the exported object of the module. It's available in global
   ***
   ### `backend.webgl`
     An object specifying WebGL backend settings. The supported member variables are:
-    - **contextId** (`'webgl'|'webgl2'|'experimental-webgl'`)
+    - **contextId** (`'webgl'|'webgl2'`)
 
       Optional. Force the WebGL Context ID.
 

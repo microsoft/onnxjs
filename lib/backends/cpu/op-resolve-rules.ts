@@ -20,7 +20,7 @@ import {CpuMatMul} from './ops/matmul';
 import {CpuAveragePool, CpuGlobalAveragePool, CpuGlobalMaxPool, CpuMaxPool} from './ops/pool';
 import * as cpuReduce from './ops/reduce';
 import {CpuReshape} from './ops/reshape';
-import {CpuSlice} from './ops/slice';
+import {CpuSlice, CpuSliceV10} from './ops/slice';
 import {CpuSoftmax} from './ops/softmax';
 import {CpuSqueeze} from './ops/squeeze';
 import {CpuSum} from './ops/sum';
@@ -76,6 +76,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Reshape', '', '5+', () => new CpuReshape()],
   ['Sigmoid', '', '6+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.sigmoid)],
   ['Sin', '', '7+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.sin)],
+  ['Slice', '', '10+', () => new CpuSliceV10()],  // TODO: support 'steps' for Slice-10
   ['Slice', '', '1-9', () => new CpuSlice()],
   ['Softmax', '', '1+', () => new CpuSoftmax()],
   ['Sqrt', '', '6+', () => new unaryOps.CpuUnaryOp(NUMBER_TYPES, unaryOps.sqrt)],

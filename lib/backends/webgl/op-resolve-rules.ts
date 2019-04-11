@@ -21,7 +21,7 @@ import {WebGLPad} from './ops/pad';
 import {WebGLAveragePool, WebGLGlobalAveragePool, WebGLGlobalMaxPool, WebGLMaxPool} from './ops/pool';
 import * as reduceOps from './ops/reduce';
 import {WebGLReshape} from './ops/reshape';
-import {WebGLSlice} from './ops/slice';
+import {WebGLSlice, WebGLSliceV10} from './ops/slice';
 import {WebGLSoftmax} from './ops/softmax';
 import {WebGLSplit} from './ops/split';
 import {WebGLSqueeze} from './ops/squeeze';
@@ -82,6 +82,7 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Reshape', '', '5+', () => new WebGLReshape()],
   ['Sigmoid', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSigmoid())],
   ['Sin', '', '7+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSin())],
+  ['Slice', '', '10+', () => new WebGLSliceV10()],  // TODO: support 'steps' for Slice-10
   ['Slice', '', '1-9', () => new WebGLSlice()],
   ['Softmax', '', '1+', () => new WebGLSoftmax()],
   // 'Split' operator has an optional attribute 'split'

@@ -49,11 +49,11 @@ export class Tensor implements TensorInterface {
   get(indices: ReadonlyArray<number>): ElementType;
   get(indices?: ReadonlyArray<number>|number, ...rest: number[]): ElementType {
     let flatIndices = 0;
-    let indexArray: number[] = [];
-    if (typeof arguments[0] === 'number') {
-      indexArray = [arguments[0], ...rest];
-    } else if (arguments[0]) {
-      indexArray = arguments[0];
+    let indexArray: ReadonlyArray<number> = [];
+    if (typeof indices === 'number') {
+      indexArray = [indices, ...rest];
+    } else if (indices) {
+      indexArray = indices;
     } else {
       throw new Error(`Input index array is undefined. `);
     }
@@ -79,11 +79,11 @@ export class Tensor implements TensorInterface {
   set(value: ElementType, indices?: ReadonlyArray<number>|number, ...rest: number[]) {
     Utils.matchElementType(this.type, value);
     let flatIndices = 0;
-    let indexArray: number[] = [];
-    if (typeof arguments[1] === 'number') {
-      indexArray = [arguments[1], ...rest];
-    } else if (arguments[1]) {
-      indexArray = arguments[1];
+    let indexArray: ReadonlyArray<number> = [];
+    if (typeof indices === 'number') {
+      indexArray = [indices, ...rest];
+    } else if (indices) {
+      indexArray = indices;
     } else {
       throw new Error(`Input index array is undefined.`);
     }

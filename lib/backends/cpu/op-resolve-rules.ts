@@ -20,7 +20,7 @@ import {CpuMatMul} from './ops/matmul';
 import {CpuAveragePool, CpuGlobalAveragePool, CpuGlobalMaxPool, CpuMaxPool} from './ops/pool';
 import * as cpuReduce from './ops/reduce';
 import {CpuReshape} from './ops/reshape';
-import {CpuSlice} from './ops/slice';
+import {CpuSlice, CpuSliceV10} from './ops/slice';
 import {CpuSoftmax} from './ops/softmax';
 import {CpuSqueeze} from './ops/squeeze';
 import {CpuSum} from './ops/sum';
@@ -86,7 +86,8 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Sign', '', '9+', () => new CpuUnaryOp(NUMBER_TYPES, unaryOps.sign)],
   ['Sin', '', '7+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.sin)],
   ['Sinh', '', '9+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.sinh)],
-  ['Slice', '', '1+', () => new CpuSlice()],
+  ['Slice', '', '10+', () => new CpuSliceV10()],  // TODO: support 'steps' for Slice-10
+  ['Slice', '', '1-9', () => new CpuSlice()],
   ['Softmax', '', '1+', () => new CpuSoftmax()],
   ['Sqrt', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.sqrt)],
   ['Squeeze', '', '1+', () => new CpuSqueeze()],

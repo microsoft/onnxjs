@@ -11,9 +11,7 @@ export abstract class UnaryOp implements Operator {
 
   abstract run(inferenceHandler: InferenceHandler, inputs: Tensor[]): Tensor[]|Promise<Tensor[]>;
 
-  initialize(attributes: Attribute): void {
-    this.attributes = attributes;
-  }
+  initialize(attributes: Attribute): void {}
 
   checkInputs(inputs: Tensor[]): boolean {
     if (!inputs || inputs.length !== 1) {
@@ -30,6 +28,4 @@ export abstract class UnaryOp implements Operator {
 
     return true;
   }
-
-  protected attributes: Attribute;
 }

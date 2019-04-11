@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {Attribute} from '../../../attribute';
 import {UnaryOp} from '../../../ops/unary-op';
 import {Tensor} from '../../../tensor';
 import {FunctionType, GlslValueFunction} from '../glsl-definitions';
@@ -15,7 +14,6 @@ export class WebGLUnaryOp extends UnaryOp implements WebGLOperator {
   constructor(protected typeConstraint: ReadonlyArray<Tensor.DataType>, protected glslFunc: GlslValueFunction) {
     super(typeConstraint);
   }
-  initialize(attributes: Attribute): void {}
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
   }

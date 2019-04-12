@@ -71,6 +71,7 @@ export class GlslPreprocessor {
     return `
     precision highp float;
     precision highp int;
+    precision highp sampler2D;
     varying vec2 TexCoords;
 
     ${script}

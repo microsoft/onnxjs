@@ -42,6 +42,8 @@ const DEFAULT_BACKENDS: ReadonlyArray<TestRunnerCliArgs.Backend> =
     args.env === 'node' ? ['cpu', 'wasm'] : ['cpu', 'wasm', 'webgl'];
 const DEFAULT_OPSET_VERSIONS: ReadonlyArray<number> = [10, 9, 8, 7];
 
+// The max size of the file that will be put into file cache
+const FILE_CACHE_MAX_SIZE = 4 * 1024 * 1024;
 const fileCache: Test.FileCache = {};
 
 const nodeTests = new Map<string, Test.ModelTestGroup[]>();
@@ -104,7 +106,7 @@ switch (args.mode) {
     const testFolderSearchPattern = args.param;
     const testFolder = tryLocateModelTestFolder(testFolderSearchPattern);
     for (const b of args.backends) {
-      modelTestGroups.push({name: testFolder, tests: [modelTestFromFolder(testFolder, b, false, args.times)]});
+      modelTestGroups.push({name: testFolder, tests: [modelTestFromFolder(testFolder, b, args.times)]});
     }
     break;
 
@@ -181,28 +183,26 @@ function validateWhiteList() {
 
 function loadNodeTests(backend: string, version: number): Test.ModelTestGroup {
   return suiteFromFolder(
-      `node-opset_v${version}-${backend}`, path.join(TEST_DATA_MODEL_NODE_ROOT, `v${version}`), backend, true,
+      `node-opset_v${version}-${backend}`, path.join(TEST_DATA_MODEL_NODE_ROOT, `v${version}`), backend,
       whitelist[backend].node);
 }
 
 function loadOnnxTests(backend: string): Test.ModelTestGroup {
-  return suiteFromFolder(`onnx-${backend}`, TEST_DATA_MODEL_ONNX_ROOT, backend, false, whitelist[backend].onnx);
+  return suiteFromFolder(`onnx-${backend}`, TEST_DATA_MODEL_ONNX_ROOT, backend, whitelist[backend].onnx);
 }
 
 function suiteFromFolder(
-    name: string, suiteRootFolder: string, backend: string, preload: boolean,
-    whitelist?: ReadonlyArray<string>): Test.ModelTestGroup {
+    name: string, suiteRootFolder: string, backend: string, whitelist?: ReadonlyArray<string>): Test.ModelTestGroup {
   const sessions: Test.ModelTest[] = [];
   const tests = fs.readdirSync(suiteRootFolder);
   for (const test of tests) {
     const skip = whitelist && !whitelist.some(p => minimatch(path.join(suiteRootFolder, test), path.join('**', p)));
-    sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, preload, skip ? 0 : undefined));
+    sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, skip ? 0 : undefined));
   }
   return {name, tests: sessions};
 }
 
-function modelTestFromFolder(
-    testDataRootFolder: string, backend: string, preload: boolean, times?: number): Test.ModelTest {
+function modelTestFromFolder(testDataRootFolder: string, backend: string, times?: number): Test.ModelTest {
   if (times === 0) {
     logger.verbose('TestRunnerCli.Init.Model', `Skip test data from folder: ${testDataRootFolder}`);
     return {name: path.basename(testDataRootFolder), backend, modelUrl: '', cases: []};
@@ -222,7 +222,7 @@ function modelTestFromFolder(
         if (ext.toLowerCase() === '.onnx') {
           if (modelUrl === null) {
             modelUrl = path.join(TEST_DATA_BASE, path.relative(TEST_ROOT, thisFullPath));
-            if (preload && !fileCache[modelUrl]) {
+            if (stat.size <= FILE_CACHE_MAX_SIZE && !fileCache[modelUrl]) {
               fileCache[modelUrl] = bufferToBase64(fs.readFileSync(thisFullPath));
             }
           } else {
@@ -238,7 +238,8 @@ function modelTestFromFolder(
           if (ext.toLowerCase() === '.pb') {
             const dataFileUrl = path.join(TEST_DATA_BASE, path.relative(TEST_ROOT, dataFileFullPath));
             dataFiles.push(dataFileUrl);
-            if (preload && !fileCache[dataFileUrl]) {
+            const stat = fs.lstatSync(dataFileFullPath);
+            if (stat.size <= FILE_CACHE_MAX_SIZE && !fileCache[dataFileUrl]) {
               fileCache[dataFileUrl] = bufferToBase64(fs.readFileSync(dataFileFullPath));
             }
           }

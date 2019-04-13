@@ -27,7 +27,7 @@ let initializing = false;
  *
  * this function should be called before any other calls to methods in WasmBinding.
  */
-export function init(numWorkers: number): Promise<void> {
+export function init(numWorkers: number, initTimeout: number): Promise<void> {
   if (initialized) {
     return Promise.resolve();
   }
@@ -68,7 +68,7 @@ export function init(numWorkers: number): Promise<void> {
     const rejectAfterTimeOutPromise = new Promise((resolve, reject) => {
       waitForBindingInitTimeoutId = setTimeout(() => {
         reject('Wasm init promise failed to be resolved within set timeout');
-      }, 5000);
+      }, initTimeout);
     });
 
     // user requests positive number of workers

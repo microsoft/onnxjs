@@ -17,6 +17,7 @@ export class WasmBackend implements Backend, WasmOptions {
   disabled?: boolean;
   worker: number;
   cpuFallback: boolean;
+  initTimeout: number;
   constructor() {
     // default parameters that users can override using the onnx global object
 
@@ -26,6 +27,8 @@ export class WasmBackend implements Backend, WasmOptions {
     // by default use 3 workers
     // TODO: Have logic to determing optimal fallback worker numbers based on CPU cores
     this.worker = 3;
+
+    this.initTimeout = 5000;
   }
   async initialize(): Promise<boolean> {
     this.checkIfNumWorkersIsValid();
@@ -49,7 +52,7 @@ export class WasmBackend implements Backend, WasmOptions {
   }
   async isWasmSupported(): Promise<boolean> {
     try {
-      await wasmBinding.init(this.worker);
+      await wasmBinding.init(this.worker, this.initTimeout);
       return true;
     } catch (e) {
       Logger.warning('WebAssembly', `Unable to initialize WebAssembly backend. ${e}`);

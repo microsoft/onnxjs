@@ -164,7 +164,7 @@ export class WebGLContext implements Disposable {
     const gl = this.gl;
     const shader = gl.createShader(shaderType);
     if (!shader) {
-      throw new Error('createShader() returned null');
+      throw new Error(`createShader() returned null with type ${shaderType}`);
     }
 
     gl.shaderSource(shader, shaderSource);
@@ -228,20 +228,21 @@ export class WebGLContext implements Disposable {
   }
   getEncoder(dataType: Encoder.DataType, channels: number, usage: Encoder.Usage = Encoder.Usage.Default): DataEncoder {
     if (this.version === 2) {
-      return new DataEncoders.RedFloat32DataEncoder(channels);
+      return new DataEncoders.RedFloat32DataEncoder(this.gl as WebGL2RenderingContext, channels);
     }
 
     switch (dataType) {
       case 'float':
         if (usage === Encoder.Usage.UploadOnly || this.renderFloat32Enabled) {
-          return new DataEncoders.RGBAFloatDataEncoder(channels);
+          return new DataEncoders.RGBAFloatDataEncoder(this.gl, channels);
         } else {
-          return new DataEncoders.RGBAFloatDataEncoder(channels, this.textureHalfFloatExtension!.HALF_FLOAT_OES);
+          return new DataEncoders.RGBAFloatDataEncoder(
+              this.gl, channels, this.textureHalfFloatExtension!.HALF_FLOAT_OES);
         }
       case 'int':
         throw new Error('not implemented');
       case 'byte':
-        return new DataEncoders.Uint8DataEncoder(channels);
+        return new DataEncoders.Uint8DataEncoder(this.gl, channels);
       default:
         throw new Error(`Invalid dataType: ${dataType}`);
     }

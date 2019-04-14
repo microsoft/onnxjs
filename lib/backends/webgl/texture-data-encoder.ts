@@ -42,16 +42,16 @@ export class RedFloat32DataEncoder implements DataEncoder {
   format: number;
   textureType: number;
   channelSize: number;
-  constructor(channels = 1) {
+  constructor(gl: WebGL2RenderingContext, channels = 1) {
     if (channels === 1) {
-      this.internalFormat = WebGL2RenderingContext.R32F;
-      this.format = WebGL2RenderingContext.RED;
-      this.textureType = WebGL2RenderingContext.FLOAT;
+      this.internalFormat = gl.R32F;
+      this.format = gl.RED;
+      this.textureType = gl.FLOAT;
       this.channelSize = channels;
     } else if (channels === 4) {
-      this.internalFormat = WebGL2RenderingContext.RGBA32F;
-      this.format = WebGL2RenderingContext.RGBA;
-      this.textureType = WebGL2RenderingContext.FLOAT;
+      this.internalFormat = gl.RGBA32F;
+      this.format = gl.RGBA;
+      this.textureType = gl.FLOAT;
       this.channelSize = channels;
     } else {
       throw new Error(`Invalid number of channels: ${channels}`);
@@ -90,16 +90,18 @@ export class RedFloat32DataEncoder implements DataEncoder {
  * Data encoder for WebGL 1 with support for floating point texture
  */
 export class RGBAFloatDataEncoder implements DataEncoder {
-  internalFormat: number = WebGLRenderingContext.RGBA;
-  format: number = WebGLRenderingContext.RGBA;
+  internalFormat: number;
+  format: number;
   textureType: number;
   channelSize: number;
-  constructor(channels = 1, channelType = WebGLRenderingContext.FLOAT) {
+  constructor(gl: WebGLRenderingContext, channels = 1, textureType?: number) {
     if (channels !== 1 && channels !== 4) {
       throw new Error(`Invalid number of channels: ${channels}`);
     }
+    this.internalFormat = gl.RGBA;
+    this.format = gl.RGBA;
     this.channelSize = channels;
-    this.textureType = channelType;
+    this.textureType = textureType || gl.FLOAT;
   }
   encode(src: Float32Array, textureSize: number): Encoder.DataArrayType {
     let dest = src;
@@ -122,54 +124,21 @@ export class RGBAFloatDataEncoder implements DataEncoder {
   }
 }
 
-/**
- * Data encoder for WebGL 1 with not support only for floating point textures
- */
-export class WebGl2Uint8DataEncoder implements DataEncoder {
-  internalFormat: number;
-  format: number;
-  textureType: number;
-  channelSize = 4;
-  constructor(channels = 1) {
-    if (channels === 1) {
-      this.internalFormat = WebGL2RenderingContext.R8UI;
-      this.format = WebGL2RenderingContext.RGBA_INTEGER;
-      this.textureType = WebGL2RenderingContext.UNSIGNED_BYTE;
-      this.channelSize = channels;
-    } else if (channels === 4) {
-      this.internalFormat = WebGL2RenderingContext.RGBA8UI;
-      this.format = WebGL2RenderingContext.RGBA_INTEGER;
-      this.textureType = WebGL2RenderingContext.UNSIGNED_BYTE;
-      this.channelSize = channels;
-    } else {
-      throw new Error(`Invalid number of channels: ${channels}`);
-    }
-  }
-  encode(src: Uint8Array, textureSize: number): Encoder.DataArrayType {
-    return new Uint8Array(src.buffer, src.byteOffset, src.byteLength);
-  }
-  allocate(size: number): Encoder.DataArrayType {
-    return new Uint8Array(size * this.channelSize);
-  }
-  decode(buffer: Encoder.DataArrayType, dataSize: number): Uint8Array {
-    return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.length / this.channelSize);
-  }
-}
 export class Uint8DataEncoder implements DataEncoder {
   internalFormat: number;
   format: number;
   textureType: number;
   channelSize = 4;
-  constructor(channels = 1) {
+  constructor(gl: WebGLRenderingContext, channels = 1) {
     if (channels === 1) {
-      this.internalFormat = WebGLRenderingContext.ALPHA;
-      this.format = WebGLRenderingContext.ALPHA;  // not tested
-      this.textureType = WebGLRenderingContext.UNSIGNED_BYTE;
+      this.internalFormat = gl.ALPHA;
+      this.format = gl.ALPHA;  // not tested
+      this.textureType = gl.UNSIGNED_BYTE;
       this.channelSize = channels;
     } else if (channels === 4) {
-      this.internalFormat = WebGLRenderingContext.RGBA;
-      this.format = WebGLRenderingContext.RGBA;
-      this.textureType = WebGLRenderingContext.UNSIGNED_BYTE;
+      this.internalFormat = gl.RGBA;
+      this.format = gl.RGBA;
+      this.textureType = gl.UNSIGNED_BYTE;
       this.channelSize = channels;
     } else {
       throw new Error(`Invalid number of channels: ${channels}`);

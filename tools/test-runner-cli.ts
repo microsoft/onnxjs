@@ -32,7 +32,7 @@ logger.verbose('TestRunnerCli.Init', `Loading whitelist...`);
 
 // The following is a whitelist of unittests for already implemented operators.
 // Modify this list to control what node tests to run.
-const jsonWithComments = fs.readFileSync(path.resolve(TEST_ROOT, './unittest-whitelist.jsonc')).toString();
+const jsonWithComments = fs.readFileSync(path.resolve(TEST_ROOT, './test-suite-whitelist.jsonc')).toString();
 const json = stripJsonComments(jsonWithComments, {whitespace: true});
 const whitelist = JSON.parse(json) as Test.WhiteList;
 logger.verbose('TestRunnerCli.Init', `Loading whitelist... DONE`);
@@ -133,7 +133,6 @@ run({
   unittest,
   model: modelTestGroups,
   op: opTestGroups,
-  fileCache,
   log: args.logConfig,
   profile: args.profile,
   options: {debug: args.debug, cpu: args.cpuOptions, webgl: args.webglOptions, wasm: args.wasmOptions}
@@ -366,29 +365,35 @@ function tryLocateOpTestManifest(searchPattern: string): string {
 }
 
 function run(config: Test.Config) {
-  // STEP 1. we write the config to testdata.js
-  logger.info('TestRunnerCli.Run', '(1/4) Writing config to file: testdata.js ...');
-  saveConfig(config);
-  logger.info('TestRunnerCli.Run', '(1/4) Writing config to file: testdata.js ... DONE');
+  // STEP 1. write file cache to testdata-file-cache.json
+  logger.info('TestRunnerCli.Run', '(1/5) Writing file cache to file: testdata-file-cache.json ...');
+  fs.writeFileSync(path.join(TEST_ROOT, './testdata-file-cache.json'), JSON.stringify(fileCache));
+  config.fileCache = path.join(TEST_DATA_BASE, './testdata-file-cache.json');
+  logger.info('TestRunnerCli.Run', '(1/5) Writing file cache to file: testdata-file-cache.json ... DONE');
 
-  // STEP 2. get npm bin folder
-  logger.info('TestRunnerCli.Run', '(2/4) Retrieving npm bin folder...');
+  // STEP 2. write the config to testdata-config.js
+  logger.info('TestRunnerCli.Run', '(2/5) Writing config to file: testdata-config.js ...');
+  saveConfig(config);
+  logger.info('TestRunnerCli.Run', '(2/5) Writing config to file: testdata-config.js ... DONE');
+
+  // STEP 3. get npm bin folder
+  logger.info('TestRunnerCli.Run', '(3/5) Retrieving npm bin folder...');
   const npmBin = execSync('npm bin', {encoding: 'utf8'}).trimRight();
-  logger.info('TestRunnerCli.Run', `(2/4) Retrieving npm bin folder... DONE, folder: ${npmBin}`);
+  logger.info('TestRunnerCli.Run', `(3/5) Retrieving npm bin folder... DONE, folder: ${npmBin}`);
 
   if (args.env === 'node') {
-    // STEP 3. use tsc to build ONNX.js
-    logger.info('TestRunnerCli.Run', '(3/4) Running tsc...');
+    // STEP 4. use tsc to build ONNX.js
+    logger.info('TestRunnerCli.Run', '(4/5) Running tsc...');
     const tscCommand = path.join(npmBin, 'tsc');
     const tsc = spawnSync(tscCommand, {shell: true, stdio: 'inherit'});
     if (tsc.status !== 0) {
       console.error(tsc.error);
       process.exit(tsc.status);
     }
-    logger.info('TestRunnerCli.Run', '(3/4) Running tsc... DONE');
+    logger.info('TestRunnerCli.Run', '(4/5) Running tsc... DONE');
 
-    // STEP 4. run mocha
-    logger.info('TestRunnerCli.Run', '(4/4) Running mocha...');
+    // STEP 5. run mocha
+    logger.info('TestRunnerCli.Run', '(5/5) Running mocha...');
     const mochaCommand = path.join(npmBin, 'mocha');
     const mochaArgs = [path.join(TEST_ROOT, 'test-main'), '--timeout 60000'];
     logger.info('TestRunnerCli.Run', `CMD: ${mochaCommand} ${mochaArgs.join(' ')}`);
@@ -397,11 +402,11 @@ function run(config: Test.Config) {
       console.error(mocha.error);
       process.exit(mocha.status);
     }
-    logger.info('TestRunnerCli.Run', '(4/4) Running mocha... DONE');
+    logger.info('TestRunnerCli.Run', '(5/5) Running mocha... DONE');
 
   } else {
-    // STEP 3. use webpack to generate ONNX.js
-    logger.info('TestRunnerCli.Run', '(3/4) Running webpack to generate ONNX.js...');
+    // STEP 4. use webpack to generate ONNX.js
+    logger.info('TestRunnerCli.Run', '(4/5) Running webpack to generate ONNX.js...');
     const webpackCommand = path.join(npmBin, 'webpack');
     const webpackArgs = [
       '--mode',
@@ -414,10 +419,10 @@ function run(config: Test.Config) {
       console.error(webpack.error);
       process.exit(webpack.status);
     }
-    logger.info('TestRunnerCli.Run', '(3/4) Running webpack to generate ONNX.js... DONE');
+    logger.info('TestRunnerCli.Run', '(4/5) Running webpack to generate ONNX.js... DONE');
 
-    // STEP 4. use Karma to run test
-    logger.info('TestRunnerCli.Run', '(4/4) Running karma to start test runner...');
+    // STEP 5. use Karma to run test
+    logger.info('TestRunnerCli.Run', '(5/5) Running karma to start test runner...');
     const karmaCommand = path.join(npmBin, 'karma');
     const browser = getBrowserNameFromEnv(args.env, args.debug);
     const karmaArgs = ['start', `--browsers ${browser}`];
@@ -460,7 +465,7 @@ function run(config: Test.Config) {
       console.error(karma.error);
       process.exit(karma.status);
     }
-    logger.info('TestRunnerCli.Run', '(4/4) Running karma to start test runner... DONE');
+    logger.info('TestRunnerCli.Run', '(5/5) Running karma to start test runner... DONE');
   }
 }
 
@@ -488,9 +493,9 @@ function saveConfig(config: Test.Config) {
     setOptions += `require('onnxjs-node');`;
   }
 
-  fs.writeFileSync(path.join(TEST_ROOT, './testdata.js'), `${setOptions}
+  fs.writeFileSync(path.join(TEST_ROOT, './testdata-config.js'), `${setOptions}
 
-module.exports=${JSON.stringify(config, null, 2)};`);
+module.exports=${JSON.stringify(config)};`);
 }
 
 function getBrowserNameFromEnv(env: TestRunnerCliArgs['env'], debug?: boolean) {

@@ -14,7 +14,7 @@ module.exports = function(config) {
     frameworks: ['mocha'],
     files: [
       {pattern: mainFile},
-      {pattern: 'test/testdata-file-cache.json', included: false},
+      {pattern: 'test/testdata-file-cache-*.json', included: false},
       {pattern: 'test/onnx-worker.js', included: false},
       {pattern: 'test/data/**/*', included: false, nocache: true},
       {pattern: 'deps/data/data/test/**/*', included: false, nocache: true},

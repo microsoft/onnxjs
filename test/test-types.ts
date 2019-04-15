@@ -119,7 +119,7 @@ export declare namespace Test {
     op: ReadonlyArray<OperatorTestGroup>;
     model: ReadonlyArray<ModelTestGroup>;
 
-    fileCache?: string;
+    fileCacheUrls?: ReadonlyArray<string>;
 
     log: ReadonlyArray<{category: string, config: Logger.Config}>;
     profile: boolean;

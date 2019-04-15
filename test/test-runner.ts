@@ -34,6 +34,9 @@ const ONNXRUNTIME_THRESHOLD_RELATIVE_ERROR = 1.00001;
  */
 const now = (typeof performance !== 'undefined' && performance.now) ? () => performance.now() : Date.now;
 
+type FileCacheBuffer = {
+  [filePath: string]: Uint8Array
+};
 /**
  * a ModelTestContext object contains all states in a ModelTest
  */
@@ -110,12 +113,15 @@ export class ModelTestContext {
    * set the global file cache for looking up model and tensor protobuf files.
    */
   static setCache(cache: Test.FileCache) {
-    Logger.info('TestRunner', `File cache set up. Entry count: ${Object.keys(cache).length}.`);
-    this.cache = cache;
+    const keys = Object.keys(cache);
+    Logger.info('TestRunner', `Setting up file cache... Entry count: ${keys.length}.`);
+    for (const key of keys) {
+      this.cache[key] = base64toBuffer(cache[key]);
+    }
   }
 
   private static initializing = false;
-  private static cache: Test.FileCache = {};
+  private static cache: FileCacheBuffer = {};
 }
 
 export declare namespace ModelTestContext {
@@ -126,7 +132,7 @@ export declare namespace ModelTestContext {
     count: number;
   }
 }
-async function loadTensors(testCase: Test.ModelTestCase, fileCache?: Test.FileCache) {
+async function loadTensors(testCase: Test.ModelTestCase, fileCache?: FileCacheBuffer) {
   const inputs: Test.NamedTensor[] = [];
   const outputs: Test.NamedTensor[] = [];
   let dataFileType: 'none'|'pb'|'npy' = 'none';
@@ -141,7 +147,7 @@ async function loadTensors(testCase: Test.ModelTestCase, fileCache?: Test.FileCa
         throw new Error(`cannot load data from test case "${testCase.name}", multiple types of files detected`);
       }
 
-      const uriOrData = fileCache && fileCache[dataFile] ? base64toBuffer(fileCache[dataFile]) : dataFile;
+      const uriOrData = fileCache && fileCache[dataFile] ? fileCache[dataFile] : dataFile;
       const t = ext.toLowerCase() === '.pb' ? await loadTensorProto(uriOrData) :  // onnx.TensorProto
           await loadMlProto(uriOrData);                                           // (TBD)
 
@@ -187,9 +193,9 @@ function loadMlProto(uriOrData: string|Uint8Array): Promise<Test.NamedTensor> {
 }
 
 async function initializeSession(
-    modelFilePath: string, backendHint: string, profile: boolean, fileCache?: Test.FileCache) {
+    modelFilePath: string, backendHint: string, profile: boolean, fileCache?: FileCacheBuffer) {
   const preloadModelData: Uint8Array|undefined =
-      fileCache && fileCache[modelFilePath] ? base64toBuffer(fileCache[modelFilePath]) : undefined;
+      fileCache && fileCache[modelFilePath] ? fileCache[modelFilePath] : undefined;
   Logger.verbose(
       'TestRunner',
       `Start to load model from file: ${modelFilePath}${

@@ -43,7 +43,9 @@ const DEFAULT_BACKENDS: ReadonlyArray<TestRunnerCliArgs.Backend> =
 const DEFAULT_OPSET_VERSIONS: ReadonlyArray<number> = [10, 9, 8, 7];
 
 // The max size of the file that will be put into file cache
-const FILE_CACHE_MAX_SIZE = 4 * 1024 * 1024;
+const FILE_CACHE_MAX_FILE_SIZE = 1 * 1024 * 1024;
+// The min size of the cache file
+const FILE_CACHE_SPLIT_SIZE = 4 * 1024 * 1024;
 const fileCache: Test.FileCache = {};
 
 const nodeTests = new Map<string, Test.ModelTestGroup[]>();
@@ -242,7 +244,7 @@ function modelTestFromFolder(
         if (ext.toLowerCase() === '.onnx') {
           if (modelUrl === null) {
             modelUrl = path.join(TEST_DATA_BASE, path.relative(TEST_ROOT, thisFullPath));
-            if (stat.size <= FILE_CACHE_MAX_SIZE && !fileCache[modelUrl]) {
+            if (stat.size <= FILE_CACHE_MAX_FILE_SIZE && !fileCache[modelUrl]) {
               fileCache[modelUrl] = bufferToBase64(fs.readFileSync(thisFullPath));
             }
           } else {
@@ -259,7 +261,7 @@ function modelTestFromFolder(
             const dataFileUrl = path.join(TEST_DATA_BASE, path.relative(TEST_ROOT, dataFileFullPath));
             dataFiles.push(dataFileUrl);
             const stat = fs.lstatSync(dataFileFullPath);
-            if (stat.size <= FILE_CACHE_MAX_SIZE && !fileCache[dataFileUrl]) {
+            if (stat.size <= FILE_CACHE_MAX_FILE_SIZE && !fileCache[dataFileUrl]) {
               fileCache[dataFileUrl] = bufferToBase64(fs.readFileSync(dataFileFullPath));
             }
           }
@@ -389,8 +391,10 @@ function tryLocateOpTestManifest(searchPattern: string): string {
 function run(config: Test.Config) {
   // STEP 1. write file cache to testdata-file-cache.json
   logger.info('TestRunnerCli.Run', '(1/5) Writing file cache to file: testdata-file-cache.json ...');
-  fs.writeFileSync(path.join(TEST_ROOT, './testdata-file-cache.json'), JSON.stringify(fileCache));
-  config.fileCache = path.join(TEST_DATA_BASE, './testdata-file-cache.json');
+  const fileCacheUrls = saveFileCache(fileCache);
+  if (fileCacheUrls.length > 0) {
+    config.fileCacheUrls = fileCacheUrls;
+  }
   logger.info('TestRunnerCli.Run', '(1/5) Writing file cache to file: testdata-file-cache.json ... DONE');
 
   // STEP 2. write the config to testdata-config.js
@@ -489,6 +493,33 @@ function run(config: Test.Config) {
     }
     logger.info('TestRunnerCli.Run', '(5/5) Running karma to start test runner... DONE');
   }
+}
+
+function saveFileCache(fileCache: Test.FileCache) {
+  const fileCacheUrls: string[] = [];
+  let currentIndex = 0;
+  let currentCache: Test.FileCache = {};
+  let currentContentTotalSize = 0;
+  for (const key in fileCache) {
+    const content = fileCache[key];
+    if (currentContentTotalSize > FILE_CACHE_SPLIT_SIZE) {
+      fileCacheUrls.push(saveOneFileCache(currentIndex, currentCache));
+      currentContentTotalSize = 0;
+      currentIndex++;
+      currentCache = {};
+    }
+    currentCache[key] = content;
+    currentContentTotalSize += key.length + content.length;
+  }
+  if (currentContentTotalSize > 0) {
+    fileCacheUrls.push(saveOneFileCache(currentIndex, currentCache));
+  }
+  return fileCacheUrls;
+}
+
+function saveOneFileCache(index: number, fileCache: Test.FileCache) {
+  fs.writeFileSync(path.join(TEST_ROOT, `./testdata-file-cache-${index}.json`), JSON.stringify(fileCache));
+  return path.join(TEST_DATA_BASE, `./testdata-file-cache-${index}.json`);
 }
 
 function saveConfig(config: Test.Config) {

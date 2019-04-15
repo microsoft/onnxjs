@@ -28,10 +28,12 @@ if (ONNX_JS_TEST_CONFIG.unittest) {
 }
 
 // Set file cache
-if (ONNX_JS_TEST_CONFIG.fileCache) {
+if (ONNX_JS_TEST_CONFIG.fileCacheUrls) {
   before('prepare file cache', async () => {
-    const cache = await readJsonFile(ONNX_JS_TEST_CONFIG.fileCache!) as Test.FileCache;
-    ModelTestContext.setCache(cache);
+    const allJsonCache = await Promise.all(ONNX_JS_TEST_CONFIG.fileCacheUrls!.map(readJsonFile)) as Test.FileCache[];
+    for (const cache of allJsonCache) {
+      ModelTestContext.setCache(cache);
+    }
   });
 }
 

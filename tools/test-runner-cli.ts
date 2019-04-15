@@ -65,7 +65,9 @@ if (shouldLoadSuiteTestData) {
       }
       nodeTest.push(loadNodeTests(backend, version));
     }
-    onnxTests.set(backend, loadOnnxTests(backend));
+    if (args.mode === 'suite1') {
+      onnxTests.set(backend, loadOnnxTests(backend));
+    }
     opTests.set(backend, loadOpTests(backend));
   }
 }

@@ -66,6 +66,7 @@ Options:
 
  --wasm-worker               Set the WebAssembly worker number
  --wasm-cpu-fallback         Set whether to allow WebAssembly backend to fallback to CPU
+ --wasm-init-timeout         Set the timeout for WebAssembly backend initialization, in milliseconds
  --webgl-context-id          Set the WebGL context ID
 
 *** Browser Options ***
@@ -152,15 +153,17 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
     process.exit();
   }
 
-  if (typeof (args.verbose || args.v) === 'boolean' || (args.debug || args.d)) {
+  // Option: -d, --debug
+  const debug = parseBooleanArg(args.debug || args.d, false);
+
+  // Option: -v, --verbose
+  const verbose = parseBooleanArg(args.verbose || args.v);
+  if (verbose || debug) {
     logger.level = 'verbose';
   }
   logger.verbose('TestRunnerCli.Init', `Parsing commandline arguments...`);
 
   const mode = args._.length === 0 ? 'suite0' : args._[0];
-
-  // Option: -d, --debug
-  const debug = (args.debug || args.d) ? true : false;
 
   // Option: -b=<...>, --backend=<...>
   const backendArgs = args.b || args.backend;
@@ -302,11 +305,15 @@ function parseWasmOptions(args: minimist.ParsedArgs): Backend.WasmOptions {
   if (typeof worker !== 'undefined' && typeof worker !== 'number') {
     throw new Error('Flag "wasm-worker" must be a number value');
   }
-  const cpuFallback = args['wasm-cpu-fallback'];
+  const cpuFallback = parseBooleanArg(args['wasm-cpu-fallback']);
   if (typeof cpuFallback !== 'undefined' && typeof cpuFallback !== 'boolean') {
     throw new Error('Flag "wasm-cpu-fallback" must be a boolean value');
   }
-  return {worker, cpuFallback};
+  const initTimeout = args['wasm-init-timeout'];
+  if (typeof initTimeout !== 'undefined' && typeof initTimeout !== 'number') {
+    throw new Error('Flag "wasm-init-timeout" must be a number value');
+  }
+  return {worker, cpuFallback, initTimeout};
 }
 
 function parseWebglOptions(args: minimist.ParsedArgs): Backend.WebGLOptions {
@@ -315,4 +322,31 @@ function parseWebglOptions(args: minimist.ParsedArgs): Backend.WebGLOptions {
     throw new Error('Flag "webgl-context-id" is invalid');
   }
   return {contextId};
+}
+
+function parseBooleanArg(arg: unknown, defaultValue: boolean): boolean;
+function parseBooleanArg(arg: unknown): boolean|undefined;
+function parseBooleanArg(arg: unknown, defaultValue?: boolean): boolean|undefined {
+  if (typeof arg === 'undefined') {
+    return defaultValue;
+  }
+
+  if (typeof arg === 'boolean') {
+    return arg;
+  }
+
+  if (typeof arg === 'number') {
+    return arg !== 0;
+  }
+
+  if (typeof arg === 'string') {
+    if (arg.toLowerCase() === 'true') {
+      return true;
+    }
+    if (arg.toLowerCase() === 'false') {
+      return false;
+    }
+  }
+
+  throw new TypeError(`invalid boolean arg: ${arg}`);
 }

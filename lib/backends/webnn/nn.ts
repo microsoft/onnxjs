@@ -78,10 +78,6 @@ interface nnOperandTypeMap {
   uint32: number;
 }
 
-interface nnOperationTypeMap {
-  [Conv: string]: number;
-}
-
 // Supported typed array
 type NNTensorType = Int32Array | Float32Array;
 

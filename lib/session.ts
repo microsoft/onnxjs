@@ -17,6 +17,8 @@ export declare namespace Session {
   export interface Config {
     backendHint?: string;
     profiler?: Profiler.Config;
+    supportedOps?: string[];
+    enablePseudoReorder?: boolean;
   }
 
   export interface Context {
@@ -32,6 +34,8 @@ export class Session {
     this.backendHint = config.backendHint;
     this.profiler = Profiler.create(config.profiler);
     this.context = {profiler: this.profiler, graphInputTypes: [], graphInputDims: []};
+    this.supportedOps = new Set(config.supportedOps || []);
+    this.enablePseudoReorder = config.enablePseudoReorder || false;
   }
 
   startProfiling() {
@@ -247,22 +251,9 @@ export class Session {
     const nodes = graph.getNodes();
     this._ops = new Array(nodes.length);
 
-    const supportedOps = new Set([
-      'Conv',
-      // 'Relu',
-      // 'AveragePool',
-      // 'MaxPool',
-      // 'Concat',
-      // 'Softmax',
-      // 'Add',
-      // 'Mul',
-      // 'Reshape',
-      // 'Gemm',
-    ]);
-
     for (let i = 0; i < nodes.length; i++) {
-      if (supportedOps.has(nodes[i].opType)) {
-        this._ops[i] = new NNSubgraph(nodes[i]);
+      if (this.supportedOps.has(nodes[i].opType)) {
+        this._ops[i] = new NNSubgraph(nodes[i], this.enablePseudoReorder, this.profiler);
       } else {
         this._ops[i] = this.sessionHandler.resolve(nodes[i], this._model.opsets);
       }
@@ -275,6 +266,8 @@ export class Session {
   private _ops: Operator[];
   private _executionPlan: ExecutionPlan;
 
+  private enablePseudoReorder: boolean;
+  private supportedOps: Set<string>;
   private backendHint?: string;
 
   private sessionHandler: SessionHandlerType;

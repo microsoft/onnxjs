@@ -261,7 +261,7 @@ export class Profiler {
 
   private constructor(maxNumberEvents?: number, flushBatchSize?: number, flushIntervalInMilliseconds?: number) {
     this._started = false;
-    this._maxNumberEvents = maxNumberEvents === undefined ? 10000 : maxNumberEvents;
+    this._maxNumberEvents = maxNumberEvents === undefined ? 100000 : maxNumberEvents;
     this._flushBatchSize = flushBatchSize === undefined ? 10 : flushBatchSize;
     this._flushIntervalInMilliseconds = flushIntervalInMilliseconds === undefined ? 5000 : flushIntervalInMilliseconds;
   }
@@ -277,9 +277,90 @@ export class Profiler {
   // stop profiling
   stop() {
     this._started = false;
-    for (; this._flushPointer < this._timingEvents.length; this._flushPointer++) {
-      this.logOneEvent(this._timingEvents[this._flushPointer]);
+
+    const nodeTimings: {
+      name: string,
+      time: number,
+      setInputTime: number,
+      computeTime: number,
+      count?: number,
+    }[] = [];
+
+    for (let i = this._timingEvents.length - 1; i >= 0; i--) {
+      const event = this._timingEvents[i];
+      const elapsedTime = event.endTime - event.startTime;
+      switch (event.category) {
+        case 'op':
+        case 'session':
+          continue;
+        case 'node': {
+          nodeTimings.unshift({
+            name: event.name,
+            time: elapsedTime,
+            setInputTime: 0,
+            computeTime: 0
+          });
+        } break;
+        case 'backend': {
+          switch (event.name) {
+            case 'WebNN.Execution.setInput': {
+              nodeTimings[0].setInputTime += elapsedTime;
+            } break;
+            case 'WebNN.Execution.startCompute': {
+              nodeTimings[0].computeTime += elapsedTime;
+            } break;
+          }
+        } break;
+      }
     }
+
+    const reducedNodeTimings = [];
+    const mapping: Map<string, number> = new Map();
+    for (const i in nodeTimings) {
+      const nodeTiming = nodeTimings[i];
+      if (mapping.has(nodeTiming.name)) {
+        const index = mapping.get(nodeTiming.name)!;
+        reducedNodeTimings[index].time += nodeTiming.time;
+        reducedNodeTimings[index].setInputTime += nodeTiming.setInputTime;
+        reducedNodeTimings[index].computeTime += nodeTiming.computeTime;
+        reducedNodeTimings[index].count!++;
+      } else {
+        nodeTiming.count = 1;
+        reducedNodeTimings.push(nodeTiming);
+        mapping.set(nodeTiming.name, parseInt(i));
+      }
+    }
+
+    let sum = 0;
+    let sumSetInputTime = 0;
+    let sumComputeTime = 0;
+    let sumOverheadTime = 0;
+
+    for (const node of reducedNodeTimings) {
+      const time = node.time / node.count!;
+      const setInputTime = node.setInputTime / node.count!;
+      const computeTime = node.computeTime / node.count!;
+      const overheadTime = time - setInputTime - computeTime;
+
+
+      const padNum = node.name.length <= 30 ? 30 - node.name.length : 0;
+      let str = `${node.name}:${' '.repeat(padNum)} sum ${time.toFixed(5).slice(0, 6)}`;
+      if (setInputTime !== 0 || computeTime !== 0) {
+        str += `, setInput ${setInputTime.toFixed(5).slice(0, 6)}, `;
+        str += `computeTime ${computeTime.toFixed(5).slice(0, 6)}, `;
+        str += `reorder+overhead ${overheadTime.toFixed(5).slice(0, 6)}`;
+        sum += time;
+        sumSetInputTime += setInputTime;
+        sumComputeTime += computeTime;
+        sumOverheadTime += overheadTime;
+      }
+      console.log(str);
+    }
+
+    console.log(`Summary of WebNN execution (WASM ops are not taken into account)`);
+    console.log(`SetInput: ${(sumSetInputTime / sum * 100).toFixed(2)}%`);
+    console.log(`Compute: ${(sumComputeTime / sum * 100).toFixed(2)}%`);
+    console.log(`Reorder + Other Overhead: ${(sumOverheadTime / sum * 100).toFixed(2)}%`);
   }
 
   // create an event scope for the specific function

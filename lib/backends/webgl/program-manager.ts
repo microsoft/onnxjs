@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {env} from '../../env';
 import {Logger, Profiler} from '../../instrument';
 
 import {GlslPreprocessor} from './glsl-preprocessor';
@@ -131,6 +132,11 @@ export class ProgramManager {
       Logger.verbose('ProrgramManager', 'Compiling and caching Vertex shader for the first time');
       this.vertexShader =
           this.glContext.compileShader(this.getDefaultVertexShaderSource(), this.glContext.gl.VERTEX_SHADER);
+    }
+    if (env.debug) {
+      Logger.verbose('ProrgramManager', `FragShader:
+${fragShaderScript}
+`);
     }
     const fragShader = this.glContext.compileShader(fragShaderScript, this.glContext.gl.FRAGMENT_SHADER);
     const program = this.glContext.createProgram(this.vertexShader, fragShader);

@@ -170,7 +170,9 @@ export class WebGLContext {
 
     gl.shaderSource(shader, shaderSource);
     gl.compileShader(shader);
-    // TODO: check if the compilation was a success
+    if (gl.getShaderParameter(shader, gl.COMPILE_STATUS) === false) {
+      throw new Error(`Failed to compile shader: ${gl.getShaderInfoLog(shader)}`);
+    }
     return shader;
   }
   deleteShader(shader: WebGLShader): void {

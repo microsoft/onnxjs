@@ -39,6 +39,10 @@ export declare namespace Backend {
      * set or get a flag specifying if the fallback cpu implementations can be used in case of missing ops
      */
     cpuFallback?: boolean;
+    /**
+     * set or get a number specifying the timeout for initialization of WebAssembly backend, in milliseconds.
+     */
+    initTimeout?: number;
   }
 
   /**

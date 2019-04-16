@@ -499,11 +499,14 @@ function saveConfig(config: Test.Config) {
   if (config.options.webgl && config.options.webgl.contextId) {
     setOptions += `onnx.backend.webgl.contextId = ${JSON.stringify(config.options.webgl.contextId)};`;
   }
-  if (config.options.wasm && config.options.wasm.worker) {
+  if (config.options.wasm && config.options.wasm.worker !== undefined) {
     setOptions += `onnx.backend.wasm.worker = ${JSON.stringify(config.options.wasm.worker)};`;
   }
   if (config.options.wasm && config.options.wasm.cpuFallback !== undefined) {
     setOptions += `onnx.backend.wasm.cpuFallback = ${JSON.stringify(config.options.wasm.cpuFallback)};`;
+  }
+  if (config.options.wasm && config.options.wasm.initTimeout !== undefined) {
+    setOptions += `onnx.backend.wasm.initTimeout = ${JSON.stringify(config.options.wasm.initTimeout)};`;
   }
   if (config.model.some(testGroup => testGroup.tests.some(test => test.backend === 'onnxruntime'))) {
     setOptions += `require('onnxjs-node');`;

@@ -1,27 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {Tensor} from '../../tensor';
-
 import {GlslPositionalFunction} from './glsl-definitions';
 import {WebGLInferenceHandler} from './inference-handler';
 import {TextureLayout} from './texture-data';
 import {WidthHeightPrefs} from './texture-layout-strategy';
 import {getPackedShape} from './utils';
-import {PositionalSubOperator, WebGLOperator} from './webgl-operator';
+import {PositionalSubOperator} from './webgl-operator';
 
 export class WebGLOperatorHelper {
-  static run(op: WebGLOperator, inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    let artifact = inferenceHandler.programManager.getArtifact(op);
-    if (!artifact) {
-      const programInfo = op.createProgramInfo(inferenceHandler, inputs);
-      artifact = inferenceHandler.programManager.build(programInfo);
-      inferenceHandler.programManager.setArtifact(op, artifact);
-    }
-    const runData = op.createRunData(inferenceHandler, artifact.programInfo, inputs);
-    inferenceHandler.programManager.run(artifact, runData);
-    return [inferenceHandler.getTensor(runData.outputTextureData)];
-  }
   static getFinalLayout(
       inferenceHandler: WebGLInferenceHandler, positionalSubFunctions: GlslPositionalFunction[],
       outputShape: ReadonlyArray<number>, channels: number, prefs?: WidthHeightPrefs): TextureLayout {

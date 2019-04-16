@@ -15,6 +15,7 @@ import {Encoder} from './texture-data-encoder';
 import {TextureHelper} from './texture-helper';
 import {WidthHeightPrefs} from './texture-layout-strategy';
 import {getPackedShape} from './utils';
+import {WebGLOperator} from './webgl-operator';
 
 /**
  * GlInferencContext is reponsible for mapping from Tensors to TextureData
@@ -32,6 +33,19 @@ export class WebGLInferenceHandler implements InferenceHandler {
     this.tensorToTexture = new Map();
     this.textureToTensor = new Map();
   }
+
+  run(op: WebGLOperator, inputs: Tensor[]): Tensor[] {
+    let artifact = this.programManager.getArtifact(op);
+    if (!artifact) {
+      const programInfo = op.createProgramInfo(this, inputs);
+      artifact = this.programManager.build(programInfo);
+      this.programManager.setArtifact(op, artifact);
+    }
+    const runData = op.createRunData(this, artifact.programInfo, inputs);
+    this.programManager.run(artifact, runData);
+    return [this.getTensor(runData.outputTextureData)];
+  }
+
   protected lookupTextureData(tensor: Tensor): TextureData|undefined {
     const isInitializer = this.session.isInitializer(tensor);
     Logger.verbose('InferenceHandler', `tensor was an initializer; returning TextureData from session cache`);

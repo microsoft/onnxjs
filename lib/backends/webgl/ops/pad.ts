@@ -9,11 +9,10 @@ import {ProgramInfo} from '../program-info';
 import {RunData} from '../program-manager';
 import {TextureLayout} from '../texture-data';
 import {WebGLOperator} from '../webgl-operator';
-import {WebGLOperatorHelper} from '../webgl-operator-utils';
 
 export class WebGLPad extends Pad implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const outputShape = ShapeUtil.padShape(inputs[0].dims.slice(), this.pads);

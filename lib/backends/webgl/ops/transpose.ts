@@ -13,7 +13,7 @@ import {WebGLOperatorHelper} from '../webgl-operator-utils';
 
 export class WebGLTranspose extends Transpose implements WebGLOperator, PositionalSubOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   getOutputShape(handler: WebGLInferenceHandler, inputShapes: Array<ReadonlyArray<number>>): ReadonlyArray<number> {
     const perm = this.getAdjustedPerm(inputShapes[0]);

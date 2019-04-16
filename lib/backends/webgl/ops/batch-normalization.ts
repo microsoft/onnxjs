@@ -6,11 +6,10 @@ import {Tensor} from '../../../tensor';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo} from '../program-info';
 import {RunData} from '../program-manager';
-import {WebGLOperatorHelper} from '../webgl-operator-utils';
 
 export class WebGLBatchNormalization extends BatchNormalization {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const inputLayouts = inputs.map(t => handler.getOrCreateTextureLayout(t));

@@ -9,11 +9,10 @@ import {ProgramInfo} from '../program-info';
 import {RunData} from '../program-manager';
 import {TextureLayout} from '../texture-data';
 import {WebGLOperator} from '../webgl-operator';
-import {WebGLOperatorHelper} from '../webgl-operator-utils';
 
 export class WebGLGlobalAveragePool extends GlobalAveragePool implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     return createAveragePoolProgramInfo(
@@ -31,7 +30,7 @@ export class WebGLGlobalAveragePool extends GlobalAveragePool implements WebGLOp
 
 export class WebGLAveragePool extends AveragePool implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     return createAveragePoolProgramInfo(
@@ -76,7 +75,7 @@ function createAveragePoolProgramInfo(
 
 export class WebGLGlobalMaxPool extends GlobalMaxPool implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     return createMaxPoolProgramInfo(
@@ -94,7 +93,7 @@ export class WebGLGlobalMaxPool extends GlobalMaxPool implements WebGLOperator {
 
 export class WebGLMaxPool extends MaxPool implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     return createMaxPoolProgramInfo(

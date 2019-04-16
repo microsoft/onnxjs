@@ -7,15 +7,14 @@ import {FunctionType, GlslValueFunction} from '../glsl-definitions';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo} from '../program-info';
 import {RunData} from '../program-manager';
-import {PositionalSubOperator, WebGLOperator} from '../webgl-operator';
-import {WebGLOperatorHelper} from '../webgl-operator-utils';
+import {WebGLOperator} from '../webgl-operator';
 
 export class WebGLUnaryOp extends UnaryOp implements WebGLOperator {
   constructor(protected typeConstraint: ReadonlyArray<Tensor.DataType>, protected glslFunc: GlslValueFunction) {
     super(typeConstraint);
   }
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const outputShape = inputs[0].dims.slice();
@@ -39,9 +38,6 @@ export class WebGLUnaryOp extends UnaryOp implements WebGLOperator {
       outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),
       uniformData: {}
     };
-  }
-  addPositionalSub(positionalSubOperator: PositionalSubOperator): void {
-    throw new Error('Unary ops don\'t use index-based functions or subops');
   }
 }
 

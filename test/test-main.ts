@@ -4,7 +4,10 @@
 // tslint:disable-next-line:no-import-side-effect
 import '../lib/api';
 
+import * as platform from 'platform';
+
 import {Logger} from '../lib/instrument';
+
 import {Test} from './test-types';
 
 // tslint:disable-next-line:no-require-imports
@@ -30,7 +33,7 @@ ModelTestContext.setCache(ONNX_JS_TEST_CONFIG.fileCache);
 for (const group of ONNX_JS_TEST_CONFIG.model) {
   describe(`#ModelTest# - ${group.name}`, () => {
     for (const test of group.tests) {
-      const describeTest = (!test.cases || test.cases.length === 0) ? describe.skip : describe;
+      const describeTest = shouldSkipTest(test) ? describe.skip : describe;
       describeTest(`[${test.backend}] ${test.name}`, () => {
         let context: ModelTestContext;
 
@@ -58,7 +61,7 @@ for (const group of ONNX_JS_TEST_CONFIG.model) {
 for (const group of ONNX_JS_TEST_CONFIG.op) {
   describe(`#OpTest# - ${group.name}`, () => {
     for (const test of group.tests) {
-      const describeTest = (!test.cases || test.cases.length === 0) ? describe.skip : describe;
+      const describeTest = shouldSkipTest(test) ? describe.skip : describe;
       describeTest(`[${test.backend!}]${test.operator} - ${test.name}`, () => {
         let context: OpTestContext;
 
@@ -85,4 +88,19 @@ for (const group of ONNX_JS_TEST_CONFIG.op) {
       });
     }
   });
+}
+
+function shouldSkipTest(test: Test.ModelTest|Test.OperatorTest) {
+  if (!test.cases || test.cases.length === 0) {
+    return true;
+  }
+  if (!test.condition) {
+    return false;
+  }
+
+  if (!platform.description) {
+    throw new Error(`failed to check current platform`);
+  }
+  const regex = new RegExp(test.condition);
+  return !regex.test(platform.description);
 }

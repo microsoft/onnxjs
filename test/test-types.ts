@@ -30,6 +30,12 @@ export declare namespace Test {
     type: Tensor.DataType;
   }
 
+  /**
+   * Represent a string to describe the current environment.
+   * Used in ModelTest and OperatorTest to determine whether to run the test or not.
+   */
+  export type Condition = string;
+
   export interface ModelTestCase {
     name: string;
     dataFiles: ReadonlyArray<string>;
@@ -41,6 +47,7 @@ export declare namespace Test {
     name: string;
     modelUrl: string;
     backend?: string;  // value should be populated at build time
+    condition?: Condition;
     cases: ReadonlyArray<ModelTestCase>;
   }
 
@@ -59,6 +66,7 @@ export declare namespace Test {
     name: string;
     operator: string;
     backend?: string;  // value should be populated at build time
+    condition?: Condition;
     attributes: ReadonlyArray<AttributeValue>;
     cases: ReadonlyArray<OperatorTestCase>;
   }
@@ -68,12 +76,21 @@ export declare namespace Test {
     tests: ReadonlyArray<OperatorTest>;
   }
 
+  export namespace WhiteList {
+    export type TestName = string;
+    export interface TestDescription {
+      name: string;
+      condition: Condition;
+    }
+    export type Test = TestName|TestDescription;
+  }
+
   /**
    * The data schema of a whitelist file.
    * A whitelist should only be applied when running suite test cases (suite0, suite1)
    */
   export interface WhiteList {
-    [backend: string]: {[group: string]: ReadonlyArray<string>;};
+    [backend: string]: {[group: string]: ReadonlyArray<WhiteList.Test>;};
   }
 
   /**

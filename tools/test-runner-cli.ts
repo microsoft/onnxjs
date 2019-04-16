@@ -104,7 +104,8 @@ switch (args.mode) {
     const testFolderSearchPattern = args.param;
     const testFolder = tryLocateModelTestFolder(testFolderSearchPattern);
     for (const b of args.backends) {
-      modelTestGroups.push({name: testFolder, tests: [modelTestFromFolder(testFolder, b, false, args.times)]});
+      modelTestGroups.push(
+          {name: testFolder, tests: [modelTestFromFolder(testFolder, b, false, undefined, args.times)]});
     }
     break;
 
@@ -147,12 +148,14 @@ function validateWhiteList() {
     const nodeTest = nodeTests.get(backend);
     if (nodeTest) {
       for (const testCase of whitelist[backend].node) {
+        const testCaseName = typeof testCase === 'string' ? testCase : testCase.name;
         let found = false;
         for (const testGroup of nodeTest) {
-          found = found || testGroup.tests.some(test => minimatch(test.modelUrl, path.join('**', testCase, '*.onnx')));
+          found =
+              found || testGroup.tests.some(test => minimatch(test.modelUrl, path.join('**', testCaseName, '*.onnx')));
         }
         if (!found) {
-          throw new Error(`node model test case '${testCase}' in white list does not exist.`);
+          throw new Error(`node model test case '${testCaseName}' in white list does not exist.`);
         }
       }
     }
@@ -161,8 +164,9 @@ function validateWhiteList() {
     if (onnxTest) {
       const onnxModelTests = onnxTest.tests.map(i => i.name);
       for (const testCase of whitelist[backend].onnx) {
-        if (onnxModelTests.indexOf(testCase) === -1) {
-          throw new Error(`onnx model test case '${testCase}' in white list does not exist.`);
+        const testCaseName = typeof testCase === 'string' ? testCase : testCase.name;
+        if (onnxModelTests.indexOf(testCaseName) === -1) {
+          throw new Error(`onnx model test case '${testCaseName}' in white list does not exist.`);
         }
       }
     }
@@ -171,8 +175,9 @@ function validateWhiteList() {
     if (opTest) {
       const opTests = opTest.map(i => i.name);
       for (const testCase of whitelist[backend].ops) {
-        if (opTests.indexOf(testCase) === -1) {
-          throw new Error(`operator test case '${testCase}' in white list does not exist.`);
+        const testCaseName = typeof testCase === 'string' ? testCase : testCase.name;
+        if (opTests.indexOf(testCaseName) === -1) {
+          throw new Error(`operator test case '${testCaseName}' in white list does not exist.`);
         }
       }
     }
@@ -191,18 +196,34 @@ function loadOnnxTests(backend: string): Test.ModelTestGroup {
 
 function suiteFromFolder(
     name: string, suiteRootFolder: string, backend: string, preload: boolean,
-    whitelist?: ReadonlyArray<string>): Test.ModelTestGroup {
+    whitelist?: ReadonlyArray<Test.WhiteList.Test>): Test.ModelTestGroup {
   const sessions: Test.ModelTest[] = [];
   const tests = fs.readdirSync(suiteRootFolder);
   for (const test of tests) {
-    const skip = whitelist && !whitelist.some(p => minimatch(path.join(suiteRootFolder, test), path.join('**', p)));
-    sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, preload, skip ? 0 : undefined));
+    let condition: Test.Condition|undefined;
+    let times: number|undefined;
+    if (whitelist) {
+      const matches = whitelist.filter(
+          p => minimatch(path.join(suiteRootFolder, test), path.join('**', typeof p === 'string' ? p : p.name)));
+      if (matches.length === 0) {
+        times = 0;
+      } else if (matches.length === 1) {
+        const match = matches[0];
+        if (typeof match !== 'string') {
+          condition = match.condition;
+        }
+      } else {
+        throw new Error(`multiple whitelist rules matches test: ${path.join(suiteRootFolder, test)}`);
+      }
+    }
+    sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, preload, condition, times));
   }
   return {name, tests: sessions};
 }
 
 function modelTestFromFolder(
-    testDataRootFolder: string, backend: string, preload: boolean, times?: number): Test.ModelTest {
+    testDataRootFolder: string, backend: string, preload: boolean, condition?: Test.Condition,
+    times?: number): Test.ModelTest {
   if (times === 0) {
     logger.verbose('TestRunnerCli.Init.Model', `Skip test data from folder: ${testDataRootFolder}`);
     return {name: path.basename(testDataRootFolder), backend, modelUrl: '', cases: []};
@@ -277,7 +298,7 @@ function modelTestFromFolder(
   logger.verbose('TestRunnerCli.Init.Model', ` Test set(s): ${cases.length} (${caseCount})`);
   logger.verbose('TestRunnerCli.Init.Model', `===============================================================`);
 
-  return {name: path.basename(testDataRootFolder), modelUrl, backend, cases};
+  return {name: path.basename(testDataRootFolder), condition, modelUrl, backend, cases};
 }
 
 function tryLocateModelTestFolder(searchPattern: string): string {

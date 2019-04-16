@@ -234,9 +234,6 @@ export class ProgramManager {
   getAttribLocation(program: WebGLProgram, name: string): number {
     const gl = this.glContext.gl;
     const attributeLocation: number = gl.getAttribLocation(program, name);
-    if (attributeLocation === -1) {
-      throw new Error('Attribute ' + name + ' not found.');
-    }
     return attributeLocation;
   }
   protected getDefaultVertexShaderSource(): string {

@@ -141,9 +141,11 @@ export class WebGLContext {
   setVertexAttributes(positionHandle: number, textureCoordHandle: number): void {
     const gl = this.gl;
     gl.vertexAttribPointer(positionHandle, 3, gl.FLOAT, false, 20, 0);
-    gl.vertexAttribPointer(textureCoordHandle, 2, gl.FLOAT, false, 20, 12);
     gl.enableVertexAttribArray(positionHandle);
-    gl.enableVertexAttribArray(textureCoordHandle);
+    if (textureCoordHandle !== -1) {
+      gl.vertexAttribPointer(textureCoordHandle, 2, gl.FLOAT, false, 20, 12);
+      gl.enableVertexAttribArray(textureCoordHandle);
+    }
     this.checkError();
   }
   createProgram(

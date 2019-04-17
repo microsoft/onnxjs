@@ -391,13 +391,16 @@ function tryLocateOpTestManifest(searchPattern: string): string {
 }
 
 function run(config: Test.Config) {
-  // STEP 1. write file cache to testdata-file-cache.json
-  logger.info('TestRunnerCli.Run', '(1/5) Writing file cache to file: testdata-file-cache.json ...');
+  // STEP 1. write file cache to testdata-file-cache-*.json
+  logger.info('TestRunnerCli.Run', '(1/5) Writing file cache to file: testdata-file-cache-*.json ...');
   const fileCacheUrls = saveFileCache(fileCache);
   if (fileCacheUrls.length > 0) {
     config.fileCacheUrls = fileCacheUrls;
   }
-  logger.info('TestRunnerCli.Run', '(1/5) Writing file cache to file: testdata-file-cache.json ... DONE');
+  logger.info(
+      'TestRunnerCli.Run',
+      `(1/5) Writing file cache to file: testdata-file-cache-*.json ... ${
+          fileCacheUrls.length > 0 ? `DONE, ${fileCacheUrls.length} file(s) generated` : 'SKIPPED'}`);
 
   // STEP 2. write the config to testdata-config.js
   logger.info('TestRunnerCli.Run', '(2/5) Writing config to file: testdata-config.js ...');
@@ -436,11 +439,7 @@ function run(config: Test.Config) {
     // STEP 4. use webpack to generate ONNX.js
     logger.info('TestRunnerCli.Run', '(4/5) Running webpack to generate ONNX.js...');
     const webpackCommand = path.join(npmBin, 'webpack');
-    const webpackArgs = [
-      '--mode',
-      args.bundleMode === 'dev' ? 'development' : 'production',
-      `--bundle-mode=${args.bundleMode}`,
-    ];
+    const webpackArgs = [`--bundle-mode=${args.bundleMode}`];
     logger.info('TestRunnerCli.Run', `CMD: ${webpackCommand} ${webpackArgs.join(' ')}`);
     const webpack = spawnSync(webpackCommand, webpackArgs, {shell: true, stdio: 'inherit'});
     if (webpack.status !== 0) {

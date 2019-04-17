@@ -44,15 +44,14 @@ Options:
                                safari     (MacOS only)
                                node
                                bs         (for BrowserStack tests)
-
-*** Logging Options ***
-
  -p, --profile               Enable profiler.
                                Profiler will generate extra logs which include the information of events time
                                consumption
  -P[=<...>], --perf[=<...>]  Generate performance number. Cannot be used with flag --debug.
                                This flag can be used with a number as value, specifying the total count of test cases
                                to run. The test cases may be used multiple times. Default value is 10.
+
+*** Logging Options ***
 
  --log-verbose=<...>         Set log level to verbose
  --log-info=<...>            Set log level to info
@@ -90,12 +89,16 @@ Examples:
 
  Profile the model ResNet50 on WebGL backend
  > test-runner-cli model resnet50 --profile --backend=webgl
+
+ Run perf testing of the model SqueezeNet on WebGL backend
+ > test-runner-cli model squeezenet -b=webgl -P
  `;
 
 export declare namespace TestRunnerCliArgs {
   type Mode = 'suite0'|'suite1'|'model'|'unittest'|'op';
   type Backend = 'cpu'|'webgl'|'wasm'|'onnxruntime';
   type Environment = 'chrome'|'edge'|'firefox'|'electron'|'safari'|'node'|'bs';
+  type BundleMode = 'prod'|'dev'|'perf';
 }
 
 export interface TestRunnerCliArgs {
@@ -118,13 +121,13 @@ export interface TestRunnerCliArgs {
    *
    * For running tests, the default mode is 'dev'. If flag '--perf' is set, the mode will be set to 'perf'.
    *
-   * Mode   | Folder       | Files             | Main                 | Source Map         | Webpack Config
-   * ------ | ------------ | ----------------- | -------------------- | ------------------ | --------------
-   * prod   | /dist/       | onnx.min.js       | /lib/api/index.ts    | source-map         | production
-   * dev    | /test/       | onnx.dev.js       | /test/test-main.ts   | inline-source-map  | development
-   * perf   | /test/       | onnx.perf.js      | /test/test-main.ts   | source-map         | production
+   * Mode   | Output File        | Main                 | Source Map         | Webpack Config
+   * ------ | ------------------ | -------------------- | ------------------ | --------------
+   * prod   | /dist/onnx.min.js  | /lib/api/index.ts    | source-map         | production
+   * dev    | /test/onnx.dev.js  | /test/test-main.ts   | inline-source-map  | development
+   * perf   | /test/onnx.perf.js | /test/test-main.ts   | (none)             | production
    */
-  bundleMode: 'prod'|'dev'|'perf';
+  bundleMode: TestRunnerCliArgs.BundleMode;
 
   logConfig: Test.Config['log'];
 
@@ -200,6 +203,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
     logConfig.push({category: 'Profiler.backend', config: {minimalSeverity: 'verbose'}});
   }
 
+  // Option: -P[=<...>], --perf[=<...>]
   const perfArg = (args.perf || args.P);
   const perf = perfArg ? true : false;
   const times = (typeof perfArg === 'number') ? perfArg : 10;

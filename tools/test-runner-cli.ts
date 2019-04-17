@@ -42,10 +42,9 @@ const DEFAULT_BACKENDS: ReadonlyArray<TestRunnerCliArgs.Backend> =
     args.env === 'node' ? ['cpu', 'wasm'] : ['cpu', 'wasm', 'webgl'];
 const DEFAULT_OPSET_VERSIONS: ReadonlyArray<number> = [10, 9, 8, 7];
 
-// The max size of the file that will be put into file cache
-const FILE_CACHE_MAX_FILE_SIZE = 1 * 1024 * 1024;
-// The min size of the cache file
-const FILE_CACHE_SPLIT_SIZE = 4 * 1024 * 1024;
+const FILE_CACHE_ENABLED = args.fileCache;         // whether to enable file cache
+const FILE_CACHE_MAX_FILE_SIZE = 1 * 1024 * 1024;  // The max size of the file that will be put into file cache
+const FILE_CACHE_SPLIT_SIZE = 4 * 1024 * 1024;     // The min size of the cache file
 const fileCache: Test.FileCache = {};
 
 const nodeTests = new Map<string, Test.ModelTestGroup[]>();
@@ -246,7 +245,7 @@ function modelTestFromFolder(
         if (ext.toLowerCase() === '.onnx') {
           if (modelUrl === null) {
             modelUrl = path.join(TEST_DATA_BASE, path.relative(TEST_ROOT, thisFullPath));
-            if (stat.size <= FILE_CACHE_MAX_FILE_SIZE && !fileCache[modelUrl]) {
+            if (FILE_CACHE_ENABLED && !fileCache[modelUrl] && stat.size <= FILE_CACHE_MAX_FILE_SIZE) {
               fileCache[modelUrl] = bufferToBase64(fs.readFileSync(thisFullPath));
             }
           } else {
@@ -262,8 +261,8 @@ function modelTestFromFolder(
           if (ext.toLowerCase() === '.pb') {
             const dataFileUrl = path.join(TEST_DATA_BASE, path.relative(TEST_ROOT, dataFileFullPath));
             dataFiles.push(dataFileUrl);
-            const stat = fs.lstatSync(dataFileFullPath);
-            if (stat.size <= FILE_CACHE_MAX_FILE_SIZE && !fileCache[dataFileUrl]) {
+            if (FILE_CACHE_ENABLED && !fileCache[dataFileUrl] &&
+                fs.lstatSync(dataFileFullPath).size <= FILE_CACHE_MAX_FILE_SIZE) {
               fileCache[dataFileUrl] = bufferToBase64(fs.readFileSync(dataFileFullPath));
             }
           }

@@ -32,7 +32,7 @@ logger.verbose('TestRunnerCli.Init', `Loading whitelist...`);
 
 // The following is a whitelist of unittests for already implemented operators.
 // Modify this list to control what node tests to run.
-const jsonWithComments = fs.readFileSync(path.resolve(TEST_ROOT, './unittest-whitelist.jsonc')).toString();
+const jsonWithComments = fs.readFileSync(path.resolve(TEST_ROOT, './test-suite-whitelist.jsonc')).toString();
 const json = stripJsonComments(jsonWithComments, {whitespace: true});
 const whitelist = JSON.parse(json) as Test.WhiteList;
 logger.verbose('TestRunnerCli.Init', `Loading whitelist... DONE`);
@@ -42,6 +42,9 @@ const DEFAULT_BACKENDS: ReadonlyArray<TestRunnerCliArgs.Backend> =
     args.env === 'node' ? ['cpu', 'wasm'] : ['cpu', 'wasm', 'webgl'];
 const DEFAULT_OPSET_VERSIONS: ReadonlyArray<number> = [10, 9, 8, 7];
 
+const FILE_CACHE_ENABLED = args.fileCache;         // whether to enable file cache
+const FILE_CACHE_MAX_FILE_SIZE = 1 * 1024 * 1024;  // The max size of the file that will be put into file cache
+const FILE_CACHE_SPLIT_SIZE = 4 * 1024 * 1024;     // The min size of the cache file
 const fileCache: Test.FileCache = {};
 
 const nodeTests = new Map<string, Test.ModelTestGroup[]>();
@@ -61,7 +64,9 @@ if (shouldLoadSuiteTestData) {
       }
       nodeTest.push(loadNodeTests(backend, version));
     }
-    onnxTests.set(backend, loadOnnxTests(backend));
+    if (args.mode === 'suite1') {
+      onnxTests.set(backend, loadOnnxTests(backend));
+    }
     opTests.set(backend, loadOpTests(backend));
   }
 }
@@ -104,8 +109,7 @@ switch (args.mode) {
     const testFolderSearchPattern = args.param;
     const testFolder = tryLocateModelTestFolder(testFolderSearchPattern);
     for (const b of args.backends) {
-      modelTestGroups.push(
-          {name: testFolder, tests: [modelTestFromFolder(testFolder, b, false, undefined, args.times)]});
+      modelTestGroups.push({name: testFolder, tests: [modelTestFromFolder(testFolder, b, undefined, args.times)]});
     }
     break;
 
@@ -134,7 +138,6 @@ run({
   unittest,
   model: modelTestGroups,
   op: opTestGroups,
-  fileCache,
   log: args.logConfig,
   profile: args.profile,
   options: {debug: args.debug, cpu: args.cpuOptions, webgl: args.webglOptions, wasm: args.wasmOptions}
@@ -186,16 +189,16 @@ function validateWhiteList() {
 
 function loadNodeTests(backend: string, version: number): Test.ModelTestGroup {
   return suiteFromFolder(
-      `node-opset_v${version}-${backend}`, path.join(TEST_DATA_MODEL_NODE_ROOT, `v${version}`), backend, true,
+      `node-opset_v${version}-${backend}`, path.join(TEST_DATA_MODEL_NODE_ROOT, `v${version}`), backend,
       whitelist[backend].node);
 }
 
 function loadOnnxTests(backend: string): Test.ModelTestGroup {
-  return suiteFromFolder(`onnx-${backend}`, TEST_DATA_MODEL_ONNX_ROOT, backend, false, whitelist[backend].onnx);
+  return suiteFromFolder(`onnx-${backend}`, TEST_DATA_MODEL_ONNX_ROOT, backend, whitelist[backend].onnx);
 }
 
 function suiteFromFolder(
-    name: string, suiteRootFolder: string, backend: string, preload: boolean,
+    name: string, suiteRootFolder: string, backend: string,
     whitelist?: ReadonlyArray<Test.WhiteList.Test>): Test.ModelTestGroup {
   const sessions: Test.ModelTest[] = [];
   const tests = fs.readdirSync(suiteRootFolder);
@@ -216,14 +219,13 @@ function suiteFromFolder(
         throw new Error(`multiple whitelist rules matches test: ${path.join(suiteRootFolder, test)}`);
       }
     }
-    sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, preload, condition, times));
+    sessions.push(modelTestFromFolder(path.resolve(suiteRootFolder, test), backend, condition, times));
   }
   return {name, tests: sessions};
 }
 
 function modelTestFromFolder(
-    testDataRootFolder: string, backend: string, preload: boolean, condition?: Test.Condition,
-    times?: number): Test.ModelTest {
+    testDataRootFolder: string, backend: string, condition?: Test.Condition, times?: number): Test.ModelTest {
   if (times === 0) {
     logger.verbose('TestRunnerCli.Init.Model', `Skip test data from folder: ${testDataRootFolder}`);
     return {name: path.basename(testDataRootFolder), backend, modelUrl: '', cases: []};
@@ -243,7 +245,7 @@ function modelTestFromFolder(
         if (ext.toLowerCase() === '.onnx') {
           if (modelUrl === null) {
             modelUrl = path.join(TEST_DATA_BASE, path.relative(TEST_ROOT, thisFullPath));
-            if (preload && !fileCache[modelUrl]) {
+            if (FILE_CACHE_ENABLED && !fileCache[modelUrl] && stat.size <= FILE_CACHE_MAX_FILE_SIZE) {
               fileCache[modelUrl] = bufferToBase64(fs.readFileSync(thisFullPath));
             }
           } else {
@@ -259,7 +261,8 @@ function modelTestFromFolder(
           if (ext.toLowerCase() === '.pb') {
             const dataFileUrl = path.join(TEST_DATA_BASE, path.relative(TEST_ROOT, dataFileFullPath));
             dataFiles.push(dataFileUrl);
-            if (preload && !fileCache[dataFileUrl]) {
+            if (FILE_CACHE_ENABLED && !fileCache[dataFileUrl] &&
+                fs.lstatSync(dataFileFullPath).size <= FILE_CACHE_MAX_FILE_SIZE) {
               fileCache[dataFileUrl] = bufferToBase64(fs.readFileSync(dataFileFullPath));
             }
           }
@@ -387,29 +390,40 @@ function tryLocateOpTestManifest(searchPattern: string): string {
 }
 
 function run(config: Test.Config) {
-  // STEP 1. we write the config to testdata.js
-  logger.info('TestRunnerCli.Run', '(1/4) Writing config to file: testdata.js ...');
-  saveConfig(config);
-  logger.info('TestRunnerCli.Run', '(1/4) Writing config to file: testdata.js ... DONE');
+  // STEP 1. write file cache to testdata-file-cache-*.json
+  logger.info('TestRunnerCli.Run', '(1/5) Writing file cache to file: testdata-file-cache-*.json ...');
+  const fileCacheUrls = saveFileCache(fileCache);
+  if (fileCacheUrls.length > 0) {
+    config.fileCacheUrls = fileCacheUrls;
+  }
+  logger.info(
+      'TestRunnerCli.Run',
+      `(1/5) Writing file cache to file: testdata-file-cache-*.json ... ${
+          fileCacheUrls.length > 0 ? `DONE, ${fileCacheUrls.length} file(s) generated` : 'SKIPPED'}`);
 
-  // STEP 2. get npm bin folder
-  logger.info('TestRunnerCli.Run', '(2/4) Retrieving npm bin folder...');
+  // STEP 2. write the config to testdata-config.js
+  logger.info('TestRunnerCli.Run', '(2/5) Writing config to file: testdata-config.js ...');
+  saveConfig(config);
+  logger.info('TestRunnerCli.Run', '(2/5) Writing config to file: testdata-config.js ... DONE');
+
+  // STEP 3. get npm bin folder
+  logger.info('TestRunnerCli.Run', '(3/5) Retrieving npm bin folder...');
   const npmBin = execSync('npm bin', {encoding: 'utf8'}).trimRight();
-  logger.info('TestRunnerCli.Run', `(2/4) Retrieving npm bin folder... DONE, folder: ${npmBin}`);
+  logger.info('TestRunnerCli.Run', `(3/5) Retrieving npm bin folder... DONE, folder: ${npmBin}`);
 
   if (args.env === 'node') {
-    // STEP 3. use tsc to build ONNX.js
-    logger.info('TestRunnerCli.Run', '(3/4) Running tsc...');
+    // STEP 4. use tsc to build ONNX.js
+    logger.info('TestRunnerCli.Run', '(4/5) Running tsc...');
     const tscCommand = path.join(npmBin, 'tsc');
     const tsc = spawnSync(tscCommand, {shell: true, stdio: 'inherit'});
     if (tsc.status !== 0) {
       console.error(tsc.error);
       process.exit(tsc.status);
     }
-    logger.info('TestRunnerCli.Run', '(3/4) Running tsc... DONE');
+    logger.info('TestRunnerCli.Run', '(4/5) Running tsc... DONE');
 
-    // STEP 4. run mocha
-    logger.info('TestRunnerCli.Run', '(4/4) Running mocha...');
+    // STEP 5. run mocha
+    logger.info('TestRunnerCli.Run', '(5/5) Running mocha...');
     const mochaCommand = path.join(npmBin, 'mocha');
     const mochaArgs = [path.join(TEST_ROOT, 'test-main'), '--timeout 60000'];
     logger.info('TestRunnerCli.Run', `CMD: ${mochaCommand} ${mochaArgs.join(' ')}`);
@@ -418,27 +432,23 @@ function run(config: Test.Config) {
       console.error(mocha.error);
       process.exit(mocha.status);
     }
-    logger.info('TestRunnerCli.Run', '(4/4) Running mocha... DONE');
+    logger.info('TestRunnerCli.Run', '(5/5) Running mocha... DONE');
 
   } else {
-    // STEP 3. use webpack to generate ONNX.js
-    logger.info('TestRunnerCli.Run', '(3/4) Running webpack to generate ONNX.js...');
+    // STEP 4. use webpack to generate ONNX.js
+    logger.info('TestRunnerCli.Run', '(4/5) Running webpack to generate ONNX.js...');
     const webpackCommand = path.join(npmBin, 'webpack');
-    const webpackArgs = [
-      '--mode',
-      args.bundleMode === 'dev' ? 'development' : 'production',
-      `--bundle-mode=${args.bundleMode}`,
-    ];
+    const webpackArgs = [`--bundle-mode=${args.bundleMode}`];
     logger.info('TestRunnerCli.Run', `CMD: ${webpackCommand} ${webpackArgs.join(' ')}`);
     const webpack = spawnSync(webpackCommand, webpackArgs, {shell: true, stdio: 'inherit'});
     if (webpack.status !== 0) {
       console.error(webpack.error);
       process.exit(webpack.status);
     }
-    logger.info('TestRunnerCli.Run', '(3/4) Running webpack to generate ONNX.js... DONE');
+    logger.info('TestRunnerCli.Run', '(4/5) Running webpack to generate ONNX.js... DONE');
 
-    // STEP 4. use Karma to run test
-    logger.info('TestRunnerCli.Run', '(4/4) Running karma to start test runner...');
+    // STEP 5. use Karma to run test
+    logger.info('TestRunnerCli.Run', '(5/5) Running karma to start test runner...');
     const karmaCommand = path.join(npmBin, 'karma');
     const browser = getBrowserNameFromEnv(args.env, args.debug);
     const karmaArgs = ['start', `--browsers ${browser}`];
@@ -481,8 +491,35 @@ function run(config: Test.Config) {
       console.error(karma.error);
       process.exit(karma.status);
     }
-    logger.info('TestRunnerCli.Run', '(4/4) Running karma to start test runner... DONE');
+    logger.info('TestRunnerCli.Run', '(5/5) Running karma to start test runner... DONE');
   }
+}
+
+function saveFileCache(fileCache: Test.FileCache) {
+  const fileCacheUrls: string[] = [];
+  let currentIndex = 0;
+  let currentCache: Test.FileCache = {};
+  let currentContentTotalSize = 0;
+  for (const key in fileCache) {
+    const content = fileCache[key];
+    if (currentContentTotalSize > FILE_CACHE_SPLIT_SIZE) {
+      fileCacheUrls.push(saveOneFileCache(currentIndex, currentCache));
+      currentContentTotalSize = 0;
+      currentIndex++;
+      currentCache = {};
+    }
+    currentCache[key] = content;
+    currentContentTotalSize += key.length + content.length;
+  }
+  if (currentContentTotalSize > 0) {
+    fileCacheUrls.push(saveOneFileCache(currentIndex, currentCache));
+  }
+  return fileCacheUrls;
+}
+
+function saveOneFileCache(index: number, fileCache: Test.FileCache) {
+  fs.writeFileSync(path.join(TEST_ROOT, `./testdata-file-cache-${index}.json`), JSON.stringify(fileCache));
+  return path.join(TEST_DATA_BASE, `./testdata-file-cache-${index}.json`);
 }
 
 function saveConfig(config: Test.Config) {
@@ -512,9 +549,9 @@ function saveConfig(config: Test.Config) {
     setOptions += `require('onnxjs-node');`;
   }
 
-  fs.writeFileSync(path.join(TEST_ROOT, './testdata.js'), `${setOptions}
+  fs.writeFileSync(path.join(TEST_ROOT, './testdata-config.js'), `${setOptions}
 
-module.exports=${JSON.stringify(config, null, 2)};`);
+module.exports=${JSON.stringify(config)};`);
 }
 
 function getBrowserNameFromEnv(env: TestRunnerCliArgs['env'], debug?: boolean) {

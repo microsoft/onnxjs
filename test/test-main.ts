@@ -11,7 +11,7 @@ import {Logger} from '../lib/instrument';
 import {Test} from './test-types';
 
 // tslint:disable-next-line:no-require-imports
-const ONNX_JS_TEST_CONFIG = require('./testdata') as Test.Config;
+const ONNX_JS_TEST_CONFIG = require('./testdata-config') as Test.Config;
 
 // Set logging configuration
 for (const logConfig of ONNX_JS_TEST_CONFIG.log) {
@@ -19,6 +19,7 @@ for (const logConfig of ONNX_JS_TEST_CONFIG.log) {
 }
 
 import {ModelTestContext, OpTestContext, runModelTestSet, runOpTest} from './test-runner';
+import {readJsonFile} from './test-shared';
 
 // Unit test
 if (ONNX_JS_TEST_CONFIG.unittest) {
@@ -27,7 +28,14 @@ if (ONNX_JS_TEST_CONFIG.unittest) {
 }
 
 // Set file cache
-ModelTestContext.setCache(ONNX_JS_TEST_CONFIG.fileCache);
+if (ONNX_JS_TEST_CONFIG.fileCacheUrls) {
+  before('prepare file cache', async () => {
+    const allJsonCache = await Promise.all(ONNX_JS_TEST_CONFIG.fileCacheUrls!.map(readJsonFile)) as Test.FileCache[];
+    for (const cache of allJsonCache) {
+      ModelTestContext.setCache(cache);
+    }
+  });
+}
 
 // ModelTests
 for (const group of ONNX_JS_TEST_CONFIG.model) {

@@ -8,6 +8,7 @@ import {Backend} from '../lib/api';
 import {Logger} from '../lib/instrument';
 import {Test} from '../test/test-types';
 
+// tslint:disable:max-line-length
 const HELP_MESSAGE = `
 test-runner-cli
 
@@ -28,8 +29,8 @@ Options:
 *** General Options ***
 
  -h, --help                  Print this message.
- -v, --verbose               Verbose the output of test runner cli
  -d, --debug                 Specify to run test runner in debug mode.
+                               Debug mode outputs verbose log for test runner, sets up ONNX.js environment debug flag, and keeps karma not to exit after tests completed.
  -b=<...>, --backend=<...>   Specify one or more backend(s) to run the test upon.
                                Backends can be one or more of the following, splitted by comma:
                                  cpu
@@ -44,23 +45,19 @@ Options:
                                safari     (MacOS only)
                                node
                                bs         (for BrowserStack tests)
+ -p, --profile               Enable profiler.
+                               Profiler will generate extra logs which include the information of events time consumption
+ -P[=<...>], --perf[=<...>]  Generate performance number. Cannot be used with flag --debug.
+                               This flag can be used with a number as value, specifying the total count of test cases to run. The test cases may be used multiple times. Default value is 10.
+ -c, --file-cache            Enable file cache.
 
 *** Logging Options ***
-
- -p, --profile               Enable profiler.
-                               Profiler will generate extra logs which include the information of events time
-                               consumption
- -P[=<...>], --perf[=<...>]  Generate performance number. Cannot be used with flag --debug.
-                               This flag can be used with a number as value, specifying the total count of test cases
-                               to run. The test cases may be used multiple times. Default value is 10.
 
  --log-verbose=<...>         Set log level to verbose
  --log-info=<...>            Set log level to info
  --log-warning=<...>         Set log level to warning
  --log-error=<...>           Set log level to error
-                               The 4 flags above specify the logging configuration. Each flag allows to specify one or
-                               more category(s), splitted by comma. If use the flags without value, the log level will
-                               be applied to all category.
+                               The 4 flags above specify the logging configuration. Each flag allows to specify one or more category(s), splitted by comma. If use the flags without value, the log level will be applied to all category.
 
 *** Backend Options ***
 
@@ -79,23 +76,28 @@ Examples:
  Run all suite0 tests:
  > test-runner-cli suite0
 
- Run single model test (test_relu) on CPU backend and show verbose log
- > test-runner-cli model test_relu --verbose --backend=cpu
+ Run single model test (test_relu) on CPU backend
+ > test-runner-cli model test_relu --backend=cpu
 
  Debug unittest
  > test-runner-cli unittest --debug
 
  Debug operator matmul, highlight verbose log from BaseGlContext and WebGLBackend
- > test-runner-cli op matmul --debug --info --verbose=BaseGlContext,WebGLBackend
+ > test-runner-cli op matmul --debug --log-verbose=BaseGlContext,WebGLBackend
 
  Profile the model ResNet50 on WebGL backend
  > test-runner-cli model resnet50 --profile --backend=webgl
+
+ Run perf testing of the model SqueezeNet on WebGL backend
+ > test-runner-cli model squeezenet -b=webgl -P
  `;
+// tslint:enable:max-line-length
 
 export declare namespace TestRunnerCliArgs {
   type Mode = 'suite0'|'suite1'|'model'|'unittest'|'op';
   type Backend = 'cpu'|'webgl'|'wasm'|'onnxruntime';
   type Environment = 'chrome'|'edge'|'firefox'|'electron'|'safari'|'node'|'bs';
+  type BundleMode = 'prod'|'dev'|'perf';
 }
 
 export interface TestRunnerCliArgs {
@@ -118,13 +120,13 @@ export interface TestRunnerCliArgs {
    *
    * For running tests, the default mode is 'dev'. If flag '--perf' is set, the mode will be set to 'perf'.
    *
-   * Mode   | Folder       | Files             | Main                 | Source Map         | Webpack Config
-   * ------ | ------------ | ----------------- | -------------------- | ------------------ | --------------
-   * prod   | /dist/       | onnx.min.js       | /lib/api/index.ts    | source-map         | production
-   * dev    | /test/       | onnx.dev.js       | /test/test-main.ts   | inline-source-map  | development
-   * perf   | /test/       | onnx.perf.js      | /test/test-main.ts   | source-map         | production
+   * Mode   | Output File        | Main                 | Source Map         | Webpack Config
+   * ------ | ------------------ | -------------------- | ------------------ | --------------
+   * prod   | /dist/onnx.min.js  | /lib/api/index.ts    | source-map         | production
+   * dev    | /test/onnx.dev.js  | /test/test-main.ts   | inline-source-map  | development
+   * perf   | /test/onnx.perf.js | /test/test-main.ts   | (none)             | production
    */
-  bundleMode: 'prod'|'dev'|'perf';
+  bundleMode: TestRunnerCliArgs.BundleMode;
 
   logConfig: Test.Config['log'];
 
@@ -132,6 +134,11 @@ export interface TestRunnerCliArgs {
    * Whether to enable InferenceSession's profiler
    */
   profile: boolean;
+
+  /**
+   * Whether to enable file cache
+   */
+  fileCache: boolean;
 
   /**
    * Specify the times that test cases to run
@@ -155,10 +162,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
 
   // Option: -d, --debug
   const debug = parseBooleanArg(args.debug || args.d, false);
-
-  // Option: -v, --verbose
-  const verbose = parseBooleanArg(args.verbose || args.v);
-  if (verbose || debug) {
+  if (debug) {
     logger.level = 'verbose';
   }
   logger.verbose('TestRunnerCli.Init', `Parsing commandline arguments...`);
@@ -166,7 +170,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
   const mode = args._.length === 0 ? 'suite0' : args._[0];
 
   // Option: -b=<...>, --backend=<...>
-  const backendArgs = args.b || args.backend;
+  const backendArgs = args.backend || args.b;
   const backend = (typeof backendArgs !== 'string') ? ['cpu', 'webgl', 'wasm'] : backendArgs.split(',');
   for (const b of backend) {
     if (b !== 'cpu' && b !== 'webgl' && b !== 'wasm' && b !== 'onnxruntime') {
@@ -175,7 +179,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
   }
 
   // Option: -e=<...>, --env=<...>
-  const envArg = args.e || args.env;
+  const envArg = args.env || args.e;
   const env = (typeof envArg !== 'string') ? 'chrome' : envArg;
   if (['chrome', 'edge', 'firefox', 'electron', 'safari', 'node', 'bs'].indexOf(env) === -1) {
     throw new Error(`not supported env ${env}`);
@@ -200,6 +204,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
     logConfig.push({category: 'Profiler.backend', config: {minimalSeverity: 'verbose'}});
   }
 
+  // Option: -P[=<...>], --perf[=<...>]
   const perfArg = (args.perf || args.P);
   const perf = perfArg ? true : false;
   const times = (typeof perfArg === 'number') ? perfArg : 10;
@@ -212,6 +217,9 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
   if (perf) {
     logConfig.push({category: 'TestRunner.Perf', config: {minimalSeverity: 'verbose'}});
   }
+
+  // Option: -c, --file-cache
+  const fileCache = parseBooleanArg(args['file-cache'] || args.c, false);
 
   const cpuOptions = parseCpuOptions(args);
   const wasmOptions = parseWasmOptions(args);
@@ -242,6 +250,7 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
     logConfig,
     profile,
     times: perf ? times : undefined,
+    fileCache,
     cpuOptions,
     webglOptions,
     wasmOptions,

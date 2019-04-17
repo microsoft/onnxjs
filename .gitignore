@@ -3,6 +3,7 @@ node_modules/
 types/
 
 test/data/node/
+test/testdata-*
 
 lib/**/*.js
 lib/**/*.js.map

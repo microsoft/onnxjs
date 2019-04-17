@@ -27,9 +27,12 @@ module.exports = (env, argv) => {
     config.output = {path: path.resolve(__dirname, 'dist'), filename: 'onnx.min.js', libraryTarget: 'umd'};
   }
 
-  if (argv.mode === 'production') {
+  if (bundleMode === 'prod') {
     config.mode = 'production';
     config.devtool = 'source-map';
+  } else if (bundleMode === 'perf') {
+    config.mode = 'production';
+    config.devtool = '';
   } else {
     config.mode = 'development';
     config.devtool = 'inline-source-map';

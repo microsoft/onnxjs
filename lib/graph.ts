@@ -119,6 +119,25 @@ class Node implements Graph.Node {
   executeNode: boolean;
 }
 
+export class NNSubgraphNode implements Graph.Node {
+  constructor(public nodes: ReadonlyArray<Graph.Node>) {
+    // TODO: use subgraph partitioning results
+    this.name = nodes.map((node) => node.opType).join(', ');
+    this.opType = 'NNSubgraph';
+    this.inputs = [nodes[0].inputs[0]];
+    this.outputs = nodes[nodes.length - 1].outputs;
+    this.attributes = new Attribute(null);
+    this.executeNode = true;
+  }
+
+  name: string;
+  opType: string;
+  inputs: ReadonlyArray<number>;
+  outputs: ReadonlyArray<number>;
+  attributes: Attribute;
+  executeNode: boolean;
+}
+
 class GraphImpl implements Graph, Graph.Transformer {
   private _allData: Value[];
 
@@ -166,7 +185,7 @@ class GraphImpl implements Graph, Graph.Transformer {
   }
 
   getNodes(): ReadonlyArray<Graph.Node> {
-    return this._nodes;
+    return [new NNSubgraphNode(this._nodes)];
   }
 
   private buildGraph(graph: onnx.IGraphProto) {

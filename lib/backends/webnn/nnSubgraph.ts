@@ -2,24 +2,25 @@ import {Attribute} from '../../attribute';
 import {InferenceHandler} from '../../backend';
 import {Operator} from '../../operators';
 import {Tensor} from '../../tensor';
-import {Graph} from '../../graph';
+import {NNSubgraphNode} from '../../graph';
 import {ShapeUtil} from '../../util';
 import {Profiler} from '../../instrument';
 
 export class NNSubgraph implements Operator {
 
   constructor (
-      private _onnxNode: Graph.Node,
+      private subgraph: NNSubgraphNode,
+      initializers: Map<number, Tensor>,
       private enablePseudoReorder = false,
       private profiler: Readonly<Profiler>) {
     this._operandIndex = 0;
-    this._inputsMapping = [];
-    this._outputsMapping = [];
     this._nnOperands = [];
     this._operations = [];
     this._tensorTypes = [];
-    this._subgraphName = this._onnxNode.opType;
-    this._outputTensors = [];
+    this._tensorData = [];
+    initializers.forEach((tensor, i) => {
+      this._tensorData[i] = {tensor: tensor};
+    });
   }
 
   async run(inferenceHandler: InferenceHandler, inputs: Tensor[]): Promise<Tensor[]> {
@@ -30,47 +31,52 @@ export class NNSubgraph implements Operator {
     }
 
     // bind input tensors at runtime
-    this._inputsMapping.forEach((input) => {
-      // get runtime input tensor
-      const {nnInputIndex, onnxInputIndex} = input;
-      const tensor = inputs[onnxInputIndex];
-
-      // reorder tensor
+    inputs.forEach((tensor, i) => {
+      // reorder input tensors
       tensor.toNHWC(this.enablePseudoReorder);
 
       this.profiler.event('backend', 'WebNN.Execution.setInput', () => {
-        // set inputs
-        this._execution.setInput(nnInputIndex!, tensor.data as NNTensorType);
+        this._execution.setInput(i, tensor.data as NNTensorType);
       });
 
-      // recover inputs
+      // recover input tensors
       tensor.toNCHW(this.enablePseudoReorder);
     });
 
-    this._outputTensors.forEach((output) => {
-      output.toNHWC(this.enablePseudoReorder);
-    });
+    const outputTensors = this.subgraph.outputs.map((tensorId) => this._getTensorByOnnxId(tensorId));
+    // reorder output tensors
+    outputTensors.forEach((tensor) => tensor.toNHWC(this.enablePseudoReorder));
 
     // run submodel
     await this.profiler.event('backend', 'WebNN.Execution.startCompute', async () => {
       await this._execution.startCompute();
     });
 
-    this._outputTensors.forEach((output) => {
-      output.toNCHW(this.enablePseudoReorder);
-    });
-
-    return this._outputTensors;
+    // recover output tensors
+    outputTensors.forEach((tensor) => tensor.toNCHW(this.enablePseudoReorder));
+    return outputTensors;
   };
 
   initialize(attributes: Attribute): void {}
 
   checkInputs(inputs: Tensor[]): boolean { return true; }
 
-  async createCompiledModel(inputTensors: Tensor[]) {
+  async createCompiledModel(graphInputTensors: Tensor[]) {
     this._nn = (navigator as NNNavigator).ml.getNeuralNetworkContext();
     this._model = await this._nn.createModel({backend: 'WASM'});
-    this._addOpsAndParams(inputTensors);
+
+    graphInputTensors.forEach((tensor, i) => {
+      tensor.toNHWC();
+      const tensorId = this._addTensorFloat32(tensor.floatData as Float32Array, tensor.dims);
+      this._tensorData[this.subgraph.inputs[i]] = {tensor: tensor, nnTensorId: tensorId};
+    });
+
+    // reorder to NHWC
+    this._tensorData.forEach(({tensor}) => {
+      tensor.toNHWC();
+    });
+
+    this._addOpsAndParams();
     this._addInputsOutputs();
     await this._model.finish();
 
@@ -80,478 +86,517 @@ export class NNSubgraph implements Operator {
 
     this._execution = await this._compilation.createExecution();
     // bind output tensors at compile time
-    this._outputsMapping.forEach((output) => {
-      const {nnOutputIndex, nnTensorId} = output;
-      const operand = this._nnOperands[nnTensorId];
-      this._execution.setOutput(nnOutputIndex!, operand);
+    this.subgraph.outputs.forEach((tensorId, i) => {
+      const tensor = this._getTensorByOnnxId(tensorId);
+      // TODO: eliminate type casting
+      this._execution.setOutput(i, tensor.floatData as NNTensorType);
+    });
 
-      const outputDims = this._getTensorTypeById(nnTensorId).dimensions!;
-      const tensor = new Tensor(outputDims, 'float32', undefined, undefined, undefined, undefined, 'NHWC', operand);
-      this._outputTensors.push(tensor);
-      tensor.toNCHW(this.enablePseudoReorder);
+    // recover to NCHW
+    this._tensorData.forEach(({tensor}) => {
+      tensor.toNCHW();
     });
   }
 
   _addInputsOutputs() {
-    const modelInputs: number[] = [];
-    const modelOutputs: number[] = [];
-    this._inputsMapping.forEach((input, index) => {
-      input.nnInputIndex = index;
-      modelInputs.push(input.nnTensorId);
-    });
-    this._outputsMapping.forEach((output, index) => {
-      output.nnOutputIndex = index;
-      modelOutputs.push(output.nnTensorId);
-    });
+    const modelInputs = this.subgraph.inputs.map((onnxTensorId) => this._tensorData[onnxTensorId].nnTensorId!);
+    const modelOutputs = this.subgraph.outputs.map((onnxTensorId) => this._tensorData[onnxTensorId].nnTensorId!);
     this._model.identifyInputsAndOutputs(modelInputs, modelOutputs);
   }
 
-  _addOpsAndParams(inputTensors: Tensor[]) {
+  _addOpsAndParams() {
 
-    // reorder to NHWC
-    inputTensors.forEach((t) => t.toNHWC());
+    for (let i = 0; i < this.subgraph.nodes.length; i++) {
 
-    let opType = -1;
-    let inputs = [];
-    let outputs = [];
+      let opType: number = -1;
+      let inputs: number[] = [];
+      let outputs: number[] = [];
 
-    const attributes = this._onnxNode.attributes;
+      let node = this.subgraph.nodes[i];
+      let attributes = node.attributes;
 
-    switch(this._onnxNode.opType) {
-      case 'Conv': {
-        const input = inputTensors[0];
-        const convFilter = inputTensors[1];
-        const convBias = inputTensors[2];
+      switch(node.opType) {
+        case 'Conv': {
+          const input = this._getTensorByOnnxId(node.inputs[0]);
+          const convFilter = this._getTensorByOnnxId(node.inputs[1]);
+          const convBias = node.inputs[2] !== undefined ? this._getTensorByOnnxId(node.inputs[2]) : undefined;
 
-        const inputId = this._addTensorFloat32(input.floatData, input.dims);
-        this._inputsMapping.push({nnTensorId: inputId, nnInputIndex: 0, onnxInputIndex: 0});
+          const nGroups = attributes.getInt('group', 1);
+          const dims = convFilter.dims;
+          const nChannels = dims[0];
+          const convFilterId = this._addTensorFloat32(convFilter.floatData as Float32Array, convFilter.dims);
+          const convBiasId = convBias !== undefined ? // optional bias
+            this._addTensorFloat32(convBias.floatData as Float32Array, convBias.dims):
+            this._addTensorFloat32(new Float32Array(nChannels).fill(0), [nChannels]);
 
-        const nGroups = attributes.getInt('group', 1);
-        const dims = convFilter.dims;
-        const nChannels = dims[0];
-        const convFilterId = this._addTensorFloat32(convFilter.floatData, convFilter.dims);
-        const convBiasId = typeof convBias !== 'undefined' ? // optional bias
-          this._addTensorFloat32(convBias.floatData, convBias.dims):
-          this._addTensorFloat32(new Float32Array(nChannels).fill(0), [nChannels]);
+          inputs.push(this._tensorData[node.inputs[0]].nnTensorId!);
+          inputs.push(convFilterId);
+          inputs.push(convBiasId);
 
-        inputs.push(inputId);
-        inputs.push(convFilterId);
-        inputs.push(convBiasId);
+          const kernelShape = attributes.getInts('kernel_shape', []);
+          if (!kernelShape || kernelShape.length !== 2) {
+            throw new Error('Invalid kernelShape');
+          }
+          const kernelHeight = kernelShape[0];
+          const kernelWidth = kernelShape[1];
 
-        const kernelShape = attributes.getInts('kernel_shape', []);
-        if (!kernelShape || kernelShape.length !== 2) {
-          throw new Error('Invalid kernelShape');
-        }
-        const kernelHeight = kernelShape[0];
-        const kernelWidth = kernelShape[1];
+          const pads = attributes.getInts('pads', [0, 0, 0, 0]);
+          if (pads.length !== 4) {
+            throw new Error('Invalid pads');
+          }
+          const paddingHeightBegin = pads[0];
+          const paddingWidthBegin = pads[1];
+          const paddingHeightEnd = pads[2];
+          const paddingWidthEnd = pads[3];
+          inputs.push(this._addScalarInt32(paddingWidthBegin));
+          inputs.push(this._addScalarInt32(paddingWidthEnd));
+          inputs.push(this._addScalarInt32(paddingHeightBegin));
+          inputs.push(this._addScalarInt32(paddingHeightEnd));
 
-        const pads = attributes.getInts('pads', [0, 0, 0, 0]);
-        if (pads.length !== 4) {
-          throw new Error('Invalid pads');
-        }
-        const paddingHeightBegin = pads[0];
-        const paddingWidthBegin = pads[1];
-        const paddingHeightEnd = pads[2];
-        const paddingWidthEnd = pads[3];
-        inputs.push(this._addScalarInt32(paddingWidthBegin));
-        inputs.push(this._addScalarInt32(paddingWidthEnd));
-        inputs.push(this._addScalarInt32(paddingHeightBegin));
-        inputs.push(this._addScalarInt32(paddingHeightEnd));
+          const strides = attributes.getInts('strides', [1, 1]);
+          if (!strides || strides.length !== 2) {
+            throw new Error('Invalid strides');
+          }
+          const strideY = strides[0];
+          const strideX = strides[1];
+          inputs.push(this._addScalarInt32(strideX));
+          inputs.push(this._addScalarInt32(strideY));
 
-        const strides = attributes.getInts('strides', [1, 1]);
-        if (!strides || strides.length !== 2) {
-          throw new Error('Invalid strides');
-        }
-        const strideY = strides[0];
-        const strideX = strides[1];
-        inputs.push(this._addScalarInt32(strideX));
-        inputs.push(this._addScalarInt32(strideY));
+          let nextNode = this.subgraph.nodes[i + 1];
+          // fuse batch norm preceded by a conv
+          if (nextNode &&
+              nextNode.opType === 'BatchNormalization' &&
+              node.outputs[0] === nextNode.inputs[0]) {
+            const bnNode = nextNode;
+            const scale = this._getTensorByOnnxId(bnNode.inputs[1]);
+            const bnBias = this._getTensorByOnnxId(bnNode.inputs[2]);
+            const mean = this._getTensorByOnnxId(bnNode.inputs[3]);
+            const variance = this._getTensorByOnnxId(bnNode.inputs[4]);
+            const epsilon = bnNode.attributes.getFloat('epsilon', 1e-5);
 
-        // reshape kernel for depthwise conv
-        const [batch, inputHeight, inputWidth, inputChannels] = input.dims;
-        let isDepthWiseConv = false;
-        if (nGroups > 1) {
-          if (nGroups !== inputChannels) {
-            throw new Error('Group convolution is not supported.');
-          } else {
-            isDepthWiseConv = true;
-            let nhwc = convFilter.floatData;
-            // NHWC -> CHWN where C === 1
-            let chwnData = new Float32Array(nhwc.length);
-            const N = dims[0];
-            const H = dims[1];
-            const W = dims[2];
-            for (let n = 0; n < N; ++n) {
-              for (let h = 0; h < H; ++h) {
-                for (let w = 0; w < W; ++w) {
-                  chwnData[h*W*N + w*N + n] = nhwc[n*H*W + h*W + w];
-                }
+            const scaleTensor = scale.floatData;
+            const meanTensor = mean.floatData;
+            const varTensor = variance.floatData;
+            const bnBiasTensor = bnBias.floatData;
+            const convFilterTensor = convFilter.floatData;
+            const convBiasTensor = this._nnOperands[convBiasId];
+
+            const nPixels = ShapeUtil.size(dims.slice(1));
+            for (let c = 0; c < nChannels; c++) {
+              const w = scaleTensor[c] / Math.sqrt(varTensor[c] + epsilon);
+              convBiasTensor[c] = bnBiasTensor[c] + (convBiasTensor[c] - meanTensor[c]) * w;
+              for (let p = c * nPixels; p < (c+1) * nPixels; p++) {
+                convFilterTensor[p] *= w;
               }
             }
 
-            this._setOperandValue(convFilterId, chwnData);
-            const convFilterType = this._getTensorTypeById(convFilterId);
-            convFilterType.dimensions![0] = 1;
-            convFilterType.dimensions![3] = nGroups;
-
-            // set multiplier to 1, not used in onnx model
-            inputs.push(this._addScalarInt32(1));
+            i++;
+            node = nextNode;
+            nextNode = this.subgraph.nodes[i + 1];
           }
-        }
 
-        inputs.push(this._addScalarInt32(this._nn.FUSED_NONE));
+          if (nextNode &&
+              nextNode.opType === 'Relu' &&
+              node.outputs[0] === nextNode.inputs[0]) {
+            // Fuse relu
+            inputs.push(this._addScalarInt32(this._nn.FUSED_RELU));
+            i++;
+            node = nextNode;
+          } else {
+            inputs.push(this._addScalarInt32(this._nn.FUSED_NONE));
+          }
 
-        // Add outputs
-        const outputHeight = Math.floor((inputHeight - kernelHeight + paddingHeightBegin+paddingHeightEnd)/strideY + 1);
-        const outputWidth = Math.floor((inputWidth - kernelWidth + paddingWidthBegin + paddingWidthEnd)/strideX + 1);
-        const outputChannels = isDepthWiseConv ? nGroups : nChannels;
-        const outputDims = [batch, outputHeight, outputWidth, outputChannels];
-        const outputData = new Float32Array(ShapeUtil.size(outputDims));
-        const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
-        this._outputsMapping.push({nnTensorId: outputId, nnOutputIndex: 0})
-        outputs.push(outputId);
+          // reshape kernel for depthwise conv
+          const [batch, inputHeight, inputWidth, inputChannels] = input.dims;
+          let isDepthWiseConv = false;
+          if (nGroups > 1) {
+            if (nGroups !== inputChannels) {
+              throw new Error('Group convolution is not supported.');
+            } else {
+              isDepthWiseConv = true;
+              let nhwc = convFilter.floatData;
+              // NHWC -> CHWN where C === 1
+              let chwnData = new Float32Array(nhwc.length);
+              const N = dims[0];
+              const H = dims[1];
+              const W = dims[2];
+              for (let n = 0; n < N; ++n) {
+                for (let h = 0; h < H; ++h) {
+                  for (let w = 0; w < W; ++w) {
+                    chwnData[h*W*N + w*N + n] = nhwc[n*H*W + h*W + w];
+                  }
+                }
+              }
 
-        opType = isDepthWiseConv ? this._nn.DEPTHWISE_CONV_2D : this._nn.CONV_2D;
-      } break;
-      case 'BatchNormalization': {
-        // Add inputs
-        const input = inputTensors[0];
-        const scale = inputTensors[1];
-        const bnBias = inputTensors[2];
-        const mean = inputTensors[3];
-        const variance = inputTensors[4];
-        const epsilon = attributes.getFloat('epsilon', 1e-5);
+              this._setOperandValue(convFilterId, chwnData);
+              const convFilterType = this._getTensorTypeById(convFilterId);
+              convFilterType.dimensions![0] = 1;
+              convFilterType.dimensions![3] = nGroups;
 
-        const scaleTensor = scale.floatData;
-        const meanTensor = mean.floatData;
-        const varTensor = variance.floatData;
-        const bnBiasTensor = bnBias.floatData;
+              // set multiplier to 1, not used in onnx model
+              inputs.splice(9, 0, this._addScalarInt32(1));
+            }
+          }
 
-        // Conv with identity kernel
-        const nChannels = input.dims[3];
-        const convFilterTensor = new Float32Array(nChannels * nChannels).fill(0);
-        const convBiasTensor = new Float32Array(nChannels).fill(0);
-        const convFilterDims = [nChannels, 1, 1, nChannels];
-        const convBiasDims = [nChannels];
+          // Add outputs
+          const outputHeight = Math.floor((inputHeight-kernelHeight + paddingHeightBegin+paddingHeightEnd)/strideY + 1);
+          const outputWidth = Math.floor((inputWidth - kernelWidth + paddingWidthBegin + paddingWidthEnd)/strideX + 1);
+          const outputChannels = isDepthWiseConv ? nGroups : nChannels;
+          const outputDims = [batch, outputHeight, outputWidth, outputChannels];
+          const outputData = new Float32Array(ShapeUtil.size(outputDims));
+          const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
+          const outputTensor =
+              new Tensor(outputDims, 'float32', undefined, undefined, undefined, undefined, 'NHWC', outputData);
+          this._tensorData[node.outputs[0]] = {tensor: outputTensor, nnTensorId: outputId};
+          outputs.push(outputId);
 
-        for (let c = 0; c < nChannels; c++) {
-          const w = scaleTensor[c] / Math.sqrt(varTensor[c] + epsilon);
-          convFilterTensor[c * nChannels + c] = w;
-          convBiasTensor[c] = bnBiasTensor[c] - w * meanTensor[c];
-        }
+          opType = isDepthWiseConv ? this._nn.DEPTHWISE_CONV_2D : this._nn.CONV_2D;
+        } break;
+        case 'BatchNormalization': {
+          // Add inputs
+          const input = this._getTensorByOnnxId(node.inputs[0]);
+          const scale = this._getTensorByOnnxId(node.inputs[1]);
+          const bnBias = this._getTensorByOnnxId(node.inputs[2]);
+          const mean = this._getTensorByOnnxId(node.inputs[3]);
+          const variance = this._getTensorByOnnxId(node.inputs[4]);
+          const epsilon = attributes.getFloat('epsilon', 1e-5);
 
-        const inputId = this._addTensorFloat32(input.floatData, input.dims);
-        this._inputsMapping.push({nnTensorId: inputId, nnInputIndex: 0, onnxInputIndex: 0});
+          const scaleTensor = scale.floatData;
+          const meanTensor = mean.floatData;
+          const varTensor = variance.floatData;
+          const bnBiasTensor = bnBias.floatData;
 
-        inputs.push(inputId);
-        inputs.push(this._addTensorFloat32(convFilterTensor, convFilterDims));
-        inputs.push(this._addTensorFloat32(convBiasTensor, convBiasDims));
-        // paddings
-        inputs.push(this._addScalarInt32(0));
-        inputs.push(this._addScalarInt32(0));
-        inputs.push(this._addScalarInt32(0));
-        inputs.push(this._addScalarInt32(0));
-        // strides
-        inputs.push(this._addScalarInt32(1));
-        inputs.push(this._addScalarInt32(1));
+          // Conv with identity kernel
+          const nChannels = input.dims[3];
+          const convFilterTensor = new Float32Array(nChannels * nChannels).fill(0);
+          const convBiasTensor = new Float32Array(nChannels).fill(0);
+          const convFilterDims = [nChannels, 1, 1, nChannels];
+          const convBiasDims = [nChannels];
 
-        inputs.push(this._addScalarInt32(this._nn.FUSED_NONE));
+          for (let c = 0; c < nChannels; c++) {
+            const w = scaleTensor[c] / Math.sqrt(varTensor[c] + epsilon);
+            convFilterTensor[c * nChannels + c] = w;
+            convBiasTensor[c] = bnBiasTensor[c] - w * meanTensor[c];
+          }
 
-        // Add outputs
-        const outputDims = Array.from(input.dims);
-        const outputData = new Float32Array(ShapeUtil.size(outputDims));
-        const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
-        this._outputsMapping.push({nnTensorId: outputId, nnOutputIndex: 0})
-        outputs.push(outputId);
+          inputs.push(this._tensorData[node.inputs[0]].nnTensorId!);
+          inputs.push(this._addTensorFloat32(convFilterTensor, convFilterDims));
+          inputs.push(this._addTensorFloat32(convBiasTensor, convBiasDims));
+          // paddings
+          inputs.push(this._addScalarInt32(0));
+          inputs.push(this._addScalarInt32(0));
+          inputs.push(this._addScalarInt32(0));
+          inputs.push(this._addScalarInt32(0));
+          // strides
+          inputs.push(this._addScalarInt32(1));
+          inputs.push(this._addScalarInt32(1));
 
-        opType = this._nn.CONV_2D;
-      } break;
-      case 'Relu': {
-        // Add inputs
-        const input = inputTensors[0];
+          let nextNode = this.subgraph.nodes[i + 1];
+          if (nextNode &&
+              nextNode.opType === 'Relu' &&
+              node.outputs[0] === nextNode.inputs[0]) {
+            // Fuse relu
+            inputs.push(this._addScalarInt32(this._nn.FUSED_RELU));
+            i++;
+            node = nextNode;
+          } else {
+            inputs.push(this._addScalarInt32(this._nn.FUSED_NONE));
+          }
 
-        // Conv with identity kernel
-        const nChannels = input.dims[3];
-        const convFilterTensor = new Float32Array(nChannels * nChannels).fill(0);
-        const convBiasTensor = new Float32Array(nChannels).fill(0);
-        const convFilterDims = [nChannels, 1, 1, nChannels];
-        const convBiasDims = [nChannels];
+          // Add outputs
+          const outputDims = Array.from(input.dims);
+          const outputData = new Float32Array(ShapeUtil.size(outputDims));
+          const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
+          const outputTensor =
+              new Tensor(outputDims, 'float32', undefined, undefined, undefined, undefined, 'NHWC', outputData);
+          this._tensorData[node.outputs[0]] = {tensor: outputTensor, nnTensorId: outputId};
+          outputs.push(outputId);
 
-        for (let c = 0; c < nChannels; c++) {
-          convFilterTensor[c * nChannels + c] = 1;
-        }
+          opType = this._nn.CONV_2D;
+        } break;
+        case 'Relu': {
+          // Add inputs
+          const input = this._getTensorByOnnxId(node.inputs[0]);
 
-        const inputId = this._addTensorFloat32(input.floatData, input.dims);
-        this._inputsMapping.push({nnTensorId: inputId, nnInputIndex: 0, onnxInputIndex: 0});
+          // Conv with identity kernel
+          const nChannels = input.dims[3];
+          const convFilterTensor = new Float32Array(nChannels * nChannels).fill(0);
+          const convBiasTensor = new Float32Array(nChannels).fill(0);
+          const convFilterDims = [nChannels, 1, 1, nChannels];
+          const convBiasDims = [nChannels];
 
-        inputs.push(inputId);
-        inputs.push(this._addTensorFloat32(convFilterTensor, convFilterDims));
-        inputs.push(this._addTensorFloat32(convBiasTensor, convBiasDims));
-        // paddings
-        inputs.push(this._addScalarInt32(0));
-        inputs.push(this._addScalarInt32(0));
-        inputs.push(this._addScalarInt32(0));
-        inputs.push(this._addScalarInt32(0));
-        // strides
-        inputs.push(this._addScalarInt32(1));
-        inputs.push(this._addScalarInt32(1));
-        inputs.push(this._addScalarInt32(this._nn.FUSED_RELU));
+          for (let c = 0; c < nChannels; c++) {
+            convFilterTensor[c * nChannels + c] = 1;
+          }
 
-        // Add outputs
-        const outputDims = Array.from(input.dims);
-        const outputData = new Float32Array(ShapeUtil.size(outputDims));
-        const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
-        this._outputsMapping.push({nnTensorId: outputId, nnOutputIndex: 0})
-        outputs.push(outputId);
+          inputs.push(this._tensorData[node.inputs[0]].nnTensorId!);
+          inputs.push(this._addTensorFloat32(convFilterTensor, convFilterDims));
+          inputs.push(this._addTensorFloat32(convBiasTensor, convBiasDims));
+          // paddings
+          inputs.push(this._addScalarInt32(0));
+          inputs.push(this._addScalarInt32(0));
+          inputs.push(this._addScalarInt32(0));
+          inputs.push(this._addScalarInt32(0));
+          // strides
+          inputs.push(this._addScalarInt32(1));
+          inputs.push(this._addScalarInt32(1));
+          inputs.push(this._addScalarInt32(this._nn.FUSED_RELU));
 
-        opType = this._nn.CONV_2D;
-      } break;
-      case 'Mul':
-      case 'Sum':
-      case 'Add': {
+          // Add outputs
+          const outputDims = Array.from(input.dims);
+          const outputData = new Float32Array(ShapeUtil.size(outputDims));
+          const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
+          const outputTensor =
+              new Tensor(outputDims, 'float32', undefined, undefined, undefined, undefined, 'NHWC', outputData);
+          this._tensorData[node.outputs[0]] = {tensor: outputTensor, nnTensorId: outputId};
+          outputs.push(outputId);
 
-        if (this._onnxNode.opType === 'Sum' && inputTensors.length !== 2) {
-          throw new Error(`Only support Sum with two inputs`);
-        }
+          opType = this._nn.CONV_2D;
+        } break;
+        case 'Mul':
+        case 'Sum':
+        case 'Add': {
 
-        const in1 = inputTensors[0];
-        const in2 = inputTensors[1];
-        const in1Id = this._addTensorFloat32(in1.floatData, in1.dims);
-        const in2Id = this._addTensorFloat32(in2.floatData, in2.dims);
-        this._inputsMapping.push({nnTensorId: in1Id, nnInputIndex: 0, onnxInputIndex: 0});
-        this._inputsMapping.push({nnTensorId: in2Id, nnInputIndex: 1, onnxInputIndex: 1});
-        inputs.push(in1Id);
-        inputs.push(in2Id);
+          if (node.opType === 'Sum' && node.inputs.length !== 2) {
+            throw new Error(`Only support Sum with two inputs`);
+          }
+          const in1 = this._getTensorByOnnxId(node.inputs[0]);
+          const in2 = this._getTensorByOnnxId(node.inputs[1]);
+          inputs.push(this._tensorData[node.inputs[0]].nnTensorId!);
+          inputs.push(this._tensorData[node.inputs[1]].nnTensorId!);
+          inputs.push(this._addScalarInt32(this._nn.FUSED_NONE));
 
-        inputs.push(this._addScalarInt32(this._nn.FUSED_NONE));
+          // Add outputs
+          const in1Dims = in1.dims;
+          const in2Dims = in2.dims;
 
-        // Add outputs
-        const in1Dims = in1.dims;
-        const in2Dims = in2.dims;
+          // Compatible dims (multidirectional broadcasting)
+          const outputDims = new Array(Math.max(in1Dims.length, in2Dims.length));
+          for (let i = in1Dims.length - 1, j = in2Dims.length - 1, k = outputDims.length - 1; k >= 0;) {
+            let dim1 = in1Dims[i--] || 1;
+            let dim2 = in2Dims[j--] || 1;
+            if (dim1 !== dim2 && dim1 !== 1 && dim2 !== 1)
+              throw new Error(`Dimensions of ${in1} and ${in2} are not compatible`);
+            outputDims[k--] = Math.max(dim1, dim2);
+          }
 
-        // Compatible dims (multidirectional broadcasting)
-        const outputDims = new Array(Math.max(in1Dims.length, in2Dims.length));
-        for (let i = in1Dims.length - 1, j = in2Dims.length - 1, k = outputDims.length - 1; k >= 0;) {
-          let dim1 = in1Dims[i--] || 1;
-          let dim2 = in2Dims[j--] || 1;
-          if (dim1 !== dim2 && dim1 !== 1 && dim2 !== 1)
-            throw new Error(`Dimensions of ${in1} and ${in2} are not compatible`);
-          outputDims[k--] = Math.max(dim1, dim2);
-        }
+          const outputData = new Float32Array(ShapeUtil.size(outputDims));
+          const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
+          const outputTensor =
+              new Tensor(outputDims, 'float32', undefined, undefined, undefined, undefined, 'NHWC', outputData);
+          this._tensorData[node.outputs[0]] = {tensor: outputTensor, nnTensorId: outputId};
+          outputs.push(outputId);
 
-        const outputData = new Float32Array(ShapeUtil.size(outputDims));
-        const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
-        this._outputsMapping.push({nnTensorId: outputId, nnOutputIndex: 0})
-        outputs.push(outputId);
+          if (node.opType === 'Add' || node.opType === 'Sum') {
+            opType = this._nn.ADD;
+          } else if (node.opType === 'Mul') {
+            opType = this._nn.MUL;
+          }
+        } break;
+        case 'Gemm': {
+          // Add inputs
+          const input = this._getTensorByOnnxId(node.inputs[0]);    // A
+          const weights = this._getTensorByOnnxId(node.inputs[1]);  // B
+          const bias = this._getTensorByOnnxId(node.inputs[2]);     // C
 
-        if (this._onnxNode.opType === 'Add' || this._onnxNode.opType === 'Sum') {
-          opType = this._nn.ADD;
-        } else if (this._onnxNode.opType === 'Mul') {
-          opType = this._nn.MUL;
-        }
-      } break;
-      case 'Gemm': {
-        // Add inputs
-        const input = inputTensors[0];    // A
-        const weights = inputTensors[1];  // B
-        const bias = inputTensors[2];     // C
+          const alpha  = attributes.getFloat('alpha', 1.0);
+          const beta   = attributes.getFloat('beta', 1.0);
+          const transA = attributes.getInt('transA', 0);
+          const transB = attributes.getInt('transB', 0);
 
-        const alpha  = attributes.getInt('alpha',  1);
-        const beta   = attributes.getInt('beta',   1);
-        const transA = attributes.getInt('transA', 0);
-        const transB = attributes.getInt('transB', 0);
+          if (alpha !== 1 || beta !== 1 || transA || !transB) {
+            throw new Error('Only support fc-like Gemm oprations, i.e. alpha == beta == 1 && !transA && transB');
+          }
 
-        if (alpha !== 1 || beta !== 1 || transA || !transB) {
-          throw new Error('Only support fc-like Gemm oprations, i.e. alpha == beta == 1 && !transA && transB');
-        }
+          const weightsId = this._addTensorFloat32(weights.floatData as Float32Array, weights.dims);
+          const biasId = this._addTensorFloat32(bias.floatData as Float32Array, bias.dims);
 
-        const inputId = this._addTensorFloat32(input.floatData, input.dims);
-        this._inputsMapping.push({nnTensorId: inputId, nnInputIndex: 0, onnxInputIndex: 0});
-        const weightsId = this._addTensorFloat32(weights.floatData, weights.dims);
-        const biasId = this._addTensorFloat32(bias.floatData, bias.dims);
+          inputs.push(this._tensorData[node.inputs[0]].nnTensorId!);
+          inputs.push(weightsId);
+          inputs.push(biasId);
+          inputs.push(this._addScalarInt32(this._nn.FUSED_RELU));
 
-        inputs.push(inputId);
-        inputs.push(weightsId);
-        inputs.push(biasId);
-        inputs.push(this._addScalarInt32(this._nn.FUSED_RELU));
+          // Add outputs
+          const nUnits = weights.dims[0];
+          const batchSize = ShapeUtil.size(input.dims) / weights.dims[1];
+          const outputDims = [batchSize, nUnits];
+          const outputData = new Float32Array(ShapeUtil.size(outputDims));
+          const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
+          const outputTensor =
+              new Tensor(outputDims, 'float32', undefined, undefined, undefined, undefined, 'NHWC', outputData);
+          this._tensorData[node.outputs[0]] = {tensor: outputTensor, nnTensorId: outputId};
+          outputs.push(outputId);
 
-        // Add outputs
-        const nUnits = weights.dims[0];
-        const batchSize = ShapeUtil.size(input.dims) / weights.dims[1];
-        const outputDims = [batchSize, nUnits];
-        const outputData = new Float32Array(ShapeUtil.size(outputDims));
-        const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
-        this._outputsMapping.push({nnTensorId: outputId, nnOutputIndex: 0})
-        outputs.push(outputId);
+          opType = this._nn.FULLY_CONNECTED;
+        } break;
+        case 'AveragePool':
+        case 'MaxPool': {
+          const input = this._getTensorByOnnxId(node.inputs[0]);
+          inputs.push(this._tensorData[node.inputs[0]].nnTensorId!);
 
-        opType = this._nn.FULLY_CONNECTED;
-      } break;
-      case 'AveragePool':
-      case 'MaxPool': {
-        const input = inputTensors[0];
-        const inputId = this._addTensorFloat32(input.floatData, input.dims);
-        this._inputsMapping.push({nnTensorId: inputId, nnInputIndex: 0, onnxInputIndex: 0});
-        inputs.push(inputId);
+          const pads = attributes.getInts('pads', [0, 0, 0, 0]);
+          if (pads.length !== 4) {
+            throw new Error('Invalid pads');
+          }
+          const paddingHeightBegin = pads[0];
+          const paddingWidthBegin = pads[1];
+          const paddingHeightEnd = pads[2];
+          const paddingWidthEnd = pads[3];
+          inputs.push(this._addScalarInt32(paddingWidthBegin));
+          inputs.push(this._addScalarInt32(paddingWidthEnd));
+          inputs.push(this._addScalarInt32(paddingHeightBegin));
+          inputs.push(this._addScalarInt32(paddingHeightEnd));
 
-        const pads = attributes.getInts('pads', [0, 0, 0, 0]);
-        if (pads.length !== 4) {
-          throw new Error('Invalid pads');
-        }
-        const paddingHeightBegin = pads[0];
-        const paddingWidthBegin = pads[1];
-        const paddingHeightEnd = pads[2];
-        const paddingWidthEnd = pads[3];
-        inputs.push(this._addScalarInt32(paddingWidthBegin));
-        inputs.push(this._addScalarInt32(paddingWidthEnd));
-        inputs.push(this._addScalarInt32(paddingHeightBegin));
-        inputs.push(this._addScalarInt32(paddingHeightEnd));
+          const strides = attributes.getInts('strides', [1, 1]);
+          if (!strides || strides.length !== 2) {
+            throw new Error('Invalid strides');
+          }
+          const strideY = strides[0];
+          const strideX = strides[1];
+          inputs.push(this._addScalarInt32(strideX));
+          inputs.push(this._addScalarInt32(strideY));
 
-        const strides = attributes.getInts('strides', [1, 1]);
-        if (!strides || strides.length !== 2) {
-          throw new Error('Invalid strides');
-        }
-        const strideY = strides[0];
-        const strideX = strides[1];
-        inputs.push(this._addScalarInt32(strideX));
-        inputs.push(this._addScalarInt32(strideY));
+          const kernelShape = attributes.getInts('kernel_shape', []);
+          if (!kernelShape || kernelShape.length !== 2) {
+            throw new Error('Invalid kernelShape');
+          }
+          const kernelHeight = kernelShape[0];
+          const kernelWidth = kernelShape[1];
+          inputs.push(this._addScalarInt32(kernelWidth));
+          inputs.push(this._addScalarInt32(kernelHeight));
+          inputs.push(this._addScalarInt32(this._nn.FUSED_NONE));
 
-        const kernelShape = attributes.getInts('kernel_shape', []);
-        if (!kernelShape || kernelShape.length !== 2) {
-          throw new Error('Invalid kernelShape');
-        }
-        const kernelHeight = kernelShape[0];
-        const kernelWidth = kernelShape[1];
-        inputs.push(this._addScalarInt32(kernelWidth));
-        inputs.push(this._addScalarInt32(kernelHeight));
-        inputs.push(this._addScalarInt32(this._nn.FUSED_NONE));
+          const [batch, inputHeight, inputWidth, inputChannels] = input.dims;
+          const outputHeight =
+              Math.floor((inputHeight - kernelHeight + paddingHeightBegin + paddingHeightEnd)/strideY+1);
+          const outputWidth = Math.floor((inputWidth - kernelWidth + paddingWidthBegin + paddingWidthEnd)/strideX + 1);
+          const outputDims = [batch, outputHeight, outputWidth, inputChannels];
+          const outputData = new Float32Array(ShapeUtil.size(outputDims));
+          const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
+          const outputTensor =
+              new Tensor(outputDims, 'float32', undefined, undefined, undefined, undefined, 'NHWC', outputData);
+          this._tensorData[node.outputs[0]] = {tensor: outputTensor, nnTensorId: outputId};
+          outputs.push(outputId);
 
-        const [batch, inputHeight, inputWidth, inputChannels] = input.dims;
-        const outputHeight = Math.floor((inputHeight - kernelHeight + paddingHeightBegin + paddingHeightEnd)/strideY+1);
-        const outputWidth = Math.floor((inputWidth - kernelWidth + paddingWidthBegin + paddingWidthEnd)/strideX + 1);
-        const outputDims = [batch, outputHeight, outputWidth, inputChannels];
-        const outputData = new Float32Array(ShapeUtil.size(outputDims));
-        const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
-        this._outputsMapping.push({nnTensorId: outputId, nnOutputIndex: 0})
-        outputs.push(outputId);
+          if (node.opType === 'MaxPool') {
+            opType = this._nn.MAX_POOL_2D;
+          } else if (node.opType === 'AveragePool') {
+            opType = this._nn.AVERAGE_POOL_2D;
+          }
+        } break;
+        case 'Reshape': {
+          const input = this._getTensorByOnnxId(node.inputs[0]);
+          const shape = this._getTensorByOnnxId(node.inputs[1]);
+          const shapeId = this._addTensorInt32(shape.integerData as Int32Array, shape.dims);
+          inputs.push(this._tensorData[node.inputs[0]].nnTensorId!);
+          inputs.push(shapeId);
 
-        if (this._onnxNode.opType === 'MaxPool') {
-          opType = this._nn.MAX_POOL_2D;
-        } else if (this._onnxNode.opType === 'AveragePool') {
+          const inputDims = input.dims;
+          let outputDims = Array.from(shape.integerData);
+          // dim == 0 means actual dim is unchanged, i.e. taken from the inputDim
+          outputDims = outputDims.map((d, i) => d === 0 ? inputDims[i] : d);
+          // At most one dimension of the new shape can be -1
+          const minusOneCnt = outputDims.filter(x => x === -1).length;
+          if (minusOneCnt === 1) {
+            const nonAdaptDim = outputDims.filter(x => x !== -1);
+            const adaptDimIdx = outputDims.indexOf(-1);
+            outputDims[adaptDimIdx] = ShapeUtil.size(inputDims) / ShapeUtil.size(nonAdaptDim);
+          } else if (minusOneCnt !== 0) {
+            throw new Error(`Invalid shape ${outputDims}`);
+          }
+          this._setOperandValue(shapeId, new Int32Array(outputDims));
+
+          // Add outputs
+          const outputData = new Float32Array(ShapeUtil.size(outputDims));
+          const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
+          const outputTensor =
+              new Tensor(outputDims, 'float32', undefined, undefined, undefined, undefined, 'NHWC', outputData);
+          this._tensorData[node.outputs[0]] = {tensor: outputTensor, nnTensorId: outputId};
+          outputs.push(outputId);
+
+          opType = this._nn.RESHAPE;
+        } break;
+        case 'Concat': {
+          for (let i = 0; i < node.inputs.length; ++i) {
+            inputs.push(this._tensorData[node.inputs[i]].nnTensorId!);
+          }
+
+          const axis = attributes.getInt('axis');
+          if (axis && axis !== 1) {
+            throw new Error(`Invalid axis ${axis}`);
+          }
+          // C axis is 3 in NHWC layout
+          const concatAxis = 3;
+          inputs.push(this._addScalarInt32(concatAxis));
+
+          // Add output
+          let outputDims = Array.from(this._getTensorByOnnxId(node.inputs[0]).dims);
+          for (let i = 1; i < node.inputs.length; ++i) {
+            outputDims[concatAxis] += this._getTensorByOnnxId(node.inputs[i]).dims[concatAxis];
+          }
+          const outputData = new Float32Array(ShapeUtil.size(outputDims));
+          const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
+          const outputTensor =
+              new Tensor(outputDims, 'float32', undefined, undefined, undefined, undefined, 'NHWC', outputData);
+          this._tensorData[node.outputs[0]] = {tensor: outputTensor, nnTensorId: outputId};
+          outputs.push(outputId);
+
+          opType = this._nn.CONCATENATION;
+        } break;
+        case 'GlobalAveragePool': {
+          const input = this._getTensorByOnnxId(node.inputs[0]);
+          inputs.push(this._tensorData[node.inputs[0]].nnTensorId!);
+          // paddings
+          inputs.push(this._addScalarInt32(0));
+          inputs.push(this._addScalarInt32(0));
+          inputs.push(this._addScalarInt32(0));
+          inputs.push(this._addScalarInt32(0));
+          // strides
+          inputs.push(this._addScalarInt32(1));
+          inputs.push(this._addScalarInt32(1));
+          // filters
+          const [batch, inputHeight, inputWidth, inputChannels] = input.dims;
+          inputs.push(this._addScalarInt32(inputWidth));
+          inputs.push(this._addScalarInt32(inputHeight));
+          inputs.push(this._addScalarInt32(this._nn.FUSED_NONE));
+
+          // Add outputs
+          const outputHeight = 1;
+          const outputWidth = 1;
+          const outputDims = [batch, outputHeight, outputWidth, inputChannels];
+          const outputData = new Float32Array(ShapeUtil.size(outputDims));
+          const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
+          const outputTensor =
+              new Tensor(outputDims, 'float32', undefined, undefined, undefined, undefined, 'NHWC', outputData);
+          this._tensorData[node.outputs[0]] = {tensor: outputTensor, nnTensorId: outputId};
+          outputs.push(outputId);
+
           opType = this._nn.AVERAGE_POOL_2D;
+        } break;
+        case 'Softmax': {
+          const input = this._getTensorByOnnxId(node.inputs[0]);
+          inputs.push(this._tensorData[node.inputs[0]].nnTensorId!);
+          // Set beta to 1.0
+          inputs.push(this._addScalarFloat32(1.0));
+
+          const outputDims = input.dims;
+          const outputData = new Float32Array(ShapeUtil.size(outputDims));
+          outputData[0] = 1;
+          const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
+          const outputTensor =
+              new Tensor(outputDims, 'float32', undefined, undefined, undefined, undefined, 'NHWC', outputData);
+          this._tensorData[node.outputs[0]] = {tensor: outputTensor, nnTensorId: outputId};
+          outputs.push(outputId);
+
+          opType = this._nn.SOFTMAX;
+        } break;
+        default: {
+          throw new Error(`${node.opType} is not supported.}`);
         }
-      } break;
-      case 'Reshape': {
-        const input = inputTensors[0];
-        const shape = inputTensors[1];
-        const inputId = this._addTensorFloat32(input.floatData, input.dims);
-        this._inputsMapping.push({nnTensorId: inputId, nnInputIndex: 0, onnxInputIndex: 0});
-        const shapeId = this._addTensorInt32(shape.integerData, shape.dims);
-        inputs.push(inputId);
-        inputs.push(shapeId);
-
-        const inputDims = input.dims;
-        let outputDims = Array.from(shape.integerData);
-        // dim == 0 means actual dim is unchanged, i.e. taken from the inputDim
-        outputDims = outputDims.map((d, i) => d === 0 ? inputDims[i] : d);
-        // At most one dimension of the new shape can be -1
-        const minusOneCnt = outputDims.filter(x => x === -1).length;
-        if (minusOneCnt === 1) {
-          const nonAdaptDim = outputDims.filter(x => x !== -1);
-          const adaptDimIdx = outputDims.indexOf(-1);
-          outputDims[adaptDimIdx] = ShapeUtil.size(inputDims) / ShapeUtil.size(nonAdaptDim);
-        } else if (minusOneCnt !== 0) {
-          throw new Error(`Invalid shape ${outputDims}`);
-        }
-        this._setOperandValue(shapeId, new Int32Array(outputDims));
-
-        // Add outputs
-        const outputData = new Float32Array(ShapeUtil.size(outputDims));
-        const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
-        this._outputsMapping.push({nnTensorId: outputId, nnOutputIndex: 0})
-
-        outputs.push(outputId);
-        opType = this._nn.RESHAPE;
-      } break;
-      case 'Concat': {
-        for (let i = 0; i < inputTensors.length; ++i) {
-          const input = inputTensors[i];
-          const inputId = this._addTensorFloat32(input.floatData, input.dims);
-          inputs.push(inputId);
-          this._inputsMapping.push({nnTensorId: inputId, nnInputIndex: i, onnxInputIndex: i});
-        }
-
-        const axis = attributes.getInt('axis');
-        if (axis && axis !== 1) {
-          throw new Error(`Invalid axis ${axis}`);
-        }
-        // C axis is 3 in NHWC layout
-        const concatAxis = 3;
-        inputs.push(this._addScalarInt32(concatAxis));
-
-        // Add output
-        let outputDims = Array.from(inputTensors[0].dims);
-        for (let i = 1; i < inputTensors.length; ++i) {
-          outputDims[concatAxis] += inputTensors[i].dims[concatAxis];
-        }
-        const outputData = new Float32Array(ShapeUtil.size(outputDims));
-        const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
-        this._outputsMapping.push({nnTensorId: outputId, nnOutputIndex: 0})
-        outputs.push(outputId);
-
-        opType = this._nn.CONCATENATION;
-      } break;
-      case 'GlobalAveragePool': {
-        const input = inputTensors[0];
-        const inputId = this._addTensorFloat32(input.floatData, input.dims);
-        this._inputsMapping.push({nnTensorId: inputId, nnInputIndex: 0, onnxInputIndex: 0});
-        inputs.push(inputId);
-        // paddings
-        inputs.push(this._addScalarInt32(0));
-        inputs.push(this._addScalarInt32(0));
-        inputs.push(this._addScalarInt32(0));
-        inputs.push(this._addScalarInt32(0));
-        // strides
-        inputs.push(this._addScalarInt32(1));
-        inputs.push(this._addScalarInt32(1));
-        // filters
-        const [batch, inputHeight, inputWidth, inputChannels] = input.dims;
-        inputs.push(this._addScalarInt32(inputWidth));
-        inputs.push(this._addScalarInt32(inputHeight));
-        inputs.push(this._addScalarInt32(this._nn.FUSED_NONE));
-
-        // Add outputs
-        const outputHeight = 1;
-        const outputWidth = 1;
-        const outputDims = [batch, outputHeight, outputWidth, inputChannels];
-        const outputData = new Float32Array(ShapeUtil.size(outputDims));
-        const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
-        this._outputsMapping.push({nnTensorId: outputId, nnOutputIndex: 0});
-        outputs.push(outputId);
-
-        opType = this._nn.AVERAGE_POOL_2D;
-      } break;
-      case 'Softmax': {
-        const input = inputTensors[0];
-        const inputId = this._addTensorFloat32(input.floatData, input.dims);
-        this._inputsMapping.push({nnTensorId: inputId, nnInputIndex: 0, onnxInputIndex: 0});
-        inputs.push(inputId);
-        // Set beta to 1.0
-        inputs.push(this._addScalarFloat32(1.0));
-
-        const outputDims = input.dims;
-        const outputData = new Float32Array(ShapeUtil.size(outputDims));
-        const outputId = this._addTensorFloat32(outputData, outputDims);  // allocate output placehoder
-        this._outputsMapping.push({nnTensorId: outputId, nnOutputIndex: 0})
-        outputs.push(outputId);
-
-        opType = this._nn.SOFTMAX;
-      } break;
-      default: {
-        throw new Error(`${this._onnxNode.opType} is not supported.}`);
       }
-    }
 
-    this._addOperation(opType, inputs, outputs);
+      this._addOperation(opType, inputs, outputs);
+    }
 
     // write back all cached operands and operations
     for (const type of this._tensorTypes) {
@@ -563,19 +608,14 @@ export class NNSubgraph implements Operator {
     for (const [opCode, inputs, outputs] of this._operations) {
       this._model.addOperation(opCode, inputs, outputs);
     }
-
-    // recover to NCHW
-    inputTensors.forEach((t) => t.toNCHW());
-
   }
 
-  _getOperandValue(id: number) {
-    const data = this._nnOperands[id]
-    if (!data) {
-      throw new Error('No tensor data');
-    } else {
-      return data;
+  _getTensorByOnnxId(id: number) {
+    const data = this._tensorData[id];
+    if (data === undefined) {
+      throw new Error(`Cannot find tensor ${id}`);
     }
+    return data.tensor;
   }
 
   _setOperandValue(index: number, value: NNTensorType) {
@@ -609,31 +649,27 @@ export class NNSubgraph implements Operator {
     return this._addOperand({type: this._nn.FLOAT32}, new Float32Array([value]));
   }
 
-  _addTensorFloat32(tensor: Tensor.FloatType, dims: number[]) {
+  _addTensorFloat32(tensor: Float32Array, dims: number[]) {
     return this._addOperand({
       type: this._nn.TENSOR_FLOAT32,
       dimensions: dims
-    }, new Float32Array(tensor));
+    }, tensor);
   }
 
-  _addTensorInt32(tensor: Tensor.IntegerType, dims: number[]) {
+  _addTensorInt32(tensor: Int32Array, dims: number[]) {
     return this._addOperand({
       type: this._nn.TENSOR_INT32,
       dimensions: dims
-    }, new Int32Array(tensor));
+    }, tensor);
   }
 
-  // @ts-ignore
-  private _subgraphName: string;
   private _operandIndex: number;
-  private _inputsMapping: Array<{nnInputIndex?: number, onnxInputIndex: number, nnTensorId: number}>;
-  private _outputsMapping: Array<{nnOutputIndex?: number, nnTensorId: number}>;
   private _nnOperands: NNTensorType[];
   private _operations: any[];
   private _tensorTypes: OperandOptions[];
+  private _tensorData: {tensor: Tensor, nnTensorId?: number}[];
   private _nn: NeuralNetworkContext;
   private _model: Model;
   private _compilation: Compilation;
   private _execution: Execution;
-  private _outputTensors: Tensor[];
 }

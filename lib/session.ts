@@ -6,7 +6,7 @@ import {promisify} from 'util';
 
 import {Backend, SessionHandlerType} from './backend';
 import {ExecutionPlan} from './execution-plan';
-import {Graph} from './graph';
+import {Graph, NNSubgraphNode} from './graph';
 import {Profiler} from './instrument';
 import {Model} from './model';
 import {Operator} from './operators';
@@ -36,6 +36,7 @@ export class Session {
     this.context = {profiler: this.profiler, graphInputTypes: [], graphInputDims: []};
     this.supportedOps = new Set(config.supportedOps || []);
     this.enablePseudoReorder = config.enablePseudoReorder || false;
+    console.log(this.supportedOps);
   }
 
   startProfiling() {
@@ -249,11 +250,29 @@ export class Session {
 
   private initializeOps(graph: Graph): void {
     const nodes = graph.getNodes();
+    const values = graph.getValues();
     this._ops = new Array(nodes.length);
 
     for (let i = 0; i < nodes.length; i++) {
-      if (this.supportedOps.has(nodes[i].opType)) {
-        this._ops[i] = new NNSubgraph(nodes[i], this.enablePseudoReorder, this.profiler);
+      // if (this.supportedOps.has(nodes[i].opType)) {
+      //   this._ops[i] = new NNSubgraph(nodes[i], this.enablePseudoReorder, this.profiler);
+      // } else {
+      //   this._ops[i] = this.sessionHandler.resolve(nodes[i], this._model.opsets);
+      // }
+      if (nodes[i].opType === 'NNSubgraph') {
+        const subgraph = nodes[i] as NNSubgraphNode;
+        const initializers = new Map<number, Tensor>();
+
+        for (const subgraphNode of subgraph.nodes) {
+          for (const input of subgraphNode.inputs) {
+            const tensor = values[input].tensor;
+            if (tensor !== undefined) {
+              initializers.set(input, tensor);
+            }
+          }
+        }
+
+        this._ops[i] = new NNSubgraph(subgraph, initializers, this.enablePseudoReorder, this.profiler);
       } else {
         this._ops[i] = this.sessionHandler.resolve(nodes[i], this._model.opsets);
       }

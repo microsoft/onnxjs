@@ -5,8 +5,7 @@ import {Split} from '../../../ops/split';
 import {Tensor} from '../../../tensor';
 import {SplitUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {Artifact, RunData} from '../program-manager';
+import {Artifact, ProgramInfo, RunData} from '../types';
 
 export class WebGLSplit extends Split {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {

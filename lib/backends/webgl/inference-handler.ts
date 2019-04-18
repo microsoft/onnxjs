@@ -10,12 +10,11 @@ import {WebGLBackend} from '../backend-webgl';
 import {WebGLUint8Encode} from './ops/uint8-encode';
 import {ProgramManager} from './program-manager';
 import {WebGLSessionHandler} from './session-handler';
-import {TextureData, TextureLayout} from './texture-data';
 import {Encoder} from './texture-data-encoder';
 import {TextureHelper} from './texture-helper';
 import {WidthHeightPrefs} from './texture-layout-strategy';
+import {TextureData, TextureLayout, WebGLOperator} from './types';
 import {getPackedShape} from './utils';
-import {WebGLOperator} from './webgl-operator';
 
 /**
  * GlInferencContext is reponsible for mapping from Tensors to TextureData

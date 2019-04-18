@@ -4,9 +4,7 @@
 import {Clip} from '../../../ops/clip';
 import {Tensor} from '../../../tensor';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {WebGLOperator} from '../webgl-operator';
+import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 export class WebGLClip extends Clip implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {

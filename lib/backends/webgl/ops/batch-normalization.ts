@@ -4,8 +4,7 @@
 import {BatchNormalization} from '../../../ops/batch-normalization';
 import {Tensor} from '../../../tensor';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
+import {ProgramInfo, RunData} from '../types';
 
 export class WebGLBatchNormalization extends BatchNormalization {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {

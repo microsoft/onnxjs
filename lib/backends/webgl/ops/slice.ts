@@ -4,9 +4,7 @@ import {Slice, SliceV10} from '../../../ops/slice';
 import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {WebGLOperator} from '../webgl-operator';
+import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 export class WebGLSlice extends Slice implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {

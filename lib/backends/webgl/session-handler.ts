@@ -13,9 +13,9 @@ import {WebGLBackend} from '../backend-webgl';
 import {WebGLInferenceHandler} from './inference-handler';
 import {WEBGL_OP_RESOLVE_RULES} from './op-resolve-rules';
 import {ProgramManager} from './program-manager';
-import {TextureData} from './texture-data';
 import {TextureHelper} from './texture-helper';
 import {AlwaysKeepOriginalSizeStrategy, TextureLayoutStrategy} from './texture-layout-strategy';
+import {TextureData} from './types';
 
 export class WebGLSessionHandler implements SessionHandler {
   programManager: ProgramManager;

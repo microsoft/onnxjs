@@ -4,9 +4,7 @@
 import {LeakyRelu} from '../../../ops/leaky-relu';
 import {Tensor} from '../../../tensor';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {WebGLOperator} from '../webgl-operator';
+import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 export class WebGLLeakyRelu extends LeakyRelu implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {

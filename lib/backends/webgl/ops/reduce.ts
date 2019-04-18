@@ -3,9 +3,7 @@
 import {ReduceBase} from '../../../ops/reduce-op';
 import {Tensor} from '../../../tensor';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {WebGLOperator} from '../webgl-operator';
+import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 abstract class WebGLGenericReduce extends ReduceBase implements WebGLOperator {
   abstract getOps(inputs: Tensor[]): string[];

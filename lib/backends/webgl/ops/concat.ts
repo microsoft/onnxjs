@@ -4,9 +4,7 @@
 import {Concat} from '../../../ops/concat';
 import {Tensor} from '../../../tensor';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {WebGLOperator} from '../webgl-operator';
+import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 export class WebGLConcat extends Concat implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {

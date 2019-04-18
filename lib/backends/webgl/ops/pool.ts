@@ -5,10 +5,7 @@ import {AveragePool, GlobalAveragePool, GlobalMaxPool, MaxPool} from '../../../o
 import {Tensor} from '../../../tensor';
 import {PoolConvUtil, ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {TextureLayout} from '../texture-data';
-import {WebGLOperator} from '../webgl-operator';
+import {ProgramInfo, RunData, TextureLayout, WebGLOperator} from '../types';
 
 export class WebGLGlobalAveragePool extends GlobalAveragePool implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {

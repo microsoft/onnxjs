@@ -6,9 +6,7 @@ import {Tensor} from '../../../tensor';
 import {BroadcastUtil, ShapeUtil} from '../../../util';
 import {FunctionType, GlslValueFunction} from '../glsl-definitions';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {WebGLOperator} from '../webgl-operator';
+import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
   constructor(

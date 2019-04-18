@@ -6,9 +6,7 @@ import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
 import {FunctionType, GlslPositionalFunction} from '../glsl-definitions';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {PositionalSubOperator, WebGLOperator} from '../webgl-operator';
+import {PositionalSubOperator, ProgramInfo, RunData, WebGLOperator} from '../types';
 import {WebGLOperatorHelper} from '../webgl-operator-utils';
 
 export class WebGLTranspose extends Transpose implements WebGLOperator, PositionalSubOperator {

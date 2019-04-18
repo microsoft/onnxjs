@@ -4,9 +4,9 @@
 import {Logger, Profiler} from '../../instrument';
 import {Tensor} from '../../tensor';
 
-import {TextureData, TextureLayout} from './texture-data';
 import {Encoder} from './texture-data-encoder';
 import {TextureLayoutStrategy} from './texture-layout-strategy';
+import {TextureData, TextureLayout} from './types';
 import {WebGLContext} from './webgl-context';
 
 /**

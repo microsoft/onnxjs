@@ -4,51 +4,9 @@
 import {Logger, Profiler} from '../../instrument';
 
 import {GlslPreprocessor} from './glsl-preprocessor';
-import {ProgramInfo} from './program-info';
-import {TextureData} from './texture-data';
+import {Artifact, LocationInfo, ProgramInfo, RunData, TextureData, UniformData, VariableInfo} from './types';
 import {WebGLContext} from './webgl-context';
 
-/**
- * Information extracted from Shader source to help with binding later
- */
-export class VariableInfo {
-  type: string;
-  name: string;
-  isVec: boolean;
-  arraySuffix?: string;
-}
-/**
- * LocationInfo contains a mappig from a variable name (inside shader)
- * to its "location" in the compiled program
- */
-export class LocationInfo {
-  variable: VariableInfo;
-  location: WebGLUniformLocation|number;
-}
-/**
- * Artifact is the result of compilation
- * It does not contain input of output data
- * However anything that could be run as a "program"
- */
-export interface Artifact {
-  programInfo: ProgramInfo;
-  program: WebGLProgram;
-  uniformLocations: {[name: string]: LocationInfo};
-  attribLocations: {[name: string]: LocationInfo};
-}
-
-export interface UniformData {
-  [name: string]: number|number[];
-}
-
-export class RunData {
-  inputTextureDatas: TextureData[];
-  outputTextureData: TextureData;
-  uniformData: UniformData;
-  preRun?: (glContext: WebGLContext, artifact: Artifact) => void;
-  postRun?: (glContext: WebGLContext, artifact: Artifact) => void;
-  draw?: (glContext: WebGLContext, artifact: Artifact) => void;
-}
 /**
  * ProgramManager is the main class behind running computations
  * It builds ProgramInfo's into Artifacts

@@ -6,10 +6,8 @@ import {Conv} from '../../../ops/conv';
 import {Tensor} from '../../../tensor';
 import {PoolConvUtil, ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {Artifact, RunData} from '../program-manager';
-import {TextureLayout} from '../texture-data';
 import {Encoder} from '../texture-data-encoder';
+import {Artifact, ProgramInfo, RunData, TextureLayout} from '../types';
 import {WebGLContext} from '../webgl-context';
 
 export class WebGLConv extends Conv {

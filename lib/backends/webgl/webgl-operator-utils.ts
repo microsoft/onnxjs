@@ -3,10 +3,9 @@
 
 import {GlslPositionalFunction} from './glsl-definitions';
 import {WebGLInferenceHandler} from './inference-handler';
-import {TextureLayout} from './texture-data';
 import {WidthHeightPrefs} from './texture-layout-strategy';
+import {PositionalSubOperator, TextureLayout} from './types';
 import {getPackedShape} from './utils';
-import {PositionalSubOperator} from './webgl-operator';
 
 export class WebGLOperatorHelper {
   static getFinalLayout(

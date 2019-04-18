@@ -5,9 +5,7 @@ import {UnaryOp} from '../../../ops/unary-op';
 import {Tensor} from '../../../tensor';
 import {FunctionType, GlslValueFunction} from '../glsl-definitions';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {WebGLOperator} from '../webgl-operator';
+import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 export class WebGLUnaryOp extends UnaryOp implements WebGLOperator {
   constructor(protected typeConstraint: ReadonlyArray<Tensor.DataType>, protected glslFunc: GlslValueFunction) {

@@ -3,7 +3,7 @@
 
 import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {TextureData, TextureLayout} from '../texture-data';
+import {TextureData, TextureLayout} from '../types';
 
 export class WebGLUint8Encode {
   runInternal(inferenceHandler: WebGLInferenceHandler, input: TextureData): TextureData {

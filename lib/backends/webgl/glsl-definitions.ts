@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {ProgramInfo} from './program-info';
-import {VariableInfo} from './program-manager';
+import {ProgramInfo, VariableInfo} from './types';
 import {WebGLContext} from './webgl-context';
 
 export enum FunctionType {

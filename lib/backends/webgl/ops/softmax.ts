@@ -5,9 +5,7 @@ import {Softmax} from '../../../ops/softmax';
 import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {Artifact, RunData} from '../program-manager';
-import {TextureLayout} from '../texture-data';
+import {Artifact, ProgramInfo, RunData, TextureLayout} from '../types';
 
 export class WebGLSoftmax extends Softmax {
   constructor() {

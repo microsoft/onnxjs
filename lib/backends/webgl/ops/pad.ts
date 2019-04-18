@@ -5,10 +5,7 @@ import {Pad} from '../../../ops/pad';
 import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {TextureLayout} from '../texture-data';
-import {WebGLOperator} from '../webgl-operator';
+import {ProgramInfo, RunData, TextureLayout, WebGLOperator} from '../types';
 
 export class WebGLPad extends Pad implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {

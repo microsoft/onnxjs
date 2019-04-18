@@ -6,6 +6,7 @@ import {onnx} from 'onnx-proto';
 import {Attribute} from './attribute';
 import {Tensor} from './tensor';
 import {ProtoUtil} from './util';
+import {GraphUtil} from './graph-utils';
 
 export declare namespace Graph {
   export interface Shape {
@@ -67,6 +68,7 @@ export interface Graph {
   getOutputNames(): ReadonlyArray<string>;
   getValues(): ReadonlyArray<Graph.Value>;
   getNodes(): ReadonlyArray<Graph.Node>;
+  partitionBy(supportedOps: Set<string>): void;
 }
 
 // tslint:disable-next-line:variable-name
@@ -120,20 +122,20 @@ class Node implements Graph.Node {
 }
 
 export class NNSubgraphNode implements Graph.Node {
-  constructor(public nodes: ReadonlyArray<Graph.Node>) {
-    // TODO: use subgraph partitioning results
-    this.name = nodes.map((node) => node.opType).join(', ');
+  constructor(public nodes: ReadonlyArray<Graph.Node>,
+              public inputs: number[],
+              public outputs: number[]) {
+    this.name = Object.entries(nodes.map((node) => node.opType)
+                  .reduce((cnt: any, v: any) => {cnt[v] ? cnt[v]++ : cnt[v]=1; return cnt;}, {}))
+                  .map((n: any) => `${n[0]} x ${n[1]}`)
+                  .join(', ');
     this.opType = 'NNSubgraph';
-    this.inputs = [nodes[0].inputs[0]];
-    this.outputs = nodes[nodes.length - 1].outputs;
     this.attributes = new Attribute(null);
     this.executeNode = true;
   }
 
   name: string;
   opType: string;
-  inputs: ReadonlyArray<number>;
-  outputs: ReadonlyArray<number>;
   attributes: Attribute;
   executeNode: boolean;
 }
@@ -148,6 +150,7 @@ class GraphImpl implements Graph, Graph.Transformer {
   private _allOutputNames: string[];
 
   private _nodes: Node[];
+  private _partitions: Node[];
 
   constructor(graph: onnx.IGraphProto, graphInitializer?: Graph.Initializer) {
     if (!graph) {
@@ -185,7 +188,36 @@ class GraphImpl implements Graph, Graph.Transformer {
   }
 
   getNodes(): ReadonlyArray<Graph.Node> {
-    return [new NNSubgraphNode(this._nodes)];
+    if (this._partitions.length) {
+      return this._partitions;
+    } else {
+      return this._nodes;
+    }
+  }
+
+  partitionBy(supportedOps: Set<string>) {
+    const graph = new GraphUtil(this._nodes.length);
+    this._nodes.forEach((op, i) => {
+      graph.addNode(i, op.inputs, op.outputs);
+      if (!supportedOps.has(op.opType)) {
+        // mark unsupported ops black
+        graph.setBlack(i);
+      }
+    });
+    graph.identifyInputOutputTensors(this._allInputIndices, this._allOutputIndices);
+    const result = [];
+    for (const {nodeIds, inputIds, outputIds} of graph.partition()) {
+      // test if the first node in the partition is supported.
+      if (supportedOps.has(this._nodes[nodeIds[0]].opType)) {
+        const nodes = nodeIds.map((id) => this._nodes[id]);
+        result.push(new NNSubgraphNode(nodes, inputIds, outputIds));
+      } else {
+        for (const nodeId of nodeIds) {
+          result.push(this._nodes[nodeId]);
+        }
+      }
+    }
+    this._partitions = result;
   }
 
   private buildGraph(graph: onnx.IGraphProto) {
@@ -199,6 +231,7 @@ class GraphImpl implements Graph, Graph.Transformer {
     this._allOutputNames = [];
 
     this._nodes = [];
+    this._partitions = [];
 
     const nodesIndices = new Map<string, number>();
 

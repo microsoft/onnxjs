@@ -26,24 +26,6 @@ export class ExecutionPlan {
 
       this._ops = ops.map((op, i) => new KernelOp(op, graphNodes[i]));
       this.reset();
-
-      // look for starter node(s)
-      this._starter = [];
-      this._ops.forEach((op, i) => {
-        let resolved = true;
-        for (const input of op.node.inputs) {
-          if (
-              !this._values[input]                                   // not an initialized input
-              && this.graph.getInputIndices().indexOf(input) === -1  // not model input
-          ) {
-            resolved = false;
-            break;
-          }
-        }
-        if (resolved) {
-          this._starter.push(i);
-        }
-      });
     });
   }
 
@@ -71,17 +53,7 @@ export class ExecutionPlan {
         this._values[index] = input;
       });
 
-      // prepare running sequence
-      const sequence: number[] = this._starter.slice(0);
-
-      // execution iterations
-      const graphValues = this.graph.getValues();
-      const graphNodes = this.graph.getNodes();
-
-      let rear = 0;
-      while (rear < sequence.length) {
-        const thisOpIndex = sequence[rear++];
-        const thisOp = this._ops[thisOpIndex];
+      for (const thisOp of this._ops) {
 
         // check input
         const inputList = thisOp.node.inputs.map(i => this._values[i]);
@@ -120,26 +92,6 @@ export class ExecutionPlan {
           }
           this._values[j] = output;
         });
-
-        // resolve downstream nodes
-        const downstreamNodes = new Set<number>();
-        outputList.forEach((output, i) => {
-          const j = thisOp.node.outputs[i];
-          for (const currentDownstreamNodeIndex of graphValues[j].to) {
-            const currentDownstreamNode = graphNodes[currentDownstreamNodeIndex];
-            let resolved = true;
-            for (const k of currentDownstreamNode.inputs) {
-              if (!this._values[k]) {
-                resolved = false;
-                break;
-              }
-            }
-            if (resolved) {
-              downstreamNodes.add(currentDownstreamNodeIndex);
-            }
-          }
-        });
-        sequence.push(...downstreamNodes);
       }
 
       const output: Tensor[] = [];
@@ -160,5 +112,4 @@ export class ExecutionPlan {
 
   _values: Array<Tensor|undefined>;
   _ops: KernelOp[];
-  _starter: number[];
 }

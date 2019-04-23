@@ -2,6 +2,7 @@
 <head>
   <script src="../../../dist/webml-polyfill.js"></script>
   <script src="../../../dist/onnx.min.js"></script>
+  <script src="../common/benchmark-utils.js"></script>
   <script src="../common/ndarray-browser-min.js"></script>
   <script src="../common/imagenet.js"></script>
   <script src="../common/image-loader.js"></script>
@@ -11,10 +12,37 @@
   </script>
 </head>
 <body>
-  <h1>Resnet50 Example</h1>
-  <img id="imageSource" src="./resnet-cat.jpg"/>
+  <h1>Resnet50 Benchmark</h1>
+  <img id="imageSource" src="./resnet-cat.jpg" width="224"/>
   <div>
+    <p><b>Iterations</b></p>
+    <input type="number" id="iteration" min="1" value="50">
     <input type="button" value="Run" onclick="runExample()">
+    <br><br>
+    <p><b>Pseudo Tensor Reordering</b></p>
+    <label><input id="pseudoReorder" type="checkbox"> Enable </label>
+    <br>Note: For comparison purposes only. Once selected, answers will be incorrect as it doesn't actually perform data reordering (in JS) when the tensor is exchanged between the WebNN and ONNX.js
+    <br><br>
+    <p><b>Op-level Profiling</b></p>
+    <label><input id="profiling" type="checkbox"> Enable </label>
+    <br>Note: Report will be shown in the console. It will slightly hurt the performance.
+    <br><br>
+    <p><b>Offload to WebNN</b></p>
+    <button onclick="document.querySelectorAll('input[name=supportedOp]').forEach(x => x.checked = true)">Select All</button>
+    <button onclick="document.querySelectorAll('input[name=supportedOp]').forEach(x => x.checked = false)">Uncheck All</button>
+    <br><label><input type="checkbox" name="supportedOp" value="Conv"> Conv</label>
+    <br><label><input type="checkbox" name="supportedOp" value="BatchNormalization"> BatchNormalization</label>
+    <br><label><input type="checkbox" name="supportedOp" value="Relu"> Relu</label>
+    <!-- <br><label><input type="checkbox" name="supportedOp" value="GlobalAveragePool"> GlobalAveragePool</label> -->
+    <br><label><input type="checkbox" name="supportedOp" value="AveragePool"> AveragePool</label>
+    <br><label><input type="checkbox" name="supportedOp" value="MaxPool"> MaxPool</label>
+    <!-- <br><label><input type="checkbox" name="supportedOp" value="Concat"> Concat</label> -->
+    <br><label><input type="checkbox" name="supportedOp" value="Softmax"> Softmax</label>
+    <!-- <br><label><input type="checkbox" name="supportedOp" value="Add"> Add</label> -->
+    <!-- <br><label><input type="checkbox" name="supportedOp" value="Mul"> Mul</label> -->
+    <br><label><input type="checkbox" name="supportedOp" value="Sum"> Sum</label>
+    <br><label><input type="checkbox" name="supportedOp" value="Reshape"> Reshape</label>
+    <br><label><input type="checkbox" name="supportedOp" value="Gemm"> Gemm</label>
   </div>
   <div id="predictions">
 

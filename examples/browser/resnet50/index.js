@@ -1,6 +1,19 @@
 async function runExample() {
+
+  printHeader('Results');
+
+  const supportedOps = getSupportedOps();
+  log(`Offload Ops: ${supportedOps.length ? supportedOps.join(', ') : 'None'}`);
+  log(`Enable Pseudo Reorder: ${pseudoReorder.checked}`);
+  log(`Enable Op-level profiling: ${profiling.checked}`);
+  log(`Iterations: ${Number(iteration.value)}`);
+
   // Create an ONNX inference session with WebGL backend.
-  const session = new onnx.InferenceSession({ backendHint: 'wasm' });
+  const session = new onnx.InferenceSession({
+    backendHint: 'wasm',
+    supportedOps: supportedOps,
+    enablePseudoReorder: pseudoReorder.checked
+  });
 
   // Load an ONNX model. This model is Resnet50 that takes a 1*3*224*224 image and classifies it.
   await session.loadModel("../../../deps/data/data/examples/models/resnet50_8.onnx");
@@ -21,6 +34,8 @@ async function runExample() {
 
   // Render the output result in html.
   printMatches(outputData);
+
+  runBenchmark(session, inputTensor, Number(iteration.value), profiling.checked);
 }
 
 /**
@@ -46,7 +61,9 @@ function preprocess(data, width, height) {
  * Utility function to post-process Resnet50 output. Find top k ImageNet classes with highest probability.
  */
 function imagenetClassesTopK(classProbabilities, k) {
-  if (!k) { k = 5; }
+  if (!k) {
+    k = 5;
+  }
   const probs = Array.from(classProbabilities);
   const probsIndices = probs.map(
     function (prob, index) {
@@ -84,18 +101,20 @@ function printMatches(data) {
   if (!data || data.length === 0) {
     const empty = [];
     for (let i = 0; i < 5; i++) {
-      empty.push({ name: '-', probability: 0, index: 0 });
+      empty.push({
+        name: '-',
+        probability: 0,
+        index: 0
+      });
     }
     outputClasses = empty;
   } else {
     outputClasses = imagenetClassesTopK(data, 5);
   }
-  const predictions = document.getElementById('predictions');
-  predictions.innerHTML = '';
   const results = [];
   for (let i of [0, 1, 2, 3, 4]) {
     results.push(`${outputClasses[i].name}: ${Math.round(100 * outputClasses[i].probability)}%`);
   }
-  predictions.innerHTML = results.join('<br/>');
+  log();
+  log(results.join('<br/>'));
 }
-

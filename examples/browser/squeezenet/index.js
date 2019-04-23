@@ -1,9 +1,22 @@
 async function runExample() {
+
+  printHeader('Results');
+
+  const supportedOps = getSupportedOps();
+  log(`Offload Ops: ${supportedOps.length ? supportedOps.join(', ') : 'None'}`);
+  log(`Enable Pseudo Reorder: ${pseudoReorder.checked}`);
+  log(`Enable Op-level profiling: ${profiling.checked}`);
+  log(`Iterations: ${Number(iteration.value)}`);
+
   // Create an ONNX inference session with WebGL backend.
-  const session = new onnx.InferenceSession({ backendHint: 'webgl' });
+  const session = new onnx.InferenceSession({
+    backendHint: 'wasm',
+    supportedOps: supportedOps,
+    enablePseudoReorder: pseudoReorder.checked
+  });
 
   // Load an ONNX model. This model is SqueezeNet that takes a 1*3*224*224 image and classifies it.
-  await session.loadModel("./squeezenetV1_8.onnx");
+  await session.loadModel("../../../deps/data/data/examples/models/squeezenetV1_8.onnx");
 
   // load image.
   const imageLoader = new ImageLoader(imageSize, imageSize);
@@ -21,6 +34,8 @@ async function runExample() {
 
   // Render the output result in html.
   printMatches(outputData);
+
+  runBenchmark(session, inputTensor, Number(iteration.value), profiling.checked);
 }
 
 /**
@@ -91,11 +106,10 @@ function printMatches(data) {
   } else {
     outputClasses = imagenetClassesTopK(data, 5);
   }
-  const predictions = document.getElementById('predictions');
-  predictions.innerHTML = '';
   const results = [];
   for (let i of [0, 1, 2, 3, 4]) {
     results.push(`${outputClasses[i].name}: ${Math.round(100 * outputClasses[i].probability)}%`);
   }
-  predictions.innerHTML = results.join('<br/>');
+  log();
+  log(results.join('<br/>'));
 }

@@ -17,7 +17,6 @@ export class ExecutionPlan {
   }
 
   initialize(ops: Operator[]) {
-    // Logger.set('Profiler.node', {minimalSeverity: 'verbose'});
     this.profiler.event('session', 'ExecutionPlan.initialize', () => {
       const graphNodes = this.graph.getNodes();
       if (graphNodes.length !== ops.length) {

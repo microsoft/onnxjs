@@ -16,7 +16,7 @@ async function runExample() {
   });
 
   // Load an ONNX model. This model is SqueezeNet that takes a 1*3*224*224 image and classifies it.
-  await session.loadModel("../../../deps/data/data/examples/models/squeezenetV1_8.onnx");
+  await session.loadModel("./squeezenetV1_8.onnx");
 
   // load image.
   const imageLoader = new ImageLoader(imageSize, imageSize);

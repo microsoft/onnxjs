@@ -379,7 +379,7 @@ export class Tensor {
    * @param dims the dimensions of the tensor
    * @param type the type of the tensor
    */
-  static fromData(data: Tensor.DataTypeMap[Tensor.DataType], dims: Array<number>, type: Tensor.DataType) {
+  static fromData(data: Tensor.DataTypeMap[Tensor.DataType], dims: ReadonlyArray<number>, type: Tensor.DataType) {
     return new Tensor(dims, type, undefined, undefined, data);
   }
 }

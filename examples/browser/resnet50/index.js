@@ -16,7 +16,7 @@ async function runExample() {
   });
 
   // Load an ONNX model. This model is Resnet50 that takes a 1*3*224*224 image and classifies it.
-  await session.loadModel("../../../deps/data/data/examples/models/resnet50_8.onnx");
+  await session.loadModel("./resnet50_8.onnx");
 
   // Load image.
   const imageLoader = new ImageLoader(imageSize, imageSize);
@@ -61,9 +61,7 @@ function preprocess(data, width, height) {
  * Utility function to post-process Resnet50 output. Find top k ImageNet classes with highest probability.
  */
 function imagenetClassesTopK(classProbabilities, k) {
-  if (!k) {
-    k = 5;
-  }
+  if (!k) { k = 5; }
   const probs = Array.from(classProbabilities);
   const probsIndices = probs.map(
     function (prob, index) {
@@ -101,11 +99,7 @@ function printMatches(data) {
   if (!data || data.length === 0) {
     const empty = [];
     for (let i = 0; i < 5; i++) {
-      empty.push({
-        name: '-',
-        probability: 0,
-        index: 0
-      });
+      empty.push({ name: '-', probability: 0, index: 0 });
     }
     outputClasses = empty;
   } else {

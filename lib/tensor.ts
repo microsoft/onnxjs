@@ -52,7 +52,11 @@ export class Tensor {
       }
       this.cache = data;
     }
-    return this.cache;
+    if (this.format === 'NHWC') {
+      return this.nhwcCache;
+    } else {
+      return this.cache;
+    }
   }
 
   /**
@@ -130,12 +134,14 @@ export class Tensor {
    * get the number of elements in the tensor
    */
   public readonly size: number;
+  public dims: number[];
+  private nhwcCache: TensorData;
 
   constructor(
       /**
        * get the dimensions of the tensor
        */
-      public readonly dims: ReadonlyArray<number>,
+      dims: ReadonlyArray<number>,
       /**
        * get the type of the tensor
        */
@@ -144,8 +150,13 @@ export class Tensor {
       /**
        * get the data ID that used to map to a tensor data
        */
-      public readonly dataId: Tensor.Id = {}) {
+      public readonly dataId: Tensor.Id = {},
+      public format: string = 'NCHW',
+      public isInitializer?: boolean) {
+
+    this.dims = Array.from(dims);
     this.size = ShapeUtil.validateDimsAndCalcSize(dims);
+
     const size = this.size;
     const empty = (dataProvider === undefined && asyncDataProvider === undefined && cache === undefined);
 
@@ -175,7 +186,52 @@ export class Tensor {
         const buf = new ArrayBuffer(size * sizeof(type));
         this.cache = createView(buf, type);
       }
+      const nhwcBuf = new ArrayBuffer(size * sizeof(type));
+      this.nhwcCache = createView(nhwcBuf, type);
     }
+  }
+
+
+  toNHWC() {  // NCHW -> NHWC, ONNX -> WebNN
+    if (this.format === 'NCHW' && this.dims.length === 4) {
+      const [N, C, H, W] = Array.from(this.dims);
+      this.dims = [N, H, W, C];
+
+      const nchwData = this.cache!;
+      const nhwcData = this.nhwcCache;
+      for (let n = 0; n < N; ++n){
+        for (let c = 0; c < C; ++c){
+          for (let h = 0; h < H; ++h){
+            for (let w = 0; w < W; ++w){
+              nhwcData[n*H*W*C + h*W*C + w*C + c] = nchwData[n*C*H*W + c*H*W + h*W + w];
+            }
+          }
+        }
+      }
+    }
+    this.format = 'NHWC';
+    return this;
+  }
+
+  toNCHW() {  // NHWC -> NCHW, WebNN -> ONNX
+    if (this.format === 'NHWC' && this.dims.length === 4) {
+      const [N, H, W, C] = Array.from(this.dims);
+      this.dims = [N, C, H, W];
+
+      const nchwData = this.cache!;
+      const nhwcData = this.nhwcCache;
+      for (let n = 0; n < N; ++n) {
+        for (let c = 0; c < C; ++c) {
+          for (let h = 0; h < H; ++h) {
+            for (let w = 0; w < W; ++w) {
+              nchwData[n*C*H*W + c*H*W + h*W + w] = nhwcData[n*H*W*C + h*W*C + w*C + c];
+            }
+          }
+        }
+      }
+    }
+    this.format = 'NCHW';
+    return this;
   }
 
   /**
@@ -190,6 +246,7 @@ export class Tensor {
     const dims = ProtoUtil.tensorDimsFromProto(tensorProto.dims!);
 
     const value = new Tensor(dims, type);
+    value.isInitializer = true;
 
     if (type === 'string') {
       // When it's STRING type, the value should always be stored in field
@@ -301,7 +358,7 @@ export class Tensor {
    * @param dims the dimensions of the tensor
    * @param type the type of the tensor
    */
-  static fromData(data: Tensor.DataTypeMap[Tensor.DataType], dims: ReadonlyArray<number>, type: Tensor.DataType) {
+  static fromData(data: Tensor.DataTypeMap[Tensor.DataType], dims: Array<number>, type: Tensor.DataType) {
     return new Tensor(dims, type, undefined, undefined, data);
   }
 }

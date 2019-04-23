@@ -1,9 +1,9 @@
 async function runExample() {
   // Create an ONNX inference session with WebGL backend.
-  const session = new onnx.InferenceSession({ backendHint: 'webgl' });
+  const session = new onnx.InferenceSession({ backendHint: 'wasm' });
 
   // Load an ONNX model. This model is Resnet50 that takes a 1*3*224*224 image and classifies it.
-  await session.loadModel("./resnet50_8.onnx");
+  await session.loadModel("../../../deps/data/data/examples/models/resnet50_8.onnx");
 
   // Load image.
   const imageLoader = new ImageLoader(imageSize, imageSize);

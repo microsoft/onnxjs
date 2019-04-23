@@ -25,7 +25,7 @@ export class WasmBackend implements Backend, WasmOptions {
 
     // by default use 3 workers
     // TODO: Have logic to determing optimal fallback worker numbers based on CPU cores
-    this.worker = 3;
+    this.worker = 0;
   }
   async initialize(): Promise<boolean> {
     this.checkIfNumWorkersIsValid();

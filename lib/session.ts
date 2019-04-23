@@ -11,6 +11,7 @@ import {Profiler} from './instrument';
 import {Model} from './model';
 import {Operator} from './operators';
 import {Tensor} from './tensor';
+import {NNSubgraph} from './backends/webnn/nnSubgraph';
 
 export declare namespace Session {
   export interface Config {
@@ -246,8 +247,25 @@ export class Session {
     const nodes = graph.getNodes();
     this._ops = new Array(nodes.length);
 
+    const supportedOps = new Set([
+      'Conv',
+      // 'Relu',
+      // 'AveragePool',
+      // 'MaxPool',
+      // 'Concat',
+      // 'Softmax',
+      // 'Add',
+      // 'Mul',
+      // 'Reshape',
+      // 'Gemm',
+    ]);
+
     for (let i = 0; i < nodes.length; i++) {
-      this._ops[i] = this.sessionHandler.resolve(nodes[i], this._model.opsets);
+      if (supportedOps.has(nodes[i].opType)) {
+        this._ops[i] = new NNSubgraph(nodes[i]);
+      } else {
+        this._ops[i] = this.sessionHandler.resolve(nodes[i], this._model.opsets);
+      }
     }
   }
 

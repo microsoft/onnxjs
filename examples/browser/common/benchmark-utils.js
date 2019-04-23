@@ -1,3 +1,20 @@
+window.addEventListener('load', () => {
+  onnxBackend.addEventListener('change', (e) => {
+
+    if (e.target.value === 'webgl') {
+      document.querySelectorAll('input[name=supportedOp]').forEach((x) => {
+        x.checked = false;
+        x.disabled = true;
+      });
+    } else {
+      document.querySelectorAll('input[name=supportedOp]').forEach((x) => {
+        x.disabled = false;
+      });
+    }
+
+  }, false);
+});
+
 function getSupportedOps() {
   return Array.from(
     document.querySelectorAll('input[name=supportedOp]:checked')).map(x => x.value);

@@ -14,9 +14,17 @@
   <h1>Resnet50 Benchmark</h1>
   <img id="imageSource" src="./resnet-cat.jpg" width="224"/>
   <div>
+    <p><mark><b>WebNN-enabled Chromium Required</b></mark></p>
     <p><b>Iterations</b></p>
     <input type="number" id="iteration" min="1" value="50">
     <input type="button" value="Run" onclick="runExample()">
+    <br><br>
+    <p><b>ONNX Backend</b></p>
+    <select id="onnxBackend">
+      <option value="wasm">WASM</option>
+      <option value="webgl">WebGL</option>
+    </select>
+    <br><br>Note: WebGL backend is not able to offload to WebNN.
     <br><br>
     <p><b>Pseudo Tensor Reordering</b></p>
     <label><input id="pseudoReorder" type="checkbox"> Enable </label>

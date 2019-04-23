@@ -3,6 +3,7 @@ async function runExample() {
   printHeader('Results');
 
   const supportedOps = getSupportedOps();
+  log(`ONNX Backend: ${onnxBackend.value}`);
   log(`Offload Ops: ${supportedOps.length ? supportedOps.join(', ') : 'None'}`);
   log(`Enable Pseudo Reorder: ${pseudoReorder.checked}`);
   log(`Enable Op-level profiling: ${profiling.checked}`);
@@ -10,7 +11,7 @@ async function runExample() {
 
   // Create an ONNX inference session with WebGL backend.
   const session = new onnx.InferenceSession({
-    backendHint: 'wasm',
+    backendHint: onnxBackend.value,
     supportedOps: supportedOps,
     enablePseudoReorder: pseudoReorder.checked
   });

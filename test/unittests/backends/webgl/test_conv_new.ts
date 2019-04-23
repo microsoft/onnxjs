@@ -107,7 +107,9 @@ describe('New Conv tests', () => {
 });
 
 function createRandomArray(size: number): Float32Array {
-  return new Float32Array(Array.from({length: size}, (v, k) => k % 10));
+  const randomTable = [0, 3, 6, 9, 2, 5, 8, 1, 4, 7];
+  return new Float32Array(
+      Array.from({length: size}, (v, k) => randomTable[k % 10] * 0.1 + randomTable[Math.trunc(k / 10) % 10] * 0.01));
 }
 interface TestData {
   inputShape: number[];

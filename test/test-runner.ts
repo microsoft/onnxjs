@@ -12,6 +12,7 @@ import {fromInternalTensor, toInternalTensor} from '../lib/api/tensor-impl-utils
 import {Attribute} from '../lib/attribute';
 import {Backend, InferenceHandler, SessionHandler} from '../lib/backend';
 import {TextureData} from '../lib/backends/webgl/texture-data';
+import {createWebGLContext} from '../lib/backends/webgl/webgl-context-factory';
 import {Logger, Profiler} from '../lib/instrument';
 import {Operator} from '../lib/operators';
 import {Tensor} from '../lib/tensor';
@@ -24,6 +25,8 @@ const CPU_THRESHOLD_ABSOLUTE_ERROR = 1.0e-4;
 const CPU_THRESHOLD_RELATIVE_ERROR = 1.000001;
 const WEBGL_THRESHOLD_ABSOLUTE_ERROR = 1.0e-3;
 const WEBGL_THRESHOLD_RELATIVE_ERROR = 1.00001;
+const WEBGL_HALF_FLOAT_THRESHOLD_ABSOLUTE_ERROR = 0.1;
+const WEBGL_HALF_FLOAT_THRESHOLD_RELATIVE_ERROR = 1.02;
 const WASM_THRESHOLD_ABSOLUTE_ERROR = 1.0e-4;
 const WASM_THRESHOLD_RELATIVE_ERROR = 1.000001;
 const ONNXRUNTIME_THRESHOLD_ABSOLUTE_ERROR = 1.0e-3;
@@ -338,13 +341,26 @@ function createTensor(dims: number[], type: Tensor.DataType, data: number[]): Te
 export class TensorResultValidator {
   private readonly absoluteThreshold: number;
   private readonly relativeThreshold: number;
+  private readonly maxFloatValue: number = 3.4028234663852886e+38;
+
+  private static isHalfFloat: boolean|undefined;
+
   constructor(backend: string) {
     if (backend === 'cpu') {
       this.absoluteThreshold = CPU_THRESHOLD_ABSOLUTE_ERROR;
       this.relativeThreshold = CPU_THRESHOLD_RELATIVE_ERROR;
     } else if (backend === 'webgl') {
-      this.absoluteThreshold = WEBGL_THRESHOLD_ABSOLUTE_ERROR;
-      this.relativeThreshold = WEBGL_THRESHOLD_RELATIVE_ERROR;
+      if (TensorResultValidator.isHalfFloat === undefined) {
+        TensorResultValidator.isHalfFloat = !createWebGLContext(onnx.backend.webgl.contextId).renderFloat32Enabled;
+      }
+      if (TensorResultValidator.isHalfFloat) {
+        this.maxFloatValue = 65504;
+        this.absoluteThreshold = WEBGL_HALF_FLOAT_THRESHOLD_ABSOLUTE_ERROR;
+        this.relativeThreshold = WEBGL_HALF_FLOAT_THRESHOLD_RELATIVE_ERROR;
+      } else {
+        this.absoluteThreshold = WEBGL_THRESHOLD_ABSOLUTE_ERROR;
+        this.relativeThreshold = WEBGL_THRESHOLD_RELATIVE_ERROR;
+      }
     } else if (backend === 'wasm') {
       this.absoluteThreshold = WASM_THRESHOLD_ABSOLUTE_ERROR;
       this.relativeThreshold = WASM_THRESHOLD_RELATIVE_ERROR;
@@ -458,7 +474,7 @@ export class TensorResultValidator {
     }
 
     for (let i = actual.length - 1; i >= 0; i--) {
-      const a = actual[i], b = expected[i];
+      const a = actual[i], b = Math.max(Math.min(expected[i], this.maxFloatValue), -this.maxFloatValue);
 
       // check for NaN
       //
@@ -468,13 +484,6 @@ export class TensorResultValidator {
       if (Number.isNaN(a) || Number.isNaN(b)) {
         Logger.error('Validator', `a or b isNan -- index:${i}: actual=${actual[i]},expected=${expected[i]}`);
         return false;  // one is NaN and the other is not
-      }
-
-      // sign should be same if not equals to zero
-      //
-      if ((a > 0 && b < 0) || (a < 0 && b > 0)) {
-        Logger.error('Validator', `signs are different -- index:${i}: actual=${actual[i]},expected=${expected[i]}`);
-        return false;  // sign is different
       }
 
       // Comparing 2 float numbers: (Suppose a >= b)

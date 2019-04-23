@@ -3,7 +3,6 @@
 
 import {Logger, Profiler} from '../../instrument';
 import {Tensor} from '../../tensor';
-import {ShapeUtil} from '../../util';
 
 import {TextureData, TextureLayout} from './texture-data';
 import {Encoder} from './texture-data-encoder';
@@ -32,38 +31,17 @@ export class TextureHelper {
     this.layoutStrategy = layoutStrategy;
     this.profiler = profiler;
   }
-  createTextureFromLayout(dataType: Tensor.DataType, layout: TextureLayout, data?: Tensor.NumberType) {
+  createTextureFromLayout(
+      dataType: Tensor.DataType, layout: TextureLayout, data?: Tensor.NumberType, usage?: Encoder.Usage) {
     let texture: WebGLTexture;
     const textureDataType = this.toEncoderType(dataType);
     const size = `${layout.width}-${layout.height}`;
 
     Logger.verbose('TextureHelper', `Creating new texture of size ${size}`);
-    texture = this.glContext.allocateTexture(
-        layout.width, layout.height, textureDataType, layout.channels, this.toTextureData(dataType, data));
+    const encoder = this.glContext.getEncoder(textureDataType, layout.channels || 1, usage);
+    texture = this.glContext.allocateTexture(layout.width, layout.height, encoder, this.toTextureData(dataType, data));
 
     return {...layout, dataType, texture};
-  }
-  createTexture(
-      dataType: Tensor.DataType, shape: ReadonlyArray<number>, strides?: ReadonlyArray<number>,
-      data?: Tensor.NumberType, channels?: number, width?: number, height?: number,
-      unpackedShape?: ReadonlyArray<number>): TextureData {
-    return this.profiler.event('backend', 'TextureHelper.createTexture', () => {
-      if (!width || !height) {
-        [width, height] = this.layoutStrategy.computeTextureWH(shape);
-      }
-      if (!strides) {
-        strides = ShapeUtil.computeStrides(shape);
-      }
-      if (!channels || channels === 1) {
-        channels = 1;
-        unpackedShape = shape;
-      }
-      if (channels > 1 && !unpackedShape) {
-        throw new Error('unpacked shape is needed when the number of channels is > 1');
-      }
-      const layout = {width, height, channels, shape, strides, unpackedShape: unpackedShape!};
-      return this.createTextureFromLayout(dataType, layout, data);
-    });
   }
   readTexture(td: TextureData, dataType: Tensor.DataType, channels?: number): Tensor.NumberType {
     if (!channels) {

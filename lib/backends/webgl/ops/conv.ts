@@ -6,7 +6,6 @@ import {Conv} from '../../../ops/conv';
 import {Tensor} from '../../../tensor';
 import {PoolConvUtil, ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {Encoder} from '../texture-data-encoder';
 import {Artifact, ProgramInfo, RunData, TextureLayout} from '../types';
 import {WebGLContext} from '../webgl-context';
 
@@ -24,7 +23,7 @@ export class WebGLConv extends Conv {
     const runDatas = this.createRunDatas(inferenceHandler, this.artifacts.map(a => a.programInfo), inputs);
     programManager.run(this.artifacts[0], runDatas[0]);
     programManager.run(this.artifacts[1], runDatas[1]);
-    return [inferenceHandler.getTensor(runDatas[1].outputTextureData)];
+    return [runDatas[1].outputTextureData.tensor];
   }
   createProgramInfos(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo[] {
     const xshape = inputs[0].dims.slice();
@@ -55,9 +54,9 @@ export class WebGLConv extends Conv {
       Logger.verbose('Conv', 'Did not find the adjustedKernel texture in the cache. Creating rew.');
       const newKernelData =
           WebGLConv.prepKernelForDotProduct(k.dims.slice(), this.group, 4, k.floatData as Float32Array);
-      kTD = inferenceHandler.createTextureDataFromLayout(
-          programInfos[1].inputLayouts[1], k.type, newKernelData, Encoder.Usage.UploadOnly);
-      inferenceHandler.setTextureData(k, kTD);
+      // hack: should use graph transformer to rewrite initializer K
+      kTD = inferenceHandler.createTextureDataFromLayoutBindTensor(
+          programInfos[1].inputLayouts[1], k.type, newKernelData, k);
     }
     const runtDataIm2Col = {
       inputTextureDatas: [inferenceHandler.getOrCreateTextureData(inputs[0])],

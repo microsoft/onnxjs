@@ -24,7 +24,7 @@ export class WebGLSoftmax extends Softmax {
     const runDatas = this.createRunDatas(inferenceHandler, this.artifacts.map(a => a.programInfo), inputs);
     runDatas.forEach((v, i) => inferenceHandler.programManager.run(this.artifacts[i], v));
     // return only the last output
-    return [inferenceHandler.getTensor(runDatas[runDatas.length - 1].outputTextureData)];
+    return [runDatas[runDatas.length - 1].outputTextureData.tensor];
   }
   createSoftMaxProgramInfo(
       inferenceHandler: WebGLInferenceHandler, input: Tensor, N: number, D: number,

@@ -138,11 +138,10 @@ export class ProgramManager {
     return program;
   }
   bindOutput(td: TextureData): void {
-    Logger.verbose('ProrgramManager', `Binding output texture to Framebuffer:
-       w/h: ${td.width}/${td.height},
-       shape: ${td.shape},
-       type: ${td.dataType}
-    `);
+    Logger.verbose(
+        'ProrgramManager',
+        `Binding output texture to Framebuffer: w/h=${td.width}/${td.height}, shape=${td.shape}, type=${
+            td.tensor.type}`);
     this.glContext.attachFramebuffer(td.texture, td.width, td.height);
   }
   bindAttributes(attribLocations: {[name: string]: LocationInfo}): void {

@@ -82,7 +82,7 @@ export class WebGLConcat extends Concat implements WebGLOperator {
     const uniformData = {'sizeInConcatAxis': sizeInConcatAxis};
     return {
       inputTextureDatas: inputTDs,
-      outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),
+      outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),
       uniformData
     };
   }

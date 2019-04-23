@@ -41,7 +41,7 @@ export class WebGLBatchNormalization extends BatchNormalization {
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
     const inputTDs = [handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
     inputs.slice(1).forEach(t => inputTDs.push(handler.getOrCreateTextureData(t)));
-    const outputTD = handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType);
+    const outputTD = handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type);
     return {inputTextureDatas: inputTDs, outputTextureData: outputTD, uniformData: {}};
   }
 }

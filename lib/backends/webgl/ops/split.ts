@@ -23,7 +23,7 @@ export class WebGLSplit extends Split {
     this.artifacts.forEach(artifact => {
       const rundata = this.createRunData(inferenceHandler, artifact.programInfo, inputs);
       inferenceHandler.programManager.run(artifact, rundata);
-      results.push(inferenceHandler.getTensor(rundata.outputTextureData));
+      results.push(rundata.outputTextureData.tensor);
     });
     return results;
   }
@@ -53,7 +53,8 @@ export class WebGLSplit extends Split {
     const inputTDs = [inferenceHandler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
     return {
       inputTextureDatas: inputTDs,
-      outputTextureData: inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),
+      outputTextureData:
+          inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),
       uniformData: {}
     };
   }

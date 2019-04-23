@@ -29,7 +29,7 @@ export interface TextureLayout {
   unpackedShape: ReadonlyArray<number>;
 }
 export interface TextureData extends TextureLayout {
-  dataType: Tensor.DataType;
+  tensor: Tensor;
   texture: WebGLTexture;
 }
 

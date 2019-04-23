@@ -30,7 +30,7 @@ export class WebGLLeakyRelu extends LeakyRelu implements WebGLOperator {
     const inputTDs = [handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
     return {
       inputTextureDatas: inputTDs,
-      outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),
+      outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),
       uniformData: {}
     };
   }

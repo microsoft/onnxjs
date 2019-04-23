@@ -44,7 +44,7 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
       return {
         hasMain: false,
         inputLayouts,
-        outputLayout: handler.createBasicTextureLayout(outputShape),
+        outputLayout: handler.createTextureLayoutFromShape(outputShape),
         shaderSource,
       };
     }
@@ -62,12 +62,12 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
     return {
       hasMain: true,
       inputLayouts,
-      outputLayout: handler.createBasicTextureLayout(inputs[0].dims),
+      outputLayout: handler.createTextureLayoutFromShape(inputs[0].dims),
       shaderSource,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = inputs.map((t, i) => handler.getOrCreate(t, programInfo.inputLayouts[i]));
+    const inputTDs = inputs.map((t, i) => handler.getOrCreateTextureData(t, programInfo.inputLayouts[i]));
     return {
       inputTextureDatas: inputTDs,
       outputTextureData: handler.createTextureDataFromLayout(

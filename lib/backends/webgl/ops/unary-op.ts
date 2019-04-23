@@ -26,11 +26,11 @@ export class WebGLUnaryOp extends UnaryOp implements WebGLOperator {
         gl_FragColor = v;
       }
       `;
-    const outputLayout = handler.createBasicTextureLayout(outputShape);
+    const outputLayout = handler.createTextureLayoutFromShape(outputShape);
     return {hasMain: true, inputLayouts: [inputLayout], outputLayout, shaderSource};
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = [handler.getOrCreate(inputs[0], programInfo.inputLayouts[0])];
+    const inputTDs = [handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
     return {
       inputTextureDatas: inputTDs,
       outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),

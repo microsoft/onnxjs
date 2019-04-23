@@ -17,7 +17,7 @@ export class WebGLReshape extends Reshape {
 
 export function reshape(
     inferenceHandler: WebGLInferenceHandler, input: Tensor, reshapedDims: ReadonlyArray<number>): Tensor {
-  const inputTD = inferenceHandler.getOrCreate(input);
+  const inputTD = inferenceHandler.getOrCreateTextureData(input);
   const isInitializer = inferenceHandler.session.isInitializer(input);
   let packedShape = reshapedDims;
   if (inputTD.channels === 4) {

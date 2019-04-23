@@ -25,12 +25,12 @@ export class WebGLPad extends Pad implements WebGLOperator {
     return {
       hasMain: false,
       inputLayouts: [alayout],
-      outputLayout: inferenceHandler.createBasicTextureLayout(outputShape),
+      outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
       shaderSource,
     };
   }
   createRunData(inferenceHandler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = [inferenceHandler.getOrCreate(inputs[0], programInfo.inputLayouts[0])];
+    const inputTDs = [inferenceHandler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
     return {
       inputTextureDatas: inputTDs,
       outputTextureData: inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),

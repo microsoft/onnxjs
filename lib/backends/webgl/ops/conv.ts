@@ -60,13 +60,13 @@ export class WebGLConv extends Conv {
       inferenceHandler.setTextureData(k, kTD);
     }
     const runtDataIm2Col = {
-      inputTextureDatas: [inferenceHandler.getOrCreate(inputs[0])],
+      inputTextureDatas: [inferenceHandler.getOrCreateTextureData(inputs[0])],
       outputTextureData: inferenceHandler.createTextureDataFromLayout(programInfos[0].outputLayout, inputs[0].type),
       uniformData: {}
     };
     const inputTDs = [runtDataIm2Col.outputTextureData, kTD];
     if (b) {
-      inputTDs.push(inferenceHandler.getOrCreate(b));
+      inputTDs.push(inferenceHandler.getOrCreateTextureData(b));
     }
     const outputTD = inferenceHandler.createTextureDataFromLayout(programInfos[1].outputLayout, inputs[0].type);
     const runDataDotProduct = {
@@ -105,7 +105,7 @@ export class WebGLConv extends Conv {
 
     const rank = outputShape.length;
     const im2colDims = WebGLConv.calcIm2ColDims(xshape, kshape, outputShape, 4);
-    const outputLayout = inferenceHandler.createBasicTextureLayout(
+    const outputLayout = inferenceHandler.createTextureLayoutFromShape(
         im2colDims, 4, [im2colDims[0], im2colDims[1], im2colDims[2], im2colDims[3] * 4], {breakAxis: 3});
     const shaderSource = `
     uniform sampler2D X;
@@ -156,7 +156,7 @@ export class WebGLConv extends Conv {
       `;
     return {
       hasMain: false,
-      inputLayouts: [inferenceHandler.createBasicTextureLayout(xshape)],
+      inputLayouts: [inferenceHandler.createTextureLayoutFromShape(xshape)],
       outputLayout,
       shaderSource,
     };
@@ -167,7 +167,7 @@ export class WebGLConv extends Conv {
     const xshape = inputs[0].dims.slice();
     const kshape = inputs[1].dims.slice();
     const adjustedKernelShape = [kshape[0], Math.ceil((xshape[1] * kshape[2] * kshape[3]) / 4)];
-    const kLayout = inferenceHandler.createBasicTextureLayout(
+    const kLayout = inferenceHandler.createTextureLayoutFromShape(
         adjustedKernelShape, 4, [adjustedKernelShape[0], adjustedKernelShape[1] * 4], {breakAxis: 1});
 
     let bLayout: TextureLayout|undefined;
@@ -175,10 +175,10 @@ export class WebGLConv extends Conv {
 
     const inputLayouts = [im2colLayout, kLayout];
     if (inputs.length === 3) {
-      bLayout = inferenceHandler.createBasicTextureLayout(inputs[2].dims.slice());
+      bLayout = inferenceHandler.createTextureLayoutFromShape(inputs[2].dims.slice());
       inputLayouts.push(bLayout);
     }
-    const outputLayout = inferenceHandler.createBasicTextureLayout(outputShape);
+    const outputLayout = inferenceHandler.createTextureLayoutFromShape(outputShape);
     const initValue = (inputs.length < 3) ? '0.0' : '_B(b)';
     const sharedDim = im2colLayout.shape[3];
     const sharedDimReadSize = this.calcSharedDimReadSize(sharedDim);
@@ -217,7 +217,7 @@ export class WebGLConv extends Conv {
     };
   }
   createDotProdRunData(inferenceHandler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = inputs.map((t, i) => inferenceHandler.getOrCreate(t, programInfo.inputLayouts[i]));
+    const inputTDs = inputs.map((t, i) => inferenceHandler.getOrCreateTextureData(t, programInfo.inputLayouts[i]));
     const outputTD = inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputs[0].type);
     return {
       inputTextureDatas: inputTDs,

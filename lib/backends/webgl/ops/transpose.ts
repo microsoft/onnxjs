@@ -32,11 +32,11 @@ export class WebGLTranspose extends Transpose implements WebGLOperator {
         perm(a, indices);
         return _A(a);
       }`;
-    const outputLayout = handler.createBasicTextureLayout(unpackedOutputShape, 1, unpackedOutputShape);
+    const outputLayout = handler.createTextureLayoutFromShape(unpackedOutputShape, 1, unpackedOutputShape);
     return {hasMain: false, inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])], outputLayout, shaderSource};
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = [handler.getOrCreate(inputs[0], programInfo.inputLayouts[0])];
+    const inputTDs = [handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
     return {
       inputTextureDatas: inputTDs,
       outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),

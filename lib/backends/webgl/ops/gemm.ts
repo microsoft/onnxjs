@@ -66,12 +66,12 @@ export class WebGLGemm extends Gemm implements WebGLOperator {
     return {
       hasMain: false,
       inputLayouts,
-      outputLayout: inferenceHandler.createBasicTextureLayout(oShape),
+      outputLayout: inferenceHandler.createTextureLayoutFromShape(oShape),
       shaderSource,
     };
   }
   createRunData(inferenceHandler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = inputs.map((t, i) => inferenceHandler.getOrCreate(t, programInfo.inputLayouts[i]));
+    const inputTDs = inputs.map((t, i) => inferenceHandler.getOrCreateTextureData(t, programInfo.inputLayouts[i]));
     return {
       inputTextureDatas: inputTDs,
       outputTextureData: inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),

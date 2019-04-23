@@ -5,12 +5,11 @@ import {env} from '../../env';
 
 import * as DataEncoders from './texture-data-encoder';
 import {DataEncoder, Encoder} from './texture-data-encoder';
-import {Disposable} from './utils';
 
 /**
  * Abstraction and wrapper around WebGLRenderingContext and its operations
  */
-export class WebGLContext implements Disposable {
+export class WebGLContext {
   gl: WebGLRenderingContext;
   version: 1|2;
 

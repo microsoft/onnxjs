@@ -33,15 +33,11 @@ export class TextureHelper {
   }
   createTextureFromLayout(
       dataType: Tensor.DataType, layout: TextureLayout, data?: Tensor.NumberType, usage?: Encoder.Usage) {
-    let texture: WebGLTexture;
     const textureDataType = this.toEncoderType(dataType);
-    const size = `${layout.width}-${layout.height}`;
 
-    Logger.verbose('TextureHelper', `Creating new texture of size ${size}`);
+    Logger.verbose('TextureHelper', `Creating new texture of size ${layout.width}x${layout.height}`);
     const encoder = this.glContext.getEncoder(textureDataType, layout.channels || 1, usage);
-    texture = this.glContext.allocateTexture(layout.width, layout.height, encoder, this.toTextureData(dataType, data));
-
-    return {...layout, dataType, texture};
+    return this.glContext.allocateTexture(layout.width, layout.height, encoder, this.toTextureData(dataType, data));
   }
   readTexture(td: TextureData, dataType: Tensor.DataType, channels?: number): Tensor.NumberType {
     if (!channels) {
@@ -61,22 +57,9 @@ export class TextureHelper {
       return new Float32Array(data.buffer, data.byteOffset, dataSize);
     });
   }
-  releaseTexture(texture: WebGLTexture): void {
-    return this.profiler.event('backend', 'TextureHelper.releaseTexture', () => {
-      this.glContext.deleteTexture(texture);
-    });
-  }
-  createPaddedTexture(inputTextureData: TextureData, outputLayout: TextureLayout): TextureData {
-    const inputTexture = inputTextureData.texture;
-    const [inputWidth, inputHeight] = [inputTextureData.width, inputTextureData.height];
-    const outputTD = this.createTextureFromLayout(inputTextureData.dataType, outputLayout);
-
-    const gl = this.gl;
-    this.glContext.attachFramebuffer(inputTexture, inputWidth, inputHeight);
-    gl.bindTexture(gl.TEXTURE_2D, outputTD.texture);
-    gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 0, 0, inputWidth, inputHeight);
-
-    return outputTD;
+  releaseTexture(texture: TextureData): void {
+    Logger.verbose('TextureHelper', `Deleting texture of size ${texture.width}x${texture.height}`);
+    this.glContext.deleteTexture(texture.texture);
   }
   toTensorData(dataType: Tensor.DataType, data: Encoder.DataArrayType): Tensor.NumberType {
     return (data.constructor === Float32Array) ? data as Float32Array : new Float32Array(data);

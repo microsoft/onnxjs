@@ -24,7 +24,6 @@ export class ProgramManager {
 
   constructor(public profiler: Readonly<Profiler>, public glContext: WebGLContext) {
     this.repo = new Map();
-    this.glContext = glContext;
     this.attributesBound = false;
   }
   getArtifact(key: {}): Artifact|undefined {
@@ -214,20 +213,14 @@ export class ProgramManager {
   getAttribLocations(program: WebGLProgram, variableInfos: VariableInfo[]): {[name: string]: LocationInfo} {
     const locationInfos: {[name: string]: LocationInfo} = {};
     variableInfos.forEach(vi => {
-      const li = new LocationInfo();
-      li.variable = vi;
-      li.location = this.getAttribLocation(program, vi.name);
-      locationInfos[vi.name] = li;
+      locationInfos[vi.name] = {variable: vi, location: this.getAttribLocation(program, vi.name)};
     });
     return locationInfos;
   }
   getUniformLocations(program: WebGLProgram, variableInfos: VariableInfo[]): {[name: string]: LocationInfo} {
     const locationInfos: {[name: string]: LocationInfo} = {};
     variableInfos.forEach(vi => {
-      const li = new LocationInfo();
-      li.variable = vi;
-      li.location = this.getUniformLocation(program, vi.name);
-      locationInfos[vi.name] = li;
+      locationInfos[vi.name] = {variable: vi, location: this.getUniformLocation(program, vi.name)};
     });
     return locationInfos;
   }

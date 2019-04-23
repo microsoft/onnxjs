@@ -1,21 +1,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {Operator} from '../../operators';
 import {Tensor} from '../../tensor';
 
 import {GlslPositionalFunction, GlslValueFunction} from './glsl-definitions';
 import {WebGLInferenceHandler} from './inference-handler';
 import {WebGLContext} from './webgl-context';
 
-export interface PositionalSubOperator extends Operator {
-  getPositionalFunction(handler: WebGLInferenceHandler, inputShape: ReadonlyArray<number>, name?: string):
-      GlslPositionalFunction;
-}
-export interface WebGLRunnable extends Operator {
-  addPositionalSub(positionalSubOperator: PositionalSubOperator): void;
-  positionalSubs: PositionalSubOperator[];
-}
+/**
+ * Represent an operator instance that can run in WebGL backend
+ */
 export interface WebGLOperator {
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo;
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData;
@@ -26,7 +20,6 @@ export interface WebGLOperator {
  * The layout is created by the TextureLayoutStrategy based on
  * the Tensor's dimensions and strides
  */
-
 export interface TextureLayout {
   width: number;
   height: number;
@@ -40,6 +33,9 @@ export interface TextureData extends TextureLayout {
   texture: WebGLTexture;
 }
 
+/**
+ * A set of data that represent a shader program
+ */
 export interface ProgramInfo {
   inputLayouts: TextureLayout[];
   shaderSource: string;
@@ -54,20 +50,22 @@ export interface ProgramInfo {
 /**
  * Information extracted from Shader source to help with binding later
  */
-export class VariableInfo {
+export interface VariableInfo {
   type: string;
   name: string;
   isVec: boolean;
   arraySuffix?: string;
 }
+
 /**
  * LocationInfo contains a mappig from a variable name (inside shader)
  * to its "location" in the compiled program
  */
-export class LocationInfo {
+export interface LocationInfo {
   variable: VariableInfo;
   location: WebGLUniformLocation|number;
 }
+
 /**
  * Artifact is the result of compilation
  * It does not contain input of output data
@@ -84,7 +82,10 @@ export interface UniformData {
   [name: string]: number|number[];
 }
 
-export class RunData {
+/**
+ * RunData contains all inputs that required to run a "program"
+ */
+export interface RunData {
   inputTextureDatas: TextureData[];
   outputTextureData: TextureData;
   uniformData: UniformData;

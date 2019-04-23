@@ -32,7 +32,7 @@ export class WebGLSessionHandler implements SessionHandler {
   }
 
   createInferenceHandler() {
-    return new WebGLInferenceHandler(this.backend, this);
+    return new WebGLInferenceHandler(this);
   }
   onGraphInitialized(graph: Graph): void {
     const initializers = graph.getValues().filter(v => v.from === -1).map(v => v.tensor).filter(t => (t)) as Tensor[];
@@ -51,7 +51,7 @@ export class WebGLSessionHandler implements SessionHandler {
   dispose(): void {
     this.programManager.dispose();
     this.textureHelper.clearActiveTextures();
-    this.textureDataCache.forEach(td => this.textureHelper.releaseTexture(td.texture));
+    this.textureDataCache.forEach(td => this.textureHelper.releaseTexture(td));
     this.textureDataCache = new Map();
   }
   resolve(node: Graph.Node, opsets: ReadonlyArray<OpSet>): Operator {

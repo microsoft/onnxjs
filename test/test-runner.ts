@@ -11,7 +11,6 @@ import * as api from '../lib/api';
 import {fromInternalTensor, toInternalTensor} from '../lib/api/tensor-impl-utils';
 import {Attribute} from '../lib/attribute';
 import {Backend, InferenceHandler, SessionHandler} from '../lib/backend';
-import {TextureData} from '../lib/backends/webgl/types';
 import {createWebGLContext} from '../lib/backends/webgl/webgl-context-factory';
 import {Logger, Profiler} from '../lib/instrument';
 import {Operator} from '../lib/operators';
@@ -310,7 +309,7 @@ export async function runOpTest(testcase: Test.OperatorTestCase, context: OpTest
       context.inferenceHandler, context.createOperator(), testcase, new TensorResultValidator(context.backendHint));
 }
 
-async function runOpTestcase<T extends TextureData|Tensor>(
+async function runOpTestcase(
     inferenceHandler: InferenceHandler, operator: Operator, testcase: Test.OperatorTestCase,
     validator: TensorResultValidator): Promise<void> {
   testcase.inputs.forEach((input, i) => {

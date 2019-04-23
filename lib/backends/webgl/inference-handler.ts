@@ -5,7 +5,6 @@ import {InferenceHandler} from '../../backend';
 import {Logger} from '../../instrument';
 import {Tensor} from '../../tensor';
 import {ShapeUtil} from '../../util';
-import {WebGLBackend} from '../backend-webgl';
 
 import {WebGLUint8Encode} from './ops/uint8-encode';
 import {ProgramManager} from './program-manager';
@@ -16,17 +15,12 @@ import {WidthHeightPrefs} from './texture-layout-strategy';
 import {TextureData, TextureLayout, WebGLOperator} from './types';
 import {getPackedShape} from './utils';
 
-/**
- * GlInferencContext is reponsible for mapping from Tensors to TextureData
- * and back
- * Throughout WebGL backend operations TextureData is used as the data carrier
- */
 export class WebGLInferenceHandler implements InferenceHandler {
   textureHelper: TextureHelper;
   programManager: ProgramManager;
   private tensorToTexture: Map<Tensor, TextureData>;
   private textureToTensor: Map<TextureData, Tensor>;
-  constructor(public backend: WebGLBackend, public session: WebGLSessionHandler) {
+  constructor(public session: WebGLSessionHandler) {
     this.textureHelper = session.textureHelper;
     this.programManager = session.programManager;
     this.tensorToTexture = new Map();
@@ -45,13 +39,8 @@ export class WebGLInferenceHandler implements InferenceHandler {
     return [this.getTensor(runData.outputTextureData)];
   }
 
-  protected lookupTextureData(tensor: Tensor): TextureData|undefined {
-    const isInitializer = this.session.isInitializer(tensor);
-    Logger.verbose('InferenceHandler', `tensor was an initializer; returning TextureData from session cache`);
-    return isInitializer ? this.session.getTextureData(tensor) : this.tensorToTexture.get(tensor);
-  }
   getOrCreate(tensor: Tensor, layout?: TextureLayout): TextureData {
-    let td = this.lookupTextureData(tensor);
+    let td = this.getTextureData(tensor);
     if (!td) {
       Logger.verbose('InferenceHandler', `Creating new TextureData for dims: [${tensor.dims}]`);
       if (!layout) {
@@ -65,8 +54,13 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     return td;
   }
+  createTextureDataFromLayout(
+      layout: TextureLayout, dataType: Tensor.DataType, data?: Tensor.NumberType, usage?: Encoder.Usage): TextureData {
+    Logger.verbose('InferenceHandler', `Creating TextureData: layout:[${JSON.stringify(layout)}]`);
+    return {...layout, dataType, texture: this.textureHelper.createTextureFromLayout(dataType, layout, data, usage)};
+  }
   getTextureData(tensor: Tensor): TextureData|undefined {
-    return this.lookupTextureData(tensor);
+    return this.session.isInitializer(tensor) ? this.session.getTextureData(tensor) : this.tensorToTexture.get(tensor);
   }
   setTextureData(tensor: Tensor, td: TextureData): void {
     if (this.session.isInitializer(tensor)) {
@@ -104,18 +98,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
     return this.createBasicTextureLayout(
         channels === 1 ? tensor.dims.slice() : getPackedShape(tensor.dims.slice()), channels, unpackedShape);
   }
-  dispose(): void {
-    this.textureHelper.clearActiveTextures();
-    this.tensorToTexture.forEach(td => this.textureHelper.releaseTexture(td.texture));
-    this.tensorToTexture = new Map();
-    this.textureToTensor = new Map();
-  }
-  createTextureDataFromLayout(
-      layout: TextureLayout, dataType: Tensor.DataType, data?: Tensor.NumberType, usage?: Encoder.Usage): TextureData {
-    Logger.verbose('InferenceHandler', `Creating TextureData: layout:[${JSON.stringify(layout)}]`);
-    const td = this.textureHelper.createTextureFromLayout(dataType, layout, data, usage);
-    return td;
-  }
   createBasicTextureLayout(
       shape: ReadonlyArray<number>, channels = 1, unpackedShape?: ReadonlyArray<number>,
       prefs?: WidthHeightPrefs): TextureLayout {
@@ -139,8 +121,16 @@ export class WebGLInferenceHandler implements InferenceHandler {
       unpackedShape
     };
   }
+
+  dispose(): void {
+    this.textureHelper.clearActiveTextures();
+    this.tensorToTexture.forEach(td => this.textureHelper.releaseTexture(td));
+    this.tensorToTexture = new Map();
+    this.textureToTensor = new Map();
+  }
+
   readTexture(textureData: TextureData): Tensor.NumberType {
-    if (this.backend.forceUint8Reads) {
+    if (this.session.backend.forceUint8Reads) {
       const op = new WebGLUint8Encode();
       const uint8TD = op.runInternal(this, textureData);
       return this.textureHelper.readUint8TextureAsFloat(uint8TD);

@@ -21,8 +21,8 @@ export class WebGLSessionHandler implements SessionHandler {
   programManager: ProgramManager;
   textureHelper: TextureHelper;
   layoutStrategy: TextureLayoutStrategy;
-  textureDataCache: Map<Tensor, TextureData>;
-  initializers: Set<Tensor>;
+  textureDataCache: Map<Tensor.Id, TextureData>;
+  initializers: Set<Tensor.Id>;
 
   constructor(public readonly backend: WebGLBackend, public readonly context: Session.Context) {
     this.programManager = new ProgramManager(this.context.profiler, backend.glContext);
@@ -35,18 +35,18 @@ export class WebGLSessionHandler implements SessionHandler {
     return new WebGLInferenceHandler(this);
   }
   onGraphInitialized(graph: Graph): void {
-    const initializers = graph.getValues().filter(v => v.from === -1).map(v => v.tensor).filter(t => (t)) as Tensor[];
+    const initializers = graph.getValues().filter(v => v.from === -1 && v.tensor).map(v => v.tensor!.dataId);
     this.initializers = new Set(initializers);
   }
-  isInitializer(t: Tensor): boolean {
-    return this.initializers ? this.initializers.has(t) : false;
+  isInitializer(tensorId: Tensor.Id): boolean {
+    return this.initializers ? this.initializers.has(tensorId) : false;
   }
-  getTextureData(tensor: Tensor): TextureData|undefined {
-    return this.textureDataCache.get(tensor);
+  getTextureData(tensorId: Tensor.Id): TextureData|undefined {
+    return this.textureDataCache.get(tensorId);
   }
-  setTextureData(tensor: Tensor, textureData: TextureData): void {
+  setTextureData(tensorId: Tensor.Id, textureData: TextureData): void {
     Logger.verbose('WebGLSessionHandler', 'Storing Texture data in cache');
-    this.textureDataCache.set(tensor, textureData);
+    this.textureDataCache.set(tensorId, textureData);
   }
   dispose(): void {
     this.programManager.dispose();

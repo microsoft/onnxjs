@@ -18,7 +18,7 @@ import {getPackedShape} from './utils';
 export class WebGLInferenceHandler implements InferenceHandler {
   textureHelper: TextureHelper;
   programManager: ProgramManager;
-  private textureDataCache: Map<Tensor, TextureData>;
+  private textureDataCache: Map<Tensor.Id, TextureData>;
   constructor(public session: WebGLSessionHandler) {
     this.textureHelper = session.textureHelper;
     this.programManager = session.programManager;
@@ -49,7 +49,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
    * @param tensor the tensor with data to upload
    */
   getOrCreateTextureData(tensor: Tensor, layout?: TextureLayout) {
-    let td = this.getTextureData(tensor);
+    let td = this.getTextureData(tensor.dataId);
     if (!td) {
       Logger.verbose('InferenceHandler', `Creating new TextureData for dims: [${tensor.dims}]`);
       if (!layout) {
@@ -99,13 +99,15 @@ export class WebGLInferenceHandler implements InferenceHandler {
    * This function does not create new texture. Usually used in scenarios using texture sharing. (eg. Reshape)
    * @param dataType the tensor data type
    * @param texture the WebGLTexture object to share
+   * @param tensorId the tensor ID of the shared tensor data
    */
-  createSharedTextureData(layout: TextureLayout, dataType: Tensor.DataType, texture: WebGLTexture): TextureData {
-    return this.createTextureDataFromTexture(layout, dataType, texture, undefined);
+  createSharedTextureData(layout: TextureLayout, dataType: Tensor.DataType, texture: WebGLTexture, tensorId: Tensor.Id):
+      TextureData {
+    return this.createTextureDataFromTexture(layout, dataType, texture, undefined, tensorId);
   }
 
   private createTextureDataFromTexture(
-      layout: TextureLayout, dataType: Tensor.DataType, texture: WebGLTexture, tensor?: Tensor) {
+      layout: TextureLayout, dataType: Tensor.DataType, texture: WebGLTexture, tensor?: Tensor, tensorId?: Tensor.Id) {
     const textureData: TextureData = {
       ...layout,
       tensor: tensor ||
@@ -113,21 +115,23 @@ export class WebGLInferenceHandler implements InferenceHandler {
                   layout.unpackedShape, dataType,
                   (id: Tensor.Id) => {
                     return this.readTexture(textureData);
-                  }),
+                  },
+                  undefined, undefined, tensorId),
       texture
     };
-    this.setTextureData(textureData.tensor, textureData);
+    this.setTextureData(textureData.tensor.dataId, textureData);
     return textureData;
   }
 
-  getTextureData(tensor: Tensor): TextureData|undefined {
-    return this.session.isInitializer(tensor) ? this.session.getTextureData(tensor) : this.textureDataCache.get(tensor);
+  getTextureData(tensorId: Tensor.Id): TextureData|undefined {
+    return this.session.isInitializer(tensorId) ? this.session.getTextureData(tensorId) :
+                                                  this.textureDataCache.get(tensorId);
   }
-  setTextureData(tensor: Tensor, td: TextureData): void {
-    if (this.session.isInitializer(tensor)) {
-      this.session.setTextureData(tensor, td);
+  setTextureData(tensorId: Tensor.Id, td: TextureData): void {
+    if (this.session.isInitializer(tensorId)) {
+      this.session.setTextureData(tensorId, td);
     } else {
-      this.textureDataCache.set(tensor, td);
+      this.textureDataCache.set(tensorId, td);
     }
   }
 
@@ -135,7 +139,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
    * Create a TextureLayout object from a tensor. If a related texture data is found, returns the cached texture layout.
    */
   getOrCreateTextureLayout(tensor: Tensor, channels = 1, unpackedShape?: ReadonlyArray<number>): TextureLayout {
-    const td = this.getTextureData(tensor);
+    const td = this.getTextureData(tensor.dataId);
     if (td) {
       return td;
     }

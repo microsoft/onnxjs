@@ -49,7 +49,7 @@ export class WebGLConv extends Conv {
   createRunDatas(inferenceHandler: WebGLInferenceHandler, programInfos: ProgramInfo[], inputs: Tensor[]): RunData[] {
     const k = inputs[1];
     const b = inputs.length >= 3 ? inputs[2] : undefined;
-    let kTD = inferenceHandler.getTextureData(k);
+    let kTD = inferenceHandler.getTextureData(k.dataId);
     if (!kTD) {
       Logger.verbose('Conv', 'Did not find the adjustedKernel texture in the cache. Creating rew.');
       const newKernelData =

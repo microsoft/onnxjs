@@ -25,9 +25,9 @@ export class WebGLSliceV10 extends SliceV10 implements WebGLOperator {
   }
 
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
-    if (!handler.session.isInitializer(inputs[1]) || !handler.session.isInitializer(inputs[2]) ||
-        (inputs.length >= 4 && !handler.session.isInitializer(inputs[3])) ||
-        (inputs.length >= 5 && !handler.session.isInitializer(inputs[4]))) {
+    if (!handler.session.isInitializer(inputs[1].dataId) || !handler.session.isInitializer(inputs[2].dataId) ||
+        (inputs.length >= 4 && !handler.session.isInitializer(inputs[3].dataId)) ||
+        (inputs.length >= 5 && !handler.session.isInitializer(inputs[4].dataId))) {
       throw new Error(`dynamic slice attributes are not allowed`);
     }
     if (inputs.length >= 5 && inputs[4].integerData.some((i: number) => i !== 1)) {

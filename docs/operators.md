@@ -112,6 +112,7 @@ See [Compatibility](../README.md#Compatibility) for a list of the supported plat
 | [Reshape](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Reshape) | 5+ |  | 5+ |
 | [Resize](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Resize) |  |  |  |
 | [ReverseSequence](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ReverseSequence) |  |  |  |
+| [RoiAlign](https://github.com/onnx/onnx/blob/master/docs/Operators.md#RoiAlign) |  |  |  |
 | [Scan](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Scan) |  |  |  |
 | [Scatter](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Scatter) |  |  |  |
 | [Selu](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Selu) |  |  |  |

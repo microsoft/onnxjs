@@ -14,7 +14,7 @@ import {WEBGL_OP_RESOLVE_RULES} from '../lib/backends/webgl/op-resolve-rules';
 import {Operator} from '../lib/operators';
 import {OpSet, resolveOperator} from '../lib/opset';
 
-https.get('https://raw.githubusercontent.com/onnx/onnx/master/onnx/defs/operator_sets.h', res => {
+https.get('https://raw.githubusercontent.com/onnx/onnx/v1.5.0/onnx/defs/operator_sets.h', res => {
   const rl = readline.createInterface({input: res});
 
   const matcher = /class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME\(\s*(\w+),\s*(\d+),\s*(\w+)\)/;

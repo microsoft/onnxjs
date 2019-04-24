@@ -16,7 +16,7 @@ abstract class WebGLGenericReduce extends ReduceBase implements WebGLOperator {
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const outputShape: number[] = [];
-    const iRank = inputs[0].dims.length;
+    const iRank = inputs[0].dims.length || 1;
 
     const idxCopy = [];  // copy output indexes to input indexes
 
@@ -44,7 +44,7 @@ abstract class WebGLGenericReduce extends ReduceBase implements WebGLOperator {
       }
     }
 
-    const oRank = outputShape.length;
+    const oRank = outputShape.length || 1;
 
     const shaderSource = `
       uniform sampler2D A;

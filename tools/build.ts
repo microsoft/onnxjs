@@ -95,7 +95,7 @@ if (prepareTestData) {
   [['v7', '5af210ca8a1c73aa6bae8754c9346ec54d0a756e'],   // rel-1.2.3
    ['v8', '5cc146270945f0d007b140fb59a892a60ba69f49'],   // rel-1.3.0
    ['v9', '4e67414849122d3df78bd72cee5717f90e715d12'],   // rel-1.4.1
-   ['v10', 'b22041c3f16cf8bcca9ed93982d6ffdf6ebf3746'],  // master
+   ['v10', '94d238d96e3fb3a7ba34f03c284b9ad3516163be'],  // rel-1.5.0
   ].forEach(v => {
     const version = v[0];
     const commit = v[1];

@@ -17,6 +17,8 @@ const cleanInstall = process.argv.indexOf('--clean-install') !== -1;
 // To call webpack to generate the bundle .js file
 const buildBundle = process.argv.indexOf('--build-bundle') !== -1;
 
+// tslint:disable: non-literal-fs-path
+
 // Path variables
 const ROOT = path.join(__dirname, '..');
 const DEPS = path.join(ROOT, 'deps');

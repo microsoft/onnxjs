@@ -159,7 +159,7 @@ Learn more about ONNX
 #### Mobile Platforms
 | OS/Browser | Chrome | Edge | FireFox | Safari | Opera |
 |:----------:|:------:|:----:|:-------:|:------:|:-----:|
-| iOS | Coming soon | - | Coming soon | Coming soon | Coming soon |
+| iOS | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 | Android | :heavy_check_mark: | :heavy_check_mark: | Coming soon | - | :heavy_check_mark: |
 
 ### Operators
@@ -171,7 +171,7 @@ Support for [ai.onnx.ml](https://github.com/onnx/onnx/blob/master/docs/Operators
 We’d love to embrace your contribution to ONNX.js. Please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Thanks
-Thanks to [BrowserStack](https://www.browserstack.com/) for providing cross browser testing support. 
+Thanks to [BrowserStack](https://www.browserstack.com/) for providing cross browser testing support.
 
 ## License
 Copyright (c) Microsoft Corporation. All rights reserved.

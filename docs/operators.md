@@ -1,72 +1,147 @@
-The following table lists the [ai.onnx](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md) operators supported by each of the available backends.
+## Operators Support Table
+
+The following table shows [ai.onnx](https://github.com/onnx/onnx/blob/master/docs/Operators.md)  operators from which onnx opset version are currently supported by onnxjs. For example, `4-6, 8+` means  ONNX.js currently support opset version 4 to 6, 8 and above.
 
 See [Compatibility](../README.md#Compatibility) for a list of the supported platforms.
 
-|                                               Operator                                                 | Cpu Backend | Wasm Backend | WebGl Backend |
-|:------------------------------------------------------------------------------------------------------:|:-----------:|:------------:|:-------------:|
-|                [Abs](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Abs)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|               [Acos](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Acos)               |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|                [Add](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Add)                |     :heavy_check_mark:     |   :heavy_check_mark:      |      :heavy_check_mark:      |
-|                [And](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#And)                |     :heavy_check_mark:     |    :heavy_check_mark:     |      :heavy_check_mark:      |
-|               [ArgMax](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ArgMax)            |     :heavy_check_mark:     |           |            |
-|               [Asin](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Asin)               |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|               [Atan](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Atan)               |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|        [AveragePool](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AveragePool)        |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
-| [BatchNormalization](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#BatchNormalization) |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
-|               [Ceil](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Ceil)               |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|             [Clip](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Clip)             |     :heavy_check_mark:     |        :heavy_check_mark:      |      :heavy_check_mark:      |
-|             [Concat](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Concat)             |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|             [Constant](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Constant)         |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
-|               [Conv](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Conv)               |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
-|                [Cos](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Cos)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|                [Div](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Div)                |     :heavy_check_mark:     |     :heavy_check_mark: |    :heavy_check_mark:      |
-|            [Dropout](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Dropout)            |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
-|              [Elu](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Elu)                  |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|              [Equal](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Equal)              |             |              |      :heavy_check_mark:      |
-|                [Exp](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Exp)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|              [Floor](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Floor)              |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|              [Flatten](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Flatten)              |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|               [Gather](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Gather)           |     :heavy_check_mark:     |           |    :heavy_check_mark:        |
-|               [Gemm](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Gemm)               |             |      :heavy_check_mark:     |      :heavy_check_mark:      |
-|  [GlobalAveragePool](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#GlobalAveragePool)  |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
-|      [GlobalMaxPool](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#GlobalMaxPool)      |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
-|            [Greater](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Greater)            |             |              |      :heavy_check_mark:      |
-|           [Identity](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Identity)           |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
-|        [ImageScaler](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ImageScaler)        |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|        [InstanceNormalization](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#InstanceNormalization)        |     :heavy_check_mark:     |   :heavy_check_mark:   |      |
-|          [LeakyRelu](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#LeakyRelu)          |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|               [Less](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Less)               |             |              |      :heavy_check_mark:      |
-|                [Log](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Log)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|                [LRN](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#LRN)                |     :heavy_check_mark:     |              |               |
-|             [MatMul](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#MatMul)             |     :heavy_check_mark:     |   :heavy_check_mark: |      :heavy_check_mark:      |
-|            [MaxPool](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#MaxPool)            |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
-|                [Mul](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Mul)                |     :heavy_check_mark:     |    :heavy_check_mark:  |    :heavy_check_mark:      |
-|                [Neg](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Neg)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|                [Not](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Not)                |             |              |      :heavy_check_mark:      |
-|                 [Or](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Or)                 |     :heavy_check_mark:     |   :heavy_check_mark:  |      :heavy_check_mark:      |
-|                [Pad](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Pad)                |             |              |      :heavy_check_mark:      |
-|                [Pow](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Pow)                |             |              |      :heavy_check_mark:      |
-|              [PRelu](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#PRelu)              |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|       [ReduceLogSum](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ReduceLogSum)       |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|          [ReduceMax](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ReduceMax)          |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|         [ReduceMean](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#ReduceMean)         |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|          [ReduceMin](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AReduceMin)         |             |              |       :heavy_check_mark:        |
-|         [ReduceProd](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AReduceProd)        |             |              |       :heavy_check_mark:        |
-|          [ReduceSum](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AReduceSum)         |             |              |       :heavy_check_mark:        |
-|    [ReduceSumSquare](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#AReduceSumSquare)   |             |              |       :heavy_check_mark:        |
-|               [Relu](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Relu)               |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|            [Reshape](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Reshape)            |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|            [Sigmoid](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Sigmoid)            |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|                [Sin](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Sin)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|            [Slice](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Slice)            |     :heavy_check_mark:     |           |      :heavy_check_mark:      |
-|            [Softmax](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Softmax)            |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
-|              [Split](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Split)              |             |              |      :heavy_check_mark:      |
-|               [Sqrt](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Sqrt)               |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|                [Sub](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Sub)                |     :heavy_check_mark:     |   :heavy_check_mark: |      :heavy_check_mark:      |
-|                [Sum](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Sum)                |     :heavy_check_mark:     |      :heavy_check_mark:     |      :heavy_check_mark:      |
-|                [Tan](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Tan)                |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|               [Tanh](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Tanh)               |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|               [Tile](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Tile)            |     :heavy_check_mark:     |           |     :heavy_check_mark:       |
-|          [Transpose](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Transpose)          |     :heavy_check_mark:     |              |      :heavy_check_mark:      |
-|          [Unsqueeze](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Unsqueeze)          |     :heavy_check_mark:     |              |     :heavy_check_mark:          |
-|                [Xor](https://github.com/onnx/onnx/blob/rel-1.2.3/docs/Operators.md#Xor)                |     :heavy_check_mark:     |   :heavy_check_mark: |    :heavy_check_mark:      |
+*This file is automatically generated from the  def files via [this script](/tools/gen-doc.ts).  Do not modify directly.*
+
+| Operator | Cpu Backend | Wasm Backend | WebGl Backend |
+|:--------:|:-----------:|:------------:|:-------------:|
+| [Abs](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Abs) | 6+ |  | 6+ |
+| [Acos](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Acos) | 7+ |  | 7+ |
+| [Acosh](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Acosh) | 9+ |  |  |
+| [Add](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Add) | 7+ | 7+ | 7+ |
+| [And](https://github.com/onnx/onnx/blob/master/docs/Operators.md#And) | 7+ | 7+ | 7+ |
+| [ArgMax](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ArgMax) | 1+ |  |  |
+| [ArgMin](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ArgMin) |  |  |  |
+| [Asin](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Asin) | 7+ |  | 7+ |
+| [Asinh](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Asinh) | 9+ |  |  |
+| [Atan](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Atan) | 7+ |  | 7+ |
+| [Atanh](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Atanh) | 9+ |  |  |
+| [AveragePool](https://github.com/onnx/onnx/blob/master/docs/Operators.md#AveragePool) | 7-9, 10+ | 7-9, 10+ | 7-9, 10+ |
+| [BatchNormalization](https://github.com/onnx/onnx/blob/master/docs/Operators.md#BatchNormalization) | 7-8, 9+ | 7-8, 9+ | 7-8, 9+ |
+| [Cast](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Cast) |  |  |  |
+| [Ceil](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Ceil) | 6+ |  | 6+ |
+| [Clip](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Clip) | 6+ | 6+ | 6+ |
+| [Compress](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Compress) |  |  |  |
+| [Concat](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Concat) | 4+ |  | 4+ |
+| [Constant](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Constant) |  |  |  |
+| [ConstantOfShape](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ConstantOfShape) |  |  |  |
+| [Conv](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Conv) | 1+ | 1+ | 1+ |
+| [ConvInteger](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ConvInteger) |  |  |  |
+| [ConvTranspose](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ConvTranspose) |  |  |  |
+| [Cos](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Cos) | 7+ |  | 7+ |
+| [Cosh](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Cosh) | 9+ |  |  |
+| [DepthToSpace](https://github.com/onnx/onnx/blob/master/docs/Operators.md#DepthToSpace) |  |  |  |
+| [DequantizeLinear](https://github.com/onnx/onnx/blob/master/docs/Operators.md#DequantizeLinear) |  |  |  |
+| [Div](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Div) | 7+ | 7+ | 7+ |
+| [Dropout](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Dropout) | 7-9, 10+ |  | 7-9, 10+ |
+| [Elu](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Elu) | 6+ |  | 6+ |
+| [Equal](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Equal) |  |  | 7+ |
+| [Erf](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Erf) |  |  |  |
+| [Exp](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Exp) | 6+ |  | 6+ |
+| [Expand](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Expand) |  |  |  |
+| [EyeLike](https://github.com/onnx/onnx/blob/master/docs/Operators.md#EyeLike) |  |  |  |
+| [Flatten](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Flatten) | 1-8, 9+ |  | 1-8, 9+ |
+| [Floor](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Floor) | 6+ |  | 6+ |
+| [GRU](https://github.com/onnx/onnx/blob/master/docs/Operators.md#GRU) |  |  |  |
+| [Gather](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Gather) | 1+ |  | 1+ |
+| [Gemm](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Gemm) | 7-8, 9+ | 7-8, 9+ | 7-8, 9+ |
+| [GlobalAveragePool](https://github.com/onnx/onnx/blob/master/docs/Operators.md#GlobalAveragePool) | 1+ | 1+ | 1+ |
+| [GlobalLpPool](https://github.com/onnx/onnx/blob/master/docs/Operators.md#GlobalLpPool) |  |  |  |
+| [GlobalMaxPool](https://github.com/onnx/onnx/blob/master/docs/Operators.md#GlobalMaxPool) | 1+ | 1+ | 1+ |
+| [Greater](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Greater) |  |  | 7-8, 9+ |
+| [HardSigmoid](https://github.com/onnx/onnx/blob/master/docs/Operators.md#HardSigmoid) |  |  |  |
+| [Hardmax](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Hardmax) |  |  |  |
+| [Identity](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Identity) |  |  | 1+ |
+| [If](https://github.com/onnx/onnx/blob/master/docs/Operators.md#If) |  |  |  |
+| [InstanceNormalization](https://github.com/onnx/onnx/blob/master/docs/Operators.md#InstanceNormalization) | 6+ | 6+ |  |
+| [IsInf](https://github.com/onnx/onnx/blob/master/docs/Operators.md#IsInf) |  |  |  |
+| [IsNaN](https://github.com/onnx/onnx/blob/master/docs/Operators.md#IsNaN) | 9+ |  |  |
+| [LRN](https://github.com/onnx/onnx/blob/master/docs/Operators.md#LRN) | 1+ |  |  |
+| [LSTM](https://github.com/onnx/onnx/blob/master/docs/Operators.md#LSTM) |  |  |  |
+| [LeakyRelu](https://github.com/onnx/onnx/blob/master/docs/Operators.md#LeakyRelu) | 6+ |  | 6+ |
+| [Less](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Less) |  |  | 7-8, 9+ |
+| [Log](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Log) | 6+ |  | 6+ |
+| [LogSoftmax](https://github.com/onnx/onnx/blob/master/docs/Operators.md#LogSoftmax) |  |  |  |
+| [Loop](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Loop) |  |  |  |
+| [LpNormalization](https://github.com/onnx/onnx/blob/master/docs/Operators.md#LpNormalization) |  |  |  |
+| [LpPool](https://github.com/onnx/onnx/blob/master/docs/Operators.md#LpPool) |  |  |  |
+| [MatMul](https://github.com/onnx/onnx/blob/master/docs/Operators.md#MatMul) | 1-8, 9+ | 1-8, 9+ | 1-8, 9+ |
+| [MatMulInteger](https://github.com/onnx/onnx/blob/master/docs/Operators.md#MatMulInteger) |  |  |  |
+| [Max](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Max) |  |  |  |
+| [MaxPool](https://github.com/onnx/onnx/blob/master/docs/Operators.md#MaxPool) | 1-7, 8-9, 10+ | 1-7, 8-9, 10+ | 1-7, 8-9, 10+ |
+| [MaxRoiPool](https://github.com/onnx/onnx/blob/master/docs/Operators.md#MaxRoiPool) |  |  |  |
+| [MaxUnpool](https://github.com/onnx/onnx/blob/master/docs/Operators.md#MaxUnpool) |  |  |  |
+| [Mean](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Mean) |  |  |  |
+| [MeanVarianceNormalization](https://github.com/onnx/onnx/blob/master/docs/Operators.md#MeanVarianceNormalization) |  |  |  |
+| [Min](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Min) |  |  |  |
+| [Mod](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Mod) |  |  |  |
+| [Mul](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Mul) | 7+ | 7+ | 7+ |
+| [Multinomial](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Multinomial) |  |  |  |
+| [Neg](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Neg) | 6+ |  | 6+ |
+| [NonMaxSuppression](https://github.com/onnx/onnx/blob/master/docs/Operators.md#NonMaxSuppression) |  |  |  |
+| [NonZero](https://github.com/onnx/onnx/blob/master/docs/Operators.md#NonZero) |  |  |  |
+| [Not](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Not) | 1+ |  | 1+ |
+| [OneHot](https://github.com/onnx/onnx/blob/master/docs/Operators.md#OneHot) |  |  |  |
+| [Or](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Or) | 7+ | 7+ | 7+ |
+| [PRelu](https://github.com/onnx/onnx/blob/master/docs/Operators.md#PRelu) | 7-8, 9+ | 7-8, 9+ | 7-8, 9+ |
+| [Pad](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Pad) |  |  | 2+ |
+| [Pow](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Pow) |  |  | 7+ |
+| [QLinearConv](https://github.com/onnx/onnx/blob/master/docs/Operators.md#QLinearConv) |  |  |  |
+| [QLinearMatMul](https://github.com/onnx/onnx/blob/master/docs/Operators.md#QLinearMatMul) |  |  |  |
+| [QuantizeLinear](https://github.com/onnx/onnx/blob/master/docs/Operators.md#QuantizeLinear) |  |  |  |
+| [RNN](https://github.com/onnx/onnx/blob/master/docs/Operators.md#RNN) |  |  |  |
+| [RandomNormal](https://github.com/onnx/onnx/blob/master/docs/Operators.md#RandomNormal) |  |  |  |
+| [RandomNormalLike](https://github.com/onnx/onnx/blob/master/docs/Operators.md#RandomNormalLike) |  |  |  |
+| [RandomUniform](https://github.com/onnx/onnx/blob/master/docs/Operators.md#RandomUniform) |  |  |  |
+| [RandomUniformLike](https://github.com/onnx/onnx/blob/master/docs/Operators.md#RandomUniformLike) |  |  |  |
+| [Reciprocal](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Reciprocal) | 6+ |  |  |
+| [ReduceL1](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ReduceL1) |  |  |  |
+| [ReduceL2](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ReduceL2) |  |  |  |
+| [ReduceLogSum](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ReduceLogSum) | 1+ |  | 1+ |
+| [ReduceLogSumExp](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ReduceLogSumExp) |  |  |  |
+| [ReduceMax](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ReduceMax) | 1+ |  | 1+ |
+| [ReduceMean](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ReduceMean) | 1+ |  | 1+ |
+| [ReduceMin](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ReduceMin) | 1+ |  | 1+ |
+| [ReduceProd](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ReduceProd) | 1+ |  | 1+ |
+| [ReduceSum](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ReduceSum) | 1+ |  | 1+ |
+| [ReduceSumSquare](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ReduceSumSquare) | 1+ |  | 1+ |
+| [Relu](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Relu) | 6+ |  | 6+ |
+| [Reshape](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Reshape) | 5+ |  | 5+ |
+| [Resize](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Resize) |  |  |  |
+| [ReverseSequence](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ReverseSequence) |  |  |  |
+| [RoiAlign](https://github.com/onnx/onnx/blob/master/docs/Operators.md#RoiAlign) |  |  |  |
+| [Scan](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Scan) |  |  |  |
+| [Scatter](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Scatter) |  |  |  |
+| [Selu](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Selu) |  |  |  |
+| [Shape](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Shape) |  |  |  |
+| [Shrink](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Shrink) |  |  |  |
+| [Sigmoid](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Sigmoid) | 6+ |  | 6+ |
+| [Sign](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Sign) | 9+ |  |  |
+| [Sin](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Sin) | 7+ |  | 7+ |
+| [Sinh](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Sinh) | 9+ |  |  |
+| [Size](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Size) |  |  |  |
+| [Slice](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Slice) | 1-9, 10+ |  | 1-9, 10+ |
+| [Softmax](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Softmax) | 1+ | 1+ | 1+ |
+| [Softplus](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Softplus) |  |  |  |
+| [Softsign](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Softsign) |  |  |  |
+| [SpaceToDepth](https://github.com/onnx/onnx/blob/master/docs/Operators.md#SpaceToDepth) |  |  |  |
+| [Split](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Split) |  |  | 2+ |
+| [Sqrt](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Sqrt) | 6+ |  | 6+ |
+| [Squeeze](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Squeeze) | 1+ |  | 1+ |
+| [StringNormalizer](https://github.com/onnx/onnx/blob/master/docs/Operators.md#StringNormalizer) |  |  |  |
+| [Sub](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Sub) | 7+ | 7+ | 7+ |
+| [Sum](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Sum) | 6-7, 8+ | 6-7, 8+ | 6-7, 8+ |
+| [Tan](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Tan) | 7+ |  | 7+ |
+| [Tanh](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Tanh) | 6+ |  | 6+ |
+| [TfIdfVectorizer](https://github.com/onnx/onnx/blob/master/docs/Operators.md#TfIdfVectorizer) |  |  |  |
+| [ThresholdedRelu](https://github.com/onnx/onnx/blob/master/docs/Operators.md#ThresholdedRelu) |  |  |  |
+| [Tile](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Tile) | 6+ |  | 6+ |
+| [TopK](https://github.com/onnx/onnx/blob/master/docs/Operators.md#TopK) |  |  |  |
+| [Transpose](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Transpose) | 1+ |  | 1+ |
+| [Unsqueeze](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Unsqueeze) | 1+ |  | 1+ |
+| [Upsample](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Upsample) |  |  |  |
+| [Where](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Where) |  |  |  |
+| [Xor](https://github.com/onnx/onnx/blob/master/docs/Operators.md#Xor) | 7+ | 7+ | 7+ |

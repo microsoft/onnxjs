@@ -463,7 +463,9 @@ export class ShapeUtil {
 
   static computeStrides(dims: ReadonlyArray<number>): ReadonlyArray<number> {
     const rank = dims.length;
-    if (rank < 2) {
+    if (rank === 0) {
+      return [];
+    } else if (rank === 1) {
       return [1];
     }
     const strides = new Array(rank);

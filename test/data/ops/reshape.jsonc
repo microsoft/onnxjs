@@ -2,27 +2,26 @@
   {
     "name": "Reshape with '0' and '-1' in the shape tensor input",
     "operator": "Reshape",
-    "attributes": [
-    ],
+    "attributes": [],
     "cases": [
       {
         "name": "T[0]",
         "inputs": [
           {
-            "data": [1,1,1,1],
-            "dims": [2,2],
+            "data": [1, 1, 1, 1],
+            "dims": [2, 2],
             "type": "float32"
           },
           {
-            "data": [-1,0],
+            "data": [-1, 0],
             "dims": [2],
             "type": "int32"
           }
         ],
         "outputs": [
           {
-            "data": [1,1,1,1],
-            "dims": [2,2],
+            "data": [1, 1, 1, 1],
+            "dims": [2, 2],
             "type": "float32"
           }
         ]
@@ -58,7 +57,7 @@
             "type": "float32"
           },
           {
-            "data": [1,1],
+            "data": [1, 1],
             "dims": [2],
             "type": "int32"
           }
@@ -66,7 +65,7 @@
         "outputs": [
           {
             "data": [1],
-            "dims": [1,1],
+            "dims": [1, 1],
             "type": "float32"
           }
         ]
@@ -80,7 +79,7 @@
             "type": "float32"
           },
           {
-            "data": [-1,1],
+            "data": [-1, 1],
             "dims": [2],
             "type": "int32"
           }
@@ -88,7 +87,7 @@
         "outputs": [
           {
             "data": [1],
-            "dims": [1,1],
+            "dims": [1, 1],
             "type": "float32"
           }
         ]

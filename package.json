@@ -16,7 +16,9 @@
     "build:bundle": "node tools/build --build-bundle",
     "test": "node tools/test-runner-cli",
     "lint": "tslint -p . -t verbose",
-    "format": "clang-format --glob=\"{{lib,test,tools}/**/*.ts,src/**/*.{cpp,h}}\" --style=file -i"
+    "format": "clang-format --glob=\"{{lib,test,tools}/**/*.ts,src/**/*.{cpp,h}}\" --style=file -i",
+    "format:md": "prettier --write --parser markdown \"{README.md,docs/**/*.md}\"",
+    "format:jsonc": "prettier --write --parser json \"test/**/*.jsonc\""
   },
   "repository": {
     "type": "git",
@@ -72,6 +74,7 @@
     "npmlog": "^4.1.2",
     "numpy-parser": "^1.2.3",
     "onnxjs-node": "^0.3.0",
+    "prettier": "1.17.0",
     "strip-json-comments": "^2.0.1",
     "ts-loader": "^5.4.3",
     "tslint": "^5.16.0",

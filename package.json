@@ -18,7 +18,8 @@
     "lint": "tslint -p . -t verbose",
     "format": "clang-format --glob=\"{{lib,test,tools}/**/*.ts,src/**/*.{cpp,h}}\" --style=file -i",
     "format:md": "prettier --write --parser markdown \"{README.md,docs/**/*.md}\"",
-    "format:jsonc": "prettier --write --parser json \"test/**/*.jsonc\""
+    "format:jsonc": "prettier --write --parser json \"test/**/*.jsonc\"",
+    "pre-commit": "node tools/pre-commit"
   },
   "repository": {
     "type": "git",

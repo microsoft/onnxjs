@@ -28,6 +28,15 @@ if (clangFormat.status !== 0) {
   process.exit(clangFormat.status);
 }
 
+logger.info('pre-commit', 'Running gen-doc...');
+const genDoc = spawnSync('npm run build:doc', {shell: true, stdio: 'inherit', cwd: ROOT});
+if (genDoc.status !== 0) {
+  if (genDoc.error) {
+    console.error(genDoc.error);
+  }
+  process.exit(genDoc.status);
+}
+
 logger.info('pre-commit', 'Running prettier on markdown...');
 const prettierMd = spawnSync('npm run format:md', {shell: true, stdio: 'inherit', cwd: ROOT});
 if (prettierMd.status !== 0) {

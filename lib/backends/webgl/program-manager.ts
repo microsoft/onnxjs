@@ -54,11 +54,7 @@ export class ProgramManager {
         throw err;
       }
       this.profiler.event('backend', 'GlContext.draw()', () => {
-        if (buildArtifact.programInfo.blockSize) {
-          this.doBlockDraw(buildArtifact, runData);
-        } else {
-          this.doDraw(buildArtifact, runData);
-        }
+        this.doDraw(buildArtifact, runData);
         gl.flush();
       });
       if (runData.postRun) {
@@ -101,30 +97,6 @@ export class ProgramManager {
       runData.draw(this.glContext, artifact);
     } else {
       this.glContext.draw();
-    }
-  }
-  protected doBlockDraw(artifact: Artifact, runData: RunData): void {
-    const gl = this.glContext.gl;
-    const [blockWidth, blockHeight] = artifact.programInfo.blockSize;
-    const widthLocation = artifact.uniformLocations.blockWidth.location;
-    const heightLocation = artifact.uniformLocations.blockHeight.location;
-    const yOffsetLocation = artifact.uniformLocations.blockYOffset.location;
-    const xOffsetLocation = artifact.uniformLocations.blockXOffset.location;
-    const height = runData.outputTextureData.height;
-    const width = runData.outputTextureData.width;
-
-    for (let col = 0; col < width; col += blockWidth) {
-      const colCount = Math.min(blockWidth, width - col);
-      gl.uniform1i(widthLocation, colCount);
-      gl.uniform1i(xOffsetLocation, col);
-      for (let row = 0; row < height; row += blockHeight) {
-        const rowCount = Math.min(blockHeight, height - row);
-        Logger.verbose('ProgramManager', `row=${row}, rowCount=${rowCount}, col=${col}, colCount=${colCount}`);
-        gl.viewport(col, row, colCount, rowCount);
-        gl.uniform1i(heightLocation, rowCount);
-        gl.uniform1i(yOffsetLocation, row);
-        this.doDraw(artifact, runData);
-      }
     }
   }
   protected compile(fragShaderScript: string): WebGLProgram {

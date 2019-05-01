@@ -60,10 +60,6 @@ export class GlslPreprocessor {
       this.context.uniformInfo.push(
           {type: matches[0], name: matches[1], isVec: matches[2] ? true : false, arraySuffix: matches[2]});
     }
-    if (this.context.programInfo.blockSize) {
-      ['blockWidth', 'blockHeight', 'blockYOffset', 'blockXOffset'].forEach(
-          name => this.context.uniformInfo.push({type: 'int', name, isVec: false, arraySuffix: ''}));
-    }
     return shaderSource.replace(uniformRegex, '');
   }
   protected addPreamble(script: string): string {
@@ -77,45 +73,13 @@ export class GlslPreprocessor {
     `;
   }
   protected addClosing(script: string): string {
-    let currentIndexVar = 'indices';
     const rank = this.context.programInfo.outputLayout.shape.length;
-    // these should be traversed in the reverse order since the very
-    // first set of indices are the outer most indices
-    const positionalSubs = this.context.programInfo.positionalSubFunctions;
-    if (positionalSubs) {
-      positionalSubs.reverse();
-    }
-    const positionalBodies = positionalSubs ? positionalSubs.map(fn => fn.body).join('\n') : '';
-    const callLines: string[] = [];
-    if (positionalSubs) {
-      let lastIndexVar = 'indices';
-      let counter = 1;
-      positionalSubs.forEach(fn => {
-        callLines.push(`int indices_${counter}[${fn.inputShape.length}];`);
-        callLines.push(`${fn.name}(indices_${counter}, ${lastIndexVar});`);
-        lastIndexVar = `indices_${counter}`;
-        currentIndexVar = `indices_${counter}`;
-        ++counter;
-      });
-    }
-    const valueSubs = this.context.programInfo.valueSubFunctions;
-    const valueBodies = valueSubs ? valueSubs.map(fn => fn.body).join('\n') : '';
-    const valueCallLines: string[] = [];
-    if (valueSubs) {
-      valueSubs.forEach(fn => {
-        valueCallLines.push(`result = ${fn.name}(result);`);
-      });
-    }
     return `
     ${script}
-    ${positionalBodies}
-    ${valueBodies}
     void main() {
       int indices[${rank}];
       toVec(TexCoords, indices);
-      ${callLines.join('\n')}
-      vec4 result = vec4(process(${currentIndexVar}));
-      ${valueCallLines.join('\n')}
+      vec4 result = vec4(process(indices));
       gl_FragColor = result;
     }
     `;

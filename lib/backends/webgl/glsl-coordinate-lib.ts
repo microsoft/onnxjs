@@ -66,13 +66,6 @@ export class CoordsGlslLib extends GlslLib {
     const xScale = output.width;
     const yScale = output.height;
 
-    const offsetFromBlocks = (this.context.programInfo.blockSize) ? `
-      int offsetFromBlocks(vec2 coords, int blockWidth, int blockHeight,
-          int blockXOffset, int blockYOffset, int totalWidth) {
-        coords = TexCoords * vec2(blockWidth, blockHeight) + vec2(blockXOffset, blockYOffset);
-        return int(coords.t) * totalWidth + int(coords.s);
-      }` :
-                                                                    '';
     const stridesBlock = [];
     for (let i = 0; i < rank - 1; ++i) {
       stridesBlock.push(`
@@ -82,15 +75,9 @@ export class CoordsGlslLib extends GlslLib {
     }
     stridesBlock.push(`
         c[${rank - 1}] = offset;`);
-    const offsetLine = (this.context.programInfo.blockSize) ? `
-      int offset = offsetFromBlocks(TexCoords, blockWidth, blockHeight, blockXOffset, blockYOffset, ${xScale});` :
-
-                                                              `
-      int offset = coordsToOffset(texCoords, ${xScale}, ${yScale});`;
     const body = `
-      ${offsetFromBlocks}
       void toVec(vec2 texCoords, out int c[${rank}]) {
-        ${offsetLine}
+        int offset = coordsToOffset(texCoords, ${xScale}, ${yScale});
         ${stridesBlock.join('')}
       }
       void toVec(int offset, out int c[${rank}]) {

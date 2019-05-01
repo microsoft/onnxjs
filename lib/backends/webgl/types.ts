@@ -3,7 +3,6 @@
 
 import {Tensor} from '../../tensor';
 
-import {GlslPositionalFunction, GlslValueFunction} from './glsl-definitions';
 import {WebGLInferenceHandler} from './inference-handler';
 import {WebGLContext} from './webgl-context';
 
@@ -23,9 +22,21 @@ export interface WebGLOperator {
 export interface TextureLayout {
   width: number;
   height: number;
-  channels: number;
+  /**
+   * specify the number of value that encoded in a single pixel
+   */
+  channels: 1|2|3|4;
+  /**
+   * the normalized shape
+   */
   shape: ReadonlyArray<number>;
+  /**
+   * the stride of each dimensions, calculated according to shape
+   */
   strides: ReadonlyArray<number>;
+  /**
+   * the original shape(dims) of the corresponding tensor
+   */
   unpackedShape: ReadonlyArray<number>;
 }
 export interface TextureData extends TextureLayout {
@@ -37,13 +48,16 @@ export interface TextureData extends TextureLayout {
  * A set of data that represent a shader program
  */
 export interface ProgramInfo {
+  /**
+   * texture layouts for each input
+   */
   inputLayouts: TextureLayout[];
-  shaderSource: string;
+  /**
+   * texture layout for output
+   */
   outputLayout: TextureLayout;
+  shaderSource: string;
   hasMain: boolean;
-  positionalSubFunctions?: GlslPositionalFunction[];
-  valueSubFunctions?: GlslValueFunction[];
-  blockSize?: [number, number];
   params?: {[name: string]: number|number[]|string};
 }
 

@@ -2,22 +2,21 @@
   {
     "name": "relu",
     "operator": "Relu",
-    "attributes": [
-    ],
+    "attributes": [],
     "cases": [
       {
         "name": "T[0]",
         "inputs": [
           {
             "data": [1.0, -2.0, 0, 2.0],
-            "dims": [2,2],
+            "dims": [2, 2],
             "type": "float32"
           }
         ],
         "outputs": [
           {
             "data": [1.0, 0, 0, 2.0],
-            "dims": [2,2],
+            "dims": [2, 2],
             "type": "float32"
           }
         ]

@@ -2,8 +2,7 @@
   {
     "name": "And with no attributes",
     "operator": "And",
-    "attributes": [
-    ],
+    "attributes": [],
     "cases": [
       {
         "name": "T[0] T[2,4]",
@@ -14,15 +13,15 @@
             "type": "bool"
           },
           {
-            "data": [true, false, true, false, true , false, true, false],
-                "dims": [2,4],
-                "type":"bool"
+            "data": [true, false, true, false, true, false, true, false],
+            "dims": [2, 4],
+            "type": "bool"
           }
         ],
         "outputs": [
           {
-            "data": [true, false, true, false, true , false, true, false],
-            "dims": [2,4],
+            "data": [true, false, true, false, true, false, true, false],
+            "dims": [2, 4],
             "type": "bool"
           }
         ]
@@ -36,15 +35,15 @@
             "type": "bool"
           },
           {
-            "data": [true, false, true, false, true , false, true, false],
-            "dims": [2,4],
-            "type":"bool"
+            "data": [true, false, true, false, true, false, true, false],
+            "dims": [2, 4],
+            "type": "bool"
           }
         ],
         "outputs": [
           {
-            "data": [true, false, false, false, true , false, false, false],
-            "dims": [2,4],
+            "data": [true, false, false, false, true, false, false, false],
+            "dims": [2, 4],
             "type": "bool"
           }
         ]
@@ -58,17 +57,15 @@
             "type": "bool"
           },
           {
-            "data": [
-              false, false, false, false
-            ],
-            "dims": [2,2],
-            "type":"bool"
+            "data": [false, false, false, false],
+            "dims": [2, 2],
+            "type": "bool"
           }
         ],
         "outputs": [
           {
             "data": [false, false, false, false],
-            "dims": [2,2],
+            "dims": [2, 2],
             "type": "bool"
           }
         ]
@@ -77,11 +74,9 @@
         "name": "T[2,2] Scalar",
         "inputs": [
           {
-            "data": [
-              true, true, true, true
-            ],
-            "dims": [2,2],
-            "type":"bool"
+            "data": [true, true, true, true],
+            "dims": [2, 2],
+            "type": "bool"
           },
           {
             "data": [false],
@@ -92,7 +87,7 @@
         "outputs": [
           {
             "data": [false, false, false, false],
-            "dims": [2,2],
+            "dims": [2, 2],
             "type": "bool"
           }
         ]
@@ -103,7 +98,7 @@
           {
             "data": [true],
             "dims": [],
-            "type":"bool"
+            "type": "bool"
           },
           {
             "data": [true],

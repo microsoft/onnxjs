@@ -9,8 +9,11 @@
     "no-document-write": true,
     "no-eval": true,
     "no-exec-script": true,
-    "no-function-constructor-with-string-args": true,
-    "no-http-string": [true, "http://www.example.com/?.*", "http://localhost:?.*"],
+    "no-http-string": [
+      true,
+      "http://www.example.com/?.*",
+      "http://localhost:?.*"
+    ],
     "no-inner-html": true,
     "no-octal-literal": true,
     "no-string-based-set-immediate": true,
@@ -62,7 +65,6 @@
     "no-string-literal": true,
     "no-string-throw": true,
     "no-submodule-imports": true,
-    "no-unnecessary-bind": true,
     "no-unnecessary-callback-wrapper": true,
     "no-unnecessary-initializer": true,
     "no-unnecessary-override": true,
@@ -89,7 +91,8 @@
 
     "array-type": [true, "array-simple"],
     "arrow-return-shorthand": true,
-    "ban-types": [true,
+    "ban-types": [
+      true,
       ["Object", "Use {} instead."],
       ["String", "Use 'string' instead."],
       ["Number", "Use 'number' instead."],
@@ -97,6 +100,7 @@
     ],
     "class-name": true,
     "curly": true,
+    "function-constructor": true,
     "interface-name": [true, "never-prefix"],
     "jsdoc-format": true,
     "max-line-length": [true, 120],
@@ -111,10 +115,15 @@
     "no-require-imports": true,
     "no-var-keyword": true,
     "object-literal-shorthand": true,
-    "only-arrow-functions": [true, "allow-declarations", "allow-named-functions"],
+    "only-arrow-functions": [
+      true,
+      "allow-declarations",
+      "allow-named-functions"
+    ],
     "prefer-const": true,
     "quotemark": [true, "single"],
     "semicolon": [true, "always", "ignore-bound-class-methods"],
+    "unnecessary-bind": true,
     "variable-name": [
       true,
       "check-format",
@@ -123,6 +132,9 @@
       "allow-trailing-underscore"
     ]
   },
-  "rulesDirectory": ["tslint-microsoft-contrib", "tslint-no-unused-expression-chai"],
+  "rulesDirectory": [
+    "tslint-microsoft-contrib",
+    "tslint-no-unused-expression-chai"
+  ],
   "extends": ["tslint-no-unused-expression-chai"]
 }

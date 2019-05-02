@@ -23,8 +23,6 @@ export class WebGLMatMul extends MatMul implements WebGLOperator {
     const brank = bShape.length;
     const sharedDim = aShape[aShape.length - 1];
     const shaderSource = `
-      uniform sampler2D A;
-      uniform sampler2D B;
       float process(int indices[${rank}]) {
           int a[${arank}];
           int b[${brank}];
@@ -40,9 +38,9 @@ export class WebGLMatMul extends MatMul implements WebGLOperator {
           return value;
       }`;
     return {
-      hasMain: false,
       inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t)),
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A', 'B'],
       shaderSource,
     };
   }

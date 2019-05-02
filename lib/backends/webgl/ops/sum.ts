@@ -13,18 +13,17 @@ export class WebGLSum extends Sum implements WebGLOperator {
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const outputShape = inputs[0].dims.slice();
     const sumLine = inputs.map((v, i) => `texture2D(X${i},TexCoords)`).join(' + ');
-    const inputUniforms = inputs.map((v, i) => `uniform sampler2D X${i};`);
-    const shaderSource = `
-      ${inputUniforms.join('\n')}
+    const samplers = inputs.map((v, i) => `X${i}`);
+    return {
+      inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t)),
+      outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers,
+      shaderSource: `
       void main() {
         vec4 result = ${sumLine};
         gl_FragColor = result;
-      }`;
-    return {
-      hasMain: true,
-      inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t)),
-      outputLayout: handler.createTextureLayoutFromShape(outputShape),
-      shaderSource,
+      }`,
+      hasMain: true
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {

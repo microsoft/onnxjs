@@ -15,17 +15,17 @@ export class WebGLClip extends Clip implements WebGLOperator {
     const shaderSource = `
       const float min = float(${this.min});
       const float max = float(${this.max});
-      uniform sampler2D A;
       void main() {
         float v = texture2D(A, TexCoords).r;
         gl_FragColor = vec4(clamp(v, min, max));
       }
       `;
     return {
-      hasMain: true,
       inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])],
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A'],
       shaderSource,
+      hasMain: true,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {

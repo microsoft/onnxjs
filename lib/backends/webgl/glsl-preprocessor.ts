@@ -2,8 +2,9 @@
 // Licensed under the MIT license.
 
 import {GlslContext, GlslLib, GlslLibRoutineNode, TopologicalSortGlslRoutines} from './glsl-definitions';
-import {GlslFunctionInliner} from './glsl-function-inliner';
+import {replaceInlines} from './glsl-function-inliner';
 import {glslRegistry} from './glsl-registered-libs';
+import {getDefaultFragShaderMain, getFragShaderPreamble} from './glsl-source';
 import {ProgramInfo, VariableInfo} from './types';
 import {WebGLContext} from './webgl-context';
 
@@ -16,123 +17,21 @@ import {WebGLContext} from './webgl-context';
  *  Macro resolution (not implemented)
  */
 export class GlslPreprocessor {
-  context: GlslContext;
-  libs: {[name: string]: GlslLib};
-  inliner: GlslFunctionInliner;
-  glslLibRoutineDependencyGraph: {[routineName: string]: GlslLibRoutineNode} = {};
-  shaderSource: string;
+  readonly context: GlslContext;
+  readonly libs: {[name: string]: GlslLib} = {};
+  readonly glslLibRoutineDependencyGraph: {[routineName: string]: GlslLibRoutineNode} = {};
 
   constructor(glContext: WebGLContext, programInfo: ProgramInfo) {
-    this.context = new GlslContext(glContext, programInfo, [], []);
-    this.inliner = new GlslFunctionInliner();
-    this.libs = {};
+    this.context = new GlslContext(glContext, programInfo);
+
+    // construct GlslLibs
     Object.keys(glslRegistry).forEach((name: string) => {
       const lib = new glslRegistry[name](this.context);
       this.libs[name] = lib;
     });
-    this.shaderSource = this.extractUniformInfo(programInfo.shaderSource);
-    this.glslLibRoutineDependencyGraph = this.constructGlslRoutineDependencyGraph();
-  }
 
-  preprocess(): string {
-    let s = this.shaderSource;
-    if (!this.context.programInfo.hasMain) {
-      s = this.addClosing(s);
-    }
-    s = this.processImports(s);
-    s = this.processMacros(s);
-    s = this.processInlines(s);
-    s = this.addUniforms(s, this.context.uniformInfo);
-    s = this.addPreamble(s);
-    return s;
-  }
-  extractAttribInfo(shaderSource: string): void {
-    const attribRegex = /^\s*attribute (\w+) (\w+);/gm;
-    for (const item of this.getVariableMatches(attribRegex, shaderSource)) {
-      const matches = item as string[];
-      this.context.attribInfo.push({type: matches[0], name: matches[1], isVec: matches[2] ? true : false});
-    }
-  }
-  extractUniformInfo(shaderSource: string): string {
-    const uniformRegex = /^\s*uniform (?:\w+ )?(\w+) (\w+)(\[\d+\])?;/gm;
-    for (const item of this.getVariableMatches(uniformRegex, shaderSource)) {
-      const matches = item as string[];
-      this.context.uniformInfo.push(
-          {type: matches[0], name: matches[1], isVec: matches[2] ? true : false, arraySuffix: matches[2]});
-    }
-    return shaderSource.replace(uniformRegex, '');
-  }
-  protected addPreamble(script: string): string {
-    return `
-    precision highp float;
-    precision highp int;
-    precision highp sampler2D;
-    varying vec2 TexCoords;
-
-    ${script}
-    `;
-  }
-  protected addClosing(script: string): string {
-    const rank = this.context.programInfo.outputLayout.shape.length;
-    return `
-    ${script}
-    void main() {
-      int indices[${rank}];
-      toVec(TexCoords, indices);
-      vec4 result = vec4(process(indices));
-      gl_FragColor = result;
-    }
-    `;
-  }
-  protected processImports(script: string): string {
-    const routinesIncluded = this.selectGlslLibRoutinesToBeIncluded(script);
-
-    if (routinesIncluded.length === 0) {
-      return `
-      ${script}
-      `;
-    }
-
-    let routines = ``;
-    for (let i = 0; i < routinesIncluded.length; ++i) {
-      if (routinesIncluded[i].routineBody) {
-        routines += routinesIncluded[i].routineBody + `\n`;
-      } else {
-        throw new Error(`Missing body for the Glsl Library routine: ${routinesIncluded[i].name}`);
-      }
-    }
-
-    return `
-    ${routines}
-    ${script}
-    `;
-  }
-  protected addUniforms(script: string, uniforms: VariableInfo[]): string {
-    const uniformLines: string[] = [];
-    uniforms.forEach(vi => {
-      const arraySuffix = vi.arraySuffix ? vi.arraySuffix : '';
-      uniformLines.push(`uniform ${vi.type} ${vi.name}${arraySuffix};`);
-    });
-    return `
-    ${uniformLines.join('\n')}
-    ${script}
-    `;
-  }
-  private selectGlslLibRoutinesToBeIncluded(script: string): GlslLibRoutineNode[] {
-    const nodes: GlslLibRoutineNode[] = [];
-
-    Object.keys(this.glslLibRoutineDependencyGraph).forEach(classAndRoutine => {
-      const routine = classAndRoutine.split('.')[1];
-      if (script.indexOf(routine) !== -1) {
-        nodes.push(this.glslLibRoutineDependencyGraph[classAndRoutine]);
-      }
-    });
-
-    return TopologicalSortGlslRoutines.returnOrderedNodes(nodes);
-  }
-
-  private constructGlslRoutineDependencyGraph(): {[routineName: string]: GlslLibRoutineNode;} {
-    const map: {[routineName: string]: GlslLibRoutineNode;} = {};
+    // construct GlslRoutineDependencyGraph
+    const map = this.glslLibRoutineDependencyGraph;
     for (const libName in this.libs) {
       const lib = this.libs[libName];
       const routinesInLib = lib.getFunctions();
@@ -160,25 +59,71 @@ export class GlslPreprocessor {
         }
       }
     }
-    return map;
   }
 
-  protected processMacros(script: string): string {
-    return script;
+  preprocess(): string {
+    const programInfo = this.context.programInfo;
+    let source = programInfo.shaderSource;
+
+    // append main() function
+    if (!this.context.programInfo.hasMain) {
+      source = `${source}
+      ${getDefaultFragShaderMain(programInfo.outputLayout.shape.length)}`;
+    }
+    // replace inlines
+    source = replaceInlines(source);
+
+    // concat final source string
+    return `${getFragShaderPreamble()}
+    ${this.getUniforms(programInfo.samplers, programInfo.variables)}
+    ${this.getImports(source)}
+    ${source}`;
   }
-  protected processInlines(script: string): string {
-    return this.inliner.inline(script);
-  }
-  protected getVariableMatches(regex: RegExp, src: string): object[] {
-    const result: object[] = [];
-    let match;
-    while ((match = regex.exec(src)) !== null) {
-      if (match.length === 4) {
-        result.push([match[1], match[2], match[3]]);
+
+  protected getImports(script: string): string {
+    const routinesIncluded = this.selectGlslLibRoutinesToBeIncluded(script);
+
+    if (routinesIncluded.length === 0) {
+      return '';
+    }
+
+    let routines = ``;
+    for (let i = 0; i < routinesIncluded.length; ++i) {
+      if (routinesIncluded[i].routineBody) {
+        routines += routinesIncluded[i].routineBody + `\n`;
       } else {
-        result.push([match[1], match[2], null]);
+        throw new Error(`Missing body for the Glsl Library routine: ${routinesIncluded[i].name}`);
       }
     }
-    return result;
+
+    return routines;
+  }
+  private selectGlslLibRoutinesToBeIncluded(script: string): GlslLibRoutineNode[] {
+    const nodes: GlslLibRoutineNode[] = [];
+
+    Object.keys(this.glslLibRoutineDependencyGraph).forEach(classAndRoutine => {
+      const routine = classAndRoutine.split('.')[1];
+      if (script.indexOf(routine) !== -1) {
+        nodes.push(this.glslLibRoutineDependencyGraph[classAndRoutine]);
+      }
+    });
+
+    return TopologicalSortGlslRoutines.returnOrderedNodes(nodes);
+  }
+
+  protected getUniforms(samplers?: string[], variables?: VariableInfo[]): string {
+    const uniformLines: string[] = [];
+    if (samplers) {
+      for (const sampler of samplers) {
+        uniformLines.push(`uniform sampler2D ${sampler};`);
+      }
+    }
+    if (variables) {
+      for (const variable of variables) {
+        uniformLines.push(
+            `uniform ${variable.type} ${variable.name}${variable.arrayLength ? `[${variable.arrayLength}]` : ''};`);
+      }
+    }
+    return uniformLines.join('\n');
   }
 }

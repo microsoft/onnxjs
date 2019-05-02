@@ -27,8 +27,7 @@ export class ShapeUtilsGlslLib extends GlslLib {
     const programInfo = this.context.programInfo;
     const outputRank = programInfo.outputLayout.shape.length;
     const result: {[name: string]: GlslLibRoutine} = {};
-    this.context.uniformInfo.filter(ui => ui.type === 'sampler2D').forEach((ui, i) => {
-      const name = ui.name;
+    this.context.programInfo.samplers.forEach((name, i) => {
       const shape = programInfo.inputLayouts[i].shape;
       if (shape.length <= outputRank) {
         const rank = shape.length;
@@ -54,8 +53,7 @@ export class ShapeUtilsGlslLib extends GlslLib {
     const programInfo = this.context.programInfo;
     const outputRank = programInfo.outputLayout.shape.length;
     const result: {[name: string]: GlslLibRoutine} = {};
-    this.context.uniformInfo.filter(ui => ui.type === 'sampler2D').forEach((ui, i) => {
-      const name = ui.name;
+    this.context.programInfo.samplers.forEach((name, i) => {
       const shape = programInfo.inputLayouts[i].shape;
       if (!(shape.length < 2 || shape.length > outputRank)) {
         const rank = shape.length;
@@ -82,8 +80,7 @@ export class ShapeUtilsGlslLib extends GlslLib {
   protected indicesToOffset(): {[name: string]: GlslLibRoutine;} {
     const programInfo = this.context.programInfo;
     const result: {[name: string]: GlslLibRoutine} = {};
-    this.context.uniformInfo.filter(ui => ui.type === 'sampler2D').forEach((ui, i) => {
-      const name = ui.name;
+    this.context.programInfo.samplers.forEach((name, i) => {
       const shape = programInfo.inputLayouts[i].shape;
       const strides = programInfo.inputLayouts[i].strides;
       const rank = shape.length;
@@ -113,8 +110,7 @@ export class ShapeUtilsGlslLib extends GlslLib {
   protected offsetToIndices(): {[name: string]: GlslLibRoutine;} {
     const programInfo = this.context.programInfo;
     const result: {[name: string]: GlslLibRoutine} = {};
-    this.context.uniformInfo.filter(ui => ui.type === 'sampler2D').forEach((ui, i) => {
-      const name = ui.name;
+    this.context.programInfo.samplers.forEach((name, i) => {
       const shape = programInfo.inputLayouts[i].shape;
       const strides = programInfo.inputLayouts[i].strides;
       const rank = shape.length;
@@ -145,8 +141,7 @@ export class ShapeUtilsGlslLib extends GlslLib {
   protected incrementIndices(): {[name: string]: GlslLibRoutine;} {
     const programInfo = this.context.programInfo;
     const result: {[name: string]: GlslLibRoutine} = {};
-    this.context.uniformInfo.filter(ui => ui.type === 'sampler2D').forEach((ui, i) => {
-      const name = ui.name;
+    this.context.programInfo.samplers.forEach((name, i) => {
       const shape = programInfo.inputLayouts[i].shape;
       const rank = shape.length;
       const funcName = `incrementIndices_${name}`;

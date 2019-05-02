@@ -53,31 +53,45 @@ export interface ProgramInfo {
    */
   inputLayouts: TextureLayout[];
   /**
+   * names of uniform samplers
+   */
+  samplers: string[];
+  /**
+   * information of uniform variables
+   */
+  variables?: VariableInfo[];
+  /**
    * texture layout for output
    */
   outputLayout: TextureLayout;
+  /**
+   * the shader's processing source code
+   */
   shaderSource: string;
-  hasMain: boolean;
+  /**
+   * whether the shader source contains a customized main function implementation
+   */
+  hasMain?: boolean;
   params?: {[name: string]: number|number[]|string};
 }
 
-/**
- * Information extracted from Shader source to help with binding later
- */
 export interface VariableInfo {
-  type: string;
+  type: 'float'|'int';
   name: string;
-  isVec: boolean;
-  arraySuffix?: string;
+  arrayLength?: number;
 }
 
 /**
- * LocationInfo contains a mappig from a variable name (inside shader)
- * to its "location" in the compiled program
+ * Information of uniforms that shader uses
  */
-export interface LocationInfo {
-  variable: VariableInfo;
-  location: WebGLUniformLocation|number;
+export interface UniformInfo {
+  type: 'sampler2D'|VariableInfo['type'];
+  name: string;
+  arrayLength?: number;
+}
+
+export interface UniformLocation extends UniformInfo {
+  location: WebGLUniformLocation;
 }
 
 /**
@@ -88,8 +102,12 @@ export interface LocationInfo {
 export interface Artifact {
   programInfo: ProgramInfo;
   program: WebGLProgram;
-  uniformLocations: {[name: string]: LocationInfo};
-  attribLocations: {[name: string]: LocationInfo};
+  uniformLocations: UniformLocation[];
+  attribLocations: {position: number; textureCoord: number};
+}
+export declare namespace Artifact {
+  type UniformLocations = Artifact['uniformLocations'];
+  type AttribLocations = Artifact['attribLocations'];
 }
 
 export interface UniformData {

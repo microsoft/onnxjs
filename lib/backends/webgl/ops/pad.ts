@@ -17,15 +17,14 @@ export class WebGLPad extends Pad implements WebGLOperator {
     const alayout = inferenceHandler.getOrCreateTextureLayout(inputs[0]);
     const padFunction = getPadFunction('A', alayout, this.mode, this.pads, this.value);
     const shaderSource = `
-      uniform sampler2D A;
       ${padFunction}
       float process(int[${rank}] indices) {
           return padA(indices);
       }`;
     return {
-      hasMain: false,
       inputLayouts: [alayout],
       outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A'],
       shaderSource,
     };
   }

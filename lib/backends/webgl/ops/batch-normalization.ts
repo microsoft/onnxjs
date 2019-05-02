@@ -16,12 +16,6 @@ export class WebGLBatchNormalization extends BatchNormalization {
     const rank = outputShape.length;
     const scale = inputLayouts[1];
     const shaderSource = `
-      uniform sampler2D A;
-      uniform sampler2D Scale;
-      uniform sampler2D B;
-      uniform sampler2D Mean;
-      uniform sampler2D Variance;
-
       float process(int[${rank}] indices) {
         vec2 position = offsetToCoords(indices[1], ${scale.width}, ${scale.height});
         float scale = getColorAsFloat(texture2D(Scale, position));
@@ -32,9 +26,9 @@ export class WebGLBatchNormalization extends BatchNormalization {
         return scale * ( (_A(indices) - mean) / sqrt(variance + float(${this.epsilon})) ) + b;
       }`;
     return {
-      hasMain: false,
       inputLayouts,
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A', 'Scale', 'B', 'Mean', 'Variance'],
       shaderSource
     };
   }

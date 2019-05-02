@@ -31,8 +31,6 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
       const aBcast = inputs[0].dims.length !== 0 ? `bcastIndices_A(indices, aindices);` : `aindices[0] = 0;`;
       const bBcast = inputs[1].dims.length !== 0 ? `bcastIndices_B(indices, bindices);` : `bindices[0] = 0;`;
       const shaderSource = `
-      uniform sampler2D A;
-      uniform sampler2D B;
       ${this.glslFunc.body}
       float process(int indices[${outputRank}]) {
         int aindices[${aRank}];
@@ -42,15 +40,13 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
         return ${this.glslFunc.name}(_A(aindices), _B(bindices));
     }`;
       return {
-        hasMain: false,
         inputLayouts,
         outputLayout: handler.createTextureLayoutFromShape(outputShape),
+        samplers: ['A', 'B'],
         shaderSource,
       };
     }
     const shaderSource = `
-    uniform sampler2D A;
-    uniform sampler2D B;
     ${this.glslFunc.body}
     void main() {
       vec4 v1 = texture2D(A, TexCoords);
@@ -63,6 +59,7 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
       hasMain: true,
       inputLayouts,
       outputLayout: handler.createTextureLayoutFromShape(inputs[0].dims),
+      samplers: ['A', 'B'],
       shaderSource,
     };
   }

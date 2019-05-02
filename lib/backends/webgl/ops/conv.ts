@@ -87,7 +87,7 @@ export class WebGLConv extends Conv {
         const gl = glContext.gl;
         const sharedDim = artifact.programInfo.params!.sharedDim as number;
         const sharedDimReadSize = artifact.programInfo.params!.sharedDimReadSize as number;
-        const sharedDimOffsetLocation = artifact.uniformLocations.sharedDimOffset.location;
+        const sharedDimOffsetLocation = artifact.uniformLocations.find(l => l.name === 'sharedDimOffset')!.location;
         for (let k = 0; k < sharedDim; k += sharedDimReadSize) {
           Logger.verbose('MatMul2D', `k = ${k}, sharedDim: ${sharedDim}, readSize = ${sharedDimReadSize}`);
           gl.uniform1i(sharedDimOffsetLocation, k);
@@ -107,7 +107,6 @@ export class WebGLConv extends Conv {
     const outputLayout = inferenceHandler.createTextureLayoutFromShape(
         im2colDims, 4, [im2colDims[0], im2colDims[1], im2colDims[2], im2colDims[3] * 4], {breakAxis: 3});
     const shaderSource = `
-    uniform sampler2D X;
       const int XC = ${xshape[1]};
       const int XH = ${xshape[2]};
       const int XW = ${xshape[3]};
@@ -154,9 +153,9 @@ export class WebGLConv extends Conv {
       }
       `;
     return {
-      hasMain: false,
       inputLayouts: [inferenceHandler.createTextureLayoutFromShape(xshape)],
       outputLayout,
+      samplers: ['X'],
       shaderSource,
     };
   }
@@ -181,12 +180,11 @@ export class WebGLConv extends Conv {
     const initValue = (inputs.length < 3) ? '0.0' : '_B(b)';
     const sharedDim = im2colLayout.shape[3];
     const sharedDimReadSize = this.calcSharedDimReadSize(sharedDim);
+    const samplers = ['Im2Col', 'K'];
+    if (inputs.length === 3) {
+      samplers.push('B');
+    }
     const shaderSource = `
-    uniform sampler2D Im2Col;
-    uniform sampler2D K;
-    ${inputs.length === 3 ? 'uniform sampler2D B;' : ''}
-    uniform int sharedDimOffset;
-
     float process(int indices[${rank}]) {
       int b[1];
       b[0] = indices[1];
@@ -208,42 +206,12 @@ export class WebGLConv extends Conv {
       return sum;
     }`;
     return {
-      hasMain: false,
       inputLayouts: inputs.length === 3 ? [im2colLayout, kLayout, bLayout!] : [im2colLayout, kLayout],
       outputLayout,
       shaderSource,
+      samplers,
+      variables: [{name: 'sharedDimOffset', type: 'int'}],
       params: {'sharedDim': sharedDim, 'sharedDimReadSize': sharedDimReadSize}
-    };
-  }
-  createDotProdRunData(inferenceHandler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = inputs.map((t, i) => inferenceHandler.getOrCreateTextureData(t, programInfo.inputLayouts[i]));
-    const outputTD = inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputs[0].type);
-    return {
-      inputTextureDatas: inputTDs,
-      outputTextureData: outputTD,
-      uniformData: {},
-      preRun: (glContext: WebGLContext, artifact: Artifact) => {
-        const gl = glContext.gl;
-        gl.enable(gl.BLEND);
-        gl.blendEquation(gl.FUNC_ADD);
-        gl.blendFunc(gl.ONE, gl.ONE);
-        glContext.checkError();
-      },
-      postRun: (glContext: WebGLContext, artifact: Artifact) => {
-        const gl = glContext.gl;
-        gl.disable(gl.BLEND);
-      },
-      draw: (glContext: WebGLContext, artifact: Artifact) => {
-        const gl = glContext.gl;
-        const sharedDim = artifact.programInfo.params!.sharedDim as number;
-        const sharedDimReadSize = artifact.programInfo.params!.sharedDimReadSize as number;
-        const sharedDimOffsetLocation = artifact.uniformLocations.sharedDimOffset.location;
-        for (let k = 0; k < sharedDim; k += sharedDimReadSize) {
-          Logger.verbose('MatMul2D', `k = ${k}, sharedDim: ${sharedDim}, readSize = ${sharedDimReadSize}`);
-          gl.uniform1i(sharedDimOffsetLocation, k);
-          glContext.draw();
-        }
-      }
     };
   }
   static prepKernelForDotProduct(shape: number[], group: number, channels: number, kernel: Float32Array): Float32Array {

@@ -13,7 +13,6 @@ export class WebGLLeakyRelu extends LeakyRelu implements WebGLOperator {
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const outputShape = inputs[0].dims.slice();
     const shaderSource = `
-      uniform sampler2D A;
       void main() {
         float v = texture2D(A, TexCoords).r;
         gl_FragColor = vec4(v < 0.0 ? v * float(${this.alpha}) : v);
@@ -23,6 +22,7 @@ export class WebGLLeakyRelu extends LeakyRelu implements WebGLOperator {
       hasMain: true,
       inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])],
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A'],
       shaderSource,
     };
   }

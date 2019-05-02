@@ -95,8 +95,7 @@ export class CoordsGlslLib extends GlslLib {
   protected valueFrom(): {[name: string]: GlslLibRoutine} {
     const programInfo = this.context.programInfo;
     const result: {[name: string]: GlslLibRoutine} = {};
-    this.context.uniformInfo.filter(ui => ui.type === 'sampler2D').forEach((ui, i) => {
-      const name = ui.name;
+    this.context.programInfo.samplers.forEach((name, i) => {
       const layout = programInfo.inputLayouts[i];
       const shape = layout.shape;
       const rank = shape.length;

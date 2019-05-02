@@ -2,21 +2,19 @@
   {
     "name": "conv with bias addition",
     "operator": "Conv",
-    "attributes": [
-      {"name":"kernel_shape", "data":[2,2], "type":"ints"}
-    ],
+    "attributes": [{ "name": "kernel_shape", "data": [2, 2], "type": "ints" }],
     "cases": [
       {
         "name": "T[0]",
         "inputs": [
           {
-            "data": [1,2,3,4],
-            "dims": [1,1,2,2],
+            "data": [1, 2, 3, 4],
+            "dims": [1, 1, 2, 2],
             "type": "float32"
           },
           {
-            "data": [1,1,1,1],
-            "dims": [1,1,2,2],
+            "data": [1, 1, 1, 1],
+            "dims": [1, 1, 2, 2],
             "type": "float32"
           },
           {
@@ -28,7 +26,7 @@
         "outputs": [
           {
             "data": [15],
-            "dims": [1,1,1,1],
+            "dims": [1, 1, 1, 1],
             "type": "float32"
           }
         ]

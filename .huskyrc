@@ -1,6 +1,6 @@
 {
   "skipCI": false,
   "hooks": {
-    "pre-commit": "npm run lint && npm run format && node -e \"var lines = require('child_process').execSync('git ls-files -m').toString(); var tsFound = lines.split('\\n').map(i => i.trim()).find(i => i.endsWith('.ts')); if (tsFound) { console.error('ERR File not formatted: ' + tsFound); process.exit(1); }\""
+    "pre-commit": "node tools/pre-commit"
   }
 }

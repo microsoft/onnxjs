@@ -2,8 +2,7 @@
   {
     "name": "neg with no attributes",
     "operator": "Neg",
-    "attributes": [
-    ],
+    "attributes": [],
     "cases": [
       {
         "name": "T[0]",
@@ -44,14 +43,14 @@
         "inputs": [
           {
             "data": [1, 2, -1, -2, 0, 1, -1, 0],
-            "dims": [2,4],
+            "dims": [2, 4],
             "type": "float32"
           }
         ],
         "outputs": [
           {
             "data": [-1, -2, 1, 2, 0, -1, 1, 0],
-            "dims": [2,4],
+            "dims": [2, 4],
             "type": "float32"
           }
         ]

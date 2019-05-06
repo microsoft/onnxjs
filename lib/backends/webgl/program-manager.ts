@@ -94,7 +94,8 @@ export class ProgramManager {
   protected compile(fragShaderScript: string): WebGLProgram {
     if (!this.vertexShader) {
       Logger.verbose('ProrgramManager', 'Compiling and caching Vertex shader for the first time');
-      this.vertexShader = this.glContext.compileShader(getVertexShaderSource(), this.glContext.gl.VERTEX_SHADER);
+      const vertexShaderScript = getVertexShaderSource(this.glContext.version);
+      this.vertexShader = this.glContext.compileShader(vertexShaderScript, this.glContext.gl.VERTEX_SHADER);
     }
     if (env.debug) {
       Logger.verbose('ProrgramManager', `FragShader:

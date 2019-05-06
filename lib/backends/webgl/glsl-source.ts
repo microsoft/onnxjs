@@ -1,13 +1,50 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-export function getVertexShaderSource(): string {
-  return `
-      precision highp float;
-      attribute vec3 position;
-      attribute vec2 textureCoord;
+/**
+ * represent a version irrelevant abstraction of for GLSL source code
+ */
+export interface Glsl {
+  readonly version: string;
+  readonly attribute: string;
+  readonly varyingVertex: string;
+  readonly varyingFrag: string;
+  readonly texture2D: string;
+  readonly output: string;
+  readonly outputDeclaration: string;
+}
 
-      varying vec2 TexCoords;
+const GLSL_ES_2_0: Glsl = {
+  version: '',
+  attribute: 'attribute',
+  varyingVertex: 'varying',
+  varyingFrag: 'varying',
+  texture2D: 'texture2D',
+  output: 'gl_FragColor',
+  outputDeclaration: '',
+};
+const GLSL_ES_3_0: Glsl = {
+  version: '#version 300 es',
+  attribute: 'in',
+  varyingVertex: 'out',
+  varyingFrag: 'in',
+  texture2D: 'texture',
+  output: 'outputColor',
+  outputDeclaration: 'out vec4 outputColor;',
+};
+
+export function getGlsl(version: 1|2) {
+  return version === 1 ? GLSL_ES_2_0 : GLSL_ES_3_0;
+}
+
+export function getVertexShaderSource(version: 1|2): string {
+  const glsl = getGlsl(version);
+  return `${glsl.version}
+      precision highp float;
+      ${glsl.attribute} vec3 position;
+      ${glsl.attribute} vec2 textureCoord;
+
+      ${glsl.varyingVertex} vec2 TexCoords;
 
       void main()
       {
@@ -16,23 +53,26 @@ export function getVertexShaderSource(): string {
       }`;
 }
 
-export function getFragShaderPreamble(): string {
-  return `
+export function getFragShaderPreamble(version: 1|2): string {
+  const glsl = getGlsl(version);
+  return `${glsl.version}
     precision highp float;
     precision highp int;
     precision highp sampler2D;
-    varying vec2 TexCoords;
+    ${glsl.varyingFrag} vec2 TexCoords;
+    ${glsl.outputDeclaration}
 
     `;
 }
 
-export function getDefaultFragShaderMain(outputShapeLength: number): string {
+export function getDefaultFragShaderMain(version: 1|2, outputShapeLength: number): string {
+  const glsl = getGlsl(version);
   return `
   void main() {
     int indices[${outputShapeLength}];
     toVec(TexCoords, indices);
     vec4 result = vec4(process(indices));
-    gl_FragColor = result;
+    ${glsl.output} = result;
   }
   `;
 }

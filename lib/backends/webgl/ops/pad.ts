@@ -4,6 +4,7 @@
 import {Pad} from '../../../ops/pad';
 import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
+import {getGlsl, Glsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, TextureLayout, WebGLOperator} from '../types';
 
@@ -15,7 +16,8 @@ export class WebGLPad extends Pad implements WebGLOperator {
     const outputShape = ShapeUtil.padShape(inputs[0].dims.slice(), this.pads);
     const rank = outputShape.length;
     const alayout = inferenceHandler.getOrCreateTextureLayout(inputs[0]);
-    const padFunction = getPadFunction('A', alayout, this.mode, this.pads, this.value);
+    const padFunction = getPadFunction(
+        getGlsl(inferenceHandler.session.backend.glContext.version), 'A', alayout, this.mode, this.pads, this.value);
     const shaderSource = `
       ${padFunction}
       float process(int[${rank}] indices) {
@@ -39,22 +41,24 @@ export class WebGLPad extends Pad implements WebGLOperator {
   }
 }
 export function getPadFunction(
-    name: string, inputLayout: TextureLayout, mode: string, pads: number[], value: number): string {
+    glsl: Glsl, name: string, inputLayout: TextureLayout, mode: string, pads: number[], value: number): string {
   switch (mode) {
     case 'constant':
       return getPadConstant(
-          name, inputLayout.shape, inputLayout.strides, inputLayout.width, inputLayout.height, pads, value);
+          glsl, name, inputLayout.shape, inputLayout.strides, inputLayout.width, inputLayout.height, pads, value);
     case 'reflect':
-      return getPadReflect(name, inputLayout.shape, inputLayout.strides, inputLayout.width, inputLayout.height, pads);
+      return getPadReflect(
+          glsl, name, inputLayout.shape, inputLayout.strides, inputLayout.width, inputLayout.height, pads);
     case 'edge':
-      return getPadEdge(name, inputLayout.shape, inputLayout.strides, inputLayout.width, inputLayout.height, pads);
+      return getPadEdge(
+          glsl, name, inputLayout.shape, inputLayout.strides, inputLayout.width, inputLayout.height, pads);
     default:
       throw new Error('Invalid mode');
   }
 }
 function getPadConstant(
-    name: string, shape: ReadonlyArray<number>, strides: ReadonlyArray<number>, width: number, height: number,
-    pads: number[], value: number) {
+    glsl: Glsl, name: string, shape: ReadonlyArray<number>, strides: ReadonlyArray<number>, width: number,
+    height: number, pads: number[], value: number) {
   const rank = shape.length;
   let block = '';
   for (let i = rank - 1; i >= 0; --i) {
@@ -72,14 +76,14 @@ function getPadConstant(
           int k = 0;
           ${block}
           vec2 coords = offsetToCoords(offset, ${width}, ${height});
-          float value = getColorAsFloat(texture2D(${name}, coords));
+          float value = getColorAsFloat(${glsl.texture2D}(${name}, coords));
           return value;
         }
         `;
 }
 function getPadReflect(
-    name: string, shape: ReadonlyArray<number>, strides: ReadonlyArray<number>, width: number, height: number,
-    pads: number[]) {
+    glsl: Glsl, name: string, shape: ReadonlyArray<number>, strides: ReadonlyArray<number>, width: number,
+    height: number, pads: number[]) {
   const rank = shape.length;
 
   let block = '';
@@ -101,14 +105,14 @@ function getPadReflect(
         int k = 0;
         ${block}
         vec2 coords = offsetToCoords(offset, ${width}, ${height});
-        float value = getColorAsFloat(texture2D(${name}, coords));
+        float value = getColorAsFloat(${glsl.texture2D}(${name}, coords));
         return value;
       }
       `;
 }
 function getPadEdge(
-    name: string, shape: ReadonlyArray<number>, strides: ReadonlyArray<number>, width: number, height: number,
-    pads: number[]) {
+    glsl: Glsl, name: string, shape: ReadonlyArray<number>, strides: ReadonlyArray<number>, width: number,
+    height: number, pads: number[]) {
   const rank = shape.length;
 
   let block = '';
@@ -126,7 +130,7 @@ function getPadEdge(
       int k = 0;
       ${block}
       vec2 coords = offsetToCoords(offset, ${width}, ${height});
-      float value = getColorAsFloat(texture2D(${name}, coords));
+      float value = getColorAsFloat(${glsl.texture2D}(${name}, coords));
       return value;
     }
     `;

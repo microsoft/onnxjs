@@ -3,6 +3,7 @@
 
 import {Clip} from '../../../ops/clip';
 import {Tensor} from '../../../tensor';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
@@ -12,12 +13,13 @@ export class WebGLClip extends Clip implements WebGLOperator {
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const outputShape = inputs[0].dims.slice();
+    const glsl = getGlsl(handler.session.backend.glContext.version);
     const shaderSource = `
       const float min = float(${this.min});
       const float max = float(${this.max});
       void main() {
-        float v = texture2D(A, TexCoords).r;
-        gl_FragColor = vec4(clamp(v, min, max));
+        float v = ${glsl.texture2D}(A, TexCoords).r;
+        ${glsl.output} = vec4(clamp(v, min, max));
       }
       `;
     return {

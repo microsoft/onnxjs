@@ -5,6 +5,7 @@ import {Logger} from '../../../instrument';
 import {Conv} from '../../../ops/conv';
 import {Tensor} from '../../../tensor';
 import {PoolConvUtil, ShapeUtil} from '../../../util';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {Artifact, ProgramInfo, RunData, TextureLayout} from '../types';
 import {WebGLContext} from '../webgl-context';
@@ -126,13 +127,13 @@ export class WebGLConv extends Conv {
         int b  = indices[0]; // batch size
         int oh = indices[1] * strideH - padH; //output height
         int ow = indices[2] * strideW - padW; //output width
-        int patch = indices[3] * outputChannels;
+        int p = indices[3] * outputChannels; //patch
         vec4 v = vec4(0.0);
         for(int i=0; i < outputChannels; ++i) {
-          if(patch < XCKHKW) {
-            int patchC = patch / KHKW;
-            int patchH = (patch - patchC*KHKW) / KW;
-            int patchW = (patch - patchC*KHKW) - patchH * KW;
+          if(p < XCKHKW) {
+            int patchC = p / KHKW;
+            int patchH = (p - patchC*KHKW) / KW;
+            int patchW = (p - patchC*KHKW) - patchH * KW;
             int xh2 = oh + patchH * dilationH;
             int xw2 = ow + patchW * dilationW;
             int x[${xshape.length}];
@@ -147,7 +148,7 @@ export class WebGLConv extends Conv {
               v[i] = _X(x);
             }
           }
-          ++patch;
+          ++p;
         }
         return v;
       }
@@ -184,6 +185,7 @@ export class WebGLConv extends Conv {
     if (inputs.length === 3) {
       samplers.push('B');
     }
+    const glsl = getGlsl(inferenceHandler.session.backend.glContext.version);
     const shaderSource = `
     float process(int indices[${rank}]) {
       int b[1];
@@ -199,7 +201,7 @@ export class WebGLConv extends Conv {
       for (int i = 0; i < ${sharedDimReadSize}; ++i) {
         vec2 im2colCoords = offsetToCoords(im2colOffset, ${im2colLayout.width}, ${im2colLayout.height});
         vec2 kernelCoords = offsetToCoords(kernelOffset, ${kLayout.width}, ${kLayout.height});
-        sum += dot(texture2D(Im2Col, im2colCoords), texture2D(K, kernelCoords));
+        sum += dot(${glsl.texture2D}(Im2Col, im2colCoords), ${glsl.texture2D}(K, kernelCoords));
         ++im2colOffset;
         ++kernelOffset;
       }

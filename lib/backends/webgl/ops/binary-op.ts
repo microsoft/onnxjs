@@ -5,6 +5,7 @@ import {BinaryOp} from '../../../ops/binary-op';
 import {Tensor} from '../../../tensor';
 import {BroadcastUtil, ShapeUtil} from '../../../util';
 import {FunctionType, GlslValueFunction} from '../glsl-definitions';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
@@ -46,13 +47,14 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
         shaderSource,
       };
     }
+    const glsl = getGlsl(handler.session.backend.glContext.version);
     const shaderSource = `
     ${this.glslFunc.body}
     void main() {
-      vec4 v1 = texture2D(A, TexCoords);
-      vec4 v2 = texture2D(B, TexCoords);
+      vec4 v1 = ${glsl.texture2D}(A, TexCoords);
+      vec4 v2 = ${glsl.texture2D}(B, TexCoords);
       vec4 result = ${this.glslFunc.name}(v1, v2);
-      gl_FragColor = result;
+      ${glsl.output} = result;
     }
     `;
     return {

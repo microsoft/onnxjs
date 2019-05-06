@@ -4,6 +4,7 @@
 import {UnaryOp} from '../../../ops/unary-op';
 import {Tensor} from '../../../tensor';
 import {FunctionType, GlslValueFunction} from '../glsl-definitions';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
@@ -17,12 +18,13 @@ export class WebGLUnaryOp extends UnaryOp implements WebGLOperator {
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const outputShape = inputs[0].dims.slice();
     const inputLayout = handler.getOrCreateTextureLayout(inputs[0]);
+    const glsl = getGlsl(handler.session.backend.glContext.version);
     const shaderSource = `
       ${this.glslFunc.body}
       void main() {
-        vec4 v = texture2D(A, TexCoords);
+        vec4 v = ${glsl.texture2D}(A, TexCoords);
         v = ${this.glslFunc.name}(v);
-        gl_FragColor = v;
+        ${glsl.output} = v;
       }
       `;
     const outputLayout = handler.createTextureLayoutFromShape(outputShape);

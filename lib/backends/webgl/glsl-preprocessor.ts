@@ -68,13 +68,13 @@ export class GlslPreprocessor {
     // append main() function
     if (!this.context.programInfo.hasMain) {
       source = `${source}
-      ${getDefaultFragShaderMain(programInfo.outputLayout.shape.length)}`;
+      ${getDefaultFragShaderMain(this.context.glContext.version, programInfo.outputLayout.shape.length)}`;
     }
     // replace inlines
     source = replaceInlines(source);
 
     // concat final source string
-    return `${getFragShaderPreamble()}
+    return `${getFragShaderPreamble(this.context.glContext.version)}
     ${this.getUniforms(programInfo.samplers, programInfo.variables)}
     ${this.getImports(source)}
     ${source}`;

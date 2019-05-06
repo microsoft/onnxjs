@@ -3,6 +3,7 @@
 
 import {Sum} from '../../../ops/sum';
 import {Tensor} from '../../../tensor';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
@@ -11,8 +12,9 @@ export class WebGLSum extends Sum implements WebGLOperator {
     return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
+    const glsl = getGlsl(handler.session.backend.glContext.version);
     const outputShape = inputs[0].dims.slice();
-    const sumLine = inputs.map((v, i) => `texture2D(X${i},TexCoords)`).join(' + ');
+    const sumLine = inputs.map((v, i) => `${glsl.texture2D}(X${i},TexCoords)`).join(' + ');
     const samplers = inputs.map((v, i) => `X${i}`);
     return {
       inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t)),
@@ -21,7 +23,7 @@ export class WebGLSum extends Sum implements WebGLOperator {
       shaderSource: `
       void main() {
         vec4 result = ${sumLine};
-        gl_FragColor = result;
+        ${glsl.output} = result;
       }`,
       hasMain: true
     };

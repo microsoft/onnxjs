@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {GlslContext, GlslLib, GlslLibRoutine} from './glsl-definitions';
+import {getGlsl} from './glsl-source';
 
 /**
  * GLSL Library responsible for data types and routines for manipulating
@@ -123,11 +124,12 @@ export class CoordsGlslLib extends GlslLib {
     if (transpose) {
       name = name + '_T';
     }
+    const glsl = getGlsl(this.context.glContext.version);
     return `
         float ${name}(int m[${rank}]) {
           int offset = indicesToOffset${name}(m);
           vec2 coords = offsetToCoords(offset, ${width}, ${height});
-          float value = getColorAsFloat(texture2D(${varName}, coords));
+          float value = getColorAsFloat(${glsl.texture2D}(${varName}, coords));
           return value;
         }
         `;

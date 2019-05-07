@@ -149,6 +149,16 @@ module.exports = function(config) {
         os: 'ios',
         os_version: '10.3',
       },
+
+      // Android
+      //
+      BS_ANDROID_9_Pixel_3: {
+        base: 'BrowserStack',
+        device: 'Google Pixel 3',
+        real_mobile: true,
+        os: 'android',
+        os_version: '9.0',
+      },
     }
   });
 };

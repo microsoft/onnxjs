@@ -159,6 +159,13 @@ module.exports = function(config) {
         os: 'android',
         os_version: '9.0',
       },
+      BS_ANDROID_7_1_Galaxy_Note_8: {
+        base: 'BrowserStack',
+        device: 'Samsung Galaxy Note 8',
+        real_mobile: true,
+        os: 'android',
+        os_version: '7.1',
+      },
     }
   });
 };

@@ -21,13 +21,13 @@ export class WebGLBackend implements Backend, WebGLOptions {
   disabled?: boolean;
   glContext: WebGLContext;
   contextId?: 'webgl'|'webgl2';
-  forceUint8Reads = false;
+  matmulMaxBatchSize?: number;
 
   initialize(): boolean {
     try {
       this.glContext = createWebGLContext(this.contextId);
-      if (!this.glContext.floatDownloadEnabled) {
-        this.forceUint8Reads = true;
+      if (typeof this.matmulMaxBatchSize !== 'number') {
+        this.matmulMaxBatchSize = 16;
       }
       Logger.verbose('WebGLBackend', `Created WebGLContext: ${typeof this.glContext}`);
       return true;

@@ -181,7 +181,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   readTexture(textureData: TextureData): Tensor.NumberType {
-    if (this.session.backend.forceUint8Reads) {
+    if (!this.session.backend.glContext.isFloatDownloadSupported) {
       const op = new WebGLUint8Encode();
       const uint8TD = op.runInternal(this, textureData);
       return this.textureHelper.readUint8TextureAsFloat(uint8TD);

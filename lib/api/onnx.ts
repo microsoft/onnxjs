@@ -26,6 +26,10 @@ export declare namespace Backend {
      * set or get the WebGL Context ID (webgl or webgl2)
      */
     contextId?: 'webgl'|'webgl2';
+    /**
+     * set or get the maximum batch size for matmul. 0 means to disable batching.
+     */
+    matmulMaxBatchSize?: number;
   }
   /**
    * set options for the WebAssembly backend

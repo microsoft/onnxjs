@@ -69,21 +69,29 @@ export class WebGLConv extends Conv {
       inputTDs.push(inferenceHandler.getOrCreateTextureData(b));
     }
     const outputTD = inferenceHandler.createTextureDataFromLayout(programInfos[1].outputLayout, inputs[0].type);
+    const blendEnabled = inferenceHandler.session.backend.glContext.isBlendSupported;
     const runDataDotProduct = {
       inputTextureDatas: inputTDs,
       outputTextureData: outputTD,
       uniformData: {},
-      preRun: (glContext: WebGLContext, artifact: Artifact) => {
-        const gl = glContext.gl;
-        gl.enable(gl.BLEND);
-        gl.blendEquation(gl.FUNC_ADD);
-        gl.blendFunc(gl.ONE, gl.ONE);
-        glContext.checkError();
-      },
-      postRun: (glContext: WebGLContext, artifact: Artifact) => {
-        const gl = glContext.gl;
-        gl.disable(gl.BLEND);
-      },
+      preRun: blendEnabled ?
+          (glContext: WebGLContext, artifact: Artifact) => {
+            const gl = glContext.gl;
+            gl.enable(gl.BLEND);
+            glContext.checkError();
+            gl.blendEquation(gl.FUNC_ADD);
+            glContext.checkError();
+            gl.blendFunc(gl.ONE, gl.ONE);
+            glContext.checkError();
+          } :
+          undefined,
+      postRun: blendEnabled ?
+          (glContext: WebGLContext, artifact: Artifact) => {
+            const gl = glContext.gl;
+            gl.disable(gl.BLEND);
+            glContext.checkError();
+          } :
+          undefined,
       draw: (glContext: WebGLContext, artifact: Artifact) => {
         const gl = glContext.gl;
         const sharedDim = artifact.programInfo.params!.sharedDim as number;
@@ -92,6 +100,7 @@ export class WebGLConv extends Conv {
         for (let k = 0; k < sharedDim; k += sharedDimReadSize) {
           Logger.verbose('MatMul2D', `k = ${k}, sharedDim: ${sharedDim}, readSize = ${sharedDimReadSize}`);
           gl.uniform1i(sharedDimOffsetLocation, k);
+          glContext.checkError();
           glContext.draw();
         }
       }
@@ -180,7 +189,10 @@ export class WebGLConv extends Conv {
     const outputLayout = inferenceHandler.createTextureLayoutFromShape(outputShape);
     const initValue = (inputs.length < 3) ? '0.0' : '_B(b)';
     const sharedDim = im2colLayout.shape[3];
-    const sharedDimReadSize = this.calcSharedDimReadSize(sharedDim);
+    const blendEnabled = inferenceHandler.session.backend.glContext.isBlendSupported;
+    const sharedDimReadSize = blendEnabled && inferenceHandler.session.backend.matmulMaxBatchSize ?
+        this.calcSharedDimReadSize(inferenceHandler.session.backend.matmulMaxBatchSize, sharedDim) :
+        sharedDim;
     const samplers = ['Im2Col', 'K'];
     if (inputs.length === 3) {
       samplers.push('B');
@@ -256,9 +268,8 @@ export class WebGLConv extends Conv {
     const outputShape = [batchSize, outChannels].concat(...outputSpatialShape);
     return outputShape;
   }
-  protected calcSharedDimReadSize(sharedDim: number): number {
-    const preferredBatchSize = 16;
-    if (sharedDim < preferredBatchSize || sharedDim % preferredBatchSize !== 0) {
+  protected calcSharedDimReadSize(preferredBatchSize: number, sharedDim: number): number {
+    if (preferredBatchSize <= 0 || sharedDim < preferredBatchSize || sharedDim % preferredBatchSize !== 0) {
       return sharedDim;
     }
     return preferredBatchSize;

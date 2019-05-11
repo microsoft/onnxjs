@@ -32,7 +32,10 @@ export declare namespace Tensor {
   export type FloatType = Tensor.DataTypeMap['float32']|Tensor.DataTypeMap['float64'];
   export type NumberType = BooleanType|IntegerType|FloatType;
 
-  export type Id = object;
+  export interface Id {
+    // this field helps typescript to perform type check, comparing to use `Id` as an alias of object.
+    _tensorDataId_unused?: never;
+  }
 }
 
 type TensorData = Tensor.DataTypeMap[Tensor.DataType];

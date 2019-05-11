@@ -35,11 +35,13 @@ export interface SessionHandler {
    * @param node
    * @param opsets
    */
+
   resolve(node: Graph.Node, opsets: ReadonlyArray<OpSet>): Operator;
   /**
    * This method let's the sessionHandler know that the graph initialization is complete
    * @param graph the completely initialized graph
    */
+
   onGraphInitialized?(graph: Graph): void;
 
   /**

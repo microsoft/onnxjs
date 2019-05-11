@@ -6,10 +6,7 @@ import {Tensor} from '../../../tensor';
 import {BroadcastUtil, ShapeUtil} from '../../../util';
 import {FunctionType, GlslValueFunction} from '../glsl-definitions';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {WebGLOperator} from '../webgl-operator';
-import {WebGLOperatorHelper} from '../webgl-operator-utils';
+import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
   constructor(
@@ -18,7 +15,7 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
     super(typeConstraint, opType, resultType);
   }
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const inputLayouts = inputs.map(t => handler.getOrCreateTextureLayout(t));
@@ -47,7 +44,7 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
       return {
         hasMain: false,
         inputLayouts,
-        outputLayout: handler.createBasicTextureLayout(outputShape),
+        outputLayout: handler.createTextureLayoutFromShape(outputShape),
         shaderSource,
       };
     }
@@ -65,12 +62,12 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
     return {
       hasMain: true,
       inputLayouts,
-      outputLayout: handler.createBasicTextureLayout(inputs[0].dims),
+      outputLayout: handler.createTextureLayoutFromShape(inputs[0].dims),
       shaderSource,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = inputs.map((t, i) => handler.getOrCreate(t, programInfo.inputLayouts[i]));
+    const inputTDs = inputs.map((t, i) => handler.getOrCreateTextureData(t, programInfo.inputLayouts[i]));
     return {
       inputTextureDatas: inputTDs,
       outputTextureData: handler.createTextureDataFromLayout(

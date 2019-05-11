@@ -4,8 +4,7 @@
 import {GlslContext, GlslLib, GlslLibRoutineNode, TopologicalSortGlslRoutines} from './glsl-definitions';
 import {GlslFunctionInliner} from './glsl-function-inliner';
 import {glslRegistry} from './glsl-registered-libs';
-import {ProgramInfo} from './program-info';
-import {VariableInfo} from './program-manager';
+import {ProgramInfo, VariableInfo} from './types';
 import {WebGLContext} from './webgl-context';
 
 /**

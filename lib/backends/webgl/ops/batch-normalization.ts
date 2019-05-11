@@ -4,13 +4,11 @@
 import {BatchNormalization} from '../../../ops/batch-normalization';
 import {Tensor} from '../../../tensor';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {WebGLOperatorHelper} from '../webgl-operator-utils';
+import {ProgramInfo, RunData} from '../types';
 
 export class WebGLBatchNormalization extends BatchNormalization {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const inputLayouts = inputs.map(t => handler.getOrCreateTextureLayout(t));
@@ -33,12 +31,17 @@ export class WebGLBatchNormalization extends BatchNormalization {
 
         return scale * ( (_A(indices) - mean) / sqrt(variance + float(${this.epsilon})) ) + b;
       }`;
-    return {hasMain: false, inputLayouts, outputLayout: handler.createBasicTextureLayout(outputShape), shaderSource};
+    return {
+      hasMain: false,
+      inputLayouts,
+      outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      shaderSource
+    };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = [handler.getOrCreate(inputs[0], programInfo.inputLayouts[0])];
-    inputs.slice(1).forEach(t => inputTDs.push(handler.getOrCreate(t)));
-    const outputTD = handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType);
+    const inputTDs = [handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
+    inputs.slice(1).forEach(t => inputTDs.push(handler.getOrCreateTextureData(t)));
+    const outputTD = handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type);
     return {inputTextureDatas: inputTDs, outputTextureData: outputTD, uniformData: {}};
   }
 }

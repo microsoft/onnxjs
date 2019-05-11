@@ -3,7 +3,7 @@
 
 import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {TextureData, TextureLayout} from '../texture-data';
+import {TextureData, TextureLayout} from '../types';
 
 export class WebGLUint8Encode {
   runInternal(inferenceHandler: WebGLInferenceHandler, input: TextureData): TextureData {
@@ -79,10 +79,10 @@ export class WebGLUint8Encode {
     };
     const artifact = inferenceHandler.programManager.build(programInfo);
 
-    const encoder = inferenceHandler.backend.glContext.getEncoder('byte', 4);
+    const encoder = inferenceHandler.session.backend.glContext.getEncoder('byte', 4);
     const texture =
-        inferenceHandler.backend.glContext.allocateTexture(outputLayout.width, outputLayout.height, encoder);
-    const outputTextureData: TextureData = {...outputLayout, dataType: 'uint8', texture};
+        inferenceHandler.session.backend.glContext.allocateTexture(outputLayout.width, outputLayout.height, encoder);
+    const outputTextureData = inferenceHandler.createSharedTextureData(outputLayout, 'uint8', texture, {});
     const runData = {inputTextureDatas: [input], outputTextureData, uniformData: {}};
 
     inferenceHandler.programManager.run(artifact, runData);

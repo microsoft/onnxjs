@@ -5,15 +5,11 @@ import {Pad} from '../../../ops/pad';
 import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {TextureLayout} from '../texture-data';
-import {WebGLOperator} from '../webgl-operator';
-import {WebGLOperatorHelper} from '../webgl-operator-utils';
+import {ProgramInfo, RunData, TextureLayout, WebGLOperator} from '../types';
 
 export class WebGLPad extends Pad implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const outputShape = ShapeUtil.padShape(inputs[0].dims.slice(), this.pads);
@@ -29,15 +25,16 @@ export class WebGLPad extends Pad implements WebGLOperator {
     return {
       hasMain: false,
       inputLayouts: [alayout],
-      outputLayout: inferenceHandler.createBasicTextureLayout(outputShape),
+      outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
       shaderSource,
     };
   }
   createRunData(inferenceHandler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = [inferenceHandler.getOrCreate(inputs[0], programInfo.inputLayouts[0])];
+    const inputTDs = [inferenceHandler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
     return {
       inputTextureDatas: inputTDs,
-      outputTextureData: inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),
+      outputTextureData:
+          inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),
       uniformData: {}
     };
   }

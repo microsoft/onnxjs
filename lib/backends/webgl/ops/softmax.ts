@@ -5,9 +5,7 @@ import {Softmax} from '../../../ops/softmax';
 import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {Artifact, RunData} from '../program-manager';
-import {TextureLayout} from '../texture-data';
+import {Artifact, ProgramInfo, RunData, TextureLayout} from '../types';
 
 export class WebGLSoftmax extends Softmax {
   constructor() {
@@ -26,13 +24,13 @@ export class WebGLSoftmax extends Softmax {
     const runDatas = this.createRunDatas(inferenceHandler, this.artifacts.map(a => a.programInfo), inputs);
     runDatas.forEach((v, i) => inferenceHandler.programManager.run(this.artifacts[i], v));
     // return only the last output
-    return [inferenceHandler.getTensor(runDatas.pop()!.outputTextureData)];
+    return [runDatas[runDatas.length - 1].outputTextureData.tensor];
   }
   createSoftMaxProgramInfo(
       inferenceHandler: WebGLInferenceHandler, input: Tensor, N: number, D: number,
       maxElementPerLogicalRow: TextureLayout, normalizationPerLogicalRow: TextureLayout): ProgramInfo {
     const inputShape = input.dims.slice();
-    const inputLayout = inferenceHandler.createBasicTextureLayout(inputShape);
+    const inputLayout = inferenceHandler.createTextureLayoutFromShape(inputShape);
     const outputShape = inputShape;
     const rank = outputShape.length;
     const textureWidth = inputLayout.width;
@@ -76,7 +74,7 @@ export class WebGLSoftmax extends Softmax {
     return {
       hasMain: false,
       inputLayouts: [inputLayout, maxElementPerLogicalRow, normalizationPerLogicalRow],
-      outputLayout: inferenceHandler.createBasicTextureLayout(outputShape),
+      outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
       shaderSource,
     };
   }
@@ -87,7 +85,7 @@ export class WebGLSoftmax extends Softmax {
   createComputScaleProgramInfo(
       inferenceHandler: WebGLInferenceHandler, x: Tensor, N: number, D: number, maxElementPerLogicalRow: TextureLayout,
       outputShape: number[]): ProgramInfo {
-    const xlayout = inferenceHandler.createBasicTextureLayout(x.dims.slice());
+    const xlayout = inferenceHandler.createTextureLayoutFromShape(x.dims.slice());
     const rank = outputShape.length;
     const textureWidth = xlayout.width;
     const textureHeight = xlayout.height;
@@ -132,7 +130,7 @@ export class WebGLSoftmax extends Softmax {
     return {
       hasMain: false,
       inputLayouts: [xlayout, maxElementPerLogicalRow],
-      outputLayout: inferenceHandler.createBasicTextureLayout(outputShape),
+      outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
       shaderSource,
     };
   }
@@ -141,7 +139,7 @@ export class WebGLSoftmax extends Softmax {
    */
   createComputeMaxProgramInfo(
       inferenceHandler: WebGLInferenceHandler, x: Tensor, N: number, D: number, outputShape: number[]): ProgramInfo {
-    const xlayout = inferenceHandler.createBasicTextureLayout(x.dims.slice());
+    const xlayout = inferenceHandler.createTextureLayoutFromShape(x.dims.slice());
     const rank = outputShape.length;
     const textureWidth = xlayout.width;
     const textureHeight = xlayout.height;
@@ -179,7 +177,7 @@ export class WebGLSoftmax extends Softmax {
     return {
       hasMain: false,
       inputLayouts: [xlayout],
-      outputLayout: inferenceHandler.createBasicTextureLayout(outputShape),
+      outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
       shaderSource,
     };
   }
@@ -199,7 +197,7 @@ export class WebGLSoftmax extends Softmax {
   }
   createRunDatas(inferenceHandler: WebGLInferenceHandler, programInfos: ProgramInfo[], inputs: Tensor[]): RunData[] {
     const dataType = inputs[0].type;
-    const inputTD = inferenceHandler.getOrCreate(inputs[0], programInfos[0].inputLayouts[0]);
+    const inputTD = inferenceHandler.getOrCreateTextureData(inputs[0], programInfos[0].inputLayouts[0]);
     const runDatas: RunData[] = [];
     runDatas.push({
       inputTextureDatas: [inputTD],

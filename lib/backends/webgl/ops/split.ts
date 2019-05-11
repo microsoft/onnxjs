@@ -5,8 +5,7 @@ import {Split} from '../../../ops/split';
 import {Tensor} from '../../../tensor';
 import {SplitUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {Artifact, RunData} from '../program-manager';
+import {Artifact, ProgramInfo, RunData} from '../types';
 
 export class WebGLSplit extends Split {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
@@ -24,7 +23,7 @@ export class WebGLSplit extends Split {
     this.artifacts.forEach(artifact => {
       const rundata = this.createRunData(inferenceHandler, artifact.programInfo, inputs);
       inferenceHandler.programManager.run(artifact, rundata);
-      results.push(inferenceHandler.getTensor(rundata.outputTextureData));
+      results.push(rundata.outputTextureData.tensor);
     });
     return results;
   }
@@ -46,15 +45,16 @@ export class WebGLSplit extends Split {
     return {
       hasMain: false,
       inputLayouts: [inferenceHandler.getOrCreateTextureLayout(input)],
-      outputLayout: inferenceHandler.createBasicTextureLayout(outputShape),
+      outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
       shaderSource,
     };
   }
   createRunData(inferenceHandler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = [inferenceHandler.getOrCreate(inputs[0], programInfo.inputLayouts[0])];
+    const inputTDs = [inferenceHandler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
     return {
       inputTextureDatas: inputTDs,
-      outputTextureData: inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),
+      outputTextureData:
+          inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),
       uniformData: {}
     };
   }

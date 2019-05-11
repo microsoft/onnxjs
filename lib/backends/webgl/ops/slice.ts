@@ -4,14 +4,11 @@ import {Slice, SliceV10} from '../../../ops/slice';
 import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {WebGLOperator} from '../webgl-operator';
-import {WebGLOperatorHelper} from '../webgl-operator-utils';
+import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 export class WebGLSlice extends Slice implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
 
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
@@ -24,13 +21,13 @@ export class WebGLSlice extends Slice implements WebGLOperator {
 
 export class WebGLSliceV10 extends SliceV10 implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
 
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
-    if (!handler.session.isInitializer(inputs[1]) || !handler.session.isInitializer(inputs[2]) ||
-        (inputs.length >= 4 && !handler.session.isInitializer(inputs[3])) ||
-        (inputs.length >= 5 && !handler.session.isInitializer(inputs[4]))) {
+    if (!handler.session.isInitializer(inputs[1].dataId) || !handler.session.isInitializer(inputs[2].dataId) ||
+        (inputs.length >= 4 && !handler.session.isInitializer(inputs[3].dataId)) ||
+        (inputs.length >= 5 && !handler.session.isInitializer(inputs[4].dataId))) {
       throw new Error(`dynamic slice attributes are not allowed`);
     }
     if (inputs.length >= 5 && inputs[4].integerData.some((i: number) => i !== 1)) {
@@ -88,16 +85,16 @@ function createProgramInfo(
   return {
     hasMain: false,
     inputLayouts: [handler.getOrCreateTextureLayout(x)],
-    outputLayout: handler.createBasicTextureLayout(outputShape),
+    outputLayout: handler.createTextureLayoutFromShape(outputShape),
     shaderSource,
   };
 }
 
 function createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-  const inputTDs = [handler.getOrCreate(inputs[0], programInfo.inputLayouts[0])];
+  const inputTDs = [handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
   return {
     inputTextureDatas: inputTDs,
-    outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),
+    outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),
     uniformData: {}
   };
 }

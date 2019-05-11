@@ -5,17 +5,14 @@ import {UnaryOp} from '../../../ops/unary-op';
 import {Tensor} from '../../../tensor';
 import {FunctionType, GlslValueFunction} from '../glsl-definitions';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {PositionalSubOperator, WebGLOperator} from '../webgl-operator';
-import {WebGLOperatorHelper} from '../webgl-operator-utils';
+import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 export class WebGLUnaryOp extends UnaryOp implements WebGLOperator {
   constructor(protected typeConstraint: ReadonlyArray<Tensor.DataType>, protected glslFunc: GlslValueFunction) {
     super(typeConstraint);
   }
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const outputShape = inputs[0].dims.slice();
@@ -29,19 +26,16 @@ export class WebGLUnaryOp extends UnaryOp implements WebGLOperator {
         gl_FragColor = v;
       }
       `;
-    const outputLayout = handler.createBasicTextureLayout(outputShape);
+    const outputLayout = handler.createTextureLayoutFromShape(outputShape);
     return {hasMain: true, inputLayouts: [inputLayout], outputLayout, shaderSource};
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = [handler.getOrCreate(inputs[0], programInfo.inputLayouts[0])];
+    const inputTDs = [handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
     return {
       inputTextureDatas: inputTDs,
-      outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),
+      outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),
       uniformData: {}
     };
-  }
-  addPositionalSub(positionalSubOperator: PositionalSubOperator): void {
-    throw new Error('Unary ops don\'t use index-based functions or subops');
   }
 }
 

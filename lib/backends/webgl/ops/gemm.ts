@@ -5,14 +5,11 @@ import {Gemm} from '../../../ops/gemm';
 import {Tensor} from '../../../tensor';
 import {GemmUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {WebGLOperator} from '../webgl-operator';
-import {WebGLOperatorHelper} from '../webgl-operator-utils';
+import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 export class WebGLGemm extends Gemm implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const aShape = inputs[0].dims.slice();
@@ -69,15 +66,16 @@ export class WebGLGemm extends Gemm implements WebGLOperator {
     return {
       hasMain: false,
       inputLayouts,
-      outputLayout: inferenceHandler.createBasicTextureLayout(oShape),
+      outputLayout: inferenceHandler.createTextureLayoutFromShape(oShape),
       shaderSource,
     };
   }
   createRunData(inferenceHandler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = inputs.map((t, i) => inferenceHandler.getOrCreate(t, programInfo.inputLayouts[i]));
+    const inputTDs = inputs.map((t, i) => inferenceHandler.getOrCreateTextureData(t, programInfo.inputLayouts[i]));
     return {
       inputTextureDatas: inputTDs,
-      outputTextureData: inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),
+      outputTextureData:
+          inferenceHandler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),
       uniformData: {'alpha': this.alpha, 'beta': this.beta}
     };
   }

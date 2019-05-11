@@ -4,14 +4,11 @@
 import {ImageScaler} from '../../../ops/image-scaler';
 import {Tensor} from '../../../tensor';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo} from '../program-info';
-import {RunData} from '../program-manager';
-import {WebGLOperator} from '../webgl-operator';
-import {WebGLOperatorHelper} from '../webgl-operator-utils';
+import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 export class WebGLImageScaler extends ImageScaler implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return WebGLOperatorHelper.run(this, inferenceHandler, inputs);
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const outputShape = inputs[0].dims.slice();
@@ -28,15 +25,15 @@ export class WebGLImageScaler extends ImageScaler implements WebGLOperator {
     return {
       hasMain: false,
       inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])],
-      outputLayout: handler.createBasicTextureLayout(outputShape),
+      outputLayout: handler.createTextureLayoutFromShape(outputShape),
       shaderSource,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = [handler.getOrCreate(inputs[0], programInfo.inputLayouts[0])];
+    const inputTDs = [handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
     return {
       inputTextureDatas: inputTDs,
-      outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].dataType),
+      outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),
       uniformData: {'bias': this.bias, 'scale': this.scale}
     };
   }

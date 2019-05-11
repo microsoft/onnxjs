@@ -202,10 +202,16 @@ class GraphImpl implements Graph, Graph.Transformer {
       throw new Error('missing information in graph: initializer');
     }
     for (const i of graph.initializer) {
-      if (!dataIndices.has(i.name!)) {
-        throw new Error(`invalid name for initializer: ${i.name}`);
+      let index = dataIndices.get(i.name!);
+      if (index === undefined) {
+        const value = new Value();
+        value.type = {
+          shape: {dims: ProtoUtil.tensorDimsFromProto(i.dims!)},
+          tensorType: ProtoUtil.tensorDataTypeFromProto(i.dataType!)
+        };
+        index = this._allData.push(value) - 1;
+        dataIndices.set(i.name!, index);
       }
-      const index = dataIndices.get(i.name!)!;
       this._allData[index]._from = -1;
       this._allData[index].tensor = Tensor.fromProto(i);
     }

@@ -204,11 +204,9 @@ export class Session {
     }
 
     for (let i = 0; i < expectedDims.length; ++i) {
-      if (expectedDims[i] !== actualDims[i]) {
-        if (!noneDimSupported || expectedDims[i] !== 0) {
-          // Not a 'None' dimension. Data shape mis-match.
-          return false;
-        }
+      if (expectedDims[i] !== actualDims[i] && (!noneDimSupported || expectedDims[i] !== 0)) {
+        // data shape mis-match AND not a 'None' dimension.
+        return false;
       }
     }
 

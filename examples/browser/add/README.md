@@ -18,13 +18,13 @@ This example shows:
     ```
     Then start an http server by running
     ```
-    http-server . -c-1 -p 3000
+    http-server .. -c-1 -p 3000
     ```
 
     This will start the local http server with disabled cache and listens on port 3000
 
 3. Open up the browser and access this URL:
-http://localhost:3000/
+http://localhost:3000/add/
 
 4. Click on Run button to see results of the inference run
 

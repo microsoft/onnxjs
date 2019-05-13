@@ -203,25 +203,10 @@ export class Session {
       return false;
     }
 
-    let noneDimSeen = false;
     for (let i = 0; i < expectedDims.length; ++i) {
-      if (expectedDims[i] !== actualDims[i]) {
-        // None dimension
-        if (noneDimSupported && expectedDims[i] === 0) {
-          // Atmost one 'None' dimension allowed in the expected shape
-          // If this is triggered, there is probably something wrong with the exported model
-          // which has more than one 'None' dimension in it's input shape specifications
-          if (noneDimSeen) {
-            return false;
-          }
-
-          noneDimSeen = true;
-        }
-
-        // Not a 'None' dimension. Data shape mis-match.
-        else {
-          return false;
-        }
+      if (expectedDims[i] !== actualDims[i] && (!noneDimSupported || expectedDims[i] !== 0)) {
+        // data shape mis-match AND not a 'None' dimension.
+        return false;
       }
     }
 

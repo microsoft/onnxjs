@@ -14,8 +14,8 @@ export declare namespace Encoder {
 
   export const enum Usage {
     Default = 0,
-    UploadOnly,
-    Download4BytesAsFloat32,
+    UploadOnly = 1,
+    Download4BytesAsFloat32 = 2,
   }
 }
 

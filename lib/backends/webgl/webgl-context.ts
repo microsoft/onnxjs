@@ -238,6 +238,10 @@ export class WebGLContext {
 
     switch (dataType) {
       case 'float':
+        if (usage === Encoder.Usage.Download4BytesAsFloat32) {
+          return new DataEncoders.Uint8DataEncoder(this.gl, channels);
+        }
+
         if (usage === Encoder.Usage.UploadOnly || this.isRenderFloat32Supported) {
           return new DataEncoders.RGBAFloatDataEncoder(this.gl, channels);
         } else {

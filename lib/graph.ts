@@ -51,7 +51,8 @@ export declare namespace Graph {
   export interface Transformer {
     removeAllIdentityNodes(): void;
     removeAllDropoutNodes(): void;
-    // TODO: add generic functions to manipulate the graph
+
+    appendNodeToOutputs(name: string): void;
   }
 
   // an initializer can use transformer to transform the graph
@@ -547,6 +548,32 @@ class GraphImpl implements Graph, Graph.Transformer {
         this.deleteNode(nodeIndex);
       }
       nodeIndex++;
+    }
+  }
+
+  appendNodeToOutputs(opType: string): void {
+    for (let i = 0; i < this._allOutputNames.length; i++) {
+      // create new output value
+      const outputName = this._allOutputNames[i];
+      const oldOutputIndex = this._allOutputIndices[i];
+      const oldOutput = this._allData[oldOutputIndex];
+      const newOutput = new Value();
+      this._allData.push(newOutput);
+      const newOutputIndex = this._allData.length - 1;
+      // assign the corresponding output index to new value
+      this._allOutputIndices[i] = newOutputIndex;
+
+      // create new node
+      const newNode = new Node({name: `${opType}_${outputName}`, opType});
+      this._nodes.push(newNode);
+      const newNodeIndex = this._nodes.length - 1;
+
+      // connect to graph
+      oldOutput.to.push(newNodeIndex);
+      newOutput._from = newNodeIndex;
+      newOutput.type = oldOutput.type;
+      newNode.inputs.push(oldOutputIndex);
+      newNode.outputs.push(newOutputIndex);
     }
   }
 }

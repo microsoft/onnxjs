@@ -61,7 +61,7 @@ export class TextureHelper {
     Logger.verbose('TextureHelper', `Deleting texture of size ${texture.width}x${texture.height}`);
     this.glContext.deleteTexture(texture.texture);
   }
-  toTensorData(dataType: Tensor.DataType, data: Encoder.DataArrayType): Tensor.NumberType {
+  private toTensorData(dataType: Tensor.DataType, data: Encoder.DataArrayType): Tensor.NumberType {
     return (data.constructor === Float32Array) ? data as Float32Array : new Float32Array(data);
     /*
     switch (dataType) {
@@ -87,7 +87,7 @@ export class TextureHelper {
     }
     */
   }
-  toTextureData(dataType: Tensor.DataType, data: Tensor.NumberType|undefined): Encoder.DataArrayType|undefined {
+  private toTextureData(dataType: Tensor.DataType, data: Tensor.NumberType|undefined): Encoder.DataArrayType|undefined {
     if (!data) {
       return undefined;
     }
@@ -111,7 +111,7 @@ export class TextureHelper {
     }
     */
   }
-  toEncoderType(dataType: Tensor.DataType): Encoder.DataType {
+  private toEncoderType(dataType: Tensor.DataType): Encoder.DataType {
     return 'float';
     // switch (dataType) {
     //   case 'int16':

@@ -31,6 +31,12 @@ export class WebGLSessionHandler implements SessionHandler {
     this.textureDataCache = new Map();
   }
 
+  transformGraph(graphTransformer: Graph.Transformer): void {
+    if (!this.backend.glContext.isFloat32DownloadSupported) {
+      graphTransformer.appendNodeToOutputs('webgl_DownloadFloat');
+    }
+  }
+
   createInferenceHandler() {
     return new WebGLInferenceHandler(this);
   }

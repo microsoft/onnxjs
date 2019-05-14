@@ -9,6 +9,7 @@ import * as binaryOps from './ops/binary-op';
 import {WebGLClip} from './ops/clip';
 import {WebGLConcat} from './ops/concat';
 import {WebGLConv} from './ops/conv';
+import {WebGLDownloadFloat} from './ops/download-float';
 import {WebGLDropout} from './ops/dropout';
 import {WebGLElu} from './ops/elu';
 import {WebGLFlatten} from './ops/flatten';
@@ -100,4 +101,7 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Transpose', '', '1+', () => new WebGLTranspose()],
   ['Unsqueeze', '', '1+', () => new WebGLUnsqueeze()],
   ['Xor', '', '7+', () => new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslXor())],
+
+  // custom OPs
+  ['webgl_DownloadFloat', '', '1+', () => new WebGLDownloadFloat()],
 ];

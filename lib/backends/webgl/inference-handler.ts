@@ -6,7 +6,6 @@ import {Logger} from '../../instrument';
 import {Tensor} from '../../tensor';
 import {ShapeUtil} from '../../util';
 
-import {WebGLUint8Encode} from './ops/uint8-encode';
 import {ProgramManager} from './program-manager';
 import {WebGLSessionHandler} from './session-handler';
 import {Encoder} from './texture-data-encoder';
@@ -65,11 +64,13 @@ export class WebGLInferenceHandler implements InferenceHandler {
 
   /**
    * Create a TextureData object from the given data type and texture layout.
-   * Usage = Encoder.Usage.Default.
    * @param dataType the tensor data type
+   * @param usage the usage of the texture
    */
-  createTextureDataFromLayout(layout: TextureLayout, dataType: Tensor.DataType): TextureData {
-    return this.createTextureData(layout, dataType);
+  createTextureDataFromLayout(
+      layout: TextureLayout, dataType: Tensor.DataType,
+      usage?: Exclude<Encoder.Usage, Encoder.Usage.UploadOnly>): TextureData {
+    return this.createTextureData(layout, dataType, undefined, undefined, usage);
   }
 
   /**
@@ -182,11 +183,9 @@ export class WebGLInferenceHandler implements InferenceHandler {
 
   readTexture(textureData: TextureData): Tensor.NumberType {
     if (!this.session.backend.glContext.isFloat32DownloadSupported) {
-      const op = new WebGLUint8Encode();
-      const uint8TD = op.runInternal(this, textureData);
-      return this.textureHelper.readUint8TextureAsFloat(uint8TD);
+      return this.textureHelper.readUint8TextureAsFloat(textureData);
     }
-    const values = this.textureHelper.readTexture(textureData, textureData.tensor.type, textureData.channels);
-    return values;
+
+    return this.textureHelper.readTexture(textureData, textureData.tensor.type, textureData.channels);
   }
 }

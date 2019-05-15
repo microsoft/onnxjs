@@ -64,8 +64,9 @@ Options:
  --wasm-worker                 Set the WebAssembly worker number
  --wasm-cpu-fallback           Set whether to allow WebAssembly backend to fallback to CPU
  --wasm-init-timeout           Set the timeout for WebAssembly backend initialization, in milliseconds
- --webgl-context-id            Set the WebGL context ID
+ --webgl-context-id            Set the WebGL context ID (webgl/webgl2)
  --webgl-matmul-max-batch-size Set the WebGL matmulMaxBatchSize
+ --webgl-texture-cache-mode    Set the WebGL texture cache mode (initializerOnly/full)
 
 *** Browser Options ***
 
@@ -335,7 +336,11 @@ function parseWebglOptions(args: minimist.ParsedArgs): Backend.WebGLOptions {
   if (matmulMaxBatchSize !== undefined && typeof matmulMaxBatchSize !== 'number') {
     throw new Error('Flag "webgl-matmul-max-batch-size" must be a number value');
   }
-  return {contextId, matmulMaxBatchSize};
+  const textureCacheMode = args['webgl-texture-cache-mode'];
+  if (textureCacheMode !== undefined && textureCacheMode !== 'initializerOnly' && textureCacheMode !== 'full') {
+    throw new Error('Flag "webgl-texture-cache-mode" is invalid');
+  }
+  return {contextId, matmulMaxBatchSize, textureCacheMode};
 }
 
 function parseBooleanArg(arg: unknown, defaultValue: boolean): boolean;

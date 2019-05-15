@@ -76,11 +76,9 @@ export class WebGLContext {
     return texture as WebGLTexture;
   }
   updateTexture(
-      texture: WebGLTexture, width: number, height: number, dataType: Encoder.DataType, channels: number,
-      data: Encoder.DataArrayType): void {
+      texture: WebGLTexture, width: number, height: number, encoder: DataEncoder, data: Encoder.DataArrayType): void {
     const gl = this.gl;
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    const encoder = this.getEncoder(dataType, channels);
     const buffer = encoder.encode(data, width * height);
     gl.texSubImage2D(
         gl.TEXTURE_2D,

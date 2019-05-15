@@ -30,6 +30,10 @@ export declare namespace Backend {
      * set or get the maximum batch size for matmul. 0 means to disable batching.
      */
     matmulMaxBatchSize?: number;
+    /**
+     * set or get the texture cache mode
+     */
+    textureCacheMode?: 'initializerOnly'|'full';
   }
   /**
    * set options for the WebAssembly backend

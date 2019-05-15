@@ -22,12 +22,16 @@ export class WebGLBackend implements Backend, WebGLOptions {
   glContext: WebGLContext;
   contextId?: 'webgl'|'webgl2';
   matmulMaxBatchSize?: number;
+  textureCacheMode?: 'initializerOnly'|'full';
 
   initialize(): boolean {
     try {
       this.glContext = createWebGLContext(this.contextId);
       if (typeof this.matmulMaxBatchSize !== 'number') {
         this.matmulMaxBatchSize = 16;
+      }
+      if (typeof this.textureCacheMode !== 'string') {
+        this.textureCacheMode = 'full';
       }
       Logger.verbose('WebGLBackend', `Created WebGLContext: ${typeof this.glContext}`);
       return true;

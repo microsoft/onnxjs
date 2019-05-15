@@ -12,12 +12,12 @@ import {WebGLContext} from '../webgl-context';
 
 export class WebGLConv extends Conv {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const programManager = inferenceHandler.programManager;
+    const programManager = inferenceHandler.session.programManager;
     if (!this.artifacts) {
       this.artifacts = [];
       const programInfos = this.createProgramInfos(inferenceHandler, inputs);
       for (let i = 0; i < programInfos.length; ++i) {
-        const artifact = inferenceHandler.programManager.build(programInfos[i]);
+        const artifact = inferenceHandler.session.programManager.build(programInfos[i]);
         this.artifacts.push(artifact);
       }
     }
@@ -70,39 +70,37 @@ export class WebGLConv extends Conv {
       inputTDs.push(inferenceHandler.getOrCreateTextureData(b));
     }
     const outputTD = inferenceHandler.createTextureDataFromLayout(programInfos[1].outputLayout, inputs[0].type);
-    const blendEnabled = inferenceHandler.session.backend.glContext.isBlendSupported;
     const runDataDotProduct = {
       inputTextureDatas: inputTDs,
       outputTextureData: outputTD,
       uniformData: {},
-      preRun: blendEnabled ?
-          (glContext: WebGLContext, artifact: Artifact) => {
-            const gl = glContext.gl;
+      draw: (glContext: WebGLContext, artifact: Artifact) => {
+        const gl = glContext.gl;
+        const sharedDim = artifact.programInfo.params!.sharedDim as number;
+        const sharedDimReadSize = artifact.programInfo.params!.sharedDimReadSize as number;
+        const sharedDimOffsetLocation = artifact.uniformLocations.find(l => l.name === 'sharedDimOffset')!.location;
+        let blend = false;
+        for (let k = 0; k < sharedDim; k += sharedDimReadSize) {
+          Logger.verbose('MatMul2D', `k = ${k}, sharedDim: ${sharedDim}, readSize = ${sharedDimReadSize}`);
+
+          if (k === sharedDimReadSize) {
+            blend = true;
             gl.enable(gl.BLEND);
             glContext.checkError();
             gl.blendEquation(gl.FUNC_ADD);
             glContext.checkError();
             gl.blendFunc(gl.ONE, gl.ONE);
             glContext.checkError();
-          } :
-          undefined,
-      postRun: blendEnabled ?
-          (glContext: WebGLContext, artifact: Artifact) => {
-            const gl = glContext.gl;
-            gl.disable(gl.BLEND);
-            glContext.checkError();
-          } :
-          undefined,
-      draw: (glContext: WebGLContext, artifact: Artifact) => {
-        const gl = glContext.gl;
-        const sharedDim = artifact.programInfo.params!.sharedDim as number;
-        const sharedDimReadSize = artifact.programInfo.params!.sharedDimReadSize as number;
-        const sharedDimOffsetLocation = artifact.uniformLocations.find(l => l.name === 'sharedDimOffset')!.location;
-        for (let k = 0; k < sharedDim; k += sharedDimReadSize) {
-          Logger.verbose('MatMul2D', `k = ${k}, sharedDim: ${sharedDim}, readSize = ${sharedDimReadSize}`);
+          }
+
           gl.uniform1i(sharedDimOffsetLocation, k);
           glContext.checkError();
           glContext.draw();
+        }
+
+        if (blend) {
+          gl.disable(gl.BLEND);
+          glContext.checkError();
         }
       }
     };

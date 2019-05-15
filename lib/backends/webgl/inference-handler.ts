@@ -7,33 +7,27 @@ import {Tensor} from '../../tensor';
 import {ShapeUtil} from '../../util';
 
 import {WebGLUint8Encode} from './ops/uint8-encode';
-import {ProgramManager} from './program-manager';
 import {WebGLSessionHandler} from './session-handler';
 import {Encoder} from './texture-data-encoder';
-import {TextureHelper} from './texture-helper';
 import {WidthHeightPrefs} from './texture-layout-strategy';
 import {TextureData, TextureLayout, WebGLOperator} from './types';
 import {getPackedShape} from './utils';
 
 export class WebGLInferenceHandler implements InferenceHandler {
-  textureHelper: TextureHelper;
-  programManager: ProgramManager;
   private textureDataCache: Map<Tensor.Id, TextureData>;
   constructor(public session: WebGLSessionHandler) {
-    this.textureHelper = session.textureHelper;
-    this.programManager = session.programManager;
     this.textureDataCache = new Map();
   }
 
   run(op: WebGLOperator, inputs: Tensor[]): Tensor[] {
-    let artifact = this.programManager.getArtifact(op);
+    let artifact = this.session.programManager.getArtifact(op);
     if (!artifact) {
       const programInfo = op.createProgramInfo(this, inputs);
-      artifact = this.programManager.build(programInfo);
-      this.programManager.setArtifact(op, artifact);
+      artifact = this.session.programManager.build(programInfo);
+      this.session.programManager.setArtifact(op, artifact);
     }
     const runData = op.createRunData(this, artifact.programInfo, inputs);
-    this.programManager.run(artifact, runData);
+    this.session.programManager.run(artifact, runData);
     return [runData.outputTextureData.tensor];
   }
 
@@ -90,7 +84,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
       layout: TextureLayout, dataType: Tensor.DataType, data?: Tensor.NumberType, tensor?: Tensor,
       usage?: Encoder.Usage): TextureData {
     Logger.verbose('InferenceHandler', `Creating TextureData: layout:[${JSON.stringify(layout)}]`);
-    const texture = this.textureHelper.createTextureFromLayout(dataType, layout, data, usage);
+    const texture = this.session.textureManager.createTextureFromLayout(dataType, layout, data, usage);
     return this.createTextureDataFromTexture(layout, dataType, texture, tensor);
   }
 
@@ -175,8 +169,8 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   dispose(): void {
-    this.textureHelper.clearActiveTextures();
-    this.textureDataCache.forEach(td => this.textureHelper.releaseTexture(td));
+    this.session.textureManager.clearActiveTextures();
+    this.textureDataCache.forEach(td => this.session.textureManager.releaseTexture(td));
     this.textureDataCache = new Map();
   }
 
@@ -184,9 +178,8 @@ export class WebGLInferenceHandler implements InferenceHandler {
     if (!this.session.backend.glContext.isFloat32DownloadSupported) {
       const op = new WebGLUint8Encode();
       const uint8TD = op.runInternal(this, textureData);
-      return this.textureHelper.readUint8TextureAsFloat(uint8TD);
+      return this.session.textureManager.readUint8TextureAsFloat(uint8TD);
     }
-    const values = this.textureHelper.readTexture(textureData, textureData.tensor.type, textureData.channels);
-    return values;
+    return this.session.textureManager.readTexture(textureData, textureData.tensor.type, textureData.channels);
   }
 }

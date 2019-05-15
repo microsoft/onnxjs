@@ -35,10 +35,6 @@ export class ProgramManager {
   }
   run(buildArtifact: Artifact, runData: RunData): void {
     this.profiler.event('backend', 'ProgramManager.run', () => {
-      if (runData.preRun) {
-        Logger.verbose('ProgramManager', 'PreRun');
-        runData.preRun(this.glContext, buildArtifact);
-      }
       const gl = this.glContext.gl;
       const program = buildArtifact.program;
       gl.useProgram(program);
@@ -56,10 +52,6 @@ export class ProgramManager {
         this.doDraw(buildArtifact, runData);
         gl.flush();
       });
-      if (runData.postRun) {
-        Logger.verbose('ProgramManager', 'PostRun');
-        runData.postRun(this.glContext, buildArtifact);
-      }
     });
   }
   dispose(): void {

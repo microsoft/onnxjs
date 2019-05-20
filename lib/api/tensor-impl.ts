@@ -48,7 +48,6 @@ export class Tensor implements TensorInterface {
   get(...indices: number[]): ElementType;
   get(indices: ReadonlyArray<number>): ElementType;
   get(indices?: ReadonlyArray<number>|number, ...rest: number[]): ElementType {
-    let flatIndices = 0;
     let indexArray: ReadonlyArray<number> = [];
     if (typeof indices === 'number') {
       indexArray = [indices, ...rest];
@@ -67,18 +66,17 @@ export class Tensor implements TensorInterface {
       if (dim >= this.dims[idx]) {
         throw new RangeError(`Input index array dims don't match the tensor dims.`);
       }
-      flatIndices += idx < indexArray.length - 1 ? dim * this.dims.slice(idx + 1).reduce((a, b) => a * b) : dim;
     });
+    const value = this.internalTensor.get(indexArray);
     if (this.type === 'bool') {
-      return this.data[flatIndices] === 1 ? true : false;
+      return value === 1 ? true : false;
     }
-    return this.data[flatIndices];
+    return value;
   }
   set(value: ElementType, ...indices: number[]): void;
   set(value: ElementType, indices: ReadonlyArray<number>): void;
   set(value: ElementType, indices?: ReadonlyArray<number>|number, ...rest: number[]) {
     Utils.matchElementType(this.type, value);
-    let flatIndices = 0;
     let indexArray: ReadonlyArray<number> = [];
     if (typeof indices === 'number') {
       indexArray = [indices, ...rest];
@@ -97,17 +95,12 @@ export class Tensor implements TensorInterface {
       if (dim >= this.dims[idx]) {
         throw new RangeError(`Input index array dims don't match the tensor dims.`);
       }
-      flatIndices += idx < indexArray.length - 1 ? dim * this.dims.slice(idx + 1).reduce((a, b) => a * b) : dim;
     });
 
     if (typeof value === 'boolean') {
-      this.data[flatIndices] = value ? 1 : 0;
-    } else if (typeof value === 'string') {
-      this.data[flatIndices] = value;
-    } else if (ArrayBuffer.isView(this.data)) {
-      this.data.set([value], flatIndices);
+      this.internalTensor.set(indexArray, value ? 1 : 0);
     } else {
-      throw new TypeError(`Value type is not supported. `);
+      this.internalTensor.set(indexArray, value);
     }
   }
 }

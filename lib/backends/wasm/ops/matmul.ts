@@ -9,9 +9,7 @@ import {WasmInferenceHandler} from '../inference-handler';
 
 export class WasmMatMul extends MatMul {
   run(inferenceHandler: WasmInferenceHandler, inputs: Tensor[]): Tensor[] {
-    let dimsA: number[];
-    let dimsB: number[];
-    [dimsA, dimsB] = MatMulUtil.preprocessInputShapes(inputs[0].dims.slice(), inputs[1].dims.slice());
+    const [dimsA, dimsB] = MatMulUtil.preprocessInputShapes(inputs[0].dims, inputs[1].dims);
     const outputShape = BroadcastUtil.calcShape(dimsA, dimsB, true);
     if (!outputShape) {
       // the inputs cannot broadcast or cannot multiply

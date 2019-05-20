@@ -11,7 +11,7 @@ export abstract class ArgMax implements Operator {
 
   initialize(attributes: Attribute): void {
     this.axis = attributes.getInt('axis', 0);
-    this.keepDims = attributes.getInt('keepdims', 1);
+    this.keepDims = attributes.getInt('keepdims', 1) === 1;
   }
 
   checkInputs(inputs: Tensor[]): boolean {
@@ -31,5 +31,5 @@ export abstract class ArgMax implements Operator {
   }
 
   protected axis: number;
-  protected keepDims: number;
+  protected keepDims: boolean;
 }

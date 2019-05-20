@@ -56,15 +56,15 @@ export class CpuReduceProd extends ReduceBase {
 }
 
 // Functions implementing specific reduce operations
-export function reduceSum(input: Tensor, axes: number[], keepDims: number): Tensor {
+export function reduceSum(input: Tensor, axes: number[], keepDims: boolean): Tensor {
   return ReduceUtil.calcReduce(input, axes, keepDims, b => b, (a, b) => a + b);
 }
 
-export function reduceSumSquare(input: Tensor, axes: number[], keepDims: number): Tensor {
+export function reduceSumSquare(input: Tensor, axes: number[], keepDims: boolean): Tensor {
   return ReduceUtil.calcReduce(input, axes, keepDims, b => b * b, (a, b) => a + b);
 }
 
-export function reduceLogSum(input: Tensor, axes: number[], keepDims: number): Tensor {
+export function reduceLogSum(input: Tensor, axes: number[], keepDims: boolean): Tensor {
   const output = ReduceUtil.calcReduce(input, axes, keepDims, b => b, (a, b) => a + b);
   const length = output.floatData.length;
   for (let i = 0; i < length; i++) {
@@ -73,15 +73,15 @@ export function reduceLogSum(input: Tensor, axes: number[], keepDims: number): T
   return output;
 }
 
-export function reduceMax(input: Tensor, axes: number[], keepDims: number): Tensor {
+export function reduceMax(input: Tensor, axes: number[], keepDims: boolean): Tensor {
   return ReduceUtil.calcReduce(input, axes, keepDims, b => b, (a, b) => Math.max(a, b));
 }
 
-export function reduceMin(input: Tensor, axes: number[], keepDims: number): Tensor {
+export function reduceMin(input: Tensor, axes: number[], keepDims: boolean): Tensor {
   return ReduceUtil.calcReduce(input, axes, keepDims, b => b, (a, b) => Math.min(a, b));
 }
 
-export function reduceMean(input: Tensor, axes: number[], keepDims: number): Tensor {
+export function reduceMean(input: Tensor, axes: number[], keepDims: boolean): Tensor {
   const output = ReduceUtil.calcReduce(input, axes, keepDims, b => b, (a, b) => a + b);
   const outputDims = ReduceUtil.calcReduceShape(input.dims as number[], axes, keepDims);
   const inputSize = ShapeUtil.size(input.dims);
@@ -94,6 +94,6 @@ export function reduceMean(input: Tensor, axes: number[], keepDims: number): Ten
   return output;
 }
 
-export function reduceProd(input: Tensor, axes: number[], keepDims: number): Tensor {
+export function reduceProd(input: Tensor, axes: number[], keepDims: boolean): Tensor {
   return ReduceUtil.calcReduce(input, axes, keepDims, b => b, (a, b) => a * b);
 }

@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import ndarray from 'ndarray';
-
 import {Attribute} from '../../../attribute';
 import {BinaryOp} from '../../../ops/binary-op';
 import {Tensor} from '../../../tensor';
@@ -32,19 +30,17 @@ export class CpuBinaryOp extends BinaryOp {
   }
 
   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const output = binaryOp(inputs[0], inputs[1], this.opLambda!, this.resultType);
+    const output = binaryOp(inputs[0], inputs[1], this.opLambda!, false, this.resultType);
     return [output];
   }
 }
 
-export function binaryOp(
-    x: Tensor, y: Tensor, opLambda: (e1: number, e2: number) => number, resultType?: Tensor.DataType): Tensor {
-  const result =
-      BroadcastUtil.calc(ndarray(x.numberData, x.dims.slice(0)), ndarray(y.numberData, y.dims.slice(0)), opLambda);
+function binaryOp(
+    x: Tensor, y: Tensor, opLambda: (e1: number, e2: number) => number, implace: boolean,
+    resultType?: Tensor.DataType): Tensor {
+  const result = BroadcastUtil.calc(x, y, opLambda, implace, resultType);
   if (!result) {
     throw new Error('not broadcastable');
   }
-  const output = new Tensor(result.shape, resultType ? resultType : x.type);
-  output.numberData.set(result.data);
-  return output;
+  return result;
 }

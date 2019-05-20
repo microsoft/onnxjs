@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import ndarray from 'ndarray';
-
 import {Gemm} from '../../../ops/gemm';
 import {Tensor} from '../../../tensor';
 import {BroadcastUtil, GemmUtil} from '../../../util';
@@ -15,14 +13,11 @@ export class WasmGemm extends Gemm {
     const b = inputs[1];
     const c = inputs[2];
 
-    const outputDims = GemmUtil.getShapeOfGemmResult(a.dims, this.transA, b.dims, this.transB, c.dims);
-    const y = new Tensor(outputDims, a.type);
-    const intermediate = BroadcastUtil.calc(
-        ndarray(y.floatData, y.dims as number[]), ndarray(c.floatData, c.dims as number[]), (a, b) => (a + b));
-    if (!intermediate) {
+    const [M, N] = GemmUtil.getShapeOfGemmResult(a.dims, this.transA, b.dims, this.transB, c.dims);
+    const y = new Tensor([M, N], a.type);
+    if (!BroadcastUtil.calc(y, c, (a, b) => (b), true)) {
       throw new Error(`c is not broadcastable to the shape of the result of the Gemm operator`);
     }
-    y.floatData.set(intermediate.data);
     WasmBinding.getInstance().ccall(
         '_gemm_f32', [this.transA, 'bool'], [this.transB, 'bool'], [this.transA ? a.dims[1] : a.dims[0], 'int32'],
         [this.transB ? b.dims[0] : b.dims[1], 'int32'], [this.transA ? a.dims[0] : a.dims[1], 'int32'],

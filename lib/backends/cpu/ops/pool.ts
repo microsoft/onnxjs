@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import ndarray from 'ndarray';
-
 import {AveragePool, GlobalAveragePool, GlobalMaxPool, MaxPool} from '../../../ops/pool';
 import {Tensor} from '../../../tensor';
 import {PoolConvUtil, ShapeUtil} from '../../../util';
@@ -93,12 +91,8 @@ export function pool(
   const stridesRank = kernelStrides.length;
   const rank = outputShape.length;
 
-  // create input ndarray
-  const ndX = ndarray(input.numberData, input.dims.slice(0));
-
   const outputSize = ShapeUtil.size(outputShape);
-  const output =
-      ndarray(input.type === 'float32' ? new Float32Array(outputSize) : new Float64Array(outputSize), outputShape);
+  const output = new Tensor(outputShape, input.type);
   const outputStride = ShapeUtil.computeStrides(outputShape);
 
   for (let ind = 0; ind < outputSize; ind++) {
@@ -126,11 +120,11 @@ export function pool(
           break;
         }
       }
-      value = isPad ? value : processOp(value, ndX.get(...x));
+      value = isPad ? value : processOp(value, input.get(x) as number);
     }
     value = countIncludePad ? finalOp(value, kernelSize) : finalOp(value, kernelSize - pad);
-    output.set(...curInd, value);
+    output.set(curInd, value);
   }
 
-  return Tensor.fromNdarray(output, input.type);
+  return output;
 }

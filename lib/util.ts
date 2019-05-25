@@ -1041,7 +1041,8 @@ export class PoolConvUtil {
 
   // adjust pad values based on 'autoPad' attribute
   static adjustPadsBasedOnAutoPad(
-      inputDims: ReadonlyArray<number>, strides: number[], kernelShape: number[], pads: number[], autoPad?: string) {
+      inputDims: ReadonlyArray<number>, strides: number[], dilations: number[], kernelShape: number[], pads: number[],
+      autoPad?: string) {
     if (!autoPad) {
       return;
     }
@@ -1060,7 +1061,8 @@ export class PoolConvUtil {
 
     for (let dim = 0; dim < inputDims.length - 2; dim++) {
       PoolConvUtil.adjustPadAndReturnShape(
-          inputDims[dim + 2], strides[dim], kernelShape[dim], pads, dim, dim + inputDims.length - 2, autoPad);
+          inputDims[dim + 2], strides[dim], dilations[dim], kernelShape[dim], pads, dim, dim + inputDims.length - 2,
+          autoPad);
     }
   }
 
@@ -1084,7 +1086,8 @@ export class PoolConvUtil {
     // Add batch size and number of channels of output
     const outputDims = [inputDims[0], inputDims[1]];
 
-    PoolConvUtil.computeShapeHelper(isGlobalOperator, inputDims, outputDims, strides, kernelShape, pads, autoPad);
+    PoolConvUtil.computeShapeHelper(
+        isGlobalOperator, inputDims, outputDims, strides, [1, 1], kernelShape, pads, autoPad);
     return outputDims;
   }
 
@@ -1099,8 +1102,8 @@ export class PoolConvUtil {
    *     dimension. Can take values NOTSET, SAME_UPPER, SAME_LOWER, or VALID.
    */
   static computeConvOutputShape(
-      inputDims: ReadonlyArray<number>, filterDims: ReadonlyArray<number>, strides: number[], kernelShape: number[],
-      pads: number[], autoPad?: string): number[] {
+      inputDims: ReadonlyArray<number>, filterDims: ReadonlyArray<number>, strides: number[], dilations: number[],
+      kernelShape: number[], pads: number[], autoPad?: string): number[] {
     if (inputDims.length <= 0 || filterDims.length <= 0) {
       throw new Error(`invalid input tensor dims or invalid filter tensor dims`);
     }
@@ -1108,7 +1111,7 @@ export class PoolConvUtil {
     // Add batch size and number of channels of output
     const outputDims = [inputDims[0], filterDims[0]];
 
-    PoolConvUtil.computeShapeHelper(false, inputDims, outputDims, strides, kernelShape, pads, autoPad);
+    PoolConvUtil.computeShapeHelper(false, inputDims, outputDims, strides, dilations, kernelShape, pads, autoPad);
     return outputDims;
   }
 
@@ -1117,7 +1120,7 @@ export class PoolConvUtil {
   // adjust pads based on 'autoPad' attribute prior to shape computation
   private static computeShapeHelper(
       isGlobalOperator: boolean, inputDims: ReadonlyArray<number>, outputDims: number[], strides: number[],
-      kernelShape: number[], pads: number[], autoPad?: string) {
+      dilations: number[], kernelShape: number[], pads: number[], autoPad?: string) {
     if (isGlobalOperator) {
       for (let dim = 0; dim < inputDims.length - 2; dim++) {
         outputDims.push(1);
@@ -1125,7 +1128,8 @@ export class PoolConvUtil {
     } else {
       for (let dim = 0; dim < inputDims.length - 2; dim++) {
         outputDims.push(PoolConvUtil.adjustPadAndReturnShape(
-            inputDims[dim + 2], strides[dim], kernelShape[dim], pads, dim, dim + inputDims.length - 2, autoPad));
+            inputDims[dim + 2], strides[dim], dilations[dim], kernelShape[dim], pads, dim, dim + inputDims.length - 2,
+            autoPad));
       }
     }
   }
@@ -1133,31 +1137,32 @@ export class PoolConvUtil {
   // helper for computeShapeHelper() and adjustPadsBasedOnAutoPad()
   // adjusts pad value for given 'autoPad' string and computes output shape along a particular dimension
   private static adjustPadAndReturnShape(
-      inSize: number, stride: number, kernel: number, pads: number[], padHeadIndex: number, padTailIndex: number,
-      autoPad?: string): number {
+      inSize: number, stride: number, dilation: number, kernel: number, pads: number[], padHeadIndex: number,
+      padTailIndex: number, autoPad?: string): number {
+    const dkernel = dilation * (kernel - 1) + 1;
     if (autoPad && autoPad !== 'NOTSET') {
       switch (autoPad) {
         case 'VALID':
           pads[padHeadIndex] = 0;
           pads[padTailIndex] = 0;
-          return Math.floor(((inSize - kernel) / stride) + 1);
+          return Math.floor(((inSize - dkernel) / stride) + 1);
         case 'SAME_LOWER':
           const legacyTargetSize1 = (inSize + stride - 1) / stride;
           const padNeeded1 = (legacyTargetSize1 - 1) * stride + kernel - inSize;
           pads[padHeadIndex] = Math.floor((padNeeded1 + 1) / 2);
           pads[padTailIndex] = padNeeded1 - pads[padHeadIndex];
-          return Math.floor(((inSize + padNeeded1 - kernel) / stride) + 1);
+          return Math.floor(((inSize + padNeeded1 - dkernel) / stride) + 1);
         case 'SAME_UPPER':
           const legacyTargetSize = (inSize + stride - 1) / stride;
           const padNeeded = (legacyTargetSize - 1) * stride + kernel - inSize;
           pads[padHeadIndex] = Math.floor(padNeeded / 2);
           pads[padTailIndex] = padNeeded - pads[padHeadIndex];
-          return Math.floor(((inSize + padNeeded - kernel) / stride) + 1);
+          return Math.floor(((inSize + padNeeded - dkernel) / stride) + 1);
         default:
           throw new Error(`Unsupported AutoPad type`);
       }
     } else {
-      return Math.floor(((inSize + pads[padHeadIndex] + pads[padTailIndex] - kernel) / stride) + 1);
+      return Math.floor(((inSize + pads[padHeadIndex] + pads[padTailIndex] - dkernel) / stride) + 1);
     }
   }
 }

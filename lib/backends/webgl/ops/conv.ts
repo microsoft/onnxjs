@@ -35,7 +35,8 @@ export class WebGLConv extends Conv {
         this.kernelShape.push(wDims[i]);
       }
     }
-    PoolConvUtil.adjustPadsBasedOnAutoPad(inputs[0].dims, this.strides, this.kernelShape, this.pads, this.autoPad);
+    PoolConvUtil.adjustPadsBasedOnAutoPad(
+        inputs[0].dims, this.strides, this.dilations, this.kernelShape, this.pads, this.autoPad);
     Logger.verbose(
         'Conv',
         `autpPad:${this.autoPad}, dilations:${this.dilations}, group:${this.group}, kernelShape:${

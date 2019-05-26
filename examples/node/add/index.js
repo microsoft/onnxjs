@@ -8,7 +8,7 @@ const assert = require('assert');
 async function main() {
   // Create an ONNX inference session with WebAssembly backend.
   const session = new onnx.InferenceSession({backendHint: 'wasm'});
-  // Load an ONNX model. This model is Resnet50 that takes a 1*3*224*224 image and classifies it.
+  // Load an ONNX model. This model takes two tensors of the same size and return their sum. 
   await session.loadModel("./add.onnx");
 
   const x = new Float32Array(3 * 4 * 5).fill(1);

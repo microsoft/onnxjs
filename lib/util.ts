@@ -1087,7 +1087,8 @@ export class PoolConvUtil {
     const outputDims = [inputDims[0], inputDims[1]];
 
     PoolConvUtil.computeShapeHelper(
-        isGlobalOperator, inputDims, outputDims, strides, [1, 1], kernelShape, pads, autoPad);
+        isGlobalOperator, inputDims, outputDims, strides, new Array<number>(kernelShape.length).fill(1), kernelShape,
+        pads, autoPad);
     return outputDims;
   }
 

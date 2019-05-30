@@ -18,7 +18,7 @@ export class WebGLContext {
 
   // WebGL flags and vital parameters
   private isFloatTextureAttachableToFrameBuffer: boolean;
-  isFloatDownloadSupported: boolean;
+  isFloat32DownloadSupported: boolean;
   isRenderFloat32Supported: boolean;
   isBlendSupported: boolean;
   maxTextureSize: number;
@@ -307,7 +307,7 @@ export class WebGLContext {
 
     this.isFloatTextureAttachableToFrameBuffer = this.checkFloatTextureAttachableToFrameBuffer();
     this.isRenderFloat32Supported = this.checkRenderFloat32();
-    this.isFloatDownloadSupported = this.checkFloatDownload();
+    this.isFloat32DownloadSupported = this.checkFloat32Download();
 
     if (this.version === 1 && !this.textureHalfFloatExtension && !this.isRenderFloat32Supported) {
       throw new Error(`both float32 and float16 TextureType are not supported`);
@@ -374,7 +374,7 @@ export class WebGLContext {
     return this.isFloatTextureAttachableToFrameBuffer;
   }
 
-  private checkFloatDownload(): boolean {
+  private checkFloat32Download(): boolean {
     if (this.version === 2) {
       if (!this.colorBufferFloatExtension) {
         return false;

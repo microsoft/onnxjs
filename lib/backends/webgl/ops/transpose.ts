@@ -21,11 +21,10 @@ export class WebGLTranspose extends Transpose implements WebGLOperator {
     const perm = this.getAdjustedPerm(inputShapes[0]);
     const unpackedOutputShape = this.getOutputShape(inputShapes);
     const rank = inputs[0].dims.length;
+    // A dims=[${inputs[0].dims.toString()}]
+    // out Dims=[${unpackedOutputShape.toString()}]
+    // based on perm=[${perm.toString()}]
     const shaderSource = `
-      // A dims=[${inputs[0].dims.toString()}]
-      // out Dims=[${unpackedOutputShape.toString()}]
-      // based on perm=[${perm.toString()}]
-      uniform sampler2D A;
       ${this.getPermFunctionBody('perm', perm, rank)}
       float process(int indices[${rank}]) {
         int a[${rank}];
@@ -33,7 +32,7 @@ export class WebGLTranspose extends Transpose implements WebGLOperator {
         return _A(a);
       }`;
     const outputLayout = handler.createTextureLayoutFromShape(unpackedOutputShape, 1, unpackedOutputShape);
-    return {hasMain: false, inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])], outputLayout, shaderSource};
+    return {inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])], outputLayout, samplers: ['A'], shaderSource};
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
     const inputTDs = [handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];

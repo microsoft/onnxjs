@@ -3,6 +3,7 @@
 
 import {Sum} from '../../../ops/sum';
 import {Tensor} from '../../../tensor';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
@@ -11,20 +12,20 @@ export class WebGLSum extends Sum implements WebGLOperator {
     return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
+    const glsl = getGlsl(handler.session.backend.glContext.version);
     const outputShape = inputs[0].dims.slice();
-    const sumLine = inputs.map((v, i) => `texture2D(X${i},TexCoords)`).join(' + ');
-    const inputUniforms = inputs.map((v, i) => `uniform sampler2D X${i};`);
-    const shaderSource = `
-      ${inputUniforms.join('\n')}
-      void main() {
-        vec4 result = ${sumLine};
-        gl_FragColor = result;
-      }`;
+    const sumLine = inputs.map((v, i) => `${glsl.texture2D}(X${i},TexCoords)`).join(' + ');
+    const samplers = inputs.map((v, i) => `X${i}`);
     return {
-      hasMain: true,
       inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t)),
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
-      shaderSource,
+      samplers,
+      shaderSource: `
+      void main() {
+        vec4 result = ${sumLine};
+        ${glsl.output} = result;
+      }`,
+      hasMain: true
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {

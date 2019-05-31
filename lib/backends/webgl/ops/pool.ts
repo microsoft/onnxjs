@@ -65,9 +65,9 @@ function createAveragePoolProgramInfo(
       ${poolingCode}
     `;
   return {
-    hasMain: false,
     inputLayouts: [inputLayout],
     outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
+    samplers: ['X'],
     shaderSource,
   };
 }
@@ -126,9 +126,9 @@ function createMaxPoolProgramInfo(
     ${poolingCode}
   `;
   return {
-    hasMain: false,
     inputLayouts: [inputLayout],
     outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
+    samplers: ['X'],
     shaderSource,
   };
 }
@@ -192,7 +192,6 @@ export function GeneratePoolingCode(
     }
 
     const poolingCode = `
-            uniform sampler2D X;
             float process(int indices[${rank}]) {
               int x[${rank}];
               copyVec(indices, x);
@@ -236,7 +235,6 @@ export function GeneratePoolingCode(
                   ${op1}`;
     }
     const poolingCode = `
-            uniform sampler2D X;
             ${offsetToIndicesFunction}
             float process(int indices[${rank}]) {
                 int x[${rank}];

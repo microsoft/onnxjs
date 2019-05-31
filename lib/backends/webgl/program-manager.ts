@@ -1,10 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {env} from '../../env';
 import {Logger, Profiler} from '../../instrument';
 
 import {GlslPreprocessor} from './glsl-preprocessor';
-import {Artifact, LocationInfo, ProgramInfo, RunData, TextureData, UniformData, VariableInfo} from './types';
+import {getVertexShaderSource} from './glsl-source';
+import {Artifact, ProgramInfo, RunData, TextureData, UniformData, VariableInfo} from './types';
 import {WebGLContext} from './webgl-context';
 
 /**
@@ -17,8 +19,7 @@ import {WebGLContext} from './webgl-context';
  * corresponding Location's in the binary program
  */
 export class ProgramManager {
-  // tslint:disable-next-line:ban-types
-  repo: Map<Object, Artifact>;  // this should be per-session object
+  repo: Map<{}, Artifact>;  // this should be per-session object
   vertexShader: WebGLShader;
   attributesBound: boolean;
 
@@ -46,18 +47,13 @@ export class ProgramManager {
         if (!this.attributesBound) {
           this.bindAttributes(buildArtifact.attribLocations);
         }
-        this.bindUniforms(buildArtifact.uniformLocations, runData.uniformData);
-        this.bindTextures(buildArtifact.uniformLocations, runData.inputTextureDatas);
+        this.bindUniforms(buildArtifact.uniformLocations, runData.uniformData, runData.inputTextureDatas);
       } catch (err) {
         Logger.error('ProgramManager', buildArtifact.programInfo.shaderSource);
         throw err;
       }
       this.profiler.event('backend', 'GlContext.draw()', () => {
-        if (buildArtifact.programInfo.blockSize) {
-          this.doBlockDraw(buildArtifact, runData);
-        } else {
-          this.doDraw(buildArtifact, runData);
-        }
+        this.doDraw(buildArtifact, runData);
         gl.flush();
       });
       if (runData.postRun) {
@@ -75,23 +71,16 @@ export class ProgramManager {
   build(programInfo: ProgramInfo): Artifact {
     return this.profiler.event('backend', 'ProgramManager.build', () => {
       const preprocessor = new GlslPreprocessor(this.glContext, programInfo);
-      preprocessor.extractAttribInfo(this.getDefaultVertexShaderSource());
       const fragScript = preprocessor.preprocess();
-      try {
-        const attribInfos = preprocessor.context.attribInfo;
-        const uniformInfos = preprocessor.context.uniformInfo;
-        const program = this.compile(fragScript);
-        const artifact = {
-          programInfo,
-          program,
-          uniformLocations: this.getUniformLocations(program, uniformInfos),
-          attribLocations: this.getAttribLocations(program, attribInfos)
-        };
-        return artifact;
-      } catch (err) {
-        Logger.error('ProgramManager', fragScript);
-        throw err;
-      }
+      const program = this.compile(fragScript);
+      const artifact = {
+        programInfo,
+        program,
+        uniformLocations: this.getUniformLocations(
+            program, preprocessor.context.programInfo.samplers, preprocessor.context.programInfo.variables),
+        attribLocations: this.getAttribLocations(program)
+      };
+      return artifact;
     });
   }
   protected doDraw(artifact: Artifact, runData: RunData): void {
@@ -102,35 +91,16 @@ export class ProgramManager {
       this.glContext.draw();
     }
   }
-  protected doBlockDraw(artifact: Artifact, runData: RunData): void {
-    const gl = this.glContext.gl;
-    const [blockWidth, blockHeight] = artifact.programInfo.blockSize;
-    const widthLocation = artifact.uniformLocations.blockWidth.location;
-    const heightLocation = artifact.uniformLocations.blockHeight.location;
-    const yOffsetLocation = artifact.uniformLocations.blockYOffset.location;
-    const xOffsetLocation = artifact.uniformLocations.blockXOffset.location;
-    const height = runData.outputTextureData.height;
-    const width = runData.outputTextureData.width;
-
-    for (let col = 0; col < width; col += blockWidth) {
-      const colCount = Math.min(blockWidth, width - col);
-      gl.uniform1i(widthLocation, colCount);
-      gl.uniform1i(xOffsetLocation, col);
-      for (let row = 0; row < height; row += blockHeight) {
-        const rowCount = Math.min(blockHeight, height - row);
-        Logger.verbose('ProgramManager', `row=${row}, rowCount=${rowCount}, col=${col}, colCount=${colCount}`);
-        gl.viewport(col, row, colCount, rowCount);
-        gl.uniform1i(heightLocation, rowCount);
-        gl.uniform1i(yOffsetLocation, row);
-        this.doDraw(artifact, runData);
-      }
-    }
-  }
   protected compile(fragShaderScript: string): WebGLProgram {
     if (!this.vertexShader) {
       Logger.verbose('ProrgramManager', 'Compiling and caching Vertex shader for the first time');
-      this.vertexShader =
-          this.glContext.compileShader(this.getDefaultVertexShaderSource(), this.glContext.gl.VERTEX_SHADER);
+      const vertexShaderScript = getVertexShaderSource(this.glContext.version);
+      this.vertexShader = this.glContext.compileShader(vertexShaderScript, this.glContext.gl.VERTEX_SHADER);
+    }
+    if (env.debug) {
+      Logger.verbose('ProrgramManager', `FragShader:
+${fragShaderScript}
+`);
     }
     const fragShader = this.glContext.compileShader(fragShaderScript, this.glContext.gl.FRAGMENT_SHADER);
     const program = this.glContext.createProgram(this.vertexShader, fragShader);
@@ -144,113 +114,75 @@ export class ProgramManager {
             td.tensor.type}`);
     this.glContext.attachFramebuffer(td.texture, td.width, td.height);
   }
-  bindAttributes(attribLocations: {[name: string]: LocationInfo}): void {
-    const positionHandle = attribLocations.position.location as number;
-    const textureCoordHandle = attribLocations.textureCoord.location as number;
+  bindAttributes(attribLocations: Artifact.AttribLocations): void {
+    const positionHandle = attribLocations.position;
+    const textureCoordHandle = attribLocations.textureCoord;
     this.glContext.setVertexAttributes(positionHandle, textureCoordHandle);
     this.attributesBound = true;
   }
-  bindUniformArray(location: WebGLUniformLocation, type: string, value: number[]): void {
+  bindUniforms(uniformLocations: Artifact.UniformLocations, uniformData: UniformData, textures: TextureData[]): void {
     const gl = this.glContext.gl;
-    switch (type) {
-      case 'float':
-        gl.uniform1fv(location, value);
-        break;
-      case 'int':
-        gl.uniform1iv(location, value);
-        break;
-      default:
-        throw new Error('Uniform not implemented: ' + type);
-    }
-    this.glContext.checkError();
-  }
-  bindUniform(location: WebGLUniformLocation, type: string, value: number): void {
-    const gl = this.glContext.gl;
-    switch (type) {
-      case 'float':
-        gl.uniform1f(location, value);
-        break;
-      case 'int':
-        gl.uniform1i(location, value);
-        break;
-      default:
-        throw new Error('Uniform not implemented: ' + type);
-    }
-    this.glContext.checkError();
-  }
-  bindUniforms(uniformLocations: {[name: string]: LocationInfo}, inputScalars: UniformData): void {
-    if (!inputScalars) {
-      return;
-    }
-    Object.keys(uniformLocations).forEach(key => {
-      const li = uniformLocations[key];
-      if (!li.variable.type.startsWith('sampler')) {
-        const value = inputScalars[li.variable.name];
-        if (li.variable.isVec) {
-          this.bindUniformArray(li.location, li.variable.type, value as number[]);
-        } else {
-          this.bindUniform(li.location, li.variable.type, value as number);
-        }
+    let texturePosition = 0;
+    for (const {name, type, location, arrayLength} of uniformLocations) {
+      switch (type) {
+        case 'sampler2D':
+          this.bindTexture(textures[texturePosition], location, texturePosition);
+          texturePosition++;
+          break;
+        case 'float':
+          if (arrayLength) {
+            gl.uniform1fv(location, uniformData[name] as number[]);
+          } else {
+            gl.uniform1f(location, uniformData[name] as number);
+          }
+          break;
+        case 'int':
+          if (arrayLength) {
+            gl.uniform1iv(location, uniformData[name] as number[]);
+          } else {
+            gl.uniform1i(location, uniformData[name] as number);
+          }
+          break;
+        default:
+          throw new Error(`Uniform not implemented: ${type}`);
       }
-    });
-  }
-  bindTextures(uniformLocations: {[name: string]: LocationInfo}, textures: TextureData[]): void {
-    if (!textures) {
-      return;
     }
-    Object.keys(uniformLocations).forEach((key, i) => {
-      const li = uniformLocations[key];
-      if (li.variable.type.startsWith('sampler')) {
-        const tex = textures[i];
-        this.bindTexture(tex, li.location, i++);
-      }
-    });
   }
   bindTexture(td: TextureData, uniformHandle: WebGLUniformLocation, position: number): void {
     this.glContext.bindTextureToUniform(td.texture, position, uniformHandle);
   }
-  getAttribLocations(program: WebGLProgram, variableInfos: VariableInfo[]): {[name: string]: LocationInfo} {
-    const locationInfos: {[name: string]: LocationInfo} = {};
-    variableInfos.forEach(vi => {
-      locationInfos[vi.name] = {variable: vi, location: this.getAttribLocation(program, vi.name)};
-    });
-    return locationInfos;
+  getAttribLocations(program: WebGLProgram): Artifact.AttribLocations {
+    return {
+      position: this.getAttribLocation(program, 'position'),
+      textureCoord: this.getAttribLocation(program, 'textureCoord')
+    };
   }
-  getUniformLocations(program: WebGLProgram, variableInfos: VariableInfo[]): {[name: string]: LocationInfo} {
-    const locationInfos: {[name: string]: LocationInfo} = {};
-    variableInfos.forEach(vi => {
-      locationInfos[vi.name] = {variable: vi, location: this.getUniformLocation(program, vi.name)};
-    });
-    return locationInfos;
+  getUniformLocations(program: WebGLProgram, samplers?: string[], variables?: VariableInfo[]):
+      Artifact.UniformLocations {
+    const uniformLocations: Artifact.UniformLocations = [];
+    if (samplers) {
+      for (const sampler of samplers) {
+        uniformLocations.push({name: sampler, type: 'sampler2D', location: this.getUniformLocation(program, sampler)});
+      }
+    }
+    if (variables) {
+      for (const variable of variables) {
+        uniformLocations.push({...variable, location: this.getUniformLocation(program, variable.name)});
+      }
+    }
+    return uniformLocations;
   }
   getUniformLocation(program: WebGLProgram, name: string): WebGLUniformLocation {
     const gl = this.glContext.gl;
     const reference = gl.getUniformLocation(program, name);
     if (reference === null) {
-      throw new Error('Uniform ' + name + ' not found.');
+      throw new Error(`Uniform ${name} not found.`);
     }
     return reference;
   }
   getAttribLocation(program: WebGLProgram, name: string): number {
     const gl = this.glContext.gl;
     const attributeLocation: number = gl.getAttribLocation(program, name);
-    if (attributeLocation === -1) {
-      throw new Error('Attribute ' + name + ' not found.');
-    }
     return attributeLocation;
-  }
-  protected getDefaultVertexShaderSource(): string {
-    return `
-        precision highp float;
-        attribute vec3 position;
-        attribute vec2 textureCoord;
-
-        varying vec2 TexCoords;
-
-        void main()
-        {
-            gl_Position = vec4(position, 1.0);
-            TexCoords = textureCoord;
-        }`;
   }
 }

@@ -3,6 +3,7 @@
 
 import {BatchNormalization} from '../../../ops/batch-normalization';
 import {Tensor} from '../../../tensor';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData} from '../types';
 
@@ -15,26 +16,21 @@ export class WebGLBatchNormalization extends BatchNormalization {
     const outputShape = inputs[0].dims.slice();
     const rank = outputShape.length;
     const scale = inputLayouts[1];
+    const glsl = getGlsl(handler.session.backend.glContext.version);
     const shaderSource = `
-      uniform sampler2D A;
-      uniform sampler2D Scale;
-      uniform sampler2D B;
-      uniform sampler2D Mean;
-      uniform sampler2D Variance;
-
       float process(int[${rank}] indices) {
         vec2 position = offsetToCoords(indices[1], ${scale.width}, ${scale.height});
-        float scale = getColorAsFloat(texture2D(Scale, position));
-        float mean = getColorAsFloat(texture2D(Mean, position));
-        float variance = getColorAsFloat(texture2D(Variance, position));
-        float b = getColorAsFloat(texture2D(B, position));
+        float scale = getColorAsFloat(${glsl.texture2D}(Scale, position));
+        float mean = getColorAsFloat(${glsl.texture2D}(Mean, position));
+        float variance = getColorAsFloat(${glsl.texture2D}(Variance, position));
+        float b = getColorAsFloat(${glsl.texture2D}(B, position));
 
         return scale * ( (_A(indices) - mean) / sqrt(variance + float(${this.epsilon})) ) + b;
       }`;
     return {
-      hasMain: false,
       inputLayouts,
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A', 'Scale', 'B', 'Mean', 'Variance'],
       shaderSource
     };
   }

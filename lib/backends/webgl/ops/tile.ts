@@ -22,16 +22,15 @@ export class WebGLTile extends Tile implements WebGLOperator {
 
     const rank = outputShape.length;
     const shaderSource = `
-    uniform sampler2D A;
     float process(int outputIdx[${rank}]) {
       int inputIdx[${rank}];
       ${tileOps.join('\n')}
       return _A(inputIdx);
     }`;
     return {
-      hasMain: false,
       inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t)),
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A'],
       shaderSource,
     };
   }

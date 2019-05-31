@@ -77,15 +77,14 @@ function createProgramInfo(
 
   const rank = outputShape.length;
   const shaderSource = `
-      uniform sampler2D A;
       float process(int outputIdx[${rank}]) {
         ${sliceOps.join('\n      ')}
         return _A(outputIdx);
       }`;
   return {
-    hasMain: false,
     inputLayouts: [handler.getOrCreateTextureLayout(x)],
     outputLayout: handler.createTextureLayoutFromShape(outputShape),
+    samplers: ['A'],
     shaderSource,
   };
 }

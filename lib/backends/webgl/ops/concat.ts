@@ -47,10 +47,8 @@ export class WebGLConcat extends Concat implements WebGLOperator {
 
     const fetchDataFromCorrectTextureMethod = this.fetchDataFromCorrectTextureMethod(inputs.length, rank);
     const getValueFromArrayIndexMethod = this.getValueFromArrayIndexMethod(inputs.length);
-    const inputUniforms = inputs.map((v, i) => `uniform sampler2D X${i};`);
+    const samplers = inputs.map((v, i) => `X${i}`);
     const shaderSource = `
-      ${inputUniforms.join('\n')}
-      uniform int sizeInConcatAxis[${inputs.length}];
       ${fetchDataFromCorrectTextureMethod}
       ${getValueFromArrayIndexMethod}
       ${getTextureIndexWhereDataResidesMethod}
@@ -65,9 +63,10 @@ export class WebGLConcat extends Concat implements WebGLOperator {
         return fetchDataFromCorrectTexture(textureIndex, indices);
       }`;
     return {
-      hasMain: false,
       inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t)),
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers,
+      variables: [{name: 'sizeInConcatAxis', type: 'int', arrayLength: inputs.length}],
       shaderSource,
     };
   }

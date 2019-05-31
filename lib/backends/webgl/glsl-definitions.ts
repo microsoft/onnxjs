@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {ProgramInfo, VariableInfo} from './types';
+import {ProgramInfo} from './types';
 import {WebGLContext} from './webgl-context';
 
 export enum FunctionType {
@@ -20,9 +20,7 @@ export interface GlslPositionalFunction extends GlslFunction<FunctionType.Positi
 }
 
 export class GlslContext {
-  constructor(
-      public glContext: WebGLContext, public programInfo: ProgramInfo, public attribInfo: VariableInfo[],
-      public uniformInfo: VariableInfo[]) {}
+  constructor(public glContext: WebGLContext, public programInfo: ProgramInfo) {}
 }
 export abstract class GlslLib {
   constructor(public context: GlslContext) {}

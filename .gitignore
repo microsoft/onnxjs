@@ -1,16 +1,18 @@
-dist/
-node_modules/
-types/
+/.vscode/ipch/
 
-test/data/node/
-test/testdata-*
+/dist/
+/node_modules/
+/types/
 
-lib/**/*.js
-lib/**/*.js.map
-test/**/*.js
-test/**/*.js.map
-tools/**/*.js
-tools/**/*.js.map
+/test/data/node/
+/test/testdata-*
+
+/lib/**/*.js
+/lib/**/*.js.map
+/test/**/*.js
+/test/**/*.js.map
+/tools/**/*.js
+/tools/**/*.js.map
 
 npm-debug.log
 .DS_Store

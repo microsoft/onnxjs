@@ -18,58 +18,59 @@ Usage:
  test-runner-cli <mode> ... [options]
 
 Modes:
- suite0                      Run all unittests, all operator tests and node model tests that described in white list
- suite1                      Run all unittests, all operator tests and all model tests that described in white list
- model                       Run a single model test
- unittest                    Run all unittests
- op                          Run a single operator test
+ suite0                        Run all unittests, all operator tests and node model tests that described in white list
+ suite1                        Run all unittests, all operator tests and all model tests that described in white list
+ model                         Run a single model test
+ unittest                      Run all unittests
+ op                            Run a single operator test
 
 Options:
 
 *** General Options ***
 
- -h, --help                  Print this message.
- -d, --debug                 Specify to run test runner in debug mode.
-                               Debug mode outputs verbose log for test runner, sets up ONNX.js environment debug flag, and keeps karma not to exit after tests completed.
- -b=<...>, --backend=<...>   Specify one or more backend(s) to run the test upon.
-                               Backends can be one or more of the following, splitted by comma:
-                                 cpu
-                                 webgl
-                                 wasm
-                                 onnxruntime  (only works in Node.js)
- -e=<...>, --env=<...>       Specify the environment to run the test. Should be one of the following:
-                               chrome     (default)
-                               edge       (Windows only)
-                               firefox
-                               electron
-                               safari     (MacOS only)
-                               node
-                               bs         (for BrowserStack tests)
- -p, --profile               Enable profiler.
-                               Profiler will generate extra logs which include the information of events time consumption
- -P[=<...>], --perf[=<...>]  Generate performance number. Cannot be used with flag --debug.
-                               This flag can be used with a number as value, specifying the total count of test cases to run. The test cases may be used multiple times. Default value is 10.
- -c, --file-cache            Enable file cache.
+ -h, --help                    Print this message.
+ -d, --debug                   Specify to run test runner in debug mode.
+                                 Debug mode outputs verbose log for test runner, sets up ONNX.js environment debug flag, and keeps karma not to exit after tests completed.
+ -b=<...>, --backend=<...>     Specify one or more backend(s) to run the test upon.
+                                 Backends can be one or more of the following, splitted by comma:
+                                   cpu
+                                   webgl
+                                   wasm
+                                   onnxruntime  (only works in Node.js)
+ -e=<...>, --env=<...>         Specify the environment to run the test. Should be one of the following:
+                                 chrome     (default)
+                                 edge       (Windows only)
+                                 firefox
+                                 electron
+                                 safari     (MacOS only)
+                                 node
+                                 bs         (for BrowserStack tests)
+ -p, --profile                 Enable profiler.
+                                 Profiler will generate extra logs which include the information of events time consumption
+ -P[=<...>], --perf[=<...>]    Generate performance number. Cannot be used with flag --debug.
+                                 This flag can be used with a number as value, specifying the total count of test cases to run. The test cases may be used multiple times. Default value is 10.
+ -c, --file-cache              Enable file cache.
 
 *** Logging Options ***
 
- --log-verbose=<...>         Set log level to verbose
- --log-info=<...>            Set log level to info
- --log-warning=<...>         Set log level to warning
- --log-error=<...>           Set log level to error
-                               The 4 flags above specify the logging configuration. Each flag allows to specify one or more category(s), splitted by comma. If use the flags without value, the log level will be applied to all category.
+ --log-verbose=<...>           Set log level to verbose
+ --log-info=<...>              Set log level to info
+ --log-warning=<...>           Set log level to warning
+ --log-error=<...>             Set log level to error
+                                 The 4 flags above specify the logging configuration. Each flag allows to specify one or more category(s), splitted by comma. If use the flags without value, the log level will be applied to all category.
 
 *** Backend Options ***
 
- --wasm-worker               Set the WebAssembly worker number
- --wasm-cpu-fallback         Set whether to allow WebAssembly backend to fallback to CPU
- --wasm-init-timeout         Set the timeout for WebAssembly backend initialization, in milliseconds
- --webgl-context-id          Set the WebGL context ID
+ --wasm-worker                 Set the WebAssembly worker number
+ --wasm-cpu-fallback           Set whether to allow WebAssembly backend to fallback to CPU
+ --wasm-init-timeout           Set the timeout for WebAssembly backend initialization, in milliseconds
+ --webgl-context-id            Set the WebGL context ID
+ --webgl-matmul-max-batch-size Set the WebGL matmulMaxBatchSize
 
 *** Browser Options ***
 
- --no-sandbox                This flag will be passed to Chrome.
-                               Sometimes Chrome need this flag to work together with Karma.
+ --no-sandbox                  This flag will be passed to Chrome.
+                                 Sometimes Chrome need this flag to work together with Karma.
 
 Examples:
 
@@ -330,7 +331,11 @@ function parseWebglOptions(args: minimist.ParsedArgs): Backend.WebGLOptions {
   if (contextId !== undefined && contextId !== 'webgl' && contextId !== 'webgl2') {
     throw new Error('Flag "webgl-context-id" is invalid');
   }
-  return {contextId};
+  const matmulMaxBatchSize = args['webgl-matmul-max-batch-size'];
+  if (matmulMaxBatchSize !== undefined && typeof matmulMaxBatchSize !== 'number') {
+    throw new Error('Flag "webgl-matmul-max-batch-size" must be a number value');
+  }
+  return {contextId, matmulMaxBatchSize};
 }
 
 function parseBooleanArg(arg: unknown, defaultValue: boolean): boolean;

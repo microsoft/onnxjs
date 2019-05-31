@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {GlslContext, GlslLib, GlslLibRoutine} from './glsl-definitions';
+import {getGlsl} from './glsl-source';
 
 /**
  * This GLSL library handles routines around reading a texlet and writing to it
@@ -19,11 +20,12 @@ export class FragColorGlslLib extends GlslLib {
     return {};
   }
   protected setFragColor(): {[name: string]: GlslLibRoutine} {
+    const glsl = getGlsl(this.context.glContext.version);
     return {
       setFragColor: new GlslLibRoutine(
           `
         void setFragColor(float value) {
-            gl_FragColor = encode(value);
+            ${glsl.output} = encode(value);
         }
         `,
           ['encoding.encode'])

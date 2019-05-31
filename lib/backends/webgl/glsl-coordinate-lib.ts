@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {GlslContext, GlslLib, GlslLibRoutine} from './glsl-definitions';
+import {getGlsl} from './glsl-source';
 
 /**
  * GLSL Library responsible for data types and routines for manipulating
@@ -66,13 +67,6 @@ export class CoordsGlslLib extends GlslLib {
     const xScale = output.width;
     const yScale = output.height;
 
-    const offsetFromBlocks = (this.context.programInfo.blockSize) ? `
-      int offsetFromBlocks(vec2 coords, int blockWidth, int blockHeight,
-          int blockXOffset, int blockYOffset, int totalWidth) {
-        coords = TexCoords * vec2(blockWidth, blockHeight) + vec2(blockXOffset, blockYOffset);
-        return int(coords.t) * totalWidth + int(coords.s);
-      }` :
-                                                                    '';
     const stridesBlock = [];
     for (let i = 0; i < rank - 1; ++i) {
       stridesBlock.push(`
@@ -82,15 +76,9 @@ export class CoordsGlslLib extends GlslLib {
     }
     stridesBlock.push(`
         c[${rank - 1}] = offset;`);
-    const offsetLine = (this.context.programInfo.blockSize) ? `
-      int offset = offsetFromBlocks(TexCoords, blockWidth, blockHeight, blockXOffset, blockYOffset, ${xScale});` :
-
-                                                              `
-      int offset = coordsToOffset(texCoords, ${xScale}, ${yScale});`;
     const body = `
-      ${offsetFromBlocks}
       void toVec(vec2 texCoords, out int c[${rank}]) {
-        ${offsetLine}
+        int offset = coordsToOffset(texCoords, ${xScale}, ${yScale});
         ${stridesBlock.join('')}
       }
       void toVec(int offset, out int c[${rank}]) {
@@ -108,8 +96,7 @@ export class CoordsGlslLib extends GlslLib {
   protected valueFrom(): {[name: string]: GlslLibRoutine} {
     const programInfo = this.context.programInfo;
     const result: {[name: string]: GlslLibRoutine} = {};
-    this.context.uniformInfo.filter(ui => ui.type === 'sampler2D').forEach((ui, i) => {
-      const name = ui.name;
+    this.context.programInfo.samplers.forEach((name, i) => {
       const layout = programInfo.inputLayouts[i];
       const shape = layout.shape;
       const rank = shape.length;
@@ -137,11 +124,12 @@ export class CoordsGlslLib extends GlslLib {
     if (transpose) {
       name = name + '_T';
     }
+    const glsl = getGlsl(this.context.glContext.version);
     return `
         float ${name}(int m[${rank}]) {
           int offset = indicesToOffset${name}(m);
           vec2 coords = offsetToCoords(offset, ${width}, ${height});
-          float value = getColorAsFloat(texture2D(${varName}, coords));
+          float value = getColorAsFloat(${glsl.texture2D}(${varName}, coords));
           return value;
         }
         `;

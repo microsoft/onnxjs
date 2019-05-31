@@ -37,12 +37,6 @@ export class WebGLGemm extends Gemm implements WebGLOperator {
     const rank = oShape.length;
     const cRank = cShape.length;
     const shaderSource = `
-      uniform sampler2D A;
-      uniform sampler2D B;
-      uniform sampler2D C;
-      uniform float alpha;
-      uniform float beta;
-
       float process(int indices[${rank}]) {
           int a[${rank}];
           int b[${rank}];
@@ -65,9 +59,10 @@ export class WebGLGemm extends Gemm implements WebGLOperator {
       }`;
     const inputLayouts = inputs.map(t => inferenceHandler.getOrCreateTextureLayout(t));
     return {
-      hasMain: false,
       inputLayouts,
       outputLayout: inferenceHandler.createTextureLayoutFromShape(oShape),
+      samplers: ['A', 'B', 'C'],
+      variables: [{name: 'alpha', type: 'float'}, {name: 'beta', type: 'float'}],
       shaderSource,
     };
   }

@@ -23,8 +23,8 @@ export class CpuConv extends Conv {
     }
 
     // create output Tensor after determining output size (after adjusting pads based on 'autoPad' attribute)
-    const outputDims =
-        PoolConvUtil.computeConvOutputShape(x.dims, w.dims, this.strides, this.kernelShape, this.pads, this.autoPad);
+    const outputDims = PoolConvUtil.computeConvOutputShape(
+        x.dims, w.dims, this.strides, this.dilations, this.kernelShape, this.pads, this.autoPad);
     const y = new Tensor(outputDims, x.type);
 
     conv2d(y, x, w, b, this.dilations, this.group, this.pads, this.strides);

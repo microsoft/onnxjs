@@ -350,7 +350,7 @@ export class TensorResultValidator {
       this.relativeThreshold = CPU_THRESHOLD_RELATIVE_ERROR;
     } else if (backend === 'webgl') {
       if (TensorResultValidator.isHalfFloat === undefined) {
-        TensorResultValidator.isHalfFloat = !createWebGLContext(onnx.backend.webgl.contextId).renderFloat32Enabled;
+        TensorResultValidator.isHalfFloat = !createWebGLContext(onnx.backend.webgl.contextId).isRenderFloat32Supported;
       }
       if (TensorResultValidator.isHalfFloat) {
         this.maxFloatValue = 65504;

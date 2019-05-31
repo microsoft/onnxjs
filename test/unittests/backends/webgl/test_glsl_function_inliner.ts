@@ -2,11 +2,10 @@
 // Licensed under the MIT license.
 
 import {expect} from 'chai';
-import {GlslFunctionInliner} from '../../../../lib/backends/webgl/glsl-function-inliner';
+import {replaceInlines} from '../../../../lib/backends/webgl/glsl-function-inliner';
 import {Logger} from '../../../../lib/instrument';
 
 describe('#UnitTest# - FunctionInliner', () => {
-  const inliner = new GlslFunctionInliner();
   it('replaces inline and removes original declaration', () => {
     const script = `
       precision mediump float;
@@ -31,7 +30,7 @@ describe('#UnitTest# - FunctionInliner', () => {
         gl_FragColor = vColor;
       }
       `;
-    const result = inliner.inline(script);
+    const result = replaceInlines(script);
     const expected = `
       precision mediump float;
       varying vec4 vColor;

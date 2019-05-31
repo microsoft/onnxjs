@@ -15,7 +15,8 @@ export class WebGLGemm extends Gemm implements WebGLOperator {
     const aShape = inputs[0].dims.slice();
     const bShape = inputs[1].dims.slice();
     const cShape = inputs[2].dims.slice();
-    const oShape = GemmUtil.getShapeOfGemmResult(aShape, this.transA, bShape, this.transB, cShape);
+    const [M, N] = GemmUtil.getShapeOfGemmResult(aShape, this.transA, bShape, this.transB, cShape);
+    const oShape = [M, N];
     if (!oShape) {
       throw new Error('Can\'t use gemm on the given tensors');
     }

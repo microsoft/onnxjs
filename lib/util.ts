@@ -2,8 +2,6 @@
 // Licensed under the MIT license.
 
 import Long from 'long';
-import ndarray from 'ndarray';
-import {assign} from 'ndarray-ops';
 import {onnx} from 'onnx-proto';
 
 import {Graph} from './graph';
@@ -32,21 +30,19 @@ export class MatMulUtil {
    * @param dimsB The shape of tensor B. Should be an array of positive integers
    * @returns A tuple containing the preprocessed input shapes as required by ONNX specifications
    */
-  static preprocessInputShapes(dimsA: number[], dimsB: number[]): [number[], number[]] {
+  static preprocessInputShapes(dimsA: ReadonlyArray<number>, dimsB: ReadonlyArray<number>):
+      [ReadonlyArray<number>, ReadonlyArray<number>] {
     // If the first argument is 1-D, it is promoted to a matrix by prepending
     // a 1 to its dimensions. After matrix multiplication the prepended 1 is
     // removed.
-    if (dimsA.length === 1) {
-      dimsA = [1, dimsA[0]];
-    }
+    const a = (dimsA.length === 1) ? [1, dimsA[0]] : dimsA;
+
     // If the second argument is 1-D, it is promoted to a matrix by appending
     // a 1 to its dimensions. After matrix multiplication the appended 1 is
     // removed.
-    if (dimsB.length === 1) {
-      dimsB = [dimsB[0], 1];
-    }
+    const b = (dimsB.length === 1) ? [dimsB[0], 1] : dimsB;
 
-    return [dimsA, dimsB];
+    return [a, b];
   }
 
   /**
@@ -164,40 +160,43 @@ export class BroadcastUtil {
    * @param a The input tensor A
    * @param b The input tensor B
    * @param op The operator lambda function
+   * @param inplace Whether to write the result back to A.
    * @returns The result tensor, or undefined if input not broadcastable.
    */
-  static calc(a: ndarray, b: ndarray, op: (a: number, b: number) => number): ndarray|undefined {
-    const outputShape = BroadcastUtil.calcShape(a.shape, b.shape);
+  static calc(
+      a: Tensor, b: Tensor, op: (a: string|number, b: string|number) => (string | number), inplace: boolean,
+      resultType?: Tensor.DataType): Tensor|undefined {
+    const outputShape = BroadcastUtil.calcShape(a.dims, b.dims);
 
     if (outputShape) {
+      if (inplace && !ShapeUtil.areEqual(outputShape, a.dims)) {
+        // B is not broadcastable to A, failed to calculate inplace.
+        return undefined;
+      }
+
       const size = ShapeUtil.size(outputShape);
-      const c = ndarray(
-          new (
-              a.data.constructor as Int8ArrayConstructor | Int16ArrayConstructor | Int32ArrayConstructor |
-              Uint8ArrayConstructor | Uint16ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor |
-              Float64ArrayConstructor | Uint8ClampedArrayConstructor)(size),
-          outputShape as number[]);
+      const c = inplace ? a : new Tensor(outputShape, resultType || a.type);
 
       // both inputs are scalars
       if (outputShape.length === 0) {
-        c.set(op(a.get(), b.get()));
+        c.set([], op(a.get([]), b.get([])));
       }
 
       // atleast one input is a non-scalar
       else {
         const outputIndices = new Array<number>(outputShape.length);
-        const originalIndicesA = new Array(a.shape.length);
-        const originalIndicesB = new Array(b.shape.length);
-        let valA = 0;
-        let valB = 0;
+        const originalIndicesA = new Array(a.dims.length);
+        const originalIndicesB = new Array(b.dims.length);
+        let valA: string|number = 0;
+        let valB: string|number = 0;
         let isAScalar = false;
         let isBScalar = false;
-        if (a.shape.length === 0) {
-          valA = a.get();
+        if (a.dims.length === 0) {
+          valA = a.get([]);
           isAScalar = true;
         }
-        if (b.shape.length === 0) {
-          valB = b.get();
+        if (b.dims.length === 0) {
+          valB = b.get([]);
           isBScalar = true;
         }
         let rest: number;
@@ -211,16 +210,15 @@ export class BroadcastUtil {
 
           if (!isAScalar) {
             // map outputIndices (which is actually broadcasted) to the originalIndices
-            BroadcastUtil.fillIndex(outputIndices, a.shape, originalIndicesA);
-            valA = a.get(...originalIndicesA);
+            BroadcastUtil.fillIndex(outputIndices, a.dims, originalIndicesA);
+            valA = a.get(originalIndicesA);
           }
           if (!isBScalar) {
-            BroadcastUtil.fillIndex(outputIndices, b.shape, originalIndicesB);
-            valB = b.get(...originalIndicesB);
+            BroadcastUtil.fillIndex(outputIndices, b.dims, originalIndicesB);
+            valB = b.get(originalIndicesB);
           }
 
-          // assign value to output ndarray
-          c.set(...outputIndices, op(valA, valB));
+          c.set(outputIndices, op(valA, valB));
         }
       }
 
@@ -319,51 +317,7 @@ export class GemmUtil {
       throw new Error(`gemm: invalid bias shape for broadcast`);
     }
 
-    return [M, N];
-  }
-}
-
-export class NdarrayUtil {
-  /**
-   * Get the constructor of the data type in the given ndarray
-   */
-  static ctor<T>(x: ndarray<T>) {
-    return x.data.constructor as /* ArrayConstructor | Int8ArrayConstructor
-        | Int16ArrayConstructor | Int32ArrayConstructor | Uint8ArrayConstructor
-        | Uint16ArrayConstructor | Uint32ArrayConstructor |
-        Float32ArrayConstructor | Float64ArrayConstructor |
-        Uint8ClampedArrayConstructor*/
-    {
-      new (arrayLength: number): ndarray.Data<T>;
-    };
-  }
-
-  /**
-   * Create a shallow copy of the given ndarray
-   */
-  static copy<T extends ndarray<U>, U>(x: T): T {
-    return ndarray(x.data, x.shape, x.stride, x.offset) as T;
-  }
-
-  /**
-   * Create a deep copy of the given ndarray
-   */
-  static deepCopy<T extends ndarray<U>, U>(x: T): T {
-    const buf = new (NdarrayUtil.ctor(x))(x.size);
-    const y = ndarray(buf, x.shape);
-    assign(y, x);
-    return y as T;
-  }
-
-  /**
-   * Create a new ndarray, using the same underlying data type as the given
-   * ndarray
-   * @param protoType the ndarray to take as a prototype for data type
-   * @param dims the dimensions of the new ndarray
-   */
-  static create<T extends ndarray<U>, U>(protoType: T, dims: number[]): T {
-    const buf = new (NdarrayUtil.ctor(protoType))(ShapeUtil.size(dims));
-    return ndarray(buf, dims) as T;
+    return [M, N, K];
   }
 }
 
@@ -432,7 +386,7 @@ export class ShapeUtil {
 
   // `axis` inclusive
   static sizeFromDimension(dims: ReadonlyArray<number>, axis: number): number {
-    if (axis < 0 || axis >= dims.length) {
+    if (axis < 0 || axis > dims.length) {
       throw new Error(`invalid dimension of ${axis} for sizeFromDimension as Tensor has ${dims.length} dimensions.`);
     }
     return ShapeUtil.getSizeFromDimensionRange(dims, axis, dims.length);
@@ -887,13 +841,13 @@ export class ReduceUtil {
    * Perform reduce operations on the specific operator
    * @param a Input tensor data
    * @param axes The dimensions along which the Tensor will be reduced
-   * @param keepdims If set to 1, the axes which are reduced are left in the
+   * @param keepdims If set to true, the axes which are reduced are left in the
    *    result as dimensions with size one.
    * @param op1 The operation to be performed on each element in the tensor
    * @param op2 The operation to be performed between elements in the tensor
    */
   static calcReduce(
-      a: Tensor, axes: number[], keepdims: number, op1: (b: number) => number,
+      a: Tensor, axes: number[], keepdims: boolean, op1: (b: number) => number,
       op2: (a: number, b: number) => number): Tensor {
     const dims = a.dims.slice(0);
     // if axes is not set, perform reduce on all axes
@@ -901,11 +855,11 @@ export class ReduceUtil {
       dims.forEach((d, ind) => axes.push(ind));
     }
     // get a temporary broadcastable output shape
-    const outputDims = ReduceUtil.calcReduceShape(dims, axes, 1);
+    const outputDims = ReduceUtil.calcReduceShape(dims, axes, true);
 
     // loop through the output and calculate result one by one
     const size = ShapeUtil.size(outputDims);
-    const ndY = ndarray(new Array<number>(size), outputDims);
+    const y = new Tensor(outputDims, a.type);
     const strides = ShapeUtil.computeStrides(outputDims);
     const inputStrides = ShapeUtil.computeStrides(dims);
     const indicesY = new Array(dims.length);
@@ -913,19 +867,18 @@ export class ReduceUtil {
       const indices = ShapeUtil.offsetToIndices(i, strides);
       // map index
       BroadcastUtil.fillIndex(indices, dims, indicesY);
-      ndY.set(
-          ...indices,
+      y.set(
+          indices,
           ReduceUtil.calcReduceByAxis(
               a.numberData, axes, dims, 0, ShapeUtil.indicesToOffset(indicesY, inputStrides), op1, op2));
     }
 
-    if (keepdims === 1) {
-      return Tensor.fromNdarray(ndY, a.type);
+    if (keepdims) {
+      return y;
     } else {
       // keepdims == 0, calculate the expected shape
-      const res = new Tensor(ReduceUtil.calcReduceShape(dims, axes, keepdims), a.type);
-      res.numberData.set(ndY.data);
-      return res;
+      return new Tensor(
+          ReduceUtil.calcReduceShape(dims, axes, keepdims), y.type, undefined, undefined, y.data, y.dataId);
     }
   }
 
@@ -961,20 +914,19 @@ export class ReduceUtil {
    * Calculate the expected shape of a reduce operation
    * @param dims The input tensor dimension
    * @param axes The dimensions along which the Tensor will be reduced
-   * @param keepdims If set to 1, the axes which are reduced are left in the
+   * @param keepdims If set to true, the axes which are reduced are left in the
    *    result as dimensions with size one.
    */
-  static calcReduceShape(dims: number[], axes: number[], keepDims: number): number[] {
-    let outputDims = dims.slice(0);
+  static calcReduceShape(dims: ReadonlyArray<number>, axes: ReadonlyArray<number>, keepDims: boolean): number[] {
+    const outputDims = dims.slice();
     for (let i = 0; i < axes.length; i++) {
-      if (keepDims === 1) {
+      if (keepDims) {
         outputDims[axes[i]] = 1;
       } else {
         outputDims[axes[i]] = 0;
       }
     }
-    outputDims = outputDims.filter(dim => dim !== 0);
-    return outputDims;
+    return outputDims.filter(dim => dim !== 0);
   }
 }
 
@@ -1122,8 +1074,8 @@ export class PoolConvUtil {
   // called by computePoolOutputShape() and computeConvOutputShape()
   // adjust pads based on 'autoPad' attribute prior to shape computation
   private static computeShapeHelper(
-      isGlobalOperator: boolean, inputDims: ReadonlyArray<number>, outputDims: number[], strides: number[],
-      dilations: number[], kernelShape: number[], pads: number[], autoPad?: string) {
+      isGlobalOperator: boolean, inputDims: ReadonlyArray<number>, outputDims: number[], strides: ReadonlyArray<number>,
+      dilations: ReadonlyArray<number>, kernelShape: ReadonlyArray<number>, pads: number[], autoPad?: string) {
     if (isGlobalOperator) {
       for (let dim = 0; dim < inputDims.length - 2; dim++) {
         outputDims.push(1);

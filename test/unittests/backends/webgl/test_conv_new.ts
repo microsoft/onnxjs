@@ -10,9 +10,12 @@ import {Tensor} from '../../../../lib/tensor';
 import {TensorResultValidator} from '../../../test-runner';
 
 const validator = new TensorResultValidator('webgl');
-let backend: Backend|undefined;
-let sessionhandler: SessionHandler|undefined;
-let infhandler: InferenceHandler|undefined;
+let webglBackend: Backend|undefined;
+let webglSessionhandler: SessionHandler|undefined;
+let webglInferenceHandler: InferenceHandler|undefined;
+let cpuBackend: Backend|undefined;
+let cpuSessionhandler: SessionHandler|undefined;
+let cpuInferenceHandler: InferenceHandler|undefined;
 
 function webglConv(
     inputTensor: Tensor, kernelTensor: Tensor, biasTensor: Tensor|null, autoPad: string|undefined, dilations: number[],
@@ -25,7 +28,7 @@ function webglConv(
     attributes.set('pads', 'ints', pads);
   }
   attributes.set('strides', 'ints', strides);
-  const op = sessionhandler!.resolve(
+  const op = webglSessionhandler!.resolve(
       {opType: 'Conv', attributes, inputs: [], outputs: [], name: `Conv`}, [{domain: '', version: 7}]);
   if (!op.checkInputs([inputTensor, kernelTensor])) {
     throw new Error('Invalid inputs');
@@ -34,7 +37,7 @@ function webglConv(
   if (biasTensor) {
     inputs.push(biasTensor);
   }
-  return (op.run(infhandler!, inputs) as Tensor[])[0];
+  return (op.run(webglInferenceHandler!, inputs) as Tensor[])[0];
 }
 function cpuConv(
     inputTensor: Tensor, kernelTensor: Tensor, biasTensor: Tensor|null, autoPad: string|undefined, dilations: number[],
@@ -56,14 +59,17 @@ function cpuConv(
   if (biasTensor) {
     inputs.push(biasTensor);
   }
-  return (op.run(infhandler as CpuInferenceHandler, inputs))[0];
+  return (op.run(cpuInferenceHandler as CpuInferenceHandler, inputs))[0];
 }
 describe('New Conv tests', () => {
   before(async () => {
-    backend = await Backend('webgl');
     const profiler = Profiler.create();
-    sessionhandler = backend.createSessionHandler({profiler});
-    infhandler = sessionhandler.createInferenceHandler();
+    webglBackend = await Backend('webgl');
+    webglSessionhandler = webglBackend.createSessionHandler({profiler});
+    webglInferenceHandler = webglSessionhandler.createInferenceHandler();
+    cpuBackend = await Backend('cpu');
+    cpuSessionhandler = cpuBackend.createSessionHandler({profiler});
+    cpuInferenceHandler = cpuSessionhandler.createInferenceHandler();
   });
   const testDataSet = getTestData();
   for (let k = 0; k < testDataSet.length; ++k) {

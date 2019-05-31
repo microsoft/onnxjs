@@ -2,12 +2,9 @@
 // Licensed under the MIT license.
 
 import Long from 'long';
-import ndarray from 'ndarray';
 import {onnx} from 'onnx-proto';
 
 import {ProtoUtil, ShapeUtil} from './util';
-
-type NdArray = ndarray<number>|ndarray<string>;
 
 export declare namespace Tensor {
   export interface DataTypeMap {
@@ -115,24 +112,47 @@ export class Tensor {
   }
 
   /**
+   * get value of an element at the given indices
+   */
+  get(indices: ReadonlyArray<number>): Tensor.DataTypeMap[Tensor.DataType][number] {
+    return this.data[ShapeUtil.indicesToOffset(indices, this.strides)];
+  }
+
+  /**
+   * set value of an element at the given indices
+   */
+  set(indices: ReadonlyArray<number>, value: Tensor.DataTypeMap[Tensor.DataType][number]) {
+    this.data[ShapeUtil.indicesToOffset(indices, this.strides)] = value;
+  }
+
+  /**
    * get the underlying tensor data asynchronously
    */
   async getData(): Promise<TensorData> {
-    throw new Error('not implemented');
-
     // TBD: This function is designed for usage when any backend data provider offers a way to retrieve data in an
     //      asynchronous way. should implement this function when enabling webgl async read data.
 
-    // if (this.cache === undefined) {
-    //   this.cache = await this.asyncDataProvider!(this.dataId);
-    // }
-    // return this.cache!;
+    if (this.cache === undefined) {
+      this.cache = await this.asyncDataProvider!(this.dataId);
+    }
+    return this.cache;
   }
 
   /**
    * get the number of elements in the tensor
    */
   public readonly size: number;
+
+  private _strides: ReadonlyArray<number>;
+  /**
+   * get the strides for each dimension
+   */
+  get strides(): ReadonlyArray<number> {
+    if (!this._strides) {
+      this._strides = ShapeUtil.computeStrides(this.dims);
+    }
+    return this._strides;
+  }
 
   constructor(
       /**
@@ -143,7 +163,7 @@ export class Tensor {
        * get the type of the tensor
        */
       public readonly type: Tensor.DataType, private dataProvider?: DataProvider,
-      /* private */ asyncDataProvider?: AsyncDataProvider, private cache?: TensorData,
+      private asyncDataProvider?: AsyncDataProvider, private cache?: TensorData,
       /**
        * get the data ID that used to map to a tensor data
        */
@@ -275,26 +295,6 @@ export class Tensor {
     }
 
     return value;
-  }
-
-  /**
-   * Construct new Tensor from an ndarray object
-   * @param arr the ndarray object
-   * @param type the tensor data type
-   * @param copy whether to copy the underlying buffer or not
-   */
-  static fromNdarray(arr: NdArray, type: Tensor.DataType, copy = true): Tensor {
-    if (copy) {
-      const tensor = new Tensor(arr.shape, type);
-      if (type === 'string') {
-        throw new TypeError(`do not support NDArray with string tensors`);
-      } else {
-        tensor.numberData.set(arr.data as Tensor.NumberType);
-      }
-      return tensor;
-    } else {
-      return new Tensor(arr.shape, type, undefined, undefined, arr.data as TensorData);
-    }
   }
 
   /**

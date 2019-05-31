@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import ndarray from 'ndarray';
-
 import {MatMul} from '../../../ops/matmul';
 import {Tensor} from '../../../tensor';
 import {BroadcastUtil, MatMulUtil, ShapeUtil} from '../../../util';
@@ -16,71 +14,153 @@ export class CpuMatMul extends MatMul {
 }
 
 export function matMul(a: Tensor, b: Tensor) {
-  let dimsA: number[];
-  let dimsB: number[];
-  [dimsA, dimsB] = MatMulUtil.preprocessInputShapes(a.dims.slice(), b.dims.slice());
+  const [dimsA, dimsB] = MatMulUtil.preprocessInputShapes(a.dims, b.dims);
   const mat2dShape = [dimsA[dimsA.length - 2], dimsB[dimsB.length - 1]];
-  let shape = BroadcastUtil.calcShape(dimsA, dimsB, true);
+  const shape = BroadcastUtil.calcShape(dimsA, dimsB, true);
   if (!shape) {
     // the inputs cannot broadcast or cannot multiply
     throw new Error(`input dimensions do not match the requirement`);
   }
-  // make a copy and re-assign because this can be modified later
-  shape = shape.slice(0);
   const size = ShapeUtil.size(shape);
   const num2dMatrices = size / (mat2dShape[0] * mat2dShape[1]);
 
-  let ndA: ndarray;
-  let ndB: ndarray;
-  let ndY: ndarray;
-  let isFloat64 = false;
-  ndA = ndarray(a.floatData, dimsA);
-  ndB = ndarray(b.floatData, dimsB);
-  if (a.type === 'float64' || b.type === 'float64') {
-    ndY = ndarray(new Float64Array(size));
-    isFloat64 = true;
-  } else {
-    ndY = ndarray(new Float32Array(size));
-  }
-
-  let curPos = 0;
+  const y = new Tensor(shape, a.type === 'float64' || b.type === 'float64' ? 'float64' : 'float32');
+  let offsetY = 0;
   const indices = new Array<number>(shape.length);
-  const indicesA = new Array(ndA.shape.length);
-  const indicesB = new Array(ndB.shape.length);
+  const indicesA = new Array<number>(a.dims.length);
+  const indicesB = new Array<number>(b.dims.length);
   for (let i = 0; i < num2dMatrices; i++) {
     // traverse nd array at 2d level
+    indices[shape.length - 2] = 0;
+    indices[shape.length - 1] = 0;
     let rest = i;
     for (let j = shape.length - 3; j >= 0; j--) {
       indices[j] = rest % shape[j];
       rest = Math.floor(rest / shape[j]);
     }
-    // map the "broadcasted" index to original ndarray index
-    BroadcastUtil.fillIndex(indices, ndA.shape, indicesA);
-    BroadcastUtil.fillIndex(indices, ndB.shape, indicesB);
-    // slice and get 2d subarrays
-    const subarrayA = shape.length === 2 ? ndA : ndA.pick(...indicesA);
-    const subarrayB = shape.length === 2 ? ndB : ndB.pick(...indicesB);
+    // map the "broadcasted" index to original index
+    BroadcastUtil.fillIndex(indices, a.dims, indicesA);
+    BroadcastUtil.fillIndex(indices, b.dims, indicesB);
+    // calculate subarrays offset for A and B
+    const offsetA = indicesA.length <= 2 ? 0 : ShapeUtil.indicesToOffset(indicesA, a.strides, shape.length - 2);
+    const offsetB = indicesB.length <= 2 ? 0 : ShapeUtil.indicesToOffset(indicesB, b.strides, shape.length - 2);
     // multiply like conventional matrices
-    MatMul2d(subarrayA, subarrayB, ndY, curPos);
-    curPos += mat2dShape[0] * mat2dShape[1];
+    matMul2d(
+        a.floatData.subarray(offsetA), b.floatData.subarray(offsetB), y.floatData.subarray(offsetY), false, false, 1, 0,
+        mat2dShape[0], mat2dShape[1], dimsA[dimsA.length - 1]);
+    offsetY += mat2dShape[0] * mat2dShape[1];
   }
-  MatMulUtil.postprocessOutputShape(shape as number[], a.dims.length, b.dims.length);
-  const tensorY = new Tensor(shape, isFloat64 ? 'float64' : 'float32');
-  tensorY.floatData.set(ndY.data);
-  return tensorY;
+  return y;
 }
 
-function MatMul2d(A: ndarray, B: ndarray, Y: ndarray, startPos: number) {
-  // 2d matrix multiplication. Y[i,j] = sum(A[i, k] + B[k, j])
-  let offset = 0;
-  for (let i = 0; i < A.shape[0]; i++) {
-    for (let j = 0; j < B.shape[1]; j++) {
+/**
+ * perform matrix multiply on C = alpha * A * B + beta * C
+ * @param A data of tensor A, whose shape is [M,K] or [K,M] (if transA)
+ * @param B data of tensor B, whose shape is [K,N] or [N,K] (if transB)
+ * @param C data of tensor C, whose shape is [M,N]
+ */
+export function matMul2d(
+    A: Float32Array|Float64Array, B: Float32Array|Float64Array, C: Float32Array|Float64Array, transA: boolean,
+    transB: boolean, alpha: number, beta: number, M: number, N: number, K: number) {
+  if (transA && transB) {
+    return matMul2d_tAtB(A, B, C, alpha, beta, M, N, K);
+  } else if (transA) {
+    return matMul2d_tA(A, B, C, alpha, beta, M, N, K);
+  } else if (transB) {
+    return matMul2d_tB(A, B, C, alpha, beta, M, N, K);
+  } else {
+    return matMul2d_(A, B, C, alpha, beta, M, N, K);
+  }
+}
+
+function matMul2d_(
+    A: Float32Array|Float64Array, B: Float32Array|Float64Array, C: Float32Array|Float64Array, alpha: number,
+    beta: number, M: number, N: number, K: number) {
+  let offsetA = 0, offsetB = 0, offsetC = 0;
+  for (let mm = 0; mm < M; mm++) {
+    for (let nn = 0; nn < N; nn++) {
       let sum = 0;
-      for (let k = 0; k < A.shape[1]; k++) {
-        sum += A.get(i, k) * B.get(k, j);
+      for (let kk = 0; kk < K; kk++) {
+        sum += A[offsetA] * B[offsetB];
+        offsetA += 1;
+        offsetB += N;
       }
-      Y.set(startPos + offset, sum);
-      offset++;
+      offsetA -= K;
+      offsetB -= N * K;
+      C[offsetC] = alpha * sum + beta * C[offsetC];
+      offsetC++;
+      offsetB++;
     }
+    offsetB -= N;
+    offsetA += K;
+  }
+}
+
+function matMul2d_tA(
+    A: Float32Array|Float64Array, B: Float32Array|Float64Array, C: Float32Array|Float64Array, alpha: number,
+    beta: number, M: number, N: number, K: number) {
+  let offsetA = 0, offsetB = 0, offsetC = 0;
+  for (let mm = 0; mm < M; mm++) {
+    for (let nn = 0; nn < N; nn++) {
+      let sum = 0;
+      for (let kk = 0; kk < K; kk++) {
+        sum += A[offsetA] * B[offsetB];
+        offsetA += M;
+        offsetB += N;
+      }
+      offsetA -= M * K;
+      offsetB -= N * K;
+      C[offsetC] = alpha * sum + beta * C[offsetC];
+      offsetC++;
+      offsetB++;
+    }
+    offsetB -= N;
+    offsetA++;
+  }
+}
+
+function matMul2d_tB(
+    A: Float32Array|Float64Array, B: Float32Array|Float64Array, C: Float32Array|Float64Array, alpha: number,
+    beta: number, M: number, N: number, K: number) {
+  let offsetA = 0, offsetB = 0, offsetC = 0;
+  for (let mm = 0; mm < M; mm++) {
+    for (let nn = 0; nn < N; nn++) {
+      let sum = 0;
+      for (let kk = 0; kk < K; kk++) {
+        sum += A[offsetA] * B[offsetB];
+        offsetA += 1;
+        offsetB += 1;
+      }
+      offsetA -= K;
+      offsetB -= K;
+      C[offsetC] = alpha * sum + beta * C[offsetC];
+      offsetC++;
+      offsetB += K;
+    }
+    offsetB -= N * K;
+    offsetA += K;
+  }
+}
+
+function matMul2d_tAtB(
+    A: Float32Array|Float64Array, B: Float32Array|Float64Array, C: Float32Array|Float64Array, alpha: number,
+    beta: number, M: number, N: number, K: number) {
+  let offsetA = 0, offsetB = 0, offsetC = 0;
+  for (let mm = 0; mm < M; mm++) {
+    for (let nn = 0; nn < N; nn++) {
+      let sum = 0;
+      for (let kk = 0; kk < K; kk++) {
+        sum += A[offsetA] * B[offsetB];
+        offsetA += M;
+        offsetB += 1;
+      }
+      offsetA -= M * K;
+      offsetB -= K;
+      C[offsetC] = alpha * sum + beta * C[offsetC];
+      offsetC++;
+      offsetB += K;
+    }
+    offsetB -= N * K;
+    offsetA++;
   }
 }

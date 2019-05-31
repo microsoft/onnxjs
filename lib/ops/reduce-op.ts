@@ -11,7 +11,7 @@ export abstract class ReduceBase implements Operator {
 
   initialize(attributes: Attribute): void {
     this.axes = attributes.getInts('axes', []);
-    this.keepDims = attributes.getInt('keepdims', 1);
+    this.keepDims = attributes.getInt('keepdims', 1) === 1;
   }
 
   checkInputs(inputs: Tensor[]): boolean {
@@ -31,5 +31,5 @@ export abstract class ReduceBase implements Operator {
   }
 
   protected axes: number[];
-  protected keepDims: number;
+  protected keepDims: boolean;
 }

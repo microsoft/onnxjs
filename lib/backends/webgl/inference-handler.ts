@@ -138,7 +138,8 @@ export class WebGLInferenceHandler implements InferenceHandler {
   /**
    * Create a TextureLayout object from a tensor. If a related texture data is found, returns the cached texture layout.
    */
-  getOrCreateTextureLayout(tensor: Tensor, channels = 1, unpackedShape?: ReadonlyArray<number>): TextureLayout {
+  getOrCreateTextureLayout(tensor: Tensor, channels: 1|2|3|4 = 1, unpackedShape?: ReadonlyArray<number>):
+      TextureLayout {
     const td = this.getTextureData(tensor.dataId);
     if (td) {
       return td;
@@ -150,7 +151,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
    * Create a TextureLayout object from shape.
    */
   createTextureLayoutFromShape(
-      shape: ReadonlyArray<number>, channels = 1, unpackedShape?: ReadonlyArray<number>,
+      shape: ReadonlyArray<number>, channels: 1|2|3|4 = 1, unpackedShape?: ReadonlyArray<number>,
       prefs?: WidthHeightPrefs): TextureLayout {
     const [width, height] = this.session.layoutStrategy.computeTextureWH(shape, prefs);
     let inferredDims = shape;
@@ -180,7 +181,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   readTexture(textureData: TextureData): Tensor.NumberType {
-    if (this.session.backend.forceUint8Reads) {
+    if (!this.session.backend.glContext.isFloat32DownloadSupported) {
       const op = new WebGLUint8Encode();
       const uint8TD = op.runInternal(this, textureData);
       return this.textureHelper.readUint8TextureAsFloat(uint8TD);

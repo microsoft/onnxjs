@@ -3,6 +3,7 @@
 
 import {Elu} from '../../../ops/elu';
 import {Tensor} from '../../../tensor';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
@@ -12,18 +13,19 @@ export class WebGLElu extends Elu implements WebGLOperator {
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const outputShape = inputs[0].dims.slice();
+    const glsl = getGlsl(handler.session.backend.glContext.version);
     const shaderSource = `
-      uniform sampler2D A;
       void main() {
-        float v = texture2D(A, TexCoords).r;
-        gl_FragColor = vec4(v >= 0.0 ? v: (exp(v) - 1.0) * ${this.alpha.toExponential()}); /* float number format */
+        float v = ${glsl.texture2D}(A, TexCoords).r;
+        ${glsl.output} = vec4(v >= 0.0 ? v: (exp(v) - 1.0) * ${this.alpha.toExponential()}); /* float number format */
       }
       `;
     return {
-      hasMain: true,
       inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])],
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A'],
       shaderSource,
+      hasMain: true,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {

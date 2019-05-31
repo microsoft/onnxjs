@@ -4,6 +4,7 @@
 import {Softmax} from '../../../ops/softmax';
 import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {Artifact, ProgramInfo, RunData, TextureLayout} from '../types';
 
@@ -49,9 +50,6 @@ export class WebGLSoftmax extends Softmax {
     }
 
     const shaderSource = `
-    uniform sampler2D A;
-    uniform sampler2D Max;
-    uniform sampler2D Norm;
     float process(int[${rank}] indices) {
 
       // get offset of current logical tensor index from the 2-D texture coordinates (TexCoords)
@@ -72,9 +70,9 @@ export class WebGLSoftmax extends Softmax {
       return exp(_A(indices) - _Max(logical_row_index)) / norm_factor;
     }`;
     return {
-      hasMain: false,
       inputLayouts: [inputLayout, maxElementPerLogicalRow, normalizationPerLogicalRow],
       outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A', 'Max', 'Norm'],
       shaderSource,
     };
   }
@@ -110,9 +108,8 @@ export class WebGLSoftmax extends Softmax {
       throw new Error(`Shape of the intermediate results should be equal to logical row count`);
     }
 
+    const glsl = getGlsl(inferenceHandler.session.backend.glContext.version);
     const shaderSource = `
-    uniform sampler2D A;
-    uniform sampler2D Max;
     float process(int[${rank}] indices) {
 
       int logical_row_start_offset = indices[0] * ${D};
@@ -121,16 +118,16 @@ export class WebGLSoftmax extends Softmax {
       float max = _Max(indices);
       for(int i=0; i<${D}; ++i)
       {
-        norm_factor += exp(getColorAsFloat(texture2D(A, offsetToCoords(logical_row_start_offset + i, ${textureWidth}, ${
-        textureHeight}))) - max);
+        norm_factor += exp(getColorAsFloat(${glsl.texture2D}(A, offsetToCoords(logical_row_start_offset + i, ${
+        textureWidth}, ${textureHeight}))) - max);
       }
 
       return norm_factor;
     }`;
     return {
-      hasMain: false,
       inputLayouts: [xlayout, maxElementPerLogicalRow],
       outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A', 'Max'],
       shaderSource,
     };
   }
@@ -156,17 +153,17 @@ export class WebGLSoftmax extends Softmax {
       throw new Error(`Shape of the output should be equal to logical row count`);
     }
 
+    const glsl = getGlsl(inferenceHandler.session.backend.glContext.version);
     const shaderSource = `
-        uniform sampler2D A;
         float process(int[${rank}] indices) {
 
           int logical_row_start_offset = indices[0] * ${D};
 
-          float max = getColorAsFloat(texture2D(A, offsetToCoords(logical_row_start_offset, ${textureWidth}, ${
+          float max = getColorAsFloat(${glsl.texture2D}(A, offsetToCoords(logical_row_start_offset, ${textureWidth}, ${
         textureHeight} )));
           for(int i=1; i<${D}; ++i)
           {
-            float current = getColorAsFloat(texture2D(A, offsetToCoords(logical_row_start_offset + i, ${
+            float current = getColorAsFloat(${glsl.texture2D}(A, offsetToCoords(logical_row_start_offset + i, ${
         textureWidth}, ${textureHeight})));
             if(current > max)
               max = current;
@@ -175,9 +172,9 @@ export class WebGLSoftmax extends Softmax {
           return max;
         }`;
     return {
-      hasMain: false,
       inputLayouts: [xlayout],
       outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A'],
       shaderSource,
     };
   }

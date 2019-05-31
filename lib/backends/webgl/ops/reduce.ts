@@ -44,7 +44,6 @@ abstract class WebGLGenericReduce extends ReduceBase implements WebGLOperator {
     const oRank = outputShape.length || 1;
 
     const shaderSource = `
-      uniform sampler2D A;
       float process(int outputIdx[${oRank}]) {
         float value;                 // final result
         int inputIdx[${iRank}];      // addressing input data
@@ -56,9 +55,9 @@ abstract class WebGLGenericReduce extends ReduceBase implements WebGLOperator {
       }`;
 
     return {
-      hasMain: false,
       inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t)),
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A'],
       shaderSource,
     };
   }

@@ -44,8 +44,6 @@ export class WebGLGather extends Gather implements WebGLOperator {
     const irank = inputShape.length;
     const iDrank = indexDataShape.length;
     const shaderSource = `
-      uniform sampler2D A;
-      uniform sampler2D B;
       float process(int outputIdx[${orank}]) {
         int inputIdx[${irank}];
         int indexDataIdx[${iDrank}];
@@ -54,9 +52,9 @@ export class WebGLGather extends Gather implements WebGLOperator {
         return _A(inputIdx);
       }`;
     return {
-      hasMain: false,
       inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t)),
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A', 'B'],
       shaderSource,
     };
   }

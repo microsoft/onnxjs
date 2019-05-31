@@ -15,17 +15,15 @@ export class WebGLImageScaler extends ImageScaler implements WebGLOperator {
     const rank = outputShape.length;
     const getBiasMethod = this.createGetBiasMethod(this.bias.length);
     const shaderSource = `
-      uniform sampler2D X;
-      uniform float bias[${this.bias.length}];
-      uniform float scale;
       ${getBiasMethod}
       float process(int indices[${rank}]) {
         return _X(indices) * scale + getBias(bias, indices[1]);
       }`;
     return {
-      hasMain: false,
       inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])],
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers: ['X'],
+      variables: [{name: 'bias', type: 'float', arrayLength: this.bias.length}, {name: 'scale', type: 'float'}],
       shaderSource,
     };
   }

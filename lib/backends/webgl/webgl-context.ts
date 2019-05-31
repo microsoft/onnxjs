@@ -17,8 +17,10 @@ export class WebGLContext {
   private framebuffer: WebGLFramebuffer;
 
   // WebGL flags and vital parameters
-  floatDownloadEnabled: boolean;
-  renderFloat32Enabled: boolean;
+  private isFloatTextureAttachableToFrameBuffer: boolean;
+  isFloat32DownloadSupported: boolean;
+  isRenderFloat32Supported: boolean;
+  isBlendSupported: boolean;
   maxTextureSize: number;
   // private maxCombinedTextureImageUnits: number;
   private maxTextureImageUnits: number;
@@ -141,9 +143,11 @@ export class WebGLContext {
   setVertexAttributes(positionHandle: number, textureCoordHandle: number): void {
     const gl = this.gl;
     gl.vertexAttribPointer(positionHandle, 3, gl.FLOAT, false, 20, 0);
-    gl.vertexAttribPointer(textureCoordHandle, 2, gl.FLOAT, false, 20, 12);
     gl.enableVertexAttribArray(positionHandle);
-    gl.enableVertexAttribArray(textureCoordHandle);
+    if (textureCoordHandle !== -1) {
+      gl.vertexAttribPointer(textureCoordHandle, 2, gl.FLOAT, false, 20, 12);
+      gl.enableVertexAttribArray(textureCoordHandle);
+    }
     this.checkError();
   }
   createProgram(
@@ -168,7 +172,9 @@ export class WebGLContext {
 
     gl.shaderSource(shader, shaderSource);
     gl.compileShader(shader);
-    // TODO: check if the compilation was a success
+    if (gl.getShaderParameter(shader, gl.COMPILE_STATUS) === false) {
+      throw new Error(`Failed to compile shader: ${gl.getShaderInfoLog(shader)}`);
+    }
     return shader;
   }
   deleteShader(shader: WebGLShader): void {
@@ -232,7 +238,7 @@ export class WebGLContext {
 
     switch (dataType) {
       case 'float':
-        if (usage === Encoder.Usage.UploadOnly || this.renderFloat32Enabled) {
+        if (usage === Encoder.Usage.UploadOnly || this.isRenderFloat32Supported) {
           return new DataEncoders.RGBAFloatDataEncoder(this.gl, channels);
         } else {
           return new DataEncoders.RGBAFloatDataEncoder(
@@ -299,12 +305,15 @@ export class WebGLContext {
   private queryVitalParameters(): void {
     const gl = this.gl;
 
-    this.floatDownloadEnabled = this.isFloatDownloadEnabled();
-    this.renderFloat32Enabled = this.isRenderFloat32Enabled();
+    this.isFloatTextureAttachableToFrameBuffer = this.checkFloatTextureAttachableToFrameBuffer();
+    this.isRenderFloat32Supported = this.checkRenderFloat32();
+    this.isFloat32DownloadSupported = this.checkFloat32Download();
 
-    if (this.version === 1 && !this.textureHalfFloatExtension && !this.renderFloat32Enabled) {
+    if (this.version === 1 && !this.textureHalfFloatExtension && !this.isRenderFloat32Supported) {
       throw new Error(`both float32 and float16 TextureType are not supported`);
     }
+
+    this.isBlendSupported = !this.isRenderFloat32Supported || this.checkFloat32Blend();
 
     // this.maxCombinedTextureImageUnits = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
     this.maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
@@ -330,35 +339,8 @@ export class WebGLContext {
     }
   }
 
-  private isRenderFloat32Enabled(): boolean {
-    if (this.version === 2) {
-      if (!this.colorBufferFloatExtension) {
-        return false;
-      }
-    } else {
-      if (!this.textureFloatExtension) {
-        return false;
-      }
-    }
-    return this.isFloatTextureAttachableToFrameBuffer();
-  }
-  private isFloatDownloadEnabled(): boolean {
-    if (this.version === 2) {
-      if (!this.colorBufferFloatExtension) {
-        return false;
-      }
-    } else {
-      if (!this.textureFloatExtension) {
-        return false;
-      }
-      if (!this.gl.getExtension('WEBGL_color_buffer_float')) {
-        return false;
-      }
-    }
-    return this.isFloatTextureAttachableToFrameBuffer();
-  }
-  private isFloatTextureAttachableToFrameBuffer(): boolean {
-    // test whether it is supported:
+  private checkFloatTextureAttachableToFrameBuffer(): boolean {
+    // test whether Float32 texture is supported:
     // STEP.1 create a float texture
     const gl = this.gl;
     const texture = gl.createTexture();
@@ -377,5 +359,111 @@ export class WebGLContext {
     gl.deleteTexture(texture);
     gl.deleteFramebuffer(frameBuffer);
     return isComplete;
+  }
+
+  private checkRenderFloat32(): boolean {
+    if (this.version === 2) {
+      if (!this.colorBufferFloatExtension) {
+        return false;
+      }
+    } else {
+      if (!this.textureFloatExtension) {
+        return false;
+      }
+    }
+    return this.isFloatTextureAttachableToFrameBuffer;
+  }
+
+  private checkFloat32Download(): boolean {
+    if (this.version === 2) {
+      if (!this.colorBufferFloatExtension) {
+        return false;
+      }
+    } else {
+      if (!this.textureFloatExtension) {
+        return false;
+      }
+      if (!this.gl.getExtension('WEBGL_color_buffer_float')) {
+        return false;
+      }
+    }
+    return this.isFloatTextureAttachableToFrameBuffer;
+  }
+
+  /**
+   * Check whether GL_BLEND is supported
+   */
+  private checkFloat32Blend(): boolean {
+    // it looks like currently (2019-05-08) there is no easy way to detect whether BLEND is supported
+    // https://github.com/microsoft/onnxjs/issues/145
+
+    const gl = this.gl;
+
+    let texture: WebGLTexture|null|undefined;
+    let frameBuffer: WebGLFramebuffer|null|undefined;
+    let vertexShader: WebGLShader|null|undefined;
+    let fragmentShader: WebGLShader|null|undefined;
+    let program: WebGLProgram|null|undefined;
+
+    try {
+      texture = gl.createTexture();
+      frameBuffer = gl.createFramebuffer();
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+
+      const internalFormat = this.version === 2 ? (gl as unknown as {RGBA32F: number}).RGBA32F : gl.RGBA;
+      gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, 1, 1, 0, gl.RGBA, gl.FLOAT, null);
+
+      gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+
+      gl.enable(gl.BLEND);
+
+      vertexShader = gl.createShader(gl.VERTEX_SHADER);
+      if (!vertexShader) {
+        return false;
+      }
+      gl.shaderSource(vertexShader, 'void main(){}');
+      gl.compileShader(vertexShader);
+
+      fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+      if (!fragmentShader) {
+        return false;
+      }
+      gl.shaderSource(fragmentShader, `precision highp float;void main(){gl_FragColor=vec4(0.5);}`);
+      gl.compileShader(fragmentShader);
+
+      program = gl.createProgram();
+      if (!program) {
+        return false;
+      }
+      gl.attachShader(program, vertexShader);
+      gl.attachShader(program, fragmentShader);
+      gl.linkProgram(program);
+      gl.useProgram(program);
+
+      gl.drawArrays(gl.POINTS, 0, 1);
+      return gl.getError() === gl.NO_ERROR;
+
+    } finally {
+      gl.disable(gl.BLEND);
+
+      if (program) {
+        gl.deleteProgram(program);
+      }
+      if (vertexShader) {
+        gl.deleteShader(vertexShader);
+      }
+      if (fragmentShader) {
+        gl.deleteShader(fragmentShader);
+      }
+      if (frameBuffer) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.deleteFramebuffer(frameBuffer);
+      }
+      if (texture) {
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        gl.deleteTexture(texture);
+      }
+    }
   }
 }

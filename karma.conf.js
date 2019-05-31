@@ -149,6 +149,23 @@ module.exports = function(config) {
         os: 'ios',
         os_version: '10.3',
       },
+
+      // Android
+      //
+      BS_ANDROID_9_Pixel_3: {
+        base: 'BrowserStack',
+        device: 'Google Pixel 3',
+        real_mobile: true,
+        os: 'android',
+        os_version: '9.0',
+      },
+      BS_ANDROID_7_1_Galaxy_Note_8: {
+        base: 'BrowserStack',
+        device: 'Samsung Galaxy Note 8',
+        real_mobile: true,
+        os: 'android',
+        os_version: '7.1',
+      },
     }
   });
 };

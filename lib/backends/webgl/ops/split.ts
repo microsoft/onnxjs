@@ -37,15 +37,14 @@ export class WebGLSplit extends Split {
     const outputShape = shapes[index];
     const rank = outputShape.length;
     const shaderSource = `
-      uniform sampler2D A;
       float process(int indices[${rank}]) {
         indices[${this.axis}] += ${offset};
         return _A(indices);
       }`;
     return {
-      hasMain: false,
       inputLayouts: [inferenceHandler.getOrCreateTextureLayout(input)],
       outputLayout: inferenceHandler.createTextureLayoutFromShape(outputShape),
+      samplers: ['A'],
       shaderSource,
     };
   }

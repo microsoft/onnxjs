@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {ShapeUtil} from '../../../util';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {TextureData, TextureLayout} from '../types';
 
@@ -17,6 +18,7 @@ export class WebGLUint8Encode {
       strides: ShapeUtil.computeStrides(outputShape),
       unpackedShape: outputShape
     };
+    const glsl = getGlsl(inferenceHandler.session.backend.glContext.version);
     // TODO: remove this special script. Use graph transformer instead.
     /**
      * https://github.com/tensorflow/tfjs-core/blob/master/src/kernels/webgl/encode_float_gpu.ts
@@ -24,8 +26,6 @@ export class WebGLUint8Encode {
     const shaderSource = `
       const float FLOAT_MAX = 1.70141184e38;
       const float FLOAT_MIN = 1.17549435e-38;
-
-      uniform sampler2D X;
 
       bool isNaN(float val) {
         return (val < 1.0 || 0.0 < val || val == 0.0) ? false : true;
@@ -68,15 +68,10 @@ export class WebGLUint8Encode {
       }
 
       void main() {
-        float value = texture2D(X,TexCoords).r;
-        gl_FragColor = encodeAsUint8(value);
+        float value = ${glsl.texture2D}(X,TexCoords).r;
+        ${glsl.output} = encodeAsUint8(value);
       }`;
-    const programInfo = {
-      hasMain: true,
-      inputLayouts: [input],
-      outputLayout,
-      shaderSource,
-    };
+    const programInfo = {inputLayouts: [input], outputLayout, samplers: ['X'], shaderSource, hasMain: true};
     const artifact = inferenceHandler.programManager.build(programInfo);
 
     const encoder = inferenceHandler.session.backend.glContext.getEncoder('byte', 4);

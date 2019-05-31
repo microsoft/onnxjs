@@ -5,6 +5,7 @@ import {BinaryOp} from '../../../ops/binary-op';
 import {Tensor} from '../../../tensor';
 import {BroadcastUtil, ShapeUtil} from '../../../util';
 import {FunctionType, GlslValueFunction} from '../glsl-definitions';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
@@ -31,8 +32,6 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
       const aBcast = inputs[0].dims.length !== 0 ? `bcastIndices_A(indices, aindices);` : `aindices[0] = 0;`;
       const bBcast = inputs[1].dims.length !== 0 ? `bcastIndices_B(indices, bindices);` : `bindices[0] = 0;`;
       const shaderSource = `
-      uniform sampler2D A;
-      uniform sampler2D B;
       ${this.glslFunc.body}
       float process(int indices[${outputRank}]) {
         int aindices[${aRank}];
@@ -42,27 +41,27 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
         return ${this.glslFunc.name}(_A(aindices), _B(bindices));
     }`;
       return {
-        hasMain: false,
         inputLayouts,
         outputLayout: handler.createTextureLayoutFromShape(outputShape),
+        samplers: ['A', 'B'],
         shaderSource,
       };
     }
+    const glsl = getGlsl(handler.session.backend.glContext.version);
     const shaderSource = `
-    uniform sampler2D A;
-    uniform sampler2D B;
     ${this.glslFunc.body}
     void main() {
-      vec4 v1 = texture2D(A, TexCoords);
-      vec4 v2 = texture2D(B, TexCoords);
+      vec4 v1 = ${glsl.texture2D}(A, TexCoords);
+      vec4 v2 = ${glsl.texture2D}(B, TexCoords);
       vec4 result = ${this.glslFunc.name}(v1, v2);
-      gl_FragColor = result;
+      ${glsl.output} = result;
     }
     `;
     return {
       hasMain: true,
       inputLayouts,
       outputLayout: handler.createTextureLayoutFromShape(inputs[0].dims),
+      samplers: ['A', 'B'],
       shaderSource,
     };
   }

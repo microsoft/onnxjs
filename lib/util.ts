@@ -160,22 +160,22 @@ export class BroadcastUtil {
    * @param a The input tensor A
    * @param b The input tensor B
    * @param op The operator lambda function
-   * @param implace Whether to write the result back to A.
+   * @param inplace Whether to write the result back to A.
    * @returns The result tensor, or undefined if input not broadcastable.
    */
   static calc(
-      a: Tensor, b: Tensor, op: (a: string|number, b: string|number) => (string | number), implace: boolean,
+      a: Tensor, b: Tensor, op: (a: string|number, b: string|number) => (string | number), inplace: boolean,
       resultType?: Tensor.DataType): Tensor|undefined {
     const outputShape = BroadcastUtil.calcShape(a.dims, b.dims);
 
     if (outputShape) {
-      if (implace && !ShapeUtil.areEqual(outputShape, a.dims)) {
-        // B is not broadcastable to A, failed to calculate implace.
+      if (inplace && !ShapeUtil.areEqual(outputShape, a.dims)) {
+        // B is not broadcastable to A, failed to calculate inplace.
         return undefined;
       }
 
       const size = ShapeUtil.size(outputShape);
-      const c = implace ? a : new Tensor(outputShape, resultType || a.type);
+      const c = inplace ? a : new Tensor(outputShape, resultType || a.type);
 
       // both inputs are scalars
       if (outputShape.length === 0) {

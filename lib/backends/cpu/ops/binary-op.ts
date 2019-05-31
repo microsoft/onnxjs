@@ -36,9 +36,9 @@ export class CpuBinaryOp extends BinaryOp {
 }
 
 function binaryOp(
-    x: Tensor, y: Tensor, opLambda: (e1: number, e2: number) => number, implace: boolean,
+    x: Tensor, y: Tensor, opLambda: (e1: number, e2: number) => number, inplace: boolean,
     resultType?: Tensor.DataType): Tensor {
-  const result = BroadcastUtil.calc(x, y, opLambda, implace, resultType);
+  const result = BroadcastUtil.calc(x, y, opLambda, inplace, resultType);
   if (!result) {
     throw new Error('not broadcastable');
   }

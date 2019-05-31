@@ -16,7 +16,7 @@ export function argMax(x: Tensor, axis: number, keepdims: boolean): Tensor {
   const outputDims = ReduceUtil.calcReduceShape(x.dims, [axis], true);
   const X = x.data;
   const Y = new Int32Array(ShapeUtil.size(outputDims));
-  const blockSize = axis + 1 >= x.dims.length ? 1 : ShapeUtil.sizeFromDimension(x.dims, axis + 1);
+  const blockSize = ShapeUtil.sizeFromDimension(x.dims, axis + 1);
   const strides = ShapeUtil.computeStrides(outputDims);
   const inputStrides = ShapeUtil.computeStrides(x.dims);
   const indicesY = new Array(x.dims.length);

@@ -1086,9 +1086,11 @@ export class PoolConvUtil {
     // Add batch size and number of channels of output
     const outputDims = [inputDims[0], inputDims[1]];
 
+    // TODO: support dilations for pool operators
+    const dilations = new Array<number>(kernelShape.length).fill(1);
+
     PoolConvUtil.computeShapeHelper(
-        isGlobalOperator, inputDims, outputDims, strides, new Array<number>(kernelShape.length).fill(1), kernelShape,
-        pads, autoPad);
+        isGlobalOperator, inputDims, outputDims, strides, dilations, kernelShape, pads, autoPad);
     return outputDims;
   }
 
@@ -1148,17 +1150,15 @@ export class PoolConvUtil {
           pads[padTailIndex] = 0;
           return Math.floor(((inSize - dkernel) / stride) + 1);
         case 'SAME_LOWER':
-          const legacyTargetSize1 = (inSize + stride - 1) / stride;
-          const padNeeded1 = (legacyTargetSize1 - 1) * stride + kernel - inSize;
-          pads[padHeadIndex] = Math.floor((padNeeded1 + 1) / 2);
-          pads[padTailIndex] = padNeeded1 - pads[padHeadIndex];
-          return Math.floor(((inSize + padNeeded1 - dkernel) / stride) + 1);
         case 'SAME_UPPER':
+          if (dilation !== 1) {
+            throw new Error(`Dilation not supported for SAME_UPPER or SAME_LOWER`);
+          }
           const legacyTargetSize = (inSize + stride - 1) / stride;
           const padNeeded = (legacyTargetSize - 1) * stride + kernel - inSize;
-          pads[padHeadIndex] = Math.floor(padNeeded / 2);
+          pads[padHeadIndex] = (autoPad === 'SAME_LOWER') ? Math.floor((padNeeded + 1) / 2) : Math.floor(padNeeded / 2);
           pads[padTailIndex] = padNeeded - pads[padHeadIndex];
-          return Math.floor(((inSize + padNeeded - dkernel) / stride) + 1);
+          return Math.floor(((inSize + padNeeded - kernel) / stride) + 1);
         default:
           throw new Error(`Unsupported AutoPad type`);
       }

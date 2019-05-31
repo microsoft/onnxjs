@@ -34,7 +34,7 @@ export function conv(
   const ndk = ndarray(w.floatData as Float32Array, w.dims.slice(0)).transpose(2, 3, 1, 0);
 
   // adjusting pads based on 'autoPad' attribute
-  PoolConvUtil.adjustPadsBasedOnAutoPad(x.dims, strides, kernelShape, pads, autoPad);
+  PoolConvUtil.adjustPadsBasedOnAutoPad(x.dims, strides, dilations, kernelShape, pads, autoPad);
 
   // padding if needed
   const localPads: Array<[number, number]> = [[0, 0], [pads[0], pads[2]], [pads[1], pads[3]], [0, 0]];

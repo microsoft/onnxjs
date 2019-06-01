@@ -14,7 +14,7 @@ export class WebGLSplit extends Split {
       this.artifacts = [];
       for (let i = 0; i < count; ++i) {
         const programInfo = this.createProgramInfo(inferenceHandler, inputs[0], i);
-        const artifact = inferenceHandler.programManager.build(programInfo);
+        const artifact = inferenceHandler.session.programManager.build(programInfo);
         this.artifacts.push(artifact);
       }
     }
@@ -22,7 +22,7 @@ export class WebGLSplit extends Split {
 
     this.artifacts.forEach(artifact => {
       const rundata = this.createRunData(inferenceHandler, artifact.programInfo, inputs);
-      inferenceHandler.programManager.run(artifact, rundata);
+      inferenceHandler.session.programManager.run(artifact, rundata);
       results.push(rundata.outputTextureData.tensor);
     });
     return results;

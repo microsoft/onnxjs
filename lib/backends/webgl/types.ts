@@ -121,7 +121,5 @@ export interface RunData {
   inputTextureDatas: TextureData[];
   outputTextureData: TextureData;
   uniformData: UniformData;
-  preRun?: (glContext: WebGLContext, artifact: Artifact) => void;
-  postRun?: (glContext: WebGLContext, artifact: Artifact) => void;
   draw?: (glContext: WebGLContext, artifact: Artifact) => void;
 }

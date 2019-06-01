@@ -540,6 +540,9 @@ function saveConfig(config: Test.Config) {
   if (config.options.webgl && config.options.webgl.matmulMaxBatchSize !== undefined) {
     setOptions += `onnx.backend.webgl.matmulMaxBatchSize = ${config.options.webgl.matmulMaxBatchSize};`;
   }
+  if (config.options.webgl && config.options.webgl.textureCacheMode !== undefined) {
+    setOptions += `onnx.backend.webgl.textureCacheMode = ${JSON.stringify(config.options.webgl.textureCacheMode)};`;
+  }
   if (config.options.wasm && config.options.wasm.worker !== undefined) {
     setOptions += `onnx.backend.wasm.worker = ${JSON.stringify(config.options.wasm.worker)};`;
   }

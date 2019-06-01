@@ -72,7 +72,7 @@ export class WebGLUint8Encode {
         ${glsl.output} = encodeAsUint8(value);
       }`;
     const programInfo = {inputLayouts: [input], outputLayout, samplers: ['X'], shaderSource, hasMain: true};
-    const artifact = inferenceHandler.programManager.build(programInfo);
+    const artifact = inferenceHandler.session.programManager.build(programInfo);
 
     const encoder = inferenceHandler.session.backend.glContext.getEncoder('byte', 4);
     const texture =
@@ -80,7 +80,7 @@ export class WebGLUint8Encode {
     const outputTextureData = inferenceHandler.createSharedTextureData(outputLayout, 'uint8', texture, {});
     const runData = {inputTextureDatas: [input], outputTextureData, uniformData: {}};
 
-    inferenceHandler.programManager.run(artifact, runData);
+    inferenceHandler.session.programManager.run(artifact, runData);
     return runData.outputTextureData;
   }
 }

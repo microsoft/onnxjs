@@ -13,13 +13,13 @@ import {WebGLBackend} from '../backend-webgl';
 import {WebGLInferenceHandler} from './inference-handler';
 import {WEBGL_OP_RESOLVE_RULES} from './op-resolve-rules';
 import {ProgramManager} from './program-manager';
-import {TextureHelper} from './texture-helper';
 import {AlwaysKeepOriginalSizeStrategy, TextureLayoutStrategy} from './texture-layout-strategy';
+import {TextureManager} from './texture-manager';
 import {TextureData} from './types';
 
 export class WebGLSessionHandler implements SessionHandler {
   programManager: ProgramManager;
-  textureHelper: TextureHelper;
+  textureManager: TextureManager;
   layoutStrategy: TextureLayoutStrategy;
   textureDataCache: Map<Tensor.Id, TextureData>;
   initializers: Set<Tensor.Id>;
@@ -27,7 +27,9 @@ export class WebGLSessionHandler implements SessionHandler {
   constructor(public readonly backend: WebGLBackend, public readonly context: Session.Context) {
     this.programManager = new ProgramManager(this.context.profiler, backend.glContext);
     this.layoutStrategy = new AlwaysKeepOriginalSizeStrategy(backend.glContext.maxTextureSize);
-    this.textureHelper = new TextureHelper(backend.glContext, this.layoutStrategy, this.context.profiler);
+    this.textureManager = new TextureManager(
+        backend.glContext, this.layoutStrategy, this.context.profiler,
+        {reuseTextures: backend.textureCacheMode === 'full'});
     this.textureDataCache = new Map();
   }
 
@@ -50,8 +52,8 @@ export class WebGLSessionHandler implements SessionHandler {
   }
   dispose(): void {
     this.programManager.dispose();
-    this.textureHelper.clearActiveTextures();
-    this.textureDataCache.forEach(td => this.textureHelper.releaseTexture(td));
+    this.textureManager.clearActiveTextures();
+    this.textureDataCache.forEach(td => this.textureManager.releaseTexture(td, true));
     this.textureDataCache = new Map();
   }
   resolve(node: Graph.Node, opsets: ReadonlyArray<OpSet>): Operator {

@@ -16,7 +16,7 @@ if (lint.status !== 0) {
   if (lint.error) {
     console.error(lint.error);
   }
-  process.exit(lint.status);
+  process.exit(lint.status === null ? undefined : lint.status);
 }
 
 logger.info('pre-commit', 'Running Clang-Format on ts and cpp...');
@@ -25,7 +25,7 @@ if (clangFormat.status !== 0) {
   if (clangFormat.error) {
     console.error(clangFormat.error);
   }
-  process.exit(clangFormat.status);
+  process.exit(clangFormat.status === null ? undefined : clangFormat.status);
 }
 
 logger.info('pre-commit', 'Running gen-doc...');
@@ -34,7 +34,7 @@ if (genDoc.status !== 0) {
   if (genDoc.error) {
     console.error(genDoc.error);
   }
-  process.exit(genDoc.status);
+  process.exit(genDoc.status === null ? undefined : genDoc.status);
 }
 
 logger.info('pre-commit', 'Running prettier on markdown...');
@@ -43,7 +43,7 @@ if (prettierMd.status !== 0) {
   if (prettierMd.error) {
     console.error(prettierMd.error);
   }
-  process.exit(prettierMd.status);
+  process.exit(prettierMd.status === null ? undefined : prettierMd.status);
 }
 
 logger.info('pre-commit', 'Running prettier on jsonc...');
@@ -52,7 +52,7 @@ if (prettierJsonc.status !== 0) {
   if (prettierJsonc.error) {
     console.error(prettierJsonc.error);
   }
-  process.exit(prettierJsonc.status);
+  process.exit(prettierJsonc.status === null ? undefined : prettierJsonc.status);
 }
 
 const lsFiles = execSync('git ls-files -m', {encoding: 'utf8', cwd: ROOT});

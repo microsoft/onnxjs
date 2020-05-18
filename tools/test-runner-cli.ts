@@ -419,7 +419,7 @@ function run(config: Test.Config) {
     const tsc = spawnSync(tscCommand, {shell: true, stdio: 'inherit'});
     if (tsc.status !== 0) {
       console.error(tsc.error);
-      process.exit(tsc.status);
+      process.exit(tsc.status === null ? undefined : tsc.status);
     }
     logger.info('TestRunnerCli.Run', '(4/5) Running tsc... DONE');
 
@@ -431,7 +431,7 @@ function run(config: Test.Config) {
     const mocha = spawnSync(mochaCommand, mochaArgs, {shell: true, stdio: 'inherit'});
     if (mocha.status !== 0) {
       console.error(mocha.error);
-      process.exit(mocha.status);
+      process.exit(mocha.status === null ? undefined : mocha.status);
     }
     logger.info('TestRunnerCli.Run', '(5/5) Running mocha... DONE');
 
@@ -444,7 +444,7 @@ function run(config: Test.Config) {
     const webpack = spawnSync(webpackCommand, webpackArgs, {shell: true, stdio: 'inherit'});
     if (webpack.status !== 0) {
       console.error(webpack.error);
-      process.exit(webpack.status);
+      process.exit(webpack.status === null ? undefined : webpack.status);
     }
     logger.info('TestRunnerCli.Run', '(4/5) Running webpack to generate ONNX.js... DONE');
 
@@ -490,7 +490,7 @@ function run(config: Test.Config) {
     const karma = spawnSync(karmaCommand, karmaArgs, {shell: true, stdio: 'inherit'});
     if (karma.status !== 0) {
       console.error(karma.error);
-      process.exit(karma.status);
+      process.exit(karma.status === null ? undefined : karma.status);
     }
     logger.info('TestRunnerCli.Run', '(5/5) Running karma to start test runner... DONE');
   }

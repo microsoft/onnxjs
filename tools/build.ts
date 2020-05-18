@@ -77,7 +77,7 @@ if (update.status !== 0) {
   if (update.error) {
     console.error(update.error);
   }
-  process.exit(update.status);
+  process.exit(update.status === null ? undefined : update.status);
 }
 logger.info('Build.SubModules', '(2/2) Fetching submodules... DONE');
 
@@ -107,7 +107,7 @@ if (prepareTestData) {
       if (checkout.error) {
         console.error(checkout.error);
       }
-      process.exit(checkout.status);
+      process.exit(checkout.status === null ? undefined : checkout.status);
     }
     const from = path.join(DEPS_ONNX, 'onnx/backend/test/data/node');
     const to = path.join(TEST_DATA_NODE, version);
@@ -122,7 +122,7 @@ if (prepareTestData) {
     if (update.error) {
       console.error(update.error);
     }
-    process.exit(update.status);
+    process.exit(update.status === null ? undefined : update.status);
   }
   logger.info('Build.TestData', '(3/3) Revert git index... DONE');
 }
@@ -145,7 +145,7 @@ if (!buildWasm) {
       if (install.error) {
         console.error(install.error);
       }
-      process.exit(install.status);
+      process.exit(install.status === null ? undefined : install.status);
     }
     logger.info('Build.Wasm', 'Installing emsdk... DONE');
 
@@ -155,7 +155,7 @@ if (!buildWasm) {
       if (activate.error) {
         console.error(activate.error);
       }
-      process.exit(activate.status);
+      process.exit(activate.status === null ? undefined : activate.status);
     }
     logger.info('Build.Wasm', 'Activating emsdk... DONE');
   }
@@ -202,7 +202,7 @@ if (!buildWasm) {
 
   if (emccBuild.error) {
     console.error(emccBuild.error);
-    process.exit(emccBuild.status);
+    process.exit(emccBuild.status === null ? undefined : emccBuild.status);
   }
   logger.info('Build.Wasm', '(4/4) Building... DONE');
 }
@@ -229,7 +229,7 @@ if (buildBundle) {
     const webpack = spawnSync(webpackCommand, webpackArgs, {shell: true, stdio: 'inherit'});
     if (webpack.status !== 0) {
       console.error(webpack.error);
-      process.exit(webpack.status);
+      process.exit(webpack.status === null ? undefined : webpack.status);
     }
     logger.info('Build.Bundle', '(2/2) Running webpack to generate onnx.min.js... DONE');
   }

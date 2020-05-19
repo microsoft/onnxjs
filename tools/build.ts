@@ -4,10 +4,10 @@
 import {execSync, spawnSync} from 'child_process';
 import * as fs from 'fs-extra';
 import * as globby from 'globby';
-import logger from 'npmlog';
+import npmlog from 'npmlog';
 import * as path from 'path';
 
-logger.info('Build', 'Initializing...');
+npmlog.info('Build', 'Initializing...');
 
 // Flags
 // To trigger fetching some WASM dependencies and some post-processing
@@ -57,21 +57,21 @@ const BUILD_OPTIONS = [
   '--llvm-lto 3',
 ];
 
-logger.info('Build', 'Initialization completed. Start to build...');
+npmlog.info('Build', 'Initialization completed. Start to build...');
 
-logger.info('Build', `Ensure output folder: ${OUT}`);
+npmlog.info('Build', `Ensure output folder: ${OUT}`);
 fs.ensureDirSync(OUT);
 
-logger.info('Build', 'Updating submodules...');
+npmlog.info('Build', 'Updating submodules...');
 // Step 1: Clean folders if needed
-logger.info('Build.SubModules', '(1/2) Cleaning dependencies folder...');
+npmlog.info('Build.SubModules', '(1/2) Cleaning dependencies folder...');
 if (cleanInstall) {
   fs.removeSync(DEPS);
 }
-logger.info('Build.SubModules', `(1/2) Cleaning dependencies folder... ${cleanInstall ? 'DONE' : 'SKIPPED'}`);
+npmlog.info('Build.SubModules', `(1/2) Cleaning dependencies folder... ${cleanInstall ? 'DONE' : 'SKIPPED'}`);
 
 // Step 2: Get dependencies (if needed)
-logger.info('Build.SubModules', '(2/2) Fetching submodules...');
+npmlog.info('Build.SubModules', '(2/2) Fetching submodules...');
 const update = spawnSync('git submodule update --init --recursive', {shell: true, stdio: 'inherit', cwd: ROOT});
 if (update.status !== 0) {
   if (update.error) {
@@ -79,21 +79,21 @@ if (update.status !== 0) {
   }
   process.exit(update.status === null ? undefined : update.status);
 }
-logger.info('Build.SubModules', '(2/2) Fetching submodules... DONE');
+npmlog.info('Build.SubModules', '(2/2) Fetching submodules... DONE');
 
-logger.info('Build', 'Updating submodules... DONE');
+npmlog.info('Build', 'Updating submodules... DONE');
 
-logger.info('Build', 'Preparing test data...');
+npmlog.info('Build', 'Preparing test data...');
 const prepareTestData = cleanInstall || !fs.existsSync(TEST_DATA_NODE);
 if (prepareTestData) {
   // Step 1: Clean folders if needed
-  logger.info('Build.TestData', '(1/3) Cleaning folder...');
+  npmlog.info('Build.TestData', '(1/3) Cleaning folder...');
   if (cleanInstall) {
     fs.emptyDirSync(TEST_DATA_NODE);
   }
-  logger.info('Build.TestData', `(1/3) Cleaning folder... ${cleanInstall ? 'DONE' : 'SKIPPED'}`);
+  npmlog.info('Build.TestData', `(1/3) Cleaning folder... ${cleanInstall ? 'DONE' : 'SKIPPED'}`);
   // Step 2: copy node tests for different version
-  logger.info('Build.TestData', '(2/3) Copy tests...');
+  npmlog.info('Build.TestData', '(2/3) Copy tests...');
   [['v7', '5af210ca8a1c73aa6bae8754c9346ec54d0a756e'],   // rel-1.2.3
    ['v8', '5cc146270945f0d007b140fb59a892a60ba69f49'],   // rel-1.3.0
    ['v9', '4e67414849122d3df78bd72cee5717f90e715d12'],   // rel-1.4.1
@@ -101,7 +101,7 @@ if (prepareTestData) {
   ].forEach(v => {
     const version = v[0];
     const commit = v[1];
-    logger.info('Build.TestData', `Checking out deps/onnx ${commit}...`);
+    npmlog.info('Build.TestData', `Checking out deps/onnx ${commit}...`);
     const checkout = spawnSync(`git checkout -q -f ${commit}`, {shell: true, stdio: 'inherit', cwd: DEPS_ONNX});
     if (checkout.status !== 0) {
       if (checkout.error) {
@@ -111,12 +111,12 @@ if (prepareTestData) {
     }
     const from = path.join(DEPS_ONNX, 'onnx/backend/test/data/node');
     const to = path.join(TEST_DATA_NODE, version);
-    logger.info('Build.TestData', `Copying folders from "${from}" to "${to}"...`);
+    npmlog.info('Build.TestData', `Copying folders from "${from}" to "${to}"...`);
     fs.copySync(from, to);
   });
-  logger.info('Build.TestData', '(2/3) Copy tests... DONE');
+  npmlog.info('Build.TestData', '(2/3) Copy tests... DONE');
   // Step 3: revert git index
-  logger.info('Build.TestData', '(3/3) Revert git index...');
+  npmlog.info('Build.TestData', '(3/3) Revert git index...');
   const update = spawnSync(`git submodule update ${DEPS_ONNX}`, {shell: true, stdio: 'inherit', cwd: ROOT});
   if (update.status !== 0) {
     if (update.error) {
@@ -124,22 +124,22 @@ if (prepareTestData) {
     }
     process.exit(update.status === null ? undefined : update.status);
   }
-  logger.info('Build.TestData', '(3/3) Revert git index... DONE');
+  npmlog.info('Build.TestData', '(3/3) Revert git index... DONE');
 }
-logger.info('Build', `Preparing test data... ${prepareTestData ? 'DONE' : 'SKIPPED'}`);
+npmlog.info('Build', `Preparing test data... ${prepareTestData ? 'DONE' : 'SKIPPED'}`);
 
-logger.info('Build', 'Building WebAssembly sources...');
+npmlog.info('Build', 'Building WebAssembly sources...');
 if (!buildWasm) {
   // if not building Wasm AND the file onnx-wasm.js is not present, create a place holder file
   if (!fs.existsSync(OUT_WASM_JS)) {
-    logger.info('Build.Wasm', `Writing fallback target file: ${OUT_WASM_JS}`);
+    npmlog.info('Build.Wasm', `Writing fallback target file: ${OUT_WASM_JS}`);
     fs.writeFileSync(OUT_WASM_JS, `;throw new Error("please build WebAssembly before use wasm backend.");`);
   }
 } else {
   // Step 1: emsdk install (if needed)
-  logger.info('Build.Wasm', '(1/4) Setting up emsdk...');
+  npmlog.info('Build.Wasm', '(1/4) Setting up emsdk...');
   if (!fs.existsSync(DEPS_EMSDK_EMSCRIPTEN)) {
-    logger.info('Build.Wasm', 'Installing emsdk...');
+    npmlog.info('Build.Wasm', 'Installing emsdk...');
     const install = spawnSync(`${EMSDK_BIN} install latest`, {shell: true, stdio: 'inherit', cwd: DEPS_EMSDK});
     if (install.status !== 0) {
       if (install.error) {
@@ -147,9 +147,9 @@ if (!buildWasm) {
       }
       process.exit(install.status === null ? undefined : install.status);
     }
-    logger.info('Build.Wasm', 'Installing emsdk... DONE');
+    npmlog.info('Build.Wasm', 'Installing emsdk... DONE');
 
-    logger.info('Build.Wasm', 'Activating emsdk...');
+    npmlog.info('Build.Wasm', 'Activating emsdk...');
     const activate = spawnSync(`${EMSDK_BIN} activate latest`, {shell: true, stdio: 'inherit', cwd: DEPS_EMSDK});
     if (activate.status !== 0) {
       if (activate.error) {
@@ -157,28 +157,28 @@ if (!buildWasm) {
       }
       process.exit(activate.status === null ? undefined : activate.status);
     }
-    logger.info('Build.Wasm', 'Activating emsdk... DONE');
+    npmlog.info('Build.Wasm', 'Activating emsdk... DONE');
   }
-  logger.info('Build.Wasm', '(1/4) Setting up emsdk... DONE');
+  npmlog.info('Build.Wasm', '(1/4) Setting up emsdk... DONE');
 
   // Step 2: Find path to emcc
-  logger.info('Build.Wasm', '(2/4) Find path to emcc...');
+  npmlog.info('Build.Wasm', '(2/4) Find path to emcc...');
   let emcc = globby.sync('./**/emcc', {cwd: DEPS_EMSDK_EMSCRIPTEN})[0];
   if (!emcc) {
-    logger.error('Build.Wasm', 'Unable to find emcc. Try re-building with --clean-install flag.');
+    npmlog.error('Build.Wasm', 'Unable to find emcc. Try re-building with --clean-install flag.');
     process.exit(2);
   }
   emcc = path.join(DEPS_EMSDK_EMSCRIPTEN, emcc);
-  logger.info('Build.Wasm', `(2/4) Find path to emcc... DONE, emcc: ${emcc}`);
+  npmlog.info('Build.Wasm', `(2/4) Find path to emcc... DONE, emcc: ${emcc}`);
 
   // Step 3: Prepare build config
-  logger.info('Build.Wasm', '(3/4) Preparing build config...');
+  npmlog.info('Build.Wasm', '(3/4) Preparing build config...');
   // tslint:disable-next-line:non-literal-require
   const wasmBuildConfig = require(SRC_WASM_BUILD_CONFIG);
   const exportedFunctions = wasmBuildConfig.exported_functions as string[];
   const srcPatterns = wasmBuildConfig.src as string[];
   if (exportedFunctions.length === 0) {
-    logger.error('Build.Wasm', `No exported functions specified in the file: ${SRC_WASM_BUILD_CONFIG}`);
+    npmlog.error('Build.Wasm', `No exported functions specified in the file: ${SRC_WASM_BUILD_CONFIG}`);
     process.exit(1);
   }
 
@@ -186,17 +186,17 @@ if (!buildWasm) {
 
   const cppFileNames = globby.sync(srcPatterns, {cwd: SRC});
   if (cppFileNames.length === 0) {
-    logger.error('Build.Wasm', 'Unable to find any cpp source files to compile and generate the WASM file');
+    npmlog.error('Build.Wasm', 'Unable to find any cpp source files to compile and generate the WASM file');
     process.exit(2);
   }
 
   const compileSourcesString = cppFileNames.map(f => path.join(SRC, f)).join(' ');
   BUILD_OPTIONS.push(compileSourcesString);
-  logger.info('Build.Wasm', '(3/4) Preparing build config... DONE');
+  npmlog.info('Build.Wasm', '(3/4) Preparing build config... DONE');
 
   // Step 4: Compile the source code to generate the Wasm file
-  logger.info('Build.Wasm', '(4/4) Building...');
-  logger.info('Build.Wasm', `CMD: ${emcc} ${BUILD_OPTIONS}`);
+  npmlog.info('Build.Wasm', '(4/4) Building...');
+  npmlog.info('Build.Wasm', `CMD: ${emcc} ${BUILD_OPTIONS}`);
 
   const emccBuild = spawnSync(emcc, BUILD_OPTIONS, {shell: true, stdio: 'inherit', cwd: __dirname});
 
@@ -204,34 +204,34 @@ if (!buildWasm) {
     console.error(emccBuild.error);
     process.exit(emccBuild.status === null ? undefined : emccBuild.status);
   }
-  logger.info('Build.Wasm', '(4/4) Building... DONE');
+  npmlog.info('Build.Wasm', '(4/4) Building... DONE');
 }
-logger.info('Build', `Building WebAssembly sources... ${buildWasm ? 'DONE' : 'SKIPPED'}`);
+npmlog.info('Build', `Building WebAssembly sources... ${buildWasm ? 'DONE' : 'SKIPPED'}`);
 
 // generate bundle
 //
-logger.info('Build', `Building bundle...`);
+npmlog.info('Build', `Building bundle...`);
 if (buildBundle) {
   // only generate bundle when WASM is built
   //
   if (!fs.existsSync(OUT_WASM)) {
-    logger.error('Build.Bundle', `Cannot find wasm file: ${OUT_WASM}. Please build WebAssembly sources first.`);
+    npmlog.error('Build.Bundle', `Cannot find wasm file: ${OUT_WASM}. Please build WebAssembly sources first.`);
     process.exit(2);
   } else {
-    logger.info('Build.Bundle', '(1/2) Retrieving npm bin folder...');
+    npmlog.info('Build.Bundle', '(1/2) Retrieving npm bin folder...');
     const npmBin = execSync('npm bin', {encoding: 'utf8'}).trimRight();
-    logger.info('Build.Bundle', `(1/2) Retrieving npm bin folder... DONE, folder: ${npmBin}`);
+    npmlog.info('Build.Bundle', `(1/2) Retrieving npm bin folder... DONE, folder: ${npmBin}`);
 
-    logger.info('Build.Bundle', '(2/2) Running webpack to generate onnx.min.js...');
+    npmlog.info('Build.Bundle', '(2/2) Running webpack to generate onnx.min.js...');
     const webpackCommand = path.join(npmBin, 'webpack');
     const webpackArgs = ['--bundle-mode', 'prod'];
-    logger.info('Build.Bundle', `CMD: ${webpackCommand} ${webpackArgs.join(' ')}`);
+    npmlog.info('Build.Bundle', `CMD: ${webpackCommand} ${webpackArgs.join(' ')}`);
     const webpack = spawnSync(webpackCommand, webpackArgs, {shell: true, stdio: 'inherit'});
     if (webpack.status !== 0) {
       console.error(webpack.error);
       process.exit(webpack.status === null ? undefined : webpack.status);
     }
-    logger.info('Build.Bundle', '(2/2) Running webpack to generate onnx.min.js... DONE');
+    npmlog.info('Build.Bundle', '(2/2) Running webpack to generate onnx.min.js... DONE');
   }
 }
-logger.info('Build', `Building bundle... ${buildBundle ? 'DONE' : 'SKIPPED'}`);
+npmlog.info('Build', `Building bundle... ${buildBundle ? 'DONE' : 'SKIPPED'}`);

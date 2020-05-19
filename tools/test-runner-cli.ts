@@ -5,7 +5,7 @@ import {execSync, spawnSync} from 'child_process';
 import * as fs from 'fs';
 import * as globby from 'globby';
 import {default as minimatch} from 'minimatch';
-import logger from 'npmlog';
+import npmlog from 'npmlog';
 import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
 import {inspect} from 'util';
@@ -15,11 +15,11 @@ import {Test} from '../test/test-types';
 
 import {parseTestRunnerCliArgs, TestRunnerCliArgs} from './test-runner-cli-args';
 
-logger.info('TestRunnerCli', 'Initializing...');
+npmlog.info('TestRunnerCli', 'Initializing...');
 
 const args = parseTestRunnerCliArgs(process.argv.slice(2));
 
-logger.verbose('TestRunnerCli.Init.Config', inspect(args));
+npmlog.verbose('TestRunnerCli.Init.Config', inspect(args));
 
 // tslint:disable: non-literal-fs-path
 const TEST_ROOT = path.join(__dirname, '..', 'test');
@@ -29,14 +29,14 @@ const TEST_DATA_OP_ROOT = path.join(TEST_ROOT, 'data', 'ops');
 
 const TEST_DATA_BASE = args.env === 'node' ? TEST_ROOT : '/base/test/';
 
-logger.verbose('TestRunnerCli.Init', `Loading whitelist...`);
+npmlog.verbose('TestRunnerCli.Init', `Loading whitelist...`);
 
 // The following is a whitelist of unittests for already implemented operators.
 // Modify this list to control what node tests to run.
 const jsonWithComments = fs.readFileSync(path.resolve(TEST_ROOT, './test-suite-whitelist.jsonc')).toString();
 const json = stripJsonComments(jsonWithComments, {whitespace: true});
 const whitelist = JSON.parse(json) as Test.WhiteList;
-logger.verbose('TestRunnerCli.Init', `Loading whitelist... DONE`);
+npmlog.verbose('TestRunnerCli.Init', `Loading whitelist... DONE`);
 
 // The default backends and opset version lists. Those will be used in suite tests.
 const DEFAULT_BACKENDS: ReadonlyArray<TestRunnerCliArgs.Backend> =
@@ -54,7 +54,7 @@ const opTests = new Map<string, Test.OperatorTestGroup[]>();
 
 const shouldLoadSuiteTestData = (args.mode === 'suite0' || args.mode === 'suite1');
 if (shouldLoadSuiteTestData) {
-  logger.verbose('TestRunnerCli.Init', `Loading test groups for suite test...`);
+  npmlog.verbose('TestRunnerCli.Init', `Loading test groups for suite test...`);
 
   for (const backend of DEFAULT_BACKENDS) {
     for (const version of DEFAULT_OPSET_VERSIONS) {
@@ -73,18 +73,18 @@ if (shouldLoadSuiteTestData) {
 }
 
 if (shouldLoadSuiteTestData) {
-  logger.verbose('TestRunnerCli.Init', `Loading test groups for suite test... DONE`);
+  npmlog.verbose('TestRunnerCli.Init', `Loading test groups for suite test... DONE`);
 
-  logger.verbose('TestRunnerCli.Init', `Validate whitelist...`);
+  npmlog.verbose('TestRunnerCli.Init', `Validate whitelist...`);
   validateWhiteList();
-  logger.verbose('TestRunnerCli.Init', `Validate whitelist... DONE`);
+  npmlog.verbose('TestRunnerCli.Init', `Validate whitelist... DONE`);
 }
 
 const modelTestGroups: Test.ModelTestGroup[] = [];
 const opTestGroups: Test.OperatorTestGroup[] = [];
 let unittest = false;
 
-logger.verbose('TestRunnerCli.Init', `Preparing test config...`);
+npmlog.verbose('TestRunnerCli.Init', `Preparing test config...`);
 switch (args.mode) {
   case 'suite1':
     for (const backend of DEFAULT_BACKENDS) {
@@ -132,9 +132,9 @@ switch (args.mode) {
     throw new Error(`unsupported mode '${args.mode}'`);
 }
 
-logger.verbose('TestRunnerCli.Init', `Preparing test config... DONE`);
+npmlog.verbose('TestRunnerCli.Init', `Preparing test config... DONE`);
 
-logger.info('TestRunnerCli', 'Initialization completed. Start to run tests...');
+npmlog.info('TestRunnerCli', 'Initialization completed. Start to run tests...');
 run({
   unittest,
   model: modelTestGroups,
@@ -143,7 +143,7 @@ run({
   profile: args.profile,
   options: {debug: args.debug, cpu: args.cpuOptions, webgl: args.webglOptions, wasm: args.wasmOptions}
 });
-logger.info('TestRunnerCli', 'Tests completed successfully');
+npmlog.info('TestRunnerCli', 'Tests completed successfully');
 
 process.exit();
 
@@ -228,14 +228,14 @@ function suiteFromFolder(
 function modelTestFromFolder(
     testDataRootFolder: string, backend: string, condition?: Test.Condition, times?: number): Test.ModelTest {
   if (times === 0) {
-    logger.verbose('TestRunnerCli.Init.Model', `Skip test data from folder: ${testDataRootFolder}`);
+    npmlog.verbose('TestRunnerCli.Init.Model', `Skip test data from folder: ${testDataRootFolder}`);
     return {name: path.basename(testDataRootFolder), backend, modelUrl: '', cases: []};
   }
 
   let modelUrl: string|null = null;
   let cases: Test.ModelTestCase[] = [];
 
-  logger.verbose('TestRunnerCli.Init.Model', `Start to prepare test data from folder: ${testDataRootFolder}`);
+  npmlog.verbose('TestRunnerCli.Init.Model', `Start to prepare test data from folder: ${testDataRootFolder}`);
 
   try {
     for (const thisPath of fs.readdirSync(testDataRootFolder)) {
@@ -278,7 +278,7 @@ function modelTestFromFolder(
       throw new Error('there are no model file under the folder specified');
     }
   } catch (e) {
-    logger.error('TestRunnerCli.Init.Model', `Failed to prepare test data. Error: ${inspect(e)}`);
+    npmlog.error('TestRunnerCli.Init.Model', `Failed to prepare test data. Error: ${inspect(e)}`);
     throw e;
   }
 
@@ -295,12 +295,12 @@ function modelTestFromFolder(
     }
   }
 
-  logger.verbose('TestRunnerCli.Init.Model', `Finished preparing test data.`);
-  logger.verbose('TestRunnerCli.Init.Model', `===============================================================`);
-  logger.verbose('TestRunnerCli.Init.Model', ` Model file: ${modelUrl}`);
-  logger.verbose('TestRunnerCli.Init.Model', ` Backend: ${backend}`);
-  logger.verbose('TestRunnerCli.Init.Model', ` Test set(s): ${cases.length} (${caseCount})`);
-  logger.verbose('TestRunnerCli.Init.Model', `===============================================================`);
+  npmlog.verbose('TestRunnerCli.Init.Model', `Finished preparing test data.`);
+  npmlog.verbose('TestRunnerCli.Init.Model', `===============================================================`);
+  npmlog.verbose('TestRunnerCli.Init.Model', ` Model file: ${modelUrl}`);
+  npmlog.verbose('TestRunnerCli.Init.Model', ` Backend: ${backend}`);
+  npmlog.verbose('TestRunnerCli.Init.Model', ` Test set(s): ${cases.length} (${caseCount})`);
+  npmlog.verbose('TestRunnerCli.Init.Model', `===============================================================`);
 
   return {name: path.basename(testDataRootFolder), condition, modelUrl, backend, cases};
 }
@@ -351,9 +351,9 @@ function opTestFromManifest(manifestFile: string, backend: string, skip = false)
   let tests: Test.OperatorTest[] = [];
   const filePath = path.resolve(process.cwd(), manifestFile);
   if (skip) {
-    logger.verbose('TestRunnerCli.Init.Op', `Skip test data from manifest file: ${filePath}`);
+    npmlog.verbose('TestRunnerCli.Init.Op', `Skip test data from manifest file: ${filePath}`);
   } else {
-    logger.verbose('TestRunnerCli.Init.Op', `Start to prepare test data from manifest file: ${filePath}`);
+    npmlog.verbose('TestRunnerCli.Init.Op', `Start to prepare test data from manifest file: ${filePath}`);
     const jsonWithComments = fs.readFileSync(filePath).toString();
     const json = stripJsonComments(jsonWithComments, {whitespace: true});
     tests = JSON.parse(json) as Test.OperatorTest[];
@@ -361,12 +361,12 @@ function opTestFromManifest(manifestFile: string, backend: string, skip = false)
     for (const test of tests) {
       test.backend = backend;
     }
-    logger.verbose('TestRunnerCli.Init.Op', `Finished preparing test data.`);
-    logger.verbose('TestRunnerCli.Init.Op', `===============================================================`);
-    logger.verbose('TestRunnerCli.Init.Op', ` Test Group: ${path.relative(TEST_DATA_OP_ROOT, filePath)}`);
-    logger.verbose('TestRunnerCli.Init.Op', ` Backend: ${backend}`);
-    logger.verbose('TestRunnerCli.Init.Op', ` Test case(s): ${tests.length}`);
-    logger.verbose('TestRunnerCli.Init.Op', `===============================================================`);
+    npmlog.verbose('TestRunnerCli.Init.Op', `Finished preparing test data.`);
+    npmlog.verbose('TestRunnerCli.Init.Op', `===============================================================`);
+    npmlog.verbose('TestRunnerCli.Init.Op', ` Test Group: ${path.relative(TEST_DATA_OP_ROOT, filePath)}`);
+    npmlog.verbose('TestRunnerCli.Init.Op', ` Backend: ${backend}`);
+    npmlog.verbose('TestRunnerCli.Init.Op', ` Test case(s): ${tests.length}`);
+    npmlog.verbose('TestRunnerCli.Init.Op', `===============================================================`);
   }
   return {name: path.relative(TEST_DATA_OP_ROOT, filePath), tests};
 }
@@ -387,64 +387,64 @@ function tryLocateOpTestManifest(searchPattern: string): string {
 
 function run(config: Test.Config) {
   // STEP 1. write file cache to testdata-file-cache-*.json
-  logger.info('TestRunnerCli.Run', '(1/5) Writing file cache to file: testdata-file-cache-*.json ...');
+  npmlog.info('TestRunnerCli.Run', '(1/5) Writing file cache to file: testdata-file-cache-*.json ...');
   const fileCacheUrls = saveFileCache(fileCache);
   if (fileCacheUrls.length > 0) {
     config.fileCacheUrls = fileCacheUrls;
   }
-  logger.info(
+  npmlog.info(
       'TestRunnerCli.Run',
       `(1/5) Writing file cache to file: testdata-file-cache-*.json ... ${
           fileCacheUrls.length > 0 ? `DONE, ${fileCacheUrls.length} file(s) generated` : 'SKIPPED'}`);
 
   // STEP 2. write the config to testdata-config.js
-  logger.info('TestRunnerCli.Run', '(2/5) Writing config to file: testdata-config.js ...');
+  npmlog.info('TestRunnerCli.Run', '(2/5) Writing config to file: testdata-config.js ...');
   saveConfig(config);
-  logger.info('TestRunnerCli.Run', '(2/5) Writing config to file: testdata-config.js ... DONE');
+  npmlog.info('TestRunnerCli.Run', '(2/5) Writing config to file: testdata-config.js ... DONE');
 
   // STEP 3. get npm bin folder
-  logger.info('TestRunnerCli.Run', '(3/5) Retrieving npm bin folder...');
+  npmlog.info('TestRunnerCli.Run', '(3/5) Retrieving npm bin folder...');
   const npmBin = execSync('npm bin', {encoding: 'utf8'}).trimRight();
-  logger.info('TestRunnerCli.Run', `(3/5) Retrieving npm bin folder... DONE, folder: ${npmBin}`);
+  npmlog.info('TestRunnerCli.Run', `(3/5) Retrieving npm bin folder... DONE, folder: ${npmBin}`);
 
   if (args.env === 'node') {
     // STEP 4. use tsc to build ONNX.js
-    logger.info('TestRunnerCli.Run', '(4/5) Running tsc...');
+    npmlog.info('TestRunnerCli.Run', '(4/5) Running tsc...');
     const tscCommand = path.join(npmBin, 'tsc');
     const tsc = spawnSync(tscCommand, {shell: true, stdio: 'inherit'});
     if (tsc.status !== 0) {
       console.error(tsc.error);
       process.exit(tsc.status === null ? undefined : tsc.status);
     }
-    logger.info('TestRunnerCli.Run', '(4/5) Running tsc... DONE');
+    npmlog.info('TestRunnerCli.Run', '(4/5) Running tsc... DONE');
 
     // STEP 5. run mocha
-    logger.info('TestRunnerCli.Run', '(5/5) Running mocha...');
+    npmlog.info('TestRunnerCli.Run', '(5/5) Running mocha...');
     const mochaCommand = path.join(npmBin, 'mocha');
     const mochaArgs = [path.join(TEST_ROOT, 'test-main'), '--timeout 60000'];
-    logger.info('TestRunnerCli.Run', `CMD: ${mochaCommand} ${mochaArgs.join(' ')}`);
+    npmlog.info('TestRunnerCli.Run', `CMD: ${mochaCommand} ${mochaArgs.join(' ')}`);
     const mocha = spawnSync(mochaCommand, mochaArgs, {shell: true, stdio: 'inherit'});
     if (mocha.status !== 0) {
       console.error(mocha.error);
       process.exit(mocha.status === null ? undefined : mocha.status);
     }
-    logger.info('TestRunnerCli.Run', '(5/5) Running mocha... DONE');
+    npmlog.info('TestRunnerCli.Run', '(5/5) Running mocha... DONE');
 
   } else {
     // STEP 4. use webpack to generate ONNX.js
-    logger.info('TestRunnerCli.Run', '(4/5) Running webpack to generate ONNX.js...');
+    npmlog.info('TestRunnerCli.Run', '(4/5) Running webpack to generate ONNX.js...');
     const webpackCommand = path.join(npmBin, 'webpack');
     const webpackArgs = [`--bundle-mode=${args.bundleMode}`];
-    logger.info('TestRunnerCli.Run', `CMD: ${webpackCommand} ${webpackArgs.join(' ')}`);
+    npmlog.info('TestRunnerCli.Run', `CMD: ${webpackCommand} ${webpackArgs.join(' ')}`);
     const webpack = spawnSync(webpackCommand, webpackArgs, {shell: true, stdio: 'inherit'});
     if (webpack.status !== 0) {
       console.error(webpack.error);
       process.exit(webpack.status === null ? undefined : webpack.status);
     }
-    logger.info('TestRunnerCli.Run', '(4/5) Running webpack to generate ONNX.js... DONE');
+    npmlog.info('TestRunnerCli.Run', '(4/5) Running webpack to generate ONNX.js... DONE');
 
     // STEP 5. use Karma to run test
-    logger.info('TestRunnerCli.Run', '(5/5) Running karma to start test runner...');
+    npmlog.info('TestRunnerCli.Run', '(5/5) Running karma to start test runner...');
     const karmaCommand = path.join(npmBin, 'karma');
     const browser = getBrowserNameFromEnv(args.env, args.debug);
     const karmaArgs = ['start', `--browsers ${browser}`];
@@ -478,16 +478,16 @@ function run(config: Test.Config) {
       const deleteEdgeActiveRecoveryCommand =
           // tslint:disable-next-line:max-line-length
           `del /F /Q %LOCALAPPDATA%\\Packages\\Microsoft.MicrosoftEdge_8wekyb3d8bbwe\\AC\\MicrosoftEdge\\User\\Default\\Recovery\\Active\\*`;
-      logger.info('TestRunnerCli.Run', `CMD: ${deleteEdgeActiveRecoveryCommand}`);
+      npmlog.info('TestRunnerCli.Run', `CMD: ${deleteEdgeActiveRecoveryCommand}`);
       spawnSync(deleteEdgeActiveRecoveryCommand, {shell: true, stdio: 'inherit'});
     }
-    logger.info('TestRunnerCli.Run', `CMD: ${karmaCommand} ${karmaArgs.join(' ')}`);
+    npmlog.info('TestRunnerCli.Run', `CMD: ${karmaCommand} ${karmaArgs.join(' ')}`);
     const karma = spawnSync(karmaCommand, karmaArgs, {shell: true, stdio: 'inherit'});
     if (karma.status !== 0) {
       console.error(karma.error);
       process.exit(karma.status === null ? undefined : karma.status);
     }
-    logger.info('TestRunnerCli.Run', '(5/5) Running karma to start test runner... DONE');
+    npmlog.info('TestRunnerCli.Run', '(5/5) Running karma to start test runner... DONE');
   }
 }
 

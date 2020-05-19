@@ -359,7 +359,7 @@ export class ProtoUtil {
 
   static tensorDimsFromProto(dims: Array<number|Long>): number[] {
     // get rid of Long type for dims
-    return dims.map(d => Long.isLong(d) ? (d as Long).toNumber() : d as number);
+    return dims.map(d => Long.isLong(d) ? d.toNumber() : d);
   }
 
   static tensorValueTypeFromProto(valueType: onnx.TypeProto.ITensor): Graph.ValueType {
@@ -372,10 +372,7 @@ export class ProtoUtil {
 
 export class LongUtil {
   static longToNumber(n: Long|number) {
-    if (Long.isLong(n)) {
-      return (n as Long).toNumber();
-    }
-    return n as number;
+    return Long.isLong(n) ? n.toNumber() : n;
   }
 }
 

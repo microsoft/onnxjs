@@ -24,7 +24,7 @@ const ROOT = path.join(__dirname, '..');
 const DEPS = path.join(ROOT, 'deps');
 const DEPS_EIGEN = path.join(DEPS, 'eigen');
 const DEPS_EMSDK = path.join(DEPS, 'emsdk');
-const DEPS_EMSDK_EMSCRIPTEN = path.join(DEPS_EMSDK, 'emscripten');
+const DEPS_EMSDK_EMSCRIPTEN = path.join(DEPS_EMSDK, 'upstream', 'emscripten');
 const DEPS_ONNX = path.join(DEPS, 'onnx');
 const EMSDK_BIN = path.join(DEPS_EMSDK, 'emsdk');
 const SRC = path.join(ROOT, 'src');
@@ -49,7 +49,7 @@ const BUILD_OPTIONS = [
   '-s MODULARIZE=1',
   '-s SAFE_HEAP_LOG=0',
   '-s STACK_OVERFLOW_CHECK=0',
-  '-s DEBUG_LEVEL=0',
+  // '-s DEBUG_LEVEL=0', // DEBUG_LEVEL is disabled in emsdk 1.39.16
   '-s VERBOSE=0',
   '-s EXPORT_ALL=0',
   '-o ' + OUT_WASM_JS,
@@ -163,12 +163,12 @@ if (!buildWasm) {
 
   // Step 2: Find path to emcc
   logger.info('Build.Wasm', '(2/4) Find path to emcc...');
-  let emcc = globby.sync('./emscripten/**/emcc', {cwd: DEPS_EMSDK})[0];
+  let emcc = globby.sync('./**/emcc', {cwd: DEPS_EMSDK_EMSCRIPTEN})[0];
   if (!emcc) {
     logger.error('Build.Wasm', 'Unable to find emcc. Try re-building with --clean-install flag.');
     process.exit(2);
   }
-  emcc = path.join(DEPS_EMSDK, emcc);
+  emcc = path.join(DEPS_EMSDK_EMSCRIPTEN, emcc);
   logger.info('Build.Wasm', `(2/4) Find path to emcc... DONE, emcc: ${emcc}`);
 
   // Step 3: Prepare build config

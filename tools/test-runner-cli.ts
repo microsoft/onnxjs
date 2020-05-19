@@ -314,17 +314,12 @@ function tryLocateModelTestFolder(searchPattern: string): string {
 
   // 2 - check the globby result of searchPattern
   // 3 - check the globby result of ONNX root combined with searchPattern
-  const globbyPattern = [searchPattern, path.join(TEST_DATA_MODEL_ONNX_ROOT, '**', searchPattern)];
+  const globbyPattern = [searchPattern, path.join(TEST_DATA_MODEL_ONNX_ROOT, '**', searchPattern).replace(/\\/g, '/')];
   // 4 - check the globby result of NODE root combined with opset versions and searchPattern
-  globbyPattern.push(
-      ...DEFAULT_OPSET_VERSIONS.map(v => path.join(TEST_DATA_MODEL_NODE_ROOT, `v${v}`, '**', searchPattern)));
+  globbyPattern.push(...DEFAULT_OPSET_VERSIONS.map(
+      v => path.join(TEST_DATA_MODEL_NODE_ROOT, `v${v}`, '**', searchPattern).replace(/\\/g, '/')));
 
-  folderCandidates.push(...globby.sync(
-      [
-        searchPattern, path.join(TEST_DATA_MODEL_ONNX_ROOT, '**', searchPattern),
-        path.join(TEST_DATA_MODEL_NODE_ROOT, '**', searchPattern)
-      ],
-      {onlyDirectories: true, absolute: true}));
+  folderCandidates.push(...globby.sync(globbyPattern, {onlyDirectories: true, absolute: true}));
 
   // pick the first folder that matches the pattern
   for (const folderCandidate of folderCandidates) {
@@ -379,11 +374,11 @@ function opTestFromManifest(manifestFile: string, backend: string, skip = false)
 function tryLocateOpTestManifest(searchPattern: string): string {
   for (const manifestCandidate of globby.sync(
            [
-             searchPattern, path.join(TEST_DATA_OP_ROOT, '**', searchPattern),
-             path.join(TEST_DATA_OP_ROOT, '**', searchPattern + '.json'),
-             path.join(TEST_DATA_OP_ROOT, '**', searchPattern + '.jsonc')
+             searchPattern, path.join(TEST_DATA_OP_ROOT, '**', searchPattern).replace(/\\/g, '/'),
+             path.join(TEST_DATA_OP_ROOT, '**', searchPattern + '.json').replace(/\\/g, '/'),
+             path.join(TEST_DATA_OP_ROOT, '**', searchPattern + '.jsonc').replace(/\\/g, '/')
            ],
-           {onlyFiles: true, absolute: true})) {
+           {onlyFiles: true, absolute: true, cwd: TEST_ROOT})) {
     return manifestCandidate;
   }
 

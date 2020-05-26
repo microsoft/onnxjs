@@ -68,7 +68,7 @@ export function createNewWebGLContext(contextId?: 'webgl'|'webgl2'): WebGLContex
     }
   }
   if (!contextId || contextId === 'webgl') {
-    gl = canvas.getContext('webgl', ca) || canvas.getContext('experimental-webgl', ca);
+    gl = canvas.getContext('webgl', ca) || canvas.getContext('experimental-webgl', ca) as WebGLRenderingContext;
     if (gl) {
       try {
         return new WebGLContext(gl, 1);

@@ -287,9 +287,9 @@ export class Tensor {
       for (let i = 0; i < array.length; i++) {
         const element = array[i];
         if (Long.isLong(element)) {
-          data[i] = longToNumber(element as Long, tensorProto.dataType);
+          data[i] = longToNumber(element, tensorProto.dataType);
         } else {
-          data[i] = element as number;
+          data[i] = element;
         }
       }
     }

@@ -151,8 +151,8 @@ export class Uint8DataEncoder implements DataEncoder {
     return new Uint8Array(size * this.channelSize);
   }
   decode(buffer: Encoder.DataArrayType, dataSize: number): Uint8Array {
-    if (buffer.constructor === Uint8Array) {
-      return buffer.subarray(0, dataSize) as Uint8Array;
+    if (buffer instanceof Uint8Array) {
+      return buffer.subarray(0, dataSize);
     }
     throw new Error(`Invalid array type: ${buffer.constructor}`);
   }

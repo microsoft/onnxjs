@@ -72,7 +72,7 @@ This is the most straightforward way to use ONNX.js. The following HTML example 
         // generate model input
         const inferenceInputs = getInputs();
         // execute the model
-        myOnnxSession.run(inferenceInputs).then(output => {
+        myOnnxSession.run(inferenceInputs).then((output) => {
           // consume the output
           const outputTensor = output.values().next().value;
           console.log(`model output tensor: ${outputTensor.data}.`);
@@ -115,7 +115,7 @@ await session.loadModel(url);
 ```javascript
 // creating an array of input Tensors is the easiest way. For other options see the API documentation
 const inputs = [
-  new Tensor(new Float32Array([1.0, 2.0, 3.0, 4.0]), "float32", [2, 2])
+  new Tensor(new Float32Array([1.0, 2.0, 3.0, 4.0]), "float32", [2, 2]),
 ];
 ```
 

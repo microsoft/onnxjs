@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import minimist from 'minimist';
-import logger from 'npmlog';
+import npmlog from 'npmlog';
 
 import {Backend} from '../lib/api';
 import {Logger} from '../lib/instrument';
@@ -165,9 +165,9 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
   // Option: -d, --debug
   const debug = parseBooleanArg(args.debug || args.d, false);
   if (debug) {
-    logger.level = 'verbose';
+    npmlog.level = 'verbose';
   }
-  logger.verbose('TestRunnerCli.Init', `Parsing commandline arguments...`);
+  npmlog.verbose('TestRunnerCli.Init', `Parsing commandline arguments...`);
 
   const mode = args._.length === 0 ? 'suite0' : args._[0];
 
@@ -236,11 +236,11 @@ export function parseTestRunnerCliArgs(cmdlineArgs: string[]): TestRunnerCliArgs
   // Option: --no-sandbox
   const noSandbox = !!args['no-sandbox'];
 
-  logger.verbose('TestRunnerCli.Init', ` Mode:              ${mode}`);
-  logger.verbose('TestRunnerCli.Init', ` Env:               ${env}`);
-  logger.verbose('TestRunnerCli.Init', ` Debug:             ${debug}`);
-  logger.verbose('TestRunnerCli.Init', ` Backend:           ${backend}`);
-  logger.verbose('TestRunnerCli.Init', `Parsing commandline arguments... DONE`);
+  npmlog.verbose('TestRunnerCli.Init', ` Mode:              ${mode}`);
+  npmlog.verbose('TestRunnerCli.Init', ` Env:               ${env}`);
+  npmlog.verbose('TestRunnerCli.Init', ` Debug:             ${debug}`);
+  npmlog.verbose('TestRunnerCli.Init', ` Backend:           ${backend}`);
+  npmlog.verbose('TestRunnerCli.Init', `Parsing commandline arguments... DONE`);
 
   return {
     debug,

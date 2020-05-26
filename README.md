@@ -20,7 +20,7 @@ The [Open Neural Network Exchange](http://onnx.ai/) (ONNX) is an open standard f
 
 With ONNX.js, web developers can score pre-trained ONNX models directly on browsers with various benefits of reducing server-client communication and protecting user privacy, as well as offering install-free and cross-platform in-browser ML experience.
 
-ONNX.js can run on both CPU and GPU. For running on CPU, [WebAssembly](https://developer.mozilla.org/en-US/docs/WebAssembly) is adopted to execute model at near-native speed. Furthermore, ONNX.js utilizes [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) to provide a "multi-threaded" environment to parallelize data processing. Empirical evaluation shows very promising performance gains on CPU by taking full advantage of WebAssembly and Web Workers. For running on GPUs, a popular standard for accessing GPU capabilities - WebGL is adopted. ONNX.js has further adopted several novel optimization techniques for reducing data transfer between CPU and GPU, as well as some techniques to reduce GPU processing cycles to further push the performance to the maximum.
+ONNX.js can run on both CPU and GPU. For running on CPU, [WebAssembly](https://developer.mozilla.org/en-US/docs/WebAssembly) is adopted to execute the model at near-native speed. Furthermore, ONNX.js utilizes [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) to provide a "multi-threaded" environment to parallelize data processing. Empirical evaluation shows very promising performance gains on CPU by taking full advantage of WebAssembly and Web Workers. For running on GPUs, a popular standard for accessing GPU capabilities - WebGL is adopted. ONNX.js has further adopted several novel optimization techniques for reducing data transfer between CPU and GPU, as well as some techniques to reduce GPU processing cycles to further push the performance to the maximum.
 
 See [Compatibility](#Compatibility) and [Operators Supported](#Operators) for a list of platforms and operators ONNX.js currently supports.
 
@@ -33,7 +33,7 @@ Benchmarks have been run against the most prominent open source solutions in the
 > NOTE:
 >
 > 1. Keras.js doesn't support WebGL usage on Edge
-> 2. Keras.js and TensorFlow.js doesn't support WebAssembly usage on any browser
+> 2. Keras.js and TensorFlow.js don't support WebAssembly usage on any browser
 
 > The specs of the machine that was used to perform the benchmarking is listed below:
 >
@@ -72,7 +72,7 @@ This is the most straightforward way to use ONNX.js. The following HTML example 
         // generate model input
         const inferenceInputs = getInputs();
         // execute the model
-        session.run(inferenceInputs).then(output => {
+        myOnnxSession.run(inferenceInputs).then((output) => {
           // consume the output
           const outputTensor = output.values().next().value;
           console.log(`model output tensor: ${outputTensor.data}.`);
@@ -115,7 +115,7 @@ await session.loadModel(url);
 ```javascript
 // creating an array of input Tensors is the easiest way. For other options see the API documentation
 const inputs = [
-  new Tensor(new Float32Array([1.0, 2.0, 3.0, 4.0]), "float32", [2, 2])
+  new Tensor(new Float32Array([1.0, 2.0, 3.0, 4.0]), "float32", [2, 2]),
 ];
 ```
 
@@ -151,13 +151,13 @@ Refer to [node/Add](./examples/node/add) for a detailed example.
 
 ### Developers
 
-For information on development ONNX.js, please check [Development](./docs/development.md)
+For information on ONNX.js development, please check [Development](./docs/development.md)
 
 For API reference, please check [API](./docs/api.md).
 
 ### Getting ONNX models
 
-You could get ONNX models easily in multiple ways:
+You can get ONNX models easily in multiple ways:
 
 - Choose a pre-trained ONNX model from the [ONNX Model Zoo](https://github.com/onnx/models)
 - Convert models from mainstream frameworks, e.g. PyTorch, TensorFlow and Keras, by following [ONNX tutorials](https://github.com/onnx/tutorials)

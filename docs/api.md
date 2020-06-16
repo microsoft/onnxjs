@@ -88,7 +88,7 @@ To configure an `InferenceSession`, use an object with the following parameters-
   - `'cpu'`: CPU backend
   - `'wasm'`: WebAssembly backend
   - `'webgl'`: WebGL backend
-  
+
     If not set, the backend will be determined by the platform and environment.
 
 - **profiler** (`Config.Profiler`)

@@ -279,7 +279,9 @@ export class OpTestContext {
     this.backendHint = opTest.backend === 'webgl' ? 'webgl' : 'cpu';
   }
   createOperator(): Operator {
-    return initializeOperator(this.sessionHandler, this.opTest.operator, this.opTest.attributes);
+    return initializeOperator(
+        this.sessionHandler, this.opTest.operator, this.opTest.attributes,
+        this.opTest.opsets ?? [{domain: '', version: 7}]);
   }
 
   dispose() {
@@ -295,10 +297,11 @@ export class OpTestContext {
 }
 
 function initializeOperator(
-    sessionHandler: SessionHandler, opType: string, attributeValues: ReadonlyArray<Test.AttributeValue>): Operator {
+    sessionHandler: SessionHandler, opType: string, attributeValues: ReadonlyArray<Test.AttributeValue>,
+    opsetImports: ReadonlyArray<Test.OperatorTestOpsetImport>): Operator {
   const attributes = new Attribute(undefined);
   attributeValues.forEach(value => attributes.set(value.name, value.type, value.data));
-  return sessionHandler.resolve({name: '', opType, inputs: [], outputs: [], attributes}, [{domain: '', version: 7}]);
+  return sessionHandler.resolve({name: '', opType, inputs: [], outputs: [], attributes}, opsetImports);
 }
 
 /**

@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Upsample - nearest",
+    "operator": "Upsample",
+    "attributes": [
+      { "name": "scales", "data": [1.0, 1.0, 2.0, 3.0], "type": "floats" }
+    ],
+    "cases": [
+      {
+        "name": "T[0]",
+        "inputs": [
+          {
+            "data": [1, 2, 3, 4],
+            "dims": [1, 1, 2, 2],
+            "type": "float32"
+          }
+        ],
+        "outputs": [
+          {
+            "data": [
+              1,
+              1,
+              1,
+              2,
+              2,
+              2,
+              1,
+              1,
+              1,
+              2,
+              2,
+              2,
+              3,
+              3,
+              3,
+              4,
+              4,
+              4,
+              3,
+              3,
+              3,
+              4,
+              4,
+              4
+            ],
+            "dims": [1, 1, 4, 6],
+            "type": "float32"
+          }
+        ]
+      }
+    ]
+  }
+]

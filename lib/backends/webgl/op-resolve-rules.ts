@@ -31,6 +31,7 @@ import {WebGLTile} from './ops/tile';
 import {WebGLTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
 import {WebGLUnsqueeze} from './ops/unsqueeze';
+import {WebGLUpsample} from './ops/upsample';
 
 export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Abs', '', '6+', () => new unaryOps.WebGLUnaryOp(NUMBER_TYPES, unaryOps.glslAbs())],
@@ -100,6 +101,7 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Tanh', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslTanh())],
   ['Tile', '', '6+', () => new WebGLTile()],
   ['Transpose', '', '1+', () => new WebGLTranspose()],
+  ['Upsample', '', '7-8', () => new WebGLUpsample()],
   ['Unsqueeze', '', '1+', () => new WebGLUnsqueeze()],
   ['Xor', '', '7+', () => new binaryOps.WebGLBinaryOp(['bool'], binaryOps.glslXor())],
 ];

@@ -62,9 +62,15 @@ export declare namespace Test {
     outputs: ReadonlyArray<TensorValue>;
   }
 
+  export interface OperatorTestOpsetImport {
+    domain: string;
+    version: number;
+  }
+
   export interface OperatorTest {
     name: string;
     operator: string;
+    opsets?: ReadonlyArray<OperatorTestOpsetImport>;
     backend?: string;  // value should be populated at build time
     condition?: Condition;
     attributes: ReadonlyArray<AttributeValue>;

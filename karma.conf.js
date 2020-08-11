@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 const bundleMode = require('minimist')(process.argv)['bundle-mode'] || 'dev';  // 'dev'|'perf'|undefined;
+const karmaPlugins = require('minimist')(process.argv)['karma-plugins'] || undefined;
 const mainFile = bundleMode === 'perf' ? 'test/onnx.perf.js' : 'test/onnx.dev.js';
 
 // it's a known issue that Safari does not work with "localhost" in BrowserStack:
@@ -30,7 +31,7 @@ function getMachineIpAddress() {
   return 'localhost';
 }
 
-module.exports = function(config) {
+module.exports = function (config) {
   config.set({
     // global config of your BrowserStack account
     browserStack: {
@@ -41,20 +42,21 @@ module.exports = function(config) {
     },
     frameworks: ['mocha'],
     files: [
-      {pattern: mainFile},
-      {pattern: 'test/testdata-file-cache-*.json', included: false},
-      {pattern: 'test/onnx-worker.js', included: false},
-      {pattern: 'test/data/**/*', included: false, nocache: true},
-      {pattern: 'deps/data/data/test/**/*', included: false, nocache: true},
-      {pattern: 'deps/onnx/onnx/backend/test/data/**/*', included: false, nocache: true},
-      {pattern: 'dist/onnx-wasm.wasm', included: false},
+      { pattern: mainFile },
+      { pattern: 'test/testdata-file-cache-*.json', included: false },
+      { pattern: 'test/onnx-worker.js', included: false },
+      { pattern: 'test/data/**/*', included: false, nocache: true },
+      { pattern: 'deps/data/data/test/**/*', included: false, nocache: true },
+      { pattern: 'deps/onnx/onnx/backend/test/data/**/*', included: false, nocache: true },
+      { pattern: 'dist/onnx-wasm.wasm', included: false },
     ],
     proxies: {
       '/onnx-wasm.wasm': '/base/dist/onnx-wasm.wasm',
       '/onnx-worker.js': '/base/test/onnx-worker.js',
     },
-    client: {captureConsole: true, mocha: {expose: ['body'], timeout: 60000}},
-    preprocessors: {mainFile: ['sourcemap']},
+    plugins: karmaPlugins,
+    client: { captureConsole: true, mocha: { expose: ['body'], timeout: 60000 } },
+    preprocessors: { mainFile: ['sourcemap'] },
     reporters: ['mocha', 'BrowserStack'],
     browsers: [],
     captureTimeout: 120000,
@@ -65,8 +67,8 @@ module.exports = function(config) {
     browserSocketTimeout: 60000,
     hostname: getMachineIpAddress(),
     customLaunchers: {
-      ChromeTest: {base: 'Chrome', flags: ['--window-size=1,1']},
-      ChromeDebug: {debug: true, base: 'Chrome', flags: ['--remote-debugging-port=9333']},
+      ChromeTest: { base: 'Chrome', flags: ['--window-size=1,1'] },
+      ChromeDebug: { debug: true, base: 'Chrome', flags: ['--remote-debugging-port=9333'] },
       //
       // ==== BrowserStack browsers ====
       //

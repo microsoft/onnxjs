@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import * as globby from 'globby';
 import {default as minimatch} from 'minimatch';
 import npmlog from 'npmlog';
+import * as os from 'os';
 import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
 import {inspect} from 'util';
@@ -457,29 +458,54 @@ function run(config: Test.Config) {
       karmaArgs.push('--no-sandbox');
     }
     karmaArgs.push(`--bundle-mode=${args.bundleMode}`);
-    // == Special treatment to Microsoft Edge ==
-    //
-    // == Edge's Auto Recovery Feature ==
-    // when Edge starts, if it found itself was terminated forcely last time, it always recovers all previous pages.
-    // this always happen in Karma because `karma-edge-launcher` uses `taskkill` command to kill Edge every time.
-    //
-    // == The Problem ==
-    // every time when a test is completed, it will be added to the recovery page list.
-    // if we run the test 100 times, there will be 100 previous tabs when we launch Edge again.
-    // this run out of resources quickly and fails the futher test.
-    // and it cannot recover by itself because every time it is terminated forcely or crashes.
-    // and the auto recovery feature has no way to disable by configuration/commandline/registry
-    //
-    // == The Solution ==
-    // for Microsoft Edge, we should clean up the previous active page before each run
-    // delete the files stores in the specific folder to clean up the recovery page list.
-    // see also: https://www.laptopmag.com/articles/edge-browser-stop-tab-restore
     if (browser === 'Edge') {
-      const deleteEdgeActiveRecoveryCommand =
-          // tslint:disable-next-line:max-line-length
-          `del /F /Q %LOCALAPPDATA%\\Packages\\Microsoft.MicrosoftEdge_8wekyb3d8bbwe\\AC\\MicrosoftEdge\\User\\Default\\Recovery\\Active\\*`;
-      npmlog.info('TestRunnerCli.Run', `CMD: ${deleteEdgeActiveRecoveryCommand}`);
-      spawnSync(deleteEdgeActiveRecoveryCommand, {shell: true, stdio: 'inherit'});
+      // There are currently 2 Edge browser launchers:
+      //  - karma-edge-launcher: used to launch the old Edge browser
+      //  - karma-chromium-edge-launcher: used to launch the new chromium-kernel Edge browser
+      //
+
+      // Those 2 plugins cannot be loaded at the same time, so we need to determine which launchers to use.
+      //  - If we use 'karma-edge-launcher', no plugins config need to be set.
+      //  - If we use 'karma-chromium-edge-launcher', we need to:
+      //       - add plugin "@chiragrupani/karma-chromium-edge-launcher" explicitly, because it does not match the
+      //         default plugins config "^karma-.*"
+      //       - remove "karma-edge-launcher".
+
+      // check if we have the latest Edge installed:
+      if (os.platform() === 'darwin' ||
+          (os.platform() === 'win32' &&
+           // tslint:disable-next-line:no-require-imports no-submodule-imports
+           require('@chiragrupani/karma-chromium-edge-launcher/dist/Utilities').default.GetEdgeExe('Edge') !== '')) {
+        // use "@chiragrupani/karma-chromium-edge-launcher"
+        karmaArgs.push(
+            '--karma-plugins=@chiragrupani/karma-chromium-edge-launcher',
+            '--karma-plugins=(?!karma-edge-launcher$)karma-*');
+      } else {
+        // use "karma-edge-launcher"
+
+        // == Special treatment to Microsoft Edge ==
+        //
+        // == Edge's Auto Recovery Feature ==
+        // when Edge starts, if it found itself was terminated forcely last time, it always recovers all previous pages.
+        // this always happen in Karma because `karma-edge-launcher` uses `taskkill` command to kill Edge every time.
+        //
+        // == The Problem ==
+        // every time when a test is completed, it will be added to the recovery page list.
+        // if we run the test 100 times, there will be 100 previous tabs when we launch Edge again.
+        // this run out of resources quickly and fails the futher test.
+        // and it cannot recover by itself because every time it is terminated forcely or crashes.
+        // and the auto recovery feature has no way to disable by configuration/commandline/registry
+        //
+        // == The Solution ==
+        // for Microsoft Edge, we should clean up the previous active page before each run
+        // delete the files stores in the specific folder to clean up the recovery page list.
+        // see also: https://www.laptopmag.com/articles/edge-browser-stop-tab-restore
+        const deleteEdgeActiveRecoveryCommand =
+            // tslint:disable-next-line:max-line-length
+            `del /F /Q %LOCALAPPDATA%\\Packages\\Microsoft.MicrosoftEdge_8wekyb3d8bbwe\\AC\\MicrosoftEdge\\User\\Default\\Recovery\\Active\\*`;
+        npmlog.info('TestRunnerCli.Run', `CMD: ${deleteEdgeActiveRecoveryCommand}`);
+        spawnSync(deleteEdgeActiveRecoveryCommand, {shell: true, stdio: 'inherit'});
+      }
     }
     npmlog.info('TestRunnerCli.Run', `CMD: ${karmaCommand} ${karmaArgs.join(' ')}`);
     const karma = spawnSync(karmaCommand, karmaArgs, {shell: true, stdio: 'inherit'});

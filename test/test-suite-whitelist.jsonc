@@ -337,6 +337,8 @@
       "test_globalmaxpool",
       "test_greater_bcast",
       "test_greater",
+      "test_instancenorm_epsilon",
+      "test_instancenorm_example",
       "test_less_bcast",
       "test_less",
       "test_equal_bcast",

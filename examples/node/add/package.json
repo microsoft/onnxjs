@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "A simple example which adds two Tensors and validates the result.",
   "main": "index.js",
-  "scripts": {
-  },
+  "scripts": {},
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "onnxjs": "^0.1.0"
+    "onnxjs": "^0.1.0",
+    "onnxjs-node": "^1.4.0"
   }
 }

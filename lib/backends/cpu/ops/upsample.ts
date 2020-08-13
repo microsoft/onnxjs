@@ -80,48 +80,48 @@ function upsampleBilinear(
     xData: Tensor.NumberType, yData: Tensor.NumberType, batchSize: number, numChannels: number, inputHeight: number,
     inputWidth: number, outputHeight: number, outputWidth: number, heightScale: number, widthScale: number,
     roi: number[]) {
-  const y_original: number[] = [];
-  const x_original: number[] = [];
+  const yOriginal: number[] = [];
+  const xOriginal: number[] = [];
 
-  const input_width_mul_y1 = new Array<number>(outputHeight);
-  const input_width_mul_y2 = new Array<number>(outputHeight);
-  const in_x1 = new Array<number>(outputWidth);
-  const in_x2 = new Array<number>(outputWidth);
+  const inputWidthMulY1 = new Array<number>(outputHeight);
+  const inputWidthMulY2 = new Array<number>(outputHeight);
+  const inX1 = new Array<number>(outputWidth);
+  const inX2 = new Array<number>(outputWidth);
   const dy1 = new Array<number>(outputHeight);
   const dy2 = new Array<number>(outputHeight);
   const dx1 = new Array<number>(outputWidth);
   const dx2 = new Array<number>(outputWidth);
 
   for (let y = 0; y < outputHeight; ++y) {
-    let in_y = getOriginalCoordinate(y, heightScale);
-    y_original.push(in_y);
-    in_y = Math.max(0, Math.min(in_y, inputHeight - 1));
+    let inY = getOriginalCoordinate(y, heightScale);
+    yOriginal.push(inY);
+    inY = Math.max(0, Math.min(inY, inputHeight - 1));
 
-    const in_y1 = Math.min(Math.floor(in_y), inputHeight - 1);
-    const in_y2 = Math.min(in_y1 + 1, inputHeight - 1);
-    dy1[y] = Math.abs(in_y - in_y1);
-    dy2[y] = Math.abs(in_y - in_y2);
+    const inY1 = Math.min(Math.floor(inY), inputHeight - 1);
+    const inY2 = Math.min(inY1 + 1, inputHeight - 1);
+    dy1[y] = Math.abs(inY - inY1);
+    dy2[y] = Math.abs(inY - inY2);
 
-    if (in_y1 == in_y2) {
+    if (inY1 === inY2) {
       dy1[y] = 0.5;
       dy2[y] = 0.5;
     }
 
-    input_width_mul_y1[y] = inputWidth * in_y1;
-    input_width_mul_y2[y] = inputWidth * in_y2;
+    inputWidthMulY1[y] = inputWidth * inY1;
+    inputWidthMulY2[y] = inputWidth * inY2;
   }
 
   for (let x = 0; x < outputWidth; ++x) {
-    let in_x = getOriginalCoordinate(x, widthScale);
-    x_original.push(in_x);
-    in_x = Math.max(0, Math.min(in_x, inputWidth - 1));
+    let inX = getOriginalCoordinate(x, widthScale);
+    xOriginal.push(inX);
+    inX = Math.max(0, Math.min(inX, inputWidth - 1));
 
-    in_x1[x] = Math.min(Math.floor(in_x), inputWidth - 1);
-    in_x2[x] = Math.min(in_x1[x] + 1, inputWidth - 1);
+    inX1[x] = Math.min(Math.floor(inX), inputWidth - 1);
+    inX2[x] = Math.min(inX1[x] + 1, inputWidth - 1);
 
-    dx1[x] = Math.abs(in_x - in_x1[x]);
-    dx2[x] = Math.abs(in_x - in_x2[x]);
-    if (in_x1[x] == in_x2[x]) {
+    dx1[x] = Math.abs(inX - inX1[x]);
+    dx2[x] = Math.abs(inX - inX2[x]);
+    if (inX1[x] === inX2[x]) {
       dx1[x] = 0.5;
       dx2[x] = 0.5;
     }
@@ -133,13 +133,13 @@ function upsampleBilinear(
     for (let c = 0; c < numChannels; ++c) {
       for (let y = 0; y < outputHeight; ++y) {
         for (let x = 0; x < outputWidth; ++x) {
-          const X11 = xData[xOffset + input_width_mul_y1[y] + in_x1[x]];
-          const X21 = xData[xOffset + input_width_mul_y1[y] + in_x2[x]];
-          const X12 = xData[xOffset + input_width_mul_y2[y] + in_x1[x]];
-          const X22 = xData[xOffset + input_width_mul_y2[y] + in_x2[x]];
+          const x11 = xData[xOffset + inputWidthMulY1[y] + inX1[x]];
+          const x21 = xData[xOffset + inputWidthMulY1[y] + inX2[x]];
+          const x12 = xData[xOffset + inputWidthMulY2[y] + inX1[x]];
+          const x22 = xData[xOffset + inputWidthMulY2[y] + inX2[x]];
 
           yData[yOffset + outputWidth * y + x] =
-              (dx2[x] * dy2[y] * X11 + dx1[x] * dy2[y] * X21 + dx2[x] * dy1[y] * X12 + dx1[x] * dy1[y] * X22);
+              (dx2[x] * dy2[y] * x11 + dx1[x] * dy2[y] * x21 + dx2[x] * dy1[y] * x12 + dx1[x] * dy1[y] * x22);
         }
       }
       xOffset += inputHeight * inputWidth;

@@ -1,14 +1,14 @@
 require('onnxjs');
-
-// uncomment the following line to enable ONNXRuntime node binding
-// require('onnxjs-node');
+// Use package 'onnxjs-node' to load ONNXRuntime backend.
+require('onnxjs-node');
 
 const assert = require('assert');
 
 async function main() {
-  // Create an ONNX inference session with WebAssembly backend.
-  const session = new onnx.InferenceSession({backendHint: 'wasm'});
-  // Load an ONNX model. This model takes two tensors of the same size and return their sum. 
+  // Create an ONNX inference session with ONNXRuntime backend.
+  const session = new onnx.InferenceSession({backendHint: 'onnxruntime'});
+
+  // Load an ONNX model. This model takes two tensors of the same size and return their sum.
   await session.loadModel("./add.onnx");
 
   const x = new Float32Array(3 * 4 * 5).fill(1);

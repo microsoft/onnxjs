@@ -95,13 +95,6 @@ export class ExecutionPlan {
             `Runing op:${thisOp.node.name} (${
                 inputTensors.map((t, i) => `'${thisOp.node.inputs[i]}': ${t.type}[${t.dims.join(',')}]`).join(', ')})`);
 
-        // for (let i = 0; i < inputTensors.length; i++) {
-        //   console.log(`DEBUG Node(${thisOp.node.name}).input[${i}]`);
-        //   console.log(`DEBUG    DIM=${inputTensors[i].dims}`);
-        //   // console.log(`DEBUG    DATA=${
-        //   //     inputTensors[i].data.length > 16 ? inputTensors[i].data.slice(0, 16) : inputTensors[i].data}`);
-        // }
-
         const outputList = await this.profiler.event('node', thisOp.node.name, async () => {
           const op = thisOp.op;
           if (!op.checkInputs(inputTensors)) {
@@ -117,14 +110,6 @@ export class ExecutionPlan {
         if (outputList.length !== thisOp.node.outputs.length) {
           throw new Error('the size of output does not match model definition.');
         }
-
-        // for (let i = 0; i < outputList.length; i++) {
-        //   console.log(`DEBUG Node(${thisOp.node.name}).output[${i}]`);
-        //   console.log(`DEBUG    DIM=${outputList[i].dims}`);
-        //   console.log(
-        //       `DEBUG    DATA=${outputList[i].data.length > 16 ? outputList[i].data.slice(0, 16) :
-        //       outputList[i].data}`);
-        // }
 
         // fill value
         outputList.forEach((output, i) => {

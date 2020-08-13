@@ -26,7 +26,7 @@ export class Tensor implements TensorInterface {
         this.data = Float32Array.from(data as number[]);
       } else if (type === 'bool') {
         // convert boolean[] to Uint8Array
-        this.data = Uint8Array.from(data as number[]);
+        this.data = new Uint8Array(data as number[]);
       } else if (type === 'int32') {
         // convert number[] to Int32Array
         this.data = Int32Array.from(data as number[]);

@@ -98,7 +98,7 @@ export function init(numWorkers: number, initTimeout: number): Promise<void> {
     for (let workerId = 0; workerId < WORKER_NUMBER; workerId++) {
       const workerInitTask = new Promise<void>((resolveWorkerInit, rejectWorkerInit) => {
         // tslint:disable-next-line
-        const worker = require('worker-loader?publicPath=./onnx-worker.js!./worker/worker-main')() as Worker;
+        const worker = require('worker-loader?filename=onnx-worker.js!./worker/worker-main').default() as Worker;
         workers[workerId] = worker;
         completeCallbacks[workerId] = [];
         worker.onerror = e => {
@@ -140,10 +140,11 @@ export function init(numWorkers: number, initTimeout: number): Promise<void> {
                       onFulfilled,
                       // Wasm init promise resolved. Some (or all) web-worker init promises failed to be resolved.
                       // PARTIAL SUCCESS. Use Wasm backend with no web-workers (best-effort).
-                      () => {
+                      (e) => {
                         Logger.warning(
                             'WebAssembly-Workers',
-                            'Unable to get all requested workers initialized. Will use Wasm backend with 0 workers.');
+                            `Unable to get all requested workers initialized. Will use Wasm backend with 0 workers. ERR: ${
+                                e}`);
                         // TODO: need house-keeping logic to cull exisitng successfully initialized workers
                         WORKER_NUMBER = 0;
                         onFulfilled();

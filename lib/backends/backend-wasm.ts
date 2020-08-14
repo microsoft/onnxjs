@@ -24,9 +24,10 @@ export class WasmBackend implements Backend, WasmOptions {
     // by default fallback to pure JS cpu ops if not resolved in wasm backend
     this.cpuFallback = true;
 
-    // by default use 3 workers
-    // TODO: Have logic to determing optimal fallback worker numbers based on CPU cores
-    this.worker = 3;
+    // by default use ([navigator.hardwareConcurrency / 2] - 1) workers
+    this.worker = (typeof navigator !== 'undefined' && navigator && typeof navigator.hardwareConcurrency === 'number') ?
+        Math.max(Math.ceil(navigator.hardwareConcurrency / 2) - 1, 0) :
+        0;
 
     this.initTimeout = 5000;
   }

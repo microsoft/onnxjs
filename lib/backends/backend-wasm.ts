@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import * as platform from 'platform';
+
 import {Backend as BackendInterface} from '../api/onnx';
 import {Backend, SessionHandler} from '../backend';
 import {Logger} from '../instrument';
@@ -24,15 +26,12 @@ export class WasmBackend implements Backend, WasmOptions {
     // by default fallback to pure JS cpu ops if not resolved in wasm backend
     this.cpuFallback = true;
 
-    // by default use ([navigator.hardwareConcurrency / 2] - 1) workers
-    this.worker = (typeof navigator !== 'undefined' && navigator && typeof navigator.hardwareConcurrency === 'number') ?
-        Math.max(Math.ceil(navigator.hardwareConcurrency / 2) - 1, 0) :
-        0;
+    this.worker = defaultNumWorkers();
 
     this.initTimeout = 5000;
   }
   async initialize(): Promise<boolean> {
-    this.checkIfNumWorkersIsValid();
+    checkIfNumWorkersIsValid(this.worker);
     const init = await this.isWasmSupported();
     if (!init) {
       return false;
@@ -43,14 +42,7 @@ export class WasmBackend implements Backend, WasmOptions {
     return new WasmSessionHandler(this, context, this.cpuFallback);
   }
   dispose(): void {}
-  checkIfNumWorkersIsValid() {
-    if (!Number.isFinite(this.worker) || Number.isNaN(this.worker)) {
-      throw new Error(`${this.worker} is not valid number of workers`);
-    }
-    if (!Number.isInteger(this.worker)) {
-      throw new Error(`${this.worker} is not an integer and hence not valid number of workers`);
-    }
-  }
+
   async isWasmSupported(): Promise<boolean> {
     try {
       await wasmBinding.init(this.worker, this.initTimeout);
@@ -59,5 +51,34 @@ export class WasmBackend implements Backend, WasmOptions {
       Logger.warning('WebAssembly', `Unable to initialize WebAssembly backend. ${e}`);
       return false;
     }
+  }
+}
+
+function defaultNumWorkers(): number {
+  if (typeof navigator !== 'undefined' && navigator) {
+    // by default use ([navigator.hardwareConcurrency / 2] - 1) workers
+    if (typeof navigator.hardwareConcurrency === 'number') {
+      return Math.max(Math.ceil(navigator.hardwareConcurrency / 2) - 1, 0);
+    }
+
+    // if object 'navigator' exists, but 'navigator.hardwareConcurrency' does not. This may mean:
+    // - The environment is Safari (macOS/iOS), or
+    // - it's not any mainstream browser.
+    if (platform.name === 'Safari') {
+      if (platform.os && (platform.os.family === 'iOS' || platform.os.family === 'OS X')) {
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
+
+function checkIfNumWorkersIsValid(worker: number) {
+  if (!Number.isFinite(worker) || Number.isNaN(worker)) {
+    throw new Error(`${worker} is not valid number of workers`);
+  }
+  if (!Number.isInteger(worker)) {
+    throw new Error(`${worker} is not an integer and hence not valid number of workers`);
   }
 }

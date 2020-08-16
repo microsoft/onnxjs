@@ -15,6 +15,7 @@ import {WebGLFlatten} from './ops/flatten';
 import {WebGLGather} from './ops/gather';
 import {WebGLGemm} from './ops/gemm';
 import {WebGLImageScaler} from './ops/image-scaler';
+import {WebGLInstanceNormalization} from './ops/instance-normalization';
 import {WebGLLeakyRelu} from './ops/leaky-relu';
 import {WebGLMatMul} from './ops/matmul';
 import {WebGLPad} from './ops/pad';
@@ -59,6 +60,7 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Greater', '', '7+', () => new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslGreater(), undefined, 'bool')],
   ['Identity', '', '1+', () => new unaryOps.WebGLUnaryOp(NUMBER_TYPES, unaryOps.glslIdentity())],
   ['ImageScaler', '', '1+', () => new WebGLImageScaler()],
+  ['InstanceNormalization', '', '6+', () => new WebGLInstanceNormalization()],
   ['LeakyRelu', '', '6+', () => new WebGLLeakyRelu()],
   ['Less', '', '7+', () => new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslLess(), undefined, 'bool')],
   ['Log', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslLog())],

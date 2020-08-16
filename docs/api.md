@@ -88,16 +88,17 @@ To configure an `InferenceSession`, use an object with the following parameters-
   - `'cpu'`: CPU backend
   - `'wasm'`: WebAssembly backend
   - `'webgl'`: WebGL backend
+
     If not set, the backend will be determined by the platform and environment.
 
 - **profiler** (`Config.Profiler`)
-  An object specifying profiler configurations that used in an `InferenceSession`. If not set, run profiler in default config. Detailed settings are listed in [`Config.Profiler`](#Config.Profiler).
+  An object specifying the profiler configuration that is used in an `InferenceSession`. If not set, run profiler in default config. Detailed settings are listed in [`Config.Profiler`](#Config.Profiler).
 
 ---
 
 ### `Config.Profiler`
 
-Represents the configuration of the profiler that used in an `InferenceSession`. The supported member variables are:
+Represents the configuration of the profiler that is used in an `InferenceSession`. The supported member variables are:
 
     - **maxNumberEvents** (`number`)
       Optional. The max number of events to be recorded. Default = 10000.
@@ -236,7 +237,7 @@ Options for running inference.
 
 ## <a name="ref-Tensor"></a>**Tensor**
 
-Tensor is a representation of vectors, matrices and n-dimension data in `ONNX.js`. Tensors are used in `InferenceSession` as inputs for models to run.
+Tensor is a representation of vectors, matrices and n-dimensional data in `ONNX.js`. Tensors are used in `InferenceSession` as inputs for models to run.
 
 - ### **Create a Tensor**
 
@@ -263,7 +264,7 @@ Tensor is a representation of vectors, matrices and n-dimension data in `ONNX.js
 
   - **dims** (`ReadonlyArray<number>`):
 
-    Optional. The shape of the Tensor in a array of Integers. Current implementation supports up to 6 dimensions. If not set, a 1-D Tensor will be created with length inferred from `data`.
+    Optional. The shape of the Tensor in an array of Integers. Current implementation supports up to 6 dimensions. If not set, a 1-D Tensor will be created with length inferred from `data`.
 
   _Returns_
 

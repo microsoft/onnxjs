@@ -26,7 +26,9 @@ export class Tensor implements TensorInterface {
         this.data = Float32Array.from(data as number[]);
       } else if (type === 'bool') {
         // convert boolean[] to Uint8Array
-        this.data = Uint8Array.from(data as number[]);
+        // NOTE: there is a bug of Uint8Array.from() in Safari when using core-js. Use 'new Uint8Array' as workaround.
+        // See also: https://github.com/zloirock/core-js/issues/285
+        this.data = new Uint8Array(data as number[]);
       } else if (type === 'int32') {
         // convert number[] to Int32Array
         this.data = Int32Array.from(data as number[]);

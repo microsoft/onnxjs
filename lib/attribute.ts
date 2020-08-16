@@ -126,7 +126,7 @@ export class Attribute {
 
     // cast LONG to number
     if (attr.type === onnx.AttributeProto.AttributeType.INT && Long.isLong(value)) {
-      return (value as Long).toNumber();
+      return value.toNumber();
     }
 
     // cast LONG[] to number[]

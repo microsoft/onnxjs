@@ -4,7 +4,7 @@
 import {Logger} from '../../../instrument';
 import {Conv} from '../../../ops/conv';
 import {Tensor} from '../../../tensor';
-import {PoolConvUtil, ShapeUtil} from '../../../util';
+import {PoolConvUtil} from '../../../util';
 import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {Artifact, ProgramInfo, RunData, TextureLayout} from '../types';
@@ -231,18 +231,15 @@ export class WebGLConv extends Conv {
     if (group === 1 && (channels === 1 || (shape[2] * shape[3]) % channels === 0)) {
       return kernel;
     }
-    const strides = ShapeUtil.computeStrides(shape);
+    const numFeatureMaps = shape[0];
     const oldRowSize = shape[1] * shape[2] * shape[3];
-    const newRowSize = Math.ceil(oldRowSize / channels) * channels;
-    const newSize = shape[0] * newRowSize;
+    const newRowSize = Math.ceil(oldRowSize * group / channels) * channels;
+    const newSize = numFeatureMaps * newRowSize;
     const buffer = new Float32Array(newSize);
-
-    const rowbuf = new Float32Array(newRowSize);
-    for (let f = 0; f < shape[0]; ++f) {
-      const oldOffset = f * strides[0];
-      rowbuf.set(kernel.slice(oldOffset, oldOffset + oldRowSize), 0);
-      const newOffset = f * newRowSize;
-      buffer.set(rowbuf, newOffset);
+    for (let f = 0; f < numFeatureMaps; ++f) {
+      const oldOffset = f * oldRowSize;
+      const newOffset = f * newRowSize + f % group * oldRowSize;
+      buffer.set(kernel.subarray(oldOffset, oldOffset + oldRowSize), newOffset);
     }
     return buffer;
   }

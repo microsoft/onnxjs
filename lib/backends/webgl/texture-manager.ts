@@ -123,7 +123,7 @@ export class TextureManager {
     }
   }
   toTensorData(dataType: Tensor.DataType, data: Encoder.DataArrayType): Tensor.NumberType {
-    return (data.constructor === Float32Array) ? data as Float32Array : new Float32Array(data);
+    return (data instanceof Float32Array) ? data : new Float32Array(data);
     /*
     switch (dataType) {
       case 'int16':
@@ -152,7 +152,7 @@ export class TextureManager {
     if (!data) {
       return undefined;
     }
-    return (data.constructor === Float32Array) ? data as Float32Array : new Float32Array(data);
+    return (data instanceof Float32Array) ? data : new Float32Array(data);
     /*
     switch (dataType) {
       case 'int16':

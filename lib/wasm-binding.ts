@@ -98,7 +98,7 @@ export function init(numWorkers: number, initTimeout: number): Promise<void> {
     for (let workerId = 0; workerId < WORKER_NUMBER; workerId++) {
       const workerInitTask = new Promise<void>((resolveWorkerInit, rejectWorkerInit) => {
         // tslint:disable-next-line
-        const worker = require('worker-loader?name=./onnx-worker.js!./worker/worker-main')() as Worker;
+        const worker = require('worker-loader?publicPath=./onnx-worker.js!./worker/worker-main')() as Worker;
         workers[workerId] = worker;
         completeCallbacks[workerId] = [];
         worker.onerror = e => {

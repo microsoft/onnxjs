@@ -13,7 +13,7 @@ export class CpuUpsample extends Upsample {
     if (this.mode === 'nearest') {
       upsampleNearest(inputs[0].data, y.data, xDims, yDims, this.scales);
     } else {
-      upsampleLinear(inputs[0].data, y.data, xDims, yDims, this.scales, this.roi);
+      upsampleLinear(inputs[0].data, y.data, xDims, yDims, this.scales);
     }
     return [y];
   }
@@ -62,7 +62,7 @@ function upsampleNearest(
 
 function upsampleLinear(
     xData: Tensor.DataTypeMap[Tensor.DataType], yData: Tensor.DataTypeMap[Tensor.DataType],
-    xDims: ReadonlyArray<number>, yDims: ReadonlyArray<number>, scales: number[], roi: number[]) {
+    xDims: ReadonlyArray<number>, yDims: ReadonlyArray<number>, scales: number[]) {
   const is2D = xDims.length === 2;
   const batchSize = is2D ? 1 : xDims[0];
   const numChannels = is2D ? 1 : xDims[1];
@@ -73,13 +73,12 @@ function upsampleLinear(
 
   upsampleBilinear(
       xData as Tensor.NumberType, yData as Tensor.NumberType, batchSize, numChannels, inputHeight, inputWidth,
-      outputHeight, outputWidth, is2D ? scales[0] : scales[2], is2D ? scales[1] : scales[3], roi);
+      outputHeight, outputWidth, is2D ? scales[0] : scales[2], is2D ? scales[1] : scales[3]);
 }
 
 function upsampleBilinear(
     xData: Tensor.NumberType, yData: Tensor.NumberType, batchSize: number, numChannels: number, inputHeight: number,
-    inputWidth: number, outputHeight: number, outputWidth: number, heightScale: number, widthScale: number,
-    roi: number[]) {
+    inputWidth: number, outputHeight: number, outputWidth: number, heightScale: number, widthScale: number) {
   const yOriginal: number[] = [];
   const xOriginal: number[] = [];
 
@@ -99,12 +98,13 @@ function upsampleBilinear(
 
     const inY1 = Math.min(Math.floor(inY), inputHeight - 1);
     const inY2 = Math.min(inY1 + 1, inputHeight - 1);
-    dy1[y] = Math.abs(inY - inY1);
-    dy2[y] = Math.abs(inY - inY2);
 
     if (inY1 === inY2) {
       dy1[y] = 0.5;
       dy2[y] = 0.5;
+    } else {
+      dy1[y] = Math.abs(inY - inY1);
+      dy2[y] = Math.abs(inY - inY2);
     }
 
     inputWidthMulY1[y] = inputWidth * inY1;
@@ -119,11 +119,12 @@ function upsampleBilinear(
     inX1[x] = Math.min(Math.floor(inX), inputWidth - 1);
     inX2[x] = Math.min(inX1[x] + 1, inputWidth - 1);
 
-    dx1[x] = Math.abs(inX - inX1[x]);
-    dx2[x] = Math.abs(inX - inX2[x]);
     if (inX1[x] === inX2[x]) {
       dx1[x] = 0.5;
       dx2[x] = 0.5;
+    } else {
+      dx1[x] = Math.abs(inX - inX1[x]);
+      dx2[x] = Math.abs(inX - inX2[x]);
     }
   }
 

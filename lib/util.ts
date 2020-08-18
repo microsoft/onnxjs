@@ -278,7 +278,7 @@ export class GemmUtil {
   // will throw exception if the input shapes are not compatible
   static getShapeOfGemmResult(
       leftShape: ReadonlyArray<number>, transLeft: boolean, rightShape: ReadonlyArray<number>, transRight: boolean,
-      biasShape: ReadonlyArray<number>): ReadonlyArray<number> {
+      biasShape?: ReadonlyArray<number>): ReadonlyArray<number> {
     if (leftShape.length !== 2 || rightShape.length !== 2) {
       throw new Error(`shape need to be of size 2`);
     }
@@ -313,7 +313,7 @@ export class GemmUtil {
       throw new Error(`invalid shape specified`);
     }
 
-    if (!BroadcastUtil.isValidBroadcast(biasShape, [M, N])) {
+    if (biasShape && !BroadcastUtil.isValidBroadcast(biasShape, [M, N])) {
       throw new Error(`gemm: invalid bias shape for broadcast`);
     }
 
@@ -460,11 +460,18 @@ export class ShapeUtil {
     return indices;
   }
 
-  static parseAxis(axis: number, tensorRank: number): number {
+  /**
+   * normailze axis of range [-r, r) into [0, r).
+   */
+  static normalizeAxis(axis: number, tensorRank: number): number {
     if (axis < -tensorRank && axis >= tensorRank) {
       throw new Error('unsupported axis for this operation.');
     }
     return axis < 0 ? axis + tensorRank : axis;
+  }
+
+  static normalizeAxes(axes: ReadonlyArray<number>, tensorRank: number): number[] {
+    return axes.map(x => this.normalizeAxis(x, tensorRank));
   }
 
   // Increment an index into a tensor (in lexicographic
@@ -612,7 +619,7 @@ export class ShapeUtil {
       if (!Number.isInteger(n)) {
         throw new TypeError(`Invalid shape: ${n} is not an integer`);
       }
-      if (n <= 0 || n > 2147483647) {
+      if (n < 0 || n > 2147483647) {
         throw new TypeError(`Invalid shape: length ${n} is not allowed`);
       }
       size *= n;
@@ -623,9 +630,12 @@ export class ShapeUtil {
   /**
    * Determines the shape of output tensor y = flatten(x, axis)
    * @param dims - shape of input tensor
-   * @param axis - flatten axis
+   * @param axis - flatten axis, in the range [-r, r]
    */
   static flattenShape(dims: ReadonlyArray<number>, axis: number): ReadonlyArray<number> {
+    if (axis < 0) {
+      axis += dims.length;
+    }
     const total = dims.reduce((x, y) => x * y, 1);
     const right = dims.slice(axis).reduce((x, y) => x * y, 1);
     const outputDims = [total / right, right];
@@ -642,9 +652,7 @@ export class ShapeUtil {
     const outputDims = new Array<number>();
 
     // sanity check
-    if (axes.some(axis => axis >= dims.length || axis < 0)) {
-      throw new Error(`'axes' has an out of range axis`);
-    }
+    axes = ShapeUtil.normalizeAxes(axes, dims.length);
 
     for (let i = 0; i < dims.length; i++) {
       const inSqueezeList = axes.indexOf(i) >= 0;
@@ -673,7 +681,7 @@ export class ShapeUtil {
 
     // set all axes indices to 1 in outputDims and check for duplicates
     for (let i = 0; i < axes.length; i++) {
-      const axis = axes[i];
+      const axis = ShapeUtil.normalizeAxis(axes[i], dims.length);
       if (axis >= outputDims.length) {
         throw new Error(`'axes' has an out of range axis`);
       }

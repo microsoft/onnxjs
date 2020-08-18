@@ -14,8 +14,8 @@ export class WebGLGemm extends Gemm implements WebGLOperator {
   createProgramInfo(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const aShape = inputs[0].dims.slice();
     const bShape = inputs[1].dims.slice();
-    const cShape = inputs[2].dims.slice();
-    const [M, N] = GemmUtil.getShapeOfGemmResult(aShape, this.transA, bShape, this.transB, cShape);
+    const [M, N] = GemmUtil.getShapeOfGemmResult(
+        aShape, this.transA, bShape, this.transB, inputs.length === 3 ? inputs[2].dims : undefined);
     const oShape = [M, N];
     if (!oShape) {
       throw new Error('Can\'t use gemm on the given tensors');
@@ -35,16 +35,18 @@ export class WebGLGemm extends Gemm implements WebGLOperator {
       line = `value += _A(a) * _B(b);`;
     }
     const rank = oShape.length;
-    const cRank = cShape.length;
+    const declareC = inputs.length === 3 ? `int c[${inputs[2].dims.length}];` : '';
+    const broadcastC = inputs.length === 3 ? `bcastIndices_C(indices, c);` : '';
+    const calculateC = inputs.length === 3 ? `value += beta * _C(c);` : '';
     const shaderSource = `
       float process(int indices[${rank}]) {
           int a[${rank}];
           int b[${rank}];
-          int c[${cRank}];
+          ${declareC}
 
           copyVec(indices, a);
           copyVec(indices, b);
-          bcastIndices_C(indices, c);
+          ${broadcastC}
 
           float value = 0.0;
           for (int k=0; k<${sharedDim}; ++k) {
@@ -54,14 +56,14 @@ export class WebGLGemm extends Gemm implements WebGLOperator {
           }
 
           value = value * alpha;
-          value += beta * _C(c);
+          ${calculateC}
           return value;
       }`;
     const inputLayouts = inputs.map(t => inferenceHandler.getOrCreateTextureLayout(t));
     return {
       inputLayouts,
       outputLayout: inferenceHandler.createTextureLayoutFromShape(oShape),
-      samplers: ['A', 'B', 'C'],
+      samplers: inputs.length === 3 ? ['A', 'B', 'C'] : ['A', 'B'],
       variables: [{name: 'alpha', type: 'float'}, {name: 'beta', type: 'float'}],
       shaderSource,
     };

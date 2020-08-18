@@ -2,11 +2,12 @@
 
 import {ReduceBase} from '../../../ops/reduce-op';
 import {Tensor} from '../../../tensor';
+import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
 abstract class WebGLGenericReduce extends ReduceBase implements WebGLOperator {
-  abstract getOps(inputs: Tensor[]): string[];
+  abstract getOps(inputs: Tensor[], axes: number[]): string[];
 
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     return inferenceHandler.run(this, inputs);
@@ -17,12 +18,13 @@ abstract class WebGLGenericReduce extends ReduceBase implements WebGLOperator {
 
     const idxCopy = [];  // copy output indexes to input indexes
 
-    const ops = this.getOps(inputs);  // [init ops, reduce ops, final ops]
+    const axes = ShapeUtil.normalizeAxes(this.axes, inputs[0].dims.length);
+    const ops = this.getOps(inputs, axes);  // [init ops, reduce ops, final ops]
     let reduceOps = ops[1];
 
     for (let k = 0; k < inputs[0].dims.length; k++) {
       // if this axis is reduced
-      if (this.axes.indexOf(k) >= 0 || this.axes.length === 0) {
+      if (axes.indexOf(k) >= 0 || axes.length === 0) {
         if (this.keepDims) {
           outputShape.push(1);
         }  // else { remove the axis from outputShape; }
@@ -78,10 +80,10 @@ export class WebGLReduceSum extends WebGLGenericReduce {
 }
 
 export class WebGLReduceMean extends WebGLGenericReduce {
-  getOps(inputs: Tensor[]): string[] {
+  getOps(inputs: Tensor[], axes: number[]): string[] {
     let size = 1.0;
     for (let k = 0; k < inputs[0].dims.length; k++) {
-      if (this.axes.indexOf(k) >= 0 || this.axes.length === 0) {
+      if (axes.indexOf(k) >= 0 || axes.length === 0) {
         size *= inputs[0].dims[k];
       }
     }
@@ -91,10 +93,10 @@ export class WebGLReduceMean extends WebGLGenericReduce {
 }
 
 export class WebGLReduceMax extends WebGLGenericReduce {
-  getOps(inputs: Tensor[]): string[] {
+  getOps(inputs: Tensor[], axes: number[]): string[] {
     const idxZero = [];
     for (let k = 0; k < inputs[0].dims.length; k++) {
-      if (this.axes.indexOf(k) >= 0 || this.axes.length === 0) {
+      if (axes.indexOf(k) >= 0 || axes.length === 0) {
         idxZero.push(`inputIdx[${k}] = 0;`);  // first element
       }
     }
@@ -104,10 +106,10 @@ export class WebGLReduceMax extends WebGLGenericReduce {
 }
 
 export class WebGLReduceMin extends WebGLGenericReduce {
-  getOps(inputs: Tensor[]): string[] {
+  getOps(inputs: Tensor[], axes: number[]): string[] {
     const idxZero = [];
     for (let k = 0; k < inputs[0].dims.length; k++) {
-      if (this.axes.indexOf(k) >= 0 || this.axes.length === 0) {
+      if (axes.indexOf(k) >= 0 || axes.length === 0) {
         idxZero.push(`inputIdx[${k}] = 0;`);  // first element
       }
     }

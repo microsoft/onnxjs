@@ -2,6 +2,7 @@
 
 import {Gather} from '../../../ops/gather';
 import {Tensor} from '../../../tensor';
+import {ShapeUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
@@ -19,22 +20,23 @@ export class WebGLGather extends Gather implements WebGLOperator {
       throw Error('A scalar tensor output has not been supported');
     }
 
+    const axis = ShapeUtil.normalizeAxis(this.axis, inputShape.length);
     const indexCopyOps: string[] = [];
     for (let i = 0; i < outputShape.length; i++) {
       // outputShape is divided into three parts: A, B, C
-      // |0         this.axis|           this.axis + indexDataShape.length|          end|
-      // |     A             |                     B                      |      C      |
+      // |0        axis|  axis + indexDataShape.length |          end|
+      // |     A       |             B                 |      C      |
       //
       // inputIdx: [A, inputs[1][B], C]
-      if (i < this.axis) {  // A
+      if (i < axis) {  // A
         outputShape[i] = inputShape[i];
         indexCopyOps.push(`inputIdx[${i}] = outputIdx[${i}];`);
       } else {
-        if (i < this.axis + indexDataShape.length) {  // B
-          outputShape[i] = indexDataShape[i - this.axis];
-          indexCopyOps.push(`indexDataIdx[${i - this.axis}] = outputIdx[${i}];`);
+        if (i < axis + indexDataShape.length) {  // B
+          outputShape[i] = indexDataShape[i - axis];
+          indexCopyOps.push(`indexDataIdx[${i - axis}] = outputIdx[${i}];`);
         } else {                                                       // C
-          outputShape[i] = inputShape[i - indexDataShape.length + 1];  // skip 1 for this.axis
+          outputShape[i] = inputShape[i - indexDataShape.length + 1];  // skip 1 for axis
           indexCopyOps.push(`inputIdx[${i - indexDataShape.length + 1}] = outputIdx[${i}];`);
         }
       }
@@ -48,7 +50,8 @@ export class WebGLGather extends Gather implements WebGLOperator {
         int inputIdx[${irank}];
         int indexDataIdx[${iDrank}];
         ${indexCopyOps.join('\n        ')}
-        inputIdx[${this.axis}] = int(_B(indexDataIdx));
+        int idx = int(_B(indexDataIdx));
+        inputIdx[${axis}] = idx < 0 ? idx + ${inputShape[axis]} : idx;
         return _A(inputIdx);
       }`;
     return {

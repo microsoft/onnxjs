@@ -17,7 +17,7 @@ import {OpSet, resolveOperator} from '../lib/opset';
 
 // tslint:disable: non-literal-fs-path
 
-https.get('https://raw.githubusercontent.com/onnx/onnx/v1.5.0/onnx/defs/operator_sets.h', res => {
+https.get('https://raw.githubusercontent.com/onnx/onnx/v1.7.0/onnx/defs/operator_sets.h', res => {
   const rl = readline.createInterface({input: res});
 
   const matcher = /class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME\(\s*(\w+),\s*(\d+),\s*(\w+)\)/;
@@ -73,7 +73,7 @@ https.get('https://raw.githubusercontent.com/onnx/onnx/v1.5.0/onnx/defs/operator
     doc.write(`| Operator | Cpu Backend | Wasm Backend | WebGl Backend |${EOL}`);
     doc.write(`|:--------:|:-----------:|:------------:|:-------------:|${EOL}`);
 
-    const VERSION_MAX = 10;
+    const VERSION_MAX = 12;
     for (const type of opTypes) {
       const versions = onnxOpset.get(type)!.sort((a, b) => a - b);
 
@@ -116,10 +116,7 @@ function formatDesc(opType: string, range: [number, number], support: boolean, l
   let versionDesc = '';
   if (support) {
     versionDesc = last ? `${range[0]}+` : range[0] === range[1] ? `${range[0]}` : `${range[0]}-${range[1]}`;
+    versionDesc = `[${versionDesc}](https://github.com/onnx/onnx/blob/master/docs/Changelog.md#${opType}-${range[0]})`;
   }
-  // if (!last) {
-  //   versionDesc =
-  //   `[${versionDesc}](https://github.com/onnx/onnx/blob/master/docs/Changelog.md#${opType}-${range[0]})`;
-  // }
   return versionDesc;
 }

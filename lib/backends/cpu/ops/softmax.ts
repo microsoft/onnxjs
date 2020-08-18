@@ -17,9 +17,9 @@ export function softmax(x: Tensor, axis: number): Tensor {
   const inputDimensions = x.dims;
   const inputRank = inputDimensions.length;
 
-  const axisCorrected = util.ShapeUtil.parseAxis(axis, inputRank);
-  const N = util.ShapeUtil.sizeToDimension(inputDimensions, axisCorrected);
-  const D = util.ShapeUtil.sizeFromDimension(inputDimensions, axisCorrected);
+  axis = util.ShapeUtil.normalizeAxis(axis, inputRank);
+  const N = util.ShapeUtil.sizeToDimension(inputDimensions, axis);
+  const D = util.ShapeUtil.sizeFromDimension(inputDimensions, axis);
 
   const X = x.numberData;
 

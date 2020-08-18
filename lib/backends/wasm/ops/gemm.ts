@@ -13,9 +13,9 @@ export class WasmGemm extends Gemm {
     const b = inputs[1];
     const c = inputs[2];
 
-    const [M, N] = GemmUtil.getShapeOfGemmResult(a.dims, this.transA, b.dims, this.transB, c.dims);
+    const [M, N] = GemmUtil.getShapeOfGemmResult(a.dims, this.transA, b.dims, this.transB, c?.dims);
     const y = new Tensor([M, N], a.type);
-    if (!BroadcastUtil.calc(y, c, (a, b) => (b), true)) {
+    if (c && !BroadcastUtil.calc(y, c, (a, b) => (b), true)) {
       throw new Error(`c is not broadcastable to the shape of the result of the Gemm operator`);
     }
     WasmBinding.getInstance().ccall(

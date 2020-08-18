@@ -180,9 +180,9 @@ export class WebGLSoftmax extends Softmax {
   }
   createProgramInfos(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo[] {
     const inputShape = inputs[0].dims.slice();
-    const axisCorrected = ShapeUtil.parseAxis(this.axis, inputShape.length);
-    const N = ShapeUtil.sizeToDimension(inputShape, axisCorrected);
-    const D = ShapeUtil.sizeFromDimension(inputShape, axisCorrected);
+    const axis = ShapeUtil.normalizeAxis(this.axis, inputShape.length);
+    const N = ShapeUtil.sizeToDimension(inputShape, axis);
+    const D = ShapeUtil.sizeFromDimension(inputShape, axis);
     const computeMaxProgramInfo = this.createComputeMaxProgramInfo(inferenceHandler, inputs[0], N, D, [N]);
     const computeScaleProgramInfo =
         this.createComputScaleProgramInfo(inferenceHandler, inputs[0], N, D, computeMaxProgramInfo.outputLayout, [N]);

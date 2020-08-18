@@ -3,17 +3,18 @@
 
 import {Split} from '../../../ops/split';
 import {Tensor} from '../../../tensor';
-import {SplitUtil} from '../../../util';
+import {ShapeUtil, SplitUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {Artifact, ProgramInfo, RunData} from '../types';
 
 export class WebGLSplit extends Split {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const count = this.getProgramCount(inferenceHandler, inputs);
     if (!this.artifacts) {
       this.artifacts = [];
+      const axis = ShapeUtil.normalizeAxis(this.axis, inputs[0].dims.length);
+      const count = this.getProgramCount(inferenceHandler, inputs, axis);
       for (let i = 0; i < count; ++i) {
-        const programInfo = this.createProgramInfo(inferenceHandler, inputs[0], i);
+        const programInfo = this.createProgramInfo(inferenceHandler, inputs[0], axis, i);
         const artifact = inferenceHandler.session.programManager.build(programInfo);
         this.artifacts.push(artifact);
       }
@@ -27,18 +28,18 @@ export class WebGLSplit extends Split {
     });
     return results;
   }
-  getProgramCount(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): number {
-    const [, offsets] = SplitUtil.splitShape(inputs[0].dims, this.axis, this.split, this.numOutputs);
+  getProgramCount(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[], axis: number): number {
+    const [, offsets] = SplitUtil.splitShape(inputs[0].dims, axis, this.split, this.numOutputs);
     return offsets.length;
   }
-  createProgramInfo(inferenceHandler: WebGLInferenceHandler, input: Tensor, index: number): ProgramInfo {
-    const [shapes, offsets] = SplitUtil.splitShape(input.dims, this.axis, this.split, this.numOutputs);
+  createProgramInfo(inferenceHandler: WebGLInferenceHandler, input: Tensor, axis: number, index: number): ProgramInfo {
+    const [shapes, offsets] = SplitUtil.splitShape(input.dims, axis, this.split, this.numOutputs);
     const offset = offsets[index];
     const outputShape = shapes[index];
     const rank = outputShape.length;
     const shaderSource = `
       float process(int indices[${rank}]) {
-        indices[${this.axis}] += ${offset};
+        indices[${axis}] += ${offset};
         return _A(indices);
       }`;
     return {

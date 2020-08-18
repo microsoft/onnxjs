@@ -30,6 +30,7 @@ import {CpuTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
 import {CpuUnaryOp} from './ops/unary-op';
 import {CpuUnsqueeze} from './ops/unsqueeze';
+import {CpuUpsample} from './ops/upsample';
 
 export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Abs', '', '6+', () => new CpuUnaryOp(NUMBER_TYPES, unaryOps.abs)],
@@ -100,5 +101,6 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Tile', '', '6+', () => new CpuTile()],
   ['Transpose', '', '1+', () => new CpuTranspose()],
   ['Unsqueeze', '', '1+', () => new CpuUnsqueeze()],
+  ['Upsample', '', '7-8', () => new CpuUpsample()],
   ['Xor', '', '7+', () => new CpuBinaryOp(['bool'], (e1, e2) => (e1 ^ e2))],
 ];

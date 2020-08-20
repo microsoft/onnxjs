@@ -38,15 +38,15 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Acosh', '', '9+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.acosh)],
   ['Add', '', '7+', () => new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 + e2))],
   ['And', '', '7+', () => new CpuBinaryOp(['bool'], (e1, e2) => (e1 && e2))],
-  ['ArgMax', '', '1+', () => new CpuArgMax()],
+  ['ArgMax', '', '1-11', () => new CpuArgMax()],
   ['Asin', '', '7+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.asin)],
   ['Asinh', '', '9+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.asinh)],
   ['Atan', '', '7+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.atan)],
   ['Atanh', '', '9+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.atanh)],
-  ['AveragePool', '', '7+', () => new CpuAveragePool()],  // TODO: support new attributes for AveragePool-10
+  ['AveragePool', '', '7-10', () => new CpuAveragePool()],  // TODO: support new attributes for AveragePool-10
   ['BatchNormalization', '', '7+', () => new CpuBatchNormalization()],
   ['Ceil', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.ceil)],
-  ['Clip', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.clip, unaryOps.clipInitializer)],
+  ['Clip', '', '6-10', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.clip, unaryOps.clipInitializer)],
   ['Concat', '', '4+', () => new CpuConcat()],
   ['Conv', '', '1+', () => new CpuConv()],
   ['Cos', '', '7+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.cos)],
@@ -58,7 +58,8 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Flatten', '', '1+', () => new CpuFlatten()],
   ['Floor', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.floor)],
   ['Gather', '', '1+', () => new CpuGather()],
-  ['Gemm', '', '7+', () => new CpuGemm()],
+  ['Gemm', '', '7-10', () => new CpuGemm(false)],
+  ['Gemm', '', '11+', () => new CpuGemm(true)],
   ['GlobalAveragePool', '', '1+', () => new CpuGlobalAveragePool()],
   ['GlobalMaxPool', '', '1+', () => new CpuGlobalMaxPool()],
   ['ImageScaler', '', '1+', () => new CpuImageScaler()],
@@ -68,7 +69,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Log', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.log)],
   ['LRN', '', '1+', () => new CpuLrn()],
   ['MatMul', '', '1+', () => new CpuMatMul()],
-  ['MaxPool', '', '1+', () => new CpuMaxPool()],  // TODO: support new attributes for MaxPool-8 and MaxPool-10
+  ['MaxPool', '', '1-9', () => new CpuMaxPool()],  // TODO: support new attributes for MaxPool-8 and MaxPool-10
   ['Mul', '', '7+', () => new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 * e2))],
   ['Neg', '', '6+', () => new CpuUnaryOp(NUMBER_TYPES, unaryOps.neg)],
   ['Not', '', '1+', () => new CpuUnaryOp(['bool'], unaryOps.not, undefined, 'bool')],

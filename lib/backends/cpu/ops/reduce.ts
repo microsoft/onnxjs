@@ -8,49 +8,49 @@ import {CpuInferenceHandler} from '../inference-handler';
 
 export class CpuReduceSum extends ReduceBase {
   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[]|Promise<Tensor[]> {
-    const output = reduceSum(inputs[0], this.axes, this.keepDims);
+    const output = reduceSum(inputs[0], ShapeUtil.normalizeAxes(this.axes, inputs[0].dims.length), this.keepDims);
     return [output];
   }
 }
 
 export class CpuReduceSumSquare extends ReduceBase {
   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const output = reduceSumSquare(inputs[0], this.axes, this.keepDims);
+    const output = reduceSumSquare(inputs[0], ShapeUtil.normalizeAxes(this.axes, inputs[0].dims.length), this.keepDims);
     return [output];
   }
 }
 
 export class CpuReduceLogSum extends ReduceBase {
   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const output = reduceLogSum(inputs[0], this.axes, this.keepDims);
+    const output = reduceLogSum(inputs[0], ShapeUtil.normalizeAxes(this.axes, inputs[0].dims.length), this.keepDims);
     return [output];
   }
 }
 
 export class CpuReduceMax extends ReduceBase {
   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const output = reduceMax(inputs[0], this.axes, this.keepDims);
+    const output = reduceMax(inputs[0], ShapeUtil.normalizeAxes(this.axes, inputs[0].dims.length), this.keepDims);
     return [output];
   }
 }
 
 export class CpuReduceMin extends ReduceBase {
   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const output = reduceMin(inputs[0], this.axes, this.keepDims);
+    const output = reduceMin(inputs[0], ShapeUtil.normalizeAxes(this.axes, inputs[0].dims.length), this.keepDims);
     return [output];
   }
 }
 
 export class CpuReduceMean extends ReduceBase {
   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const output = reduceMean(inputs[0], this.axes, this.keepDims);
+    const output = reduceMean(inputs[0], ShapeUtil.normalizeAxes(this.axes, inputs[0].dims.length), this.keepDims);
     return [output];
   }
 }
 
 export class CpuReduceProd extends ReduceBase {
   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const output = reduceProd(inputs[0], this.axes, this.keepDims);
+    const output = reduceProd(inputs[0], ShapeUtil.normalizeAxes(this.axes, inputs[0].dims.length), this.keepDims);
     return [output];
   }
 }

@@ -10,18 +10,20 @@ import {matMul2d} from './matmul';
 
 export class CpuGemm extends Gemm {
   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const output = gemm(inputs[0], inputs[1], inputs[2], this.alpha, this.beta, this.transA, this.transB);
+    const output = gemm(
+        inputs[0], inputs[1], this.alpha, this.beta, this.transA, this.transB,
+        inputs.length === 3 ? inputs[2] : undefined);
     return [output];
   }
 }
 
-export function gemm(a: Tensor, b: Tensor, c: Tensor, alpha: number, beta: number, transA: boolean, transB: boolean) {
-  const [M, N, K] = util.GemmUtil.getShapeOfGemmResult(a.dims, transA, b.dims, transB, c.dims);
+export function gemm(a: Tensor, b: Tensor, alpha: number, beta: number, transA: boolean, transB: boolean, c?: Tensor) {
+  const [M, N, K] = util.GemmUtil.getShapeOfGemmResult(a.dims, transA, b.dims, transB, c?.dims);
 
   // The result will always be of the shape [M,N]
   const output = new Tensor([M, N], a.type);
   // broadcast and assign value from C to output
-  if (util.BroadcastUtil.calc(output, c, (a, b) => b, true) !== output) {
+  if (c && util.BroadcastUtil.calc(output, c, (a, b) => b, true) !== output) {
     throw new Error(`tensor C is not broadcastable to [M,N]`);
   }
 

@@ -12,7 +12,7 @@ export class CpuArgMax extends ArgMax {
 
 export function argMax(x: Tensor, axis: number, keepdims: boolean): Tensor {
   const rank = x.dims ? x.dims.length : 1;
-  axis = ShapeUtil.parseAxis(axis, rank);
+  axis = ShapeUtil.normalizeAxis(axis, rank);
   const outputDims = ReduceUtil.calcReduceShape(x.dims, [axis], true);
   const X = x.data;
   const Y = new Int32Array(ShapeUtil.size(outputDims));

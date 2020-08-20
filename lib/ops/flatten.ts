@@ -18,11 +18,12 @@ export abstract class Flatten implements Operator {
       return false;
     }
 
-    if (inputs[0].dims.length === 0) {
+    const r = inputs[0].dims.length;
+    if (r === 0) {
       return false;  // scalar tensor is not supported
     }
 
-    if (this.axis < 0 || this.axis > inputs[0].dims.length) {
+    if (this.axis < -r || this.axis > r) {
       return false;
     }
 

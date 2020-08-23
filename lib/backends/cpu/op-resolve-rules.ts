@@ -76,6 +76,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Or', '', '7+', () => new CpuBinaryOp(['bool'], (e1, e2) => (e1 || e2))],
   ['PRelu', '', '7+', () => new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 >= 0 ? e1 : e1 * e2))],
   ['Pad', '', '2-10', () => new CpuPad()],
+  ['Pow', '', '7+', () => new CpuBinaryOp(NUMBER_TYPES, (e1, e2) => (e1 ** e2))],
   ['Reciprocal', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.reciprocal)],
   ['ReduceLogSum', '', '1+', () => new cpuReduce.CpuReduceLogSum()],
   ['ReduceMax', '', '1+', () => new cpuReduce.CpuReduceMax()],

@@ -7,6 +7,7 @@ import {OpSet} from '../../opset';
 import {CpuArgMax} from './ops/argMax';
 import {CpuBatchNormalization} from './ops/batch-normalization';
 import {CpuBinaryOp} from './ops/binary-op';
+import {CpuCast} from './ops/cast';
 import {CpuConcat} from './ops/concat';
 import {CpuConv} from './ops/conv';
 import {CpuDropout} from './ops/dropout';
@@ -22,6 +23,7 @@ import {CpuPad} from './ops/pad';
 import {CpuAveragePool, CpuGlobalAveragePool, CpuGlobalMaxPool, CpuMaxPool} from './ops/pool';
 import * as cpuReduce from './ops/reduce';
 import {CpuReshape} from './ops/reshape';
+import {CpuShape} from './ops/shape';
 import {CpuSlice, CpuSliceV10} from './ops/slice';
 import {CpuSoftmax} from './ops/softmax';
 import {CpuSqueeze} from './ops/squeeze';
@@ -32,8 +34,6 @@ import * as unaryOps from './ops/unary-op';
 import {CpuUnaryOp} from './ops/unary-op';
 import {CpuUnsqueeze} from './ops/unsqueeze';
 import {CpuUpsample, CpuUpsampleV9} from './ops/upsample';
-import {CpuShape} from './ops/shape';
-import {CpuCast} from './ops/cast';
 
 export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Abs', '', '6+', () => new CpuUnaryOp(NUMBER_TYPES, unaryOps.abs)],

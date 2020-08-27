@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {Shape} from '../../../ops/shape';
 import {Tensor} from '../../../tensor';
 import {CpuInferenceHandler} from '../inference-handler';
-import {Shape} from '../../../ops/shape';
 
 // import { getLogger } from 'log4js';
 

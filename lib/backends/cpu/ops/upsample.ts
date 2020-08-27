@@ -35,12 +35,8 @@ export class CpuUpsampleV9 extends UpsampleV9 {
 }
 
 function upsampleNearest(
-    xData: Tensor.DataTypeMap[Tensor.DataType],
-    yData: Tensor.DataTypeMap[Tensor.DataType],
-    xDims: ReadonlyArray<number>,
-    yDims: ReadonlyArray<number>,
-    scales: number[]
-) {
+    xData: Tensor.DataTypeMap[Tensor.DataType], yData: Tensor.DataTypeMap[Tensor.DataType],
+    xDims: ReadonlyArray<number>, yDims: ReadonlyArray<number>, scales: number[]) {
   const dim = xDims.length;
 
   const inputDimCounter = new Array<number>(dim);

@@ -48,3 +48,33 @@ export abstract class Upsample implements Operator {
   protected scales: number[];
   protected roi: number[];
 }
+
+export abstract class UpsampleV9 implements Operator {
+  abstract run(inferenceHandler: InferenceHandler, inputs: Tensor[]): Tensor[]|Promise<Tensor[]>;
+
+  initialize(attributes: Attribute): void {
+    this.mode = attributes.getString('mode', 'nearest');
+
+    if (this.mode !== 'nearest' && this.mode !== 'linear') {
+      throw new Error(`unrecognized mode: ${this.mode}`);
+    }
+  }
+
+  checkInputs(inputs: Tensor[]): boolean {
+    if (!inputs || inputs.length !== 2) {
+      return false;
+    }
+
+    return this.checkInputTypes(inputs);
+  }
+
+  protected checkInputTypes(inputs: Tensor[]): boolean {
+    if (inputs[0].type === 'string') {
+      return false;
+    }
+
+    return true;
+  }
+
+  protected mode: string;
+}

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {Upsample} from '../../../ops/upsample';
+import {Upsample, UpsampleV9} from '../../../ops/upsample';
 import {Tensor} from '../../../tensor';
 import {CpuInferenceHandler} from '../inference-handler';
 
@@ -19,9 +19,28 @@ export class CpuUpsample extends Upsample {
   }
 }
 
+export class CpuUpsampleV9 extends UpsampleV9 {
+  run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
+    const scales = inputs[1].floatData;
+    const xDims = inputs[0].dims;
+    const yDims = xDims.map((dim, i) => Math.floor(dim * scales[i]));
+    const y = new Tensor(yDims, inputs[0].type);
+    if (this.mode === 'nearest') {
+      upsampleNearest(inputs[0].data, y.data, xDims, yDims, [...scales]);
+    } else {
+      upsampleLinear(inputs[0].data, y.data, xDims, yDims, [...scales]);
+    }
+    return [y];
+  }
+}
+
 function upsampleNearest(
-    xData: Tensor.DataTypeMap[Tensor.DataType], yData: Tensor.DataTypeMap[Tensor.DataType],
-    xDims: ReadonlyArray<number>, yDims: ReadonlyArray<number>, scales: number[]) {
+    xData: Tensor.DataTypeMap[Tensor.DataType],
+    yData: Tensor.DataTypeMap[Tensor.DataType],
+    xDims: ReadonlyArray<number>,
+    yDims: ReadonlyArray<number>,
+    scales: number[]
+) {
   const dim = xDims.length;
 
   const inputDimCounter = new Array<number>(dim);

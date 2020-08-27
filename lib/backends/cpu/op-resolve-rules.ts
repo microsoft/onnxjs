@@ -10,6 +10,7 @@ import {CpuBinaryOp} from './ops/binary-op';
 import {CpuConcat} from './ops/concat';
 import {CpuConv} from './ops/conv';
 import {CpuDropout} from './ops/dropout';
+import {CpuExpand} from './ops/expand';
 import {CpuFlatten} from './ops/flatten';
 import {CpuGather} from './ops/gather';
 import {CpuGemm} from './ops/gemm';
@@ -30,7 +31,9 @@ import {CpuTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
 import {CpuUnaryOp} from './ops/unary-op';
 import {CpuUnsqueeze} from './ops/unsqueeze';
-import {CpuUpsample} from './ops/upsample';
+import {CpuUpsample, CpuUpsampleV9} from './ops/upsample';
+import {CpuShape} from './ops/shape';
+import {CpuCast} from './ops/cast';
 
 export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Abs', '', '6+', () => new CpuUnaryOp(NUMBER_TYPES, unaryOps.abs)],
@@ -45,6 +48,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Atanh', '', '9+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.atanh)],
   ['AveragePool', '', '7-10', () => new CpuAveragePool()],  // TODO: support new attributes for AveragePool-10
   ['BatchNormalization', '', '7+', () => new CpuBatchNormalization()],
+  ['Cast', '', '6+', () => new CpuCast()],
   ['Ceil', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.ceil)],
   ['Clip', '', '6-10', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.clip, unaryOps.clipInitializer)],
   ['Concat', '', '4+', () => new CpuConcat()],
@@ -55,6 +59,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Dropout', '', '7+', () => new CpuDropout()],
   ['Elu', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.elu, unaryOps.eluInitializer)],
   ['Exp', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.exp)],
+  ['Expand', '', '8+', () => new CpuExpand()],
   ['Flatten', '', '1+', () => new CpuFlatten()],
   ['Floor', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.floor)],
   ['Gather', '', '1+', () => new CpuGather()],
@@ -87,6 +92,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['ReduceSumSquare', '', '1+', () => new cpuReduce.CpuReduceSumSquare()],
   ['Relu', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.relu)],
   ['Reshape', '', '5+', () => new CpuReshape()],
+  ['Shape', '', '1+', () => new CpuShape()],
   ['Sigmoid', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.sigmoid)],
   ['Sign', '', '9+', () => new CpuUnaryOp(NUMBER_TYPES, unaryOps.sign)],
   ['Sin', '', '7+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.sin)],
@@ -104,5 +110,6 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Transpose', '', '1+', () => new CpuTranspose()],
   ['Unsqueeze', '', '1+', () => new CpuUnsqueeze()],
   ['Upsample', '', '7-8', () => new CpuUpsample()],
+  ['Upsample', '', '9', () => new CpuUpsampleV9()],
   ['Xor', '', '7+', () => new CpuBinaryOp(['bool'], (e1, e2) => (e1 ^ e2))],
 ];

@@ -21,6 +21,7 @@ import {CpuPad} from './ops/pad';
 import {CpuAveragePool, CpuGlobalAveragePool, CpuGlobalMaxPool, CpuMaxPool} from './ops/pool';
 import * as cpuReduce from './ops/reduce';
 import {CpuReshape} from './ops/reshape';
+import {CpuScatter} from './ops/scatter';
 import {CpuSlice, CpuSliceV10} from './ops/slice';
 import {CpuSoftmax} from './ops/softmax';
 import {CpuSqueeze} from './ops/squeeze';
@@ -104,4 +105,5 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Unsqueeze', '', '1+', () => new CpuUnsqueeze()],
   ['Upsample', '', '7-8', () => new CpuUpsample()],
   ['Xor', '', '7+', () => new CpuBinaryOp(['bool'], (e1, e2) => (e1 ^ e2))],
+  ['Scatter', '', '7+', () => new CpuScatter()],
 ];

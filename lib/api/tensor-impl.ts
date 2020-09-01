@@ -16,9 +16,6 @@ export class Tensor implements TensorInterface {
   internalTensor: InternalTensor;
   constructor(data: DataType|number[]|boolean[], type: Type, dims?: ReadonlyArray<number>) {
     const inferredDims = dims ? dims : [data.length];
-    if (data.length === 0) {
-      throw new RangeError(`Tensor data should contain at least one element.`);
-    }
     // convert regular arrays to typeArrays
     if (Array.isArray(data) && type !== 'string') {
       if (type === 'float32') {

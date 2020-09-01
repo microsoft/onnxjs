@@ -42,7 +42,7 @@ npmlog.verbose('TestRunnerCli.Init', `Loading whitelist... DONE`);
 // The default backends and opset version lists. Those will be used in suite tests.
 const DEFAULT_BACKENDS: ReadonlyArray<TestRunnerCliArgs.Backend> =
     args.env === 'node' ? ['cpu', 'wasm'] : ['cpu', 'wasm', 'webgl'];
-const DEFAULT_OPSET_VERSIONS: ReadonlyArray<number> = [10, 9, 8, 7];
+const DEFAULT_OPSET_VERSIONS: ReadonlyArray<number> = [12, 11, 10, 9, 8, 7];
 
 const FILE_CACHE_ENABLED = args.fileCache;         // whether to enable file cache
 const FILE_CACHE_MAX_FILE_SIZE = 1 * 1024 * 1024;  // The max size of the file that will be put into file cache

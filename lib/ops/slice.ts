@@ -3,7 +3,7 @@
 
 import {Attribute} from '../attribute';
 import {InferenceHandler} from '../backend';
-import {Operator} from '../operators';
+import {NUMBER_TYPES, Operator} from '../operators';
 import {Tensor} from '../tensor';
 
 export abstract class Slice implements Operator {
@@ -23,7 +23,7 @@ export abstract class Slice implements Operator {
   }
 
   protected checkInputTypes(inputs: Tensor[]): boolean {
-    if (inputs[0].type !== 'float32' && inputs[0].type !== 'float64') {
+    if (NUMBER_TYPES.indexOf(inputs[0].type) === -1) {
       return false;
     }
     return true;

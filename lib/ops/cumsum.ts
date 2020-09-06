@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-import { Attribute } from '../attribute';
-import { InferenceHandler } from '../backend';
-import { Operator } from '../operators';
-import { Tensor } from '../tensor';
+import {Attribute} from '../attribute';
+import {InferenceHandler} from '../backend';
+import {Operator} from '../operators';
+import {Tensor} from '../tensor';
 
 export abstract class CumSum implements Operator {
-  abstract run(inferenceHandler: InferenceHandler, inputs: Tensor[]): Tensor[] | Promise<Tensor[]>;
+  abstract run(inferenceHandler: InferenceHandler, inputs: Tensor[]): Tensor[]|Promise<Tensor[]>;
 
   initialize(attributes: Attribute): void {
     this.exclusive = attributes.getInt('exclusive', 0) === 1;

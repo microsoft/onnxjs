@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import { Tensor } from '../../../tensor';
-import { ShapeUtil } from '../../../util';
-import { CpuInferenceHandler } from '../inference-handler';
-import { CumSum } from '../../../ops/cumsum';
+import {CumSum} from '../../../ops/cumsum';
+import {Tensor} from '../../../tensor';
+import {ShapeUtil} from '../../../util';
+import {CpuInferenceHandler} from '../inference-handler';
 
 export class CpuCumSum extends CumSum {
   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {

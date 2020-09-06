@@ -28,6 +28,7 @@ import {CpuSlice, CpuSliceV10} from './ops/slice';
 import {CpuSoftmax} from './ops/softmax';
 import {CpuSqueeze} from './ops/squeeze';
 import {CpuSum} from './ops/sum';
+import {CpuCumSum} from './ops/cumsum';
 import {CpuTile} from './ops/tile';
 import {CpuTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
@@ -112,4 +113,5 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Upsample', '', '7-8', () => new CpuUpsample()],
   ['Upsample', '', '9', () => new CpuUpsampleV9()],
   ['Xor', '', '7+', () => new CpuBinaryOp(['bool'], (e1, e2) => (e1 ^ e2))],
+  ['CumSum', '', '11+', () => new CpuCumSum()],
 ];

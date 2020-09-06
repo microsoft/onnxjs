@@ -13,6 +13,7 @@ import {WasmMatMul} from './ops/matmul';
 import {WasmAveragePool, WasmGlobalAveragePool, WasmGlobalMaxPool, WasmMaxPool} from './ops/pool';
 import {WasmSoftmax} from './ops/softmax';
 import {WasmSum} from './ops/sum';
+import {WasmCumSum} from './ops/cumsum';
 
 export const WASM_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Add', '', '7+', () => new WasmBinaryOp(['float32'], 'Add')],
@@ -36,4 +37,5 @@ export const WASM_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Sub', '', '7+', () => new WasmBinaryOp(['float32'], 'Sub')],
   ['Sum', '', '6+', () => new WasmSum()],  // TODO: support multidirectional broadcast for Sum-8
   ['Xor', '', '7+', () => new WasmBinaryOp(['bool'], 'Xor')],
+  ['CumSum', '', '11+', () => new WasmCumSum()],
 ];

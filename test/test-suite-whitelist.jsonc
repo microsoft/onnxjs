@@ -265,7 +265,8 @@
       "softmax.jsonc",
       "tan.jsonc",
       "transpose.jsonc",
-      "xor.jsonc"
+      "xor.jsonc",
+      "cumsum.jsonc"
     ]
   },
   "webgl": {
@@ -527,7 +528,8 @@
       "sub.jsonc",
       "tan.jsonc",
       "transpose.jsonc",
-      "xor.jsonc"
+      "xor.jsonc",
+      "cumsum.jsonc"
     ]
   },
   "wasm": {
@@ -639,7 +641,8 @@
       "and.jsonc",
       "or.jsonc",
       "xor.jsonc",
-      "matmul.jsonc"
+      "matmul.jsonc",
+      "cumsum.jsonc"
     ]
   }
 }

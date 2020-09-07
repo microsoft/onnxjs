@@ -21,15 +21,13 @@ export abstract class Einsum implements Operator {
     }
 
     const lhsSplit = this.lhs.split(',');
-    this.input1 = lhsSplit[0].trim();
-    if (lhsSplit.length === 2) {
-      this.input2 = lhsSplit[1].trim();
+    this.inputs = lhsSplit.map(v => v.trim());
+
+    for (let i = 0; i < this.inputs.length; i++) {
+      this.inputNames.push([]);
+      this.parseEquationPart(this.inputs[i], this.inputNames[i]);
     }
 
-    this.parseEquationPart(this.input1, this.input1Names);
-    if (this.input2) {
-      this.parseEquationPart(this.input2, this.input2Names);
-    }
     if (this.rhs) {
       this.parseEquationPart(this.rhs, this.outputNames);
     }
@@ -48,9 +46,8 @@ export abstract class Einsum implements Operator {
   }
 
   protected matchInputs(inputs: Tensor[], dimensionSizeMap: {[name: string]: number}) {
-    this.matchDimensions(this.input1Names, inputs[0].dims, dimensionSizeMap);
-    if (this.input2) {
-      this.matchDimensions(this.input2Names, inputs[1].dims, dimensionSizeMap);
+    for (let i = 0; i < inputs.length; i++) {
+      this.matchDimensions(this.inputNames[i], inputs[i].dims, dimensionSizeMap);
     }
   }
 
@@ -65,18 +62,14 @@ export abstract class Einsum implements Operator {
   checkInputs(inputs: Tensor[]): boolean {
     const dimensionMap: {[id: string]: number} = {};
 
-    if (inputs.length < 1 || inputs.length > 2) {
+    if (inputs.length !== this.inputs.length) {
       return false;
     }
 
-    if (!this.matchDimensions(this.input1Names, inputs[0].dims, dimensionMap)) {
-      return false;
-    }
-
-    if (this.input2 && inputs.length < 2) {
-      return false;
-    } else if (this.input2 && !this.matchDimensions(this.input2Names, inputs[1].dims, dimensionMap)) {
-      return false;
+    for (let i = 0; i < inputs.length; i++) {
+      if (!this.matchDimensions(this.inputNames[i], inputs[i].dims, dimensionMap)) {
+        return false;
+      }
     }
 
     return this.checkInputTypes(inputs);
@@ -98,14 +91,16 @@ export abstract class Einsum implements Operator {
 
   protected checkInputTypes(inputs: Tensor[]): boolean {
     const allowedTypes = ['float32', 'float64', 'int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32'];
-    if (allowedTypes.indexOf(inputs[0].type) === -1 ||
-        (inputs.length > 1 && allowedTypes.indexOf(inputs[1].type) === -1)) {
+
+    if (inputs.find((v) => allowedTypes.indexOf(v.type) === -1) !== undefined) {
       return false;
     }
 
-    if (inputs.length > 1 && inputs[0].type !== inputs[1].type) {
+    const types = inputs.map(v => v.type)
+    if (types.find(v => v !== types[0]) !== undefined) {
       return false;
     }
+
     return true;
   }
 
@@ -113,13 +108,10 @@ export abstract class Einsum implements Operator {
   protected lhs: string;
   protected rhs?: string;
 
-  protected input1: string;
-  protected input2?: string;
+  protected inputs: string[] = [];
 
-  // Maps from input 1 axis to general axis id
-  protected input1Names: string[] = [];
-  // Maps from input 2 axis to general axis id
-  protected input2Names: string[] = [];
+  // The i-th string[] Maps from input axis i to general axis id
+  protected inputNames: string[][] = [];
 
   // Maps from output axis to general axis id
   protected outputNames: string[] = [];

@@ -26,30 +26,27 @@ export class CpuEinsum extends Einsum {
     }
 
     const outputIndices: number[] = [];
-    const input1Indices: number[] = [];
-    const input2Indices: number[] = [];
+    const inputIndices: number[][] = [];
     for (const outputName of this.outputNames) {
       outputIndices.push(nameToId[outputName]);
     }
-    for (const inputName of this.input1Names) {
-      input1Indices.push(nameToId[inputName]);
-    }
-    if (this.input2) {
-      for (const inputName of this.input2Names) {
-        input2Indices.push(nameToId[inputName]);
+    for (let i = 0; i < this.inputs.length; i++) {
+      const indices = [];
+      for (const inputName of this.inputNames[i]) {
+        indices.push(nameToId[inputName]);
       }
+      inputIndices.push(indices);
     }
 
-    const result =
-        einsum(outputShape, inputs, sizes, outputIndices, input1Indices, this.input2 ? input2Indices : undefined);
+    const result = einsum(outputShape, inputs, sizes, outputIndices, inputIndices);
 
     return [result];
   }
 }
 
 export function einsum(
-    outputShape: number[], inputs: Tensor[], sizes: number[], outputIndices: number[], input1Indices: number[],
-    input2Indices?: number[]): Tensor {
+    outputShape: number[], inputs: Tensor[], sizes: number[], outputIndices: number[],
+    inputIndices: number[][]): Tensor {
   const result = new Tensor(outputShape, inputs[0].type);
   const totalSize = ShapeUtil.size(sizes);
   let i = 0;
@@ -61,17 +58,13 @@ export function einsum(
       outputIx.push(index[outputIndex]);
     }
 
-    const input1Ix: number[] = [];
-    for (const input1Index of input1Indices) {
-      input1Ix.push(index[input1Index]);
-    }
-    let value = inputs[0].get(input1Ix) as number;
-    if (input2Indices) {
-      const input2Ix: number[] = [];
-      for (const input2Index of input2Indices) {
-        input2Ix.push(index[input2Index]);
+    let value = 1;
+    for (let i = 0; i < inputIndices.length; i++) {
+      const inputIx: number[] = [];
+      for (const inputIndex of inputIndices[i]) {
+        inputIx.push(index[inputIndex]);
       }
-      value *= inputs[1].get(input2Ix) as number;
+      value *= inputs[i].get(inputIx) as number;
     }
 
     result.set(outputIx, result.get(outputIx) as number + value);

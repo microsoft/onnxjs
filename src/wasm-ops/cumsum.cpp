@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+#include "cumsum.h"
 #include "common.h"
-#include "sum.h"
 #include "utils/shape_utils.h"
 
 // Wasm interop method

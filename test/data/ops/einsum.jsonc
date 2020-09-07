@@ -117,5 +117,119 @@
         ]
       }
     ]
+  },
+  {
+    "name": "Einsum inner product",
+    "operator": "Einsum",
+    "opsets": [
+      {
+        "domain": "",
+        "version": 12
+      }
+    ],
+    "attributes": [{ "name": "equation", "data": "i,i", "type": "string" }],
+    "cases": [
+      {
+        "name": "BMM",
+        "inputs": [
+          {
+            "data": [1, 2, 3, 4, 5],
+            "dims": [5],
+            "type": "float32"
+          },
+          {
+            "data": [1, 2, 3, 4, 5],
+            "dims": [5],
+            "type": "float32"
+          }
+        ],
+        "outputs": [
+          {
+            "data": [55],
+            "dims": [],
+            "type": "float32"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Einsum batch diagonal",
+    "operator": "Einsum",
+    "opsets": [
+      {
+        "domain": "",
+        "version": 12
+      }
+    ],
+    "attributes": [{ "name": "equation", "data": "bii->bi", "type": "string" }],
+    "cases": [
+      {
+        "name": "BMM",
+        "inputs": [
+          {
+            "data": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18
+            ],
+            "dims": [2, 3, 3],
+            "type": "float32"
+          }
+        ],
+        "outputs": [
+          {
+            "data": [1, 5, 9, 10, 14, 18],
+            "dims": [2, 3],
+            "type": "float32"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Einsum sum",
+    "operator": "Einsum",
+    "opsets": [
+      {
+        "domain": "",
+        "version": 12
+      }
+    ],
+    "attributes": [{ "name": "equation", "data": "ij->i", "type": "string" }],
+    "cases": [
+      {
+        "name": "BMM",
+        "inputs": [
+          {
+            "data": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            "dims": [3, 4],
+            "type": "float32"
+          }
+        ],
+        "outputs": [
+          {
+            "data": [10, 26, 42],
+            "dims": [3],
+            "type": "float32"
+          }
+        ]
+      }
+    ]
   }
 ]

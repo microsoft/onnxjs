@@ -16,34 +16,7 @@ export class WasmEinsum extends Einsum {
   }
 
   run(inferenceHandler: WasmInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const dimensionSizeMap: {[name: string]: number} = {};
-    this.matchInputs(inputs, dimensionSizeMap);
-    const outputShape = this.calculateOutputSize(dimensionSizeMap);
-
-    let i = 0;
-    const sizes = [];
-    const nameToId: {[name: string]: number} = {};
-    const idToName: {[id: number]: string} = {};
-
-    for (const name in dimensionSizeMap) {
-      sizes.push(dimensionSizeMap[name]);
-      nameToId[name] = i;
-      idToName[i] = name;
-      i++;
-    }
-
-    const outputIndices: number[] = [];
-    const inputIndices: number[][] = [];
-    for (const outputName of this.outputNames) {
-      outputIndices.push(nameToId[outputName]);
-    }
-    for (let i = 0; i < this.inputs.length; i++) {
-      const indices = [];
-      for (const inputName of this.inputNames[i]) {
-        indices.push(nameToId[inputName]);
-      }
-      inputIndices.push(indices);
-    }
+    const {outputShape, sizes, outputIndices, inputIndices} = this.prepareRun(inputs);
 
     const y = new Tensor(outputShape, inputs[0].type);
 

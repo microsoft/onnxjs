@@ -9,6 +9,39 @@ import {Tensor} from '../tensor';
 export abstract class Einsum implements Operator {
   abstract run(inferenceHandler: InferenceHandler, inputs: Tensor[]): Tensor[]|Promise<Tensor[]>;
 
+  prepareRun(inputs: Tensor[]) {
+    const dimensionSizeMap: {[name: string]: number} = {};
+    this.matchInputs(inputs, dimensionSizeMap);
+    const outputShape = this.calculateOutputSize(dimensionSizeMap);
+
+    let i = 0;
+    const sizes = [];
+    const nameToId: {[name: string]: number} = {};
+    const idToName: {[id: number]: string} = {};
+
+    for (const name in dimensionSizeMap) {
+      sizes.push(dimensionSizeMap[name]);
+      nameToId[name] = i;
+      idToName[i] = name;
+      i++;
+    }
+
+    const outputIndices: number[] = [];
+    const inputIndices: number[][] = [];
+    for (const outputName of this.outputNames) {
+      outputIndices.push(nameToId[outputName]);
+    }
+    for (let i = 0; i < this.inputs.length; i++) {
+      const indices = [];
+      for (const inputName of this.inputNames[i]) {
+        indices.push(nameToId[inputName]);
+      }
+      inputIndices.push(indices);
+    }
+
+    return {outputShape, sizes, outputIndices, inputIndices};
+  }
+
   initialize(attributes: Attribute): void {
     this.equation = attributes.getString('equation');
     const split = this.equation.split('->');

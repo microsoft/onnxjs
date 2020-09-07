@@ -100,7 +100,7 @@
     ],
     "cases": [
       {
-        "name": "BMM",
+        "name": "Transpose",
         "inputs": [
           {
             "data": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -130,7 +130,7 @@
     "attributes": [{ "name": "equation", "data": "i,i", "type": "string" }],
     "cases": [
       {
-        "name": "BMM",
+        "name": "Inner product",
         "inputs": [
           {
             "data": [1, 2, 3, 4, 5],
@@ -165,7 +165,7 @@
     "attributes": [{ "name": "equation", "data": "bii->bi", "type": "string" }],
     "cases": [
       {
-        "name": "BMM",
+        "name": "Diagonal",
         "inputs": [
           {
             "data": [
@@ -214,7 +214,7 @@
     "attributes": [{ "name": "equation", "data": "ij->i", "type": "string" }],
     "cases": [
       {
-        "name": "BMM",
+        "name": "Sum",
         "inputs": [
           {
             "data": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],

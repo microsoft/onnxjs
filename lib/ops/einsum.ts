@@ -129,7 +129,7 @@ export abstract class Einsum implements Operator {
       return false;
     }
 
-    const types = inputs.map(v => v.type)
+    const types = inputs.map(v => v.type);
     if (types.find(v => v !== types[0]) !== undefined) {
       return false;
     }

@@ -8,6 +8,7 @@ import {CpuConv} from '../../../../lib/backends/cpu/ops/conv';
 import {Profiler} from '../../../../lib/instrument';
 import {Tensor} from '../../../../lib/tensor';
 import {TensorResultValidator} from '../../../test-runner';
+import {createMockGraph} from '../../../test-shared';
 
 const validator = new TensorResultValidator('webgl');
 let webglBackend: Backend|undefined;
@@ -28,8 +29,8 @@ function webglConv(
     attributes.set('pads', 'ints', pads);
   }
   attributes.set('strides', 'ints', strides);
-  const op = webglSessionhandler!.resolve(
-      {opType: 'Conv', attributes, inputs: [], outputs: [], name: `Conv`}, [{domain: '', version: 7}]);
+  const graph = createMockGraph('Conv', attributes);
+  const op = webglSessionhandler!.resolve(graph.getNodes()[0], [{domain: '', version: 7}], graph);
   if (!op.checkInputs([inputTensor, kernelTensor])) {
     throw new Error('Invalid inputs');
   }

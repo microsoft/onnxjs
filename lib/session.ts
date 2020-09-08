@@ -232,7 +232,7 @@ export class Session {
     this._ops = new Array(nodes.length);
 
     for (let i = 0; i < nodes.length; i++) {
-      this._ops[i] = this.sessionHandler.resolve(nodes[i], this._model.opsets);
+      this._ops[i] = this.sessionHandler.resolve(nodes[i], this._model.opsets, graph);
     }
   }
 

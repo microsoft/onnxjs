@@ -3,10 +3,11 @@
 
 import {Attribute} from './attribute';
 import {InferenceHandler} from './backend';
+import {Graph} from './graph';
 import {Tensor} from './tensor';
 
 export interface Operator {
-  initialize(attributes: Attribute): void;
+  initialize(attributes: Attribute, node: Graph.Node, graph: Graph): void;
   checkInputs(inputs: Tensor[]): boolean;
   run(inferenceHandler: InferenceHandler, inputs: Tensor[]): Tensor[]|Promise<Tensor[]>;
 }

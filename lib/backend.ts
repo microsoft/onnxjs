@@ -32,16 +32,16 @@ export interface SessionHandler {
 
   /**
    * Resolves the operator from the name and opset version; backend specific
-   * @param node
-   * @param opsets
+   * @param node the node to resolve
+   * @param opsets a list of opsets that exported from the model
+   * @param graph the completely initialized graph
    */
+  resolve(node: Graph.Node, opsets: ReadonlyArray<OpSet>, graph: Graph): Operator;
 
-  resolve(node: Graph.Node, opsets: ReadonlyArray<OpSet>): Operator;
   /**
    * This method let's the sessionHandler know that the graph initialization is complete
    * @param graph the completely initialized graph
    */
-
   onGraphInitialized?(graph: Graph): void;
 
   /**

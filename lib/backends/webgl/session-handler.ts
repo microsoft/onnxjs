@@ -56,9 +56,9 @@ export class WebGLSessionHandler implements SessionHandler {
     this.textureDataCache.forEach(td => this.textureManager.releaseTexture(td, true));
     this.textureDataCache = new Map();
   }
-  resolve(node: Graph.Node, opsets: ReadonlyArray<OpSet>): Operator {
+  resolve(node: Graph.Node, opsets: ReadonlyArray<OpSet>, graph: Graph): Operator {
     const op = resolveOperator(node, opsets, WEBGL_OP_RESOLVE_RULES);
-    op.initialize(node.attributes);
+    op.initialize(node.attributes, node, graph);
     return op;
   }
 }

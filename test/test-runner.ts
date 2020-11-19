@@ -16,7 +16,7 @@ import {Logger, Profiler} from '../lib/instrument';
 import {Operator} from '../lib/operators';
 import {Tensor} from '../lib/tensor';
 
-import {base64toBuffer} from './test-shared';
+import {base64toBuffer, createMockGraph} from './test-shared';
 import {Test} from './test-types';
 
 // the threshold that used to compare 2 float numbers. See above for TensorResultValidator.floatEqual().
@@ -301,7 +301,8 @@ function initializeOperator(
     opsetImports: ReadonlyArray<Test.OperatorTestOpsetImport>): Operator {
   const attributes = new Attribute(undefined);
   attributeValues.forEach(value => attributes.set(value.name, value.type, value.data));
-  return sessionHandler.resolve({name: '', opType, inputs: [], outputs: [], attributes}, opsetImports);
+  const graph = createMockGraph(opType, attributes);
+  return sessionHandler.resolve(graph.getNodes()[0], opsetImports, graph);
 }
 
 /**

@@ -3,7 +3,7 @@
 
 import {Attribute} from '../attribute';
 import {InferenceHandler} from '../backend';
-import {NUMBER_TYPES, Operator} from '../operators';
+import {Operator} from '../operators';
 import {Tensor} from '../tensor';
 import {ProtoUtil} from '../util';
 
@@ -25,7 +25,7 @@ export abstract class Cast implements Operator {
   }
 
   protected checkInputTypes(inputs: Tensor[]): boolean {
-    if (NUMBER_TYPES.indexOf(inputs[0].type) === -1) {
+    if (inputs[0].type === 'string') {
       return false;
     }
     return true;

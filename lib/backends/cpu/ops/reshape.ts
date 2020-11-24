@@ -16,7 +16,7 @@ export class CpuReshape extends Reshape {
 export function reshape(x: Tensor, shape: Tensor): Tensor {
   const reshapedDims = ShapeUtil.calculateReshapedDims(x.dims, shape.integerData);
   const output = new Tensor(reshapedDims, x.type);
-  const Y = output.floatData;
-  Y.set(x.floatData);
+  const Y = output.numberData;
+  Y.set(x.numberData);
   return output;
 }

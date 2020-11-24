@@ -71,6 +71,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['InstanceNormalization', '', '6+', () => new CpuInstanceNormalization()],
   ['IsNaN', '', '9+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.isNan, undefined, 'bool')],
   ['LeakyRelu', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.leakyRelu, unaryOps.leakyReluInitializer)],
+  ['Less', '', '7+', () => new CpuBinaryOp(NUMBER_TYPES, (a, b) => a < b ? 1 : 0, undefined, 'bool')],
   ['Log', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.log)],
   ['LRN', '', '1+', () => new CpuLrn()],
   ['MatMul', '', '1+', () => new CpuMatMul()],

@@ -16,10 +16,6 @@ export class WebGLGather extends Gather implements WebGLOperator {
     const indexDataShape = inputs[1].dims.slice();
     const outputShape = new Array(inputShape.length + indexDataShape.length - 1);
 
-    if (outputShape.length === 0) {
-      throw Error('A scalar tensor output has not been supported');
-    }
-
     const axis = ShapeUtil.normalizeAxis(this.axis, inputShape.length);
     const indexCopyOps: string[] = [];
     for (let i = 0; i < outputShape.length; i++) {
@@ -42,13 +38,14 @@ export class WebGLGather extends Gather implements WebGLOperator {
       }
     }
 
-    const orank = outputShape.length;
+    const orank = outputShape.length || 1;
     const irank = inputShape.length;
-    const iDrank = indexDataShape.length;
+    const iDrank = indexDataShape.length || 1;
     const shaderSource = `
       float process(int outputIdx[${orank}]) {
         int inputIdx[${irank}];
         int indexDataIdx[${iDrank}];
+        indexDataIdx[0] = 0;
         ${indexCopyOps.join('\n        ')}
         int idx = int(_B(indexDataIdx));
         inputIdx[${axis}] = idx < 0 ? idx + ${inputShape[axis]} : idx;

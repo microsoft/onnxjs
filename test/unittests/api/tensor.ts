@@ -12,13 +12,11 @@ describe('#UnitTest# - API - Tensor constructors', () => {
     t = new Tensor([2, 3], 'int32');              // ok, a int32-typed 1D tensor with 2 elements
     t = new Tensor(new Int32Array(10), 'int32');  // ok, a int32-typed 1D tensor with 10 elements
     t = new Tensor(['a', 'b', 'c'], 'string');    // ok, a string-typed 1D tensor with 3 elements
+    t = new Tensor([], 'float32');                // ok, a zero-sized 1D tensor
 
     expect(() => {
       t = new Tensor(new Int32Array(10), 'float32');  // throws TypeError. data and type don't match.
     }).to.throw(TypeError);
-    expect(() => {
-      t = new Tensor([], 'float32');  // throws RangeError. tensor data should contain at least one element.
-    }).to.throw(RangeError);
   });
 
   it('2. Create a new Tensor with type and dims', () => {

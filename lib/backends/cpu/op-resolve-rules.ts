@@ -34,6 +34,7 @@ import * as unaryOps from './ops/unary-op';
 import {CpuUnaryOp} from './ops/unary-op';
 import {CpuUnsqueeze} from './ops/unsqueeze';
 import {CpuUpsample, CpuUpsampleV9} from './ops/upsample';
+import {CpuLogSoftmax} from './ops/log-softmax';
 
 export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Abs', '', '6+', () => new CpuUnaryOp(NUMBER_TYPES, unaryOps.abs)],
@@ -72,6 +73,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['IsNaN', '', '9+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.isNan, undefined, 'bool')],
   ['LeakyRelu', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.leakyRelu, unaryOps.leakyReluInitializer)],
   ['Log', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.log)],
+  ['LogSoftmax', '', '1+', () => new CpuLogSoftmax()],
   ['LRN', '', '1+', () => new CpuLrn()],
   ['MatMul', '', '1+', () => new CpuMatMul()],
   ['MaxPool', '', '1-9', () => new CpuMaxPool()],  // TODO: support new attributes for MaxPool-8 and MaxPool-10

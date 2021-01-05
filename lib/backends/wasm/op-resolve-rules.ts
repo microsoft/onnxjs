@@ -15,7 +15,7 @@ import {WasmSoftmax} from './ops/softmax';
 import {WasmSum} from './ops/sum';
 
 export const WASM_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
-  ['Add', '', '7+', () => new WasmBinaryOp(['float32'], 'Add')],
+  ['Add', '', '7+', () => new WasmBinaryOp(['float32', 'int32'], 'Add')],
   ['And', '', '7+', () => new WasmBinaryOp(['bool'], 'And')],
   ['AveragePool', '', '7-10', () => new WasmAveragePool()],  // TODO: support new attributes for AveragePool-10
   ['BatchNormalization', '', '7+', () => new WasmBatchNormalization()],
@@ -29,11 +29,11 @@ export const WASM_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['InstanceNormalization', '', '6+', () => new WasmInstanceNormalization()],
   ['MatMul', '', '1+', () => new WasmMatMul()],
   ['MaxPool', '', '1-9', () => new WasmMaxPool()],  // TODO: support new attributes for MaxPool-8 and MaxPool-10
-  ['Mul', '', '7+', () => new WasmBinaryOp(['float32'], 'Mul')],
+  ['Mul', '', '7+', () => new WasmBinaryOp(['float32', 'int32'], 'Mul')],
   ['Or', '', '7+', () => new WasmBinaryOp(['bool'], 'Or')],
   ['PRelu', '', '7+', () => new WasmBinaryOp(['float32'], 'PRelu')],
   ['Softmax', '', '1+', () => new WasmSoftmax()],
-  ['Sub', '', '7+', () => new WasmBinaryOp(['float32'], 'Sub')],
+  ['Sub', '', '7+', () => new WasmBinaryOp(['float32', 'int32'], 'Sub')],
   ['Sum', '', '6+', () => new WasmSum()],  // TODO: support multidirectional broadcast for Sum-8
   ['Xor', '', '7+', () => new WasmBinaryOp(['bool'], 'Xor')],
 ];

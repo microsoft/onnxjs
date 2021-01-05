@@ -267,6 +267,7 @@ export class WasmBinding {
   // retrieve data parameters (in/inout) from emscripten heap after ccall()
   static ccallDeserialize(buffer: Uint8Array, offset: number[], params: WasmCallArgument[]) {
     const heapF32 = new Float32Array(buffer.buffer, buffer.byteOffset);
+    const heapI32 = new Int32Array(buffer.buffer, buffer.byteOffset);
     const heapU8 = new Uint8Array(buffer.buffer, buffer.byteOffset);
 
     for (let i = 0; i < params.length; i++) {
@@ -287,6 +288,10 @@ export class WasmBinding {
         case 'float32ptr':
           const float32Array = (paramData as Float32Array);
           float32Array.set(heapF32.subarray(offset32, offset32 + float32Array.length));
+          break;
+        case 'int32ptr':
+          const int32Array = (paramData as Int32Array);
+          int32Array.set(heapI32.subarray(offset32, offset32 + int32Array.length));
           break;
         case 'boolptr':
           const boolArray = (paramData as Uint8Array);

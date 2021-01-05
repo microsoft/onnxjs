@@ -40,6 +40,29 @@ void prelu_f32(void *data) {
   float *output = PARAM_FLOAT_PTR(data, dataIndex[7]);
   binary_imp<float, PRelu>(data, input_1, input_2, output);
 }
+
+void add_i32(void *data) {
+  uint32_t *dataIndex = static_cast<uint32_t *>(data);
+  const int32_t *input_1 = PARAM_INT32_PTR(data, dataIndex[1]);
+  const int32_t *input_2 = PARAM_INT32_PTR(data, dataIndex[4]);
+  int32_t *output = PARAM_INT32_PTR(data, dataIndex[7]);
+  binary_imp<int32_t, Add>(data, input_1, input_2, output);
+}
+void sub_i32(void *data) {
+  uint32_t *dataIndex = static_cast<uint32_t *>(data);
+  const int32_t *input_1 = PARAM_INT32_PTR(data, dataIndex[1]);
+  const int32_t *input_2 = PARAM_INT32_PTR(data, dataIndex[4]);
+  int32_t *output = PARAM_INT32_PTR(data, dataIndex[7]);
+  binary_imp<int32_t, Sub>(data, input_1, input_2, output);
+}
+void mul_i32(void *data) {
+  uint32_t *dataIndex = static_cast<uint32_t *>(data);
+  const int32_t *input_1 = PARAM_INT32_PTR(data, dataIndex[1]);
+  const int32_t *input_2 = PARAM_INT32_PTR(data, dataIndex[4]);
+  int32_t *output = PARAM_INT32_PTR(data, dataIndex[7]);
+  binary_imp<int32_t, Mul>(data, input_1, input_2, output);
+}
+
 void xor_u8(void *data) {
   uint32_t *dataIndex = static_cast<uint32_t *>(data);
   const uint8_t *input_1 = PARAM_BOOL_PTR(data, dataIndex[1]);

@@ -25,18 +25,27 @@ export class WasmBinaryOp extends BinaryOp {
         if (inputs[0].type === 'float32') {
           fun = '_add_f32';
           binaryOpType = 'float32InFloat32Out';
+        } else if (inputs[0].type === 'int32') {
+          fun = '_add_i32';
+          binaryOpType = 'int32InInt32Out';
         }
         break;
       case 'Sub':
         if (inputs[0].type === 'float32') {
           fun = '_sub_f32';
           binaryOpType = 'float32InFloat32Out';
+        } else if (inputs[0].type === 'int32') {
+          fun = '_sub_i32';
+          binaryOpType = 'int32InInt32Out';
         }
         break;
       case 'Mul':
         if (inputs[0].type === 'float32') {
           fun = '_mul_f32';
           binaryOpType = 'float32InFloat32Out';
+        } else if (inputs[0].type === 'int32') {
+          fun = '_mul_i32';
+          binaryOpType = 'int32InInt32Out';
         }
         break;
       case 'Div':
@@ -74,6 +83,14 @@ export class WasmBinaryOp extends BinaryOp {
           [inputs[1].floatData, 'float32ptr'], [inputs[1].dims.length, 'int32'], [inputs[1].dims, 'int32ptr'],
           [result.floatData, 'float32ptr', 'out'], [result.floatData.length, 'int32'], [outputShape.length, 'int32'],
           [outputShape, 'int32ptr']);
+    } else if (binaryOpType === 'int32InInt32Out') {
+      result = new Tensor(outputShape, 'int32');
+      WasmBinding.getInstance().ccall(
+          fun, [inputs[0].integerData as Int32Array, 'int32ptr'], [inputs[0].dims.length, 'int32'],
+          [inputs[0].dims, 'int32ptr'], [inputs[1].integerData as Int32Array, 'int32ptr'],
+          [inputs[1].dims.length, 'int32'], [inputs[1].dims, 'int32ptr'],
+          [result.integerData as Int32Array, 'int32ptr', 'out'], [result.integerData.length, 'int32'],
+          [outputShape.length, 'int32'], [outputShape, 'int32ptr']);
     } else if (binaryOpType === 'boolInBoolOut') {
       result = new Tensor(outputShape, 'bool');
       WasmBinding.getInstance().ccall(

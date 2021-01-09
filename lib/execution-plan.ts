@@ -3,6 +3,7 @@
 
 import {SessionHandler} from './backend';
 import {WebGLBackend} from './backends/backend-webgl';
+import {WebGLContext} from './backends/webgl/webgl-context';
 import {Graph} from './graph';
 import {Logger, Profiler} from './instrument';
 import {Operator} from './operators';
@@ -53,9 +54,9 @@ export class ExecutionPlan {
 
   execute(sessionHandler: SessionHandler, modelInputs: Tensor[]): Promise<Tensor[]> {
     const isWebGLBackend = sessionHandler.backend instanceof WebGLBackend;
-
+    let glCtx: WebGLContext|undefined;
     if (isWebGLBackend) {
-      var glCtx = (sessionHandler.backend as WebGLBackend).glContext;
+      glCtx = (sessionHandler.backend as WebGLBackend).glContext;
     }
 
     return this.profiler.event('session', 'ExecutionPlan.execute', async () => {

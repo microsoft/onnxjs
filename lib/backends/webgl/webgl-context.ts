@@ -42,7 +42,8 @@ export class WebGLContext {
 
   // WebGL2 extensions
   colorBufferFloatExtension: {}|null;
-  disjointTimerQueryWebgl2Extension: any|null;
+  // tslint:disable-next-line: no-any
+  disjointTimerQueryWebgl2Extension: any;
 
   private disposed: boolean;
   private frameBufferBound = false;
@@ -495,12 +496,13 @@ export class WebGLContext {
   }
 
   isTimerResultAvailable(query: WebGLQuery): boolean {
+    let available = false, disjoint = false;
     if (this.version === 2) {
       const gl2 = this.gl as WebGL2RenderingContext;
       const ext = this.disjointTimerQueryWebgl2Extension;
 
-      var available = gl2.getQueryParameter(query, gl2.QUERY_RESULT_AVAILABLE);
-      var disjoint = gl2.getParameter(ext.GPU_DISJOINT_EXT);
+      available = gl2.getQueryParameter(query, gl2.QUERY_RESULT_AVAILABLE);
+      disjoint = gl2.getParameter(ext.GPU_DISJOINT_EXT);
     } else {
       // TODO: add webgl 1 handling.
       throw new Error(`Not support WebGL 2`);
@@ -510,15 +512,16 @@ export class WebGLContext {
   }
 
   getTimerResult(query: WebGLQuery): number {
+    let timeElapsed = 0;
     if (this.version === 2) {
       const gl2 = this.gl as WebGL2RenderingContext;
-      var timeElapsed = gl2.getQueryParameter(query, gl2.QUERY_RESULT);
+      timeElapsed = gl2.getQueryParameter(query, gl2.QUERY_RESULT);
     } else {
       // TODO: add webgl 1 handling.
       throw new Error(`Not support WebGL 2`);
     }
     // return miliseconds
-    return timeElapsed;
+    return timeElapsed / 1000000;
   }
 
   async waitForQueryAndGetTime(query: WebGLQuery): Promise<number> {

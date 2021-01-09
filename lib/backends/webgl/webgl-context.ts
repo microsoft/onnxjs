@@ -5,6 +5,7 @@ import {env} from '../../env';
 
 import * as DataEncoders from './texture-data-encoder';
 import {DataEncoder, Encoder} from './texture-data-encoder';
+import {repeatedTry} from './utils';
 
 /**
  * Abstraction and wrapper around WebGLRenderingContext and its operations
@@ -41,6 +42,7 @@ export class WebGLContext {
 
   // WebGL2 extensions
   colorBufferFloatExtension: {}|null;
+  disjointTimerQueryWebgl2Extension: any|null;
 
   private disposed: boolean;
   private frameBufferBound = false;
@@ -331,6 +333,7 @@ export class WebGLContext {
   private getExtensions(): void {
     if (this.version === 2) {
       this.colorBufferFloatExtension = this.gl.getExtension('EXT_color_buffer_float');
+      this.disjointTimerQueryWebgl2Extension = this.gl.getExtension('EXT_disjoint_timer_query_webgl2');
     } else {
       this.textureFloatExtension = this.gl.getExtension('OES_texture_float');
       this.textureHalfFloatExtension = this.gl.getExtension('OES_texture_half_float');
@@ -463,5 +466,63 @@ export class WebGLContext {
         gl.deleteTexture(texture);
       }
     }
+  }
+
+  beginTimer(): WebGLQuery {
+    if (this.version === 2) {
+      const gl2 = this.gl as WebGL2RenderingContext;
+      const ext = this.disjointTimerQueryWebgl2Extension;
+
+      const query = gl2.createQuery() as WebGLQuery;
+      gl2.beginQuery(ext.TIME_ELAPSED_EXT, query);
+      return query;
+    } else {
+      // TODO: add webgl 1 handling.
+      throw new Error(`Not support WebGL 2`);
+    }
+  }
+
+  endTimer() {
+    if (this.version === 2) {
+      const gl2 = this.gl as WebGL2RenderingContext;
+      const ext = this.disjointTimerQueryWebgl2Extension;
+      gl2.endQuery(ext.TIME_ELAPSED_EXT);
+      return;
+    } else {
+      // TODO: add webgl 1 handling.
+      throw new Error(`Not support WebGL 2`);
+    }
+  }
+
+  isTimerResultAvailable(query: WebGLQuery): boolean {
+    if (this.version === 2) {
+      const gl2 = this.gl as WebGL2RenderingContext;
+      const ext = this.disjointTimerQueryWebgl2Extension;
+
+      var available = gl2.getQueryParameter(query, gl2.QUERY_RESULT_AVAILABLE);
+      var disjoint = gl2.getParameter(ext.GPU_DISJOINT_EXT);
+    } else {
+      // TODO: add webgl 1 handling.
+      throw new Error(`Not support WebGL 2`);
+    }
+
+    return available && !disjoint;
+  }
+
+  getTimerResult(query: WebGLQuery): number {
+    if (this.version === 2) {
+      const gl2 = this.gl as WebGL2RenderingContext;
+      var timeElapsed = gl2.getQueryParameter(query, gl2.QUERY_RESULT);
+    } else {
+      // TODO: add webgl 1 handling.
+      throw new Error(`Not support WebGL 2`);
+    }
+    // return miliseconds
+    return timeElapsed;
+  }
+
+  async waitForQueryAndGetTime(query: WebGLQuery): Promise<number> {
+    await repeatedTry(() => this.isTimerResultAvailable(query));
+    return this.getTimerResult(query);
   }
 }

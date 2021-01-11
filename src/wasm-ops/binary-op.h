@@ -17,6 +17,10 @@ void mul_f32(void *);
 void div_f32(void *);
 void prelu_f32(void *);
 
+void add_i32(void *);
+void sub_i32(void *);
+void mul_i32(void *);
+
 // Logical ops
 void xor_u8(void *);
 void or_u8(void *);

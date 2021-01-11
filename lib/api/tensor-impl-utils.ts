@@ -61,7 +61,7 @@ export function matchElementType(type: TensorInterface.Type, element: TensorInte
 }
 
 export function validateIndices(indices: ReadonlyArray<number>) {
-  if (indices.length < 0 || indices.length > 6) {
+  if (indices.length > 6) {
     throw new RangeError(`Only rank 0 to 6 is supported for tensor shape.`);
   }
   for (const n of indices) {

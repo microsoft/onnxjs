@@ -28,7 +28,7 @@ export function concat(x: Tensor[], axis: number) {
   // ensure all of the non-concatenated axes match each other
   // along the way, calculate the shape of the output tensor
   let concatAxisSize = inputShape[axis];
-  const outputShape = new Array<number>(inputShape.length);
+  const outputShape = inputShape.slice(0);
 
   for (let i = 1; i < x.length; i++) {
     const dataN = x[i];

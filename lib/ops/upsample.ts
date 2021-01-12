@@ -67,7 +67,7 @@ export abstract class Upsample implements Operator {
       this.roiInputIdx = 1;
       this.scalesInputIdx = 2;
       this.sizesInputIdx = 3;
-    } else if (this.opset === 9) {
+    } else if (this.opset === 9 || this.opset === 10) {
       this.scalesInputIdx = 1;
     }
 

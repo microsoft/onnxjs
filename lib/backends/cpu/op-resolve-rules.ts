@@ -17,6 +17,7 @@ import {CpuGather} from './ops/gather';
 import {CpuGemm} from './ops/gemm';
 import {CpuImageScaler} from './ops/image-scaler';
 import {CpuInstanceNormalization} from './ops/instance-normalization';
+import {CpuLogSoftmax} from './ops/log-softmax';
 import {CpuLrn} from './ops/lrn';
 import {CpuMatMul} from './ops/matmul';
 import {CpuPad} from './ops/pad';
@@ -34,7 +35,6 @@ import * as unaryOps from './ops/unary-op';
 import {CpuUnaryOp} from './ops/unary-op';
 import {CpuUnsqueeze} from './ops/unsqueeze';
 import {CpuUpsample, CpuUpsampleV9} from './ops/upsample';
-import {CpuLogSoftmax} from './ops/log-softmax';
 
 export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Abs', '', '6+', () => new CpuUnaryOp(NUMBER_TYPES, unaryOps.abs)],

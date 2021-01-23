@@ -116,7 +116,7 @@ export class PreferLogicalStrategy implements TextureLayoutStrategy {
       logShape = squeezeResult.newShape;
     }
 
-    let size = sizeFromShape(logShape);
+    const size = sizeFromShape(logShape);
     if (logShape.length <= 1 && size <= maxTextureSize) {
       return [1, size];
     } else if (logShape.length === 2 && logShape[0] <= maxTextureSize && logShape[1] <= maxTextureSize) {
@@ -140,14 +140,7 @@ export class PreferLogicalStrategy implements TextureLayoutStrategy {
         // inner dimensions stay even, we rewrite size to equal the number of
         // texels. Then in the return statement we rehydrate the squarified
         // dimensions to channel units.
-
-        const batchDim = getBatchDim(logShape);
-        let rows = 2, cols = 2;
-        if (logShape.length) {
-          [rows, cols] = getRowsCols(logShape);
-        }
-        size = batchDim * (rows / 2) * (cols / 2);
-        return sizeToSquarishShape(size).map(d => d * 2) as [number, number];
+        return sizeToSquarishShape(size / 4).map(d => d * 2) as [number, number];
       }
       return sizeToSquarishShape(size);
     }

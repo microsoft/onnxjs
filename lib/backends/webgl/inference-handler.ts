@@ -10,7 +10,7 @@ import {WebGLUint8Encode} from './ops/uint8-encode';
 import {WebGLSessionHandler} from './session-handler';
 import {Encoder} from './texture-data-encoder';
 import {WidthHeightPrefs} from './texture-layout-strategy';
-import {TextureData, TextureLayout, WebGLOperator} from './types';
+import {Artifact, RunData, TextureData, TextureLayout, WebGLOperator} from './types';
 import {getPackedShape} from './utils';
 
 export class WebGLInferenceHandler implements InferenceHandler {
@@ -27,8 +27,37 @@ export class WebGLInferenceHandler implements InferenceHandler {
       this.session.programManager.setArtifact(op, artifact);
     }
     const runData = op.createRunData(this, artifact.programInfo, inputs);
-    this.session.programManager.run(artifact, runData);
+    this.runProgram(artifact, runData);
     return [runData.outputTextureData.tensor];
+  }
+
+  runProgram(artifact: Artifact, runData: RunData) {
+    // pack/unpack inputs
+    runData.inputTextureDatas.forEach(input => {
+      if (input.isPacked && !artifact.programInfo.isInputsPacked) {
+        // unpack this input
+        const unpacked = this.unpack(input);
+        input.height = unpacked.height;
+        input.isPacked = unpacked.isPacked;
+        input.texture = unpacked.texture;
+        input.width = unpacked.width;
+
+      } else if (!input.isPacked && artifact.programInfo.isInputsPacked) {
+        // pack this input
+        const packed = this.pack(input);
+        input.height = packed.height;
+        input.isPacked = packed.isPacked;
+        input.texture = packed.texture;
+        input.width = packed.width;
+      }
+    });
+
+    // output should match
+    if (!!runData.outputTextureData.isPacked !== !!artifact.programInfo.isOutputPacked) {
+      throw new Error(`output property packed inconsistent`);
+    }
+
+    this.session.programManager.run(artifact, runData);
   }
 
   /**
@@ -132,36 +161,52 @@ export class WebGLInferenceHandler implements InferenceHandler {
   /**
    * Create a TextureLayout object from a tensor. If a related texture data is found, returns the cached texture layout.
    */
-  getOrCreateTextureLayout(tensor: Tensor, channels: 1|2|3|4 = 1, unpackedShape?: ReadonlyArray<number>):
+  getOrCreateTextureLayout(tensor: Tensor, channels: 1|4 = 1, isPacked = false, unpackedShape?: ReadonlyArray<number>):
       TextureLayout {
     const td = this.getTextureData(tensor.dataId);
     if (td) {
       return td;
     }
     return this.createTextureLayoutFromShape(
-        channels === 1 ? tensor.dims.slice() : getPackedShape(tensor.dims.slice()), channels, unpackedShape);
+        channels === 1 || isPacked ? tensor.dims : getPackedShape(tensor.dims), channels, unpackedShape,
+        isPacked ? {isPacked: true} : undefined);
   }
   /**
    * Create a TextureLayout object from shape.
    */
   createTextureLayoutFromShape(
-      shape: ReadonlyArray<number>, channels: 1|2|3|4 = 1, unpackedShape?: ReadonlyArray<number>,
+      shape: ReadonlyArray<number>, channels: 1|4 = 1, unpackedShape?: ReadonlyArray<number>,
       prefs?: WidthHeightPrefs): TextureLayout {
-    const [width, height] = this.session.layoutStrategy.computeTextureWH(shape, prefs);
-    let inferredDims = shape;
-    if (shape.length === 0) {
+    const isPacked = !!(prefs && prefs.isPacked);
+    const [width, height] =
+        this.session.layoutStrategy.computeTextureWH(isPacked ? unpackedShape || shape : shape, prefs);
+    const rank = shape.length;
+    let inferredDims = shape.slice(0);
+    if (rank === 0) {
       inferredDims = [1];
     }
     if (channels === 1) {
       // unpackedShape will take `shape` and not `inferredDims` so as to create a scalar Tensor if need be
       unpackedShape = shape;
+    } else if (isPacked) {
+      if (channels !== 4) {
+        throw new Error('a packed texture must be 4-channel');
+      }
+      unpackedShape = shape;
+      if (rank > 0) {
+        inferredDims[rank - 1] = Math.ceil(inferredDims[rank - 1] / 2);
+      }
+      if (rank > 1) {
+        inferredDims[rank - 2] = Math.ceil(inferredDims[rank - 2] / 2);
+      }
     } else if (!unpackedShape) {
       throw new Error('Unpacked shape is needed when using channels > 1');
     }
     return {
       width,
       height,
-      channels: channels ? channels : 1,
+      channels,
+      isPacked,
       shape: inferredDims,
       strides: ShapeUtil.computeStrides(inferredDims),
       unpackedShape
@@ -181,5 +226,13 @@ export class WebGLInferenceHandler implements InferenceHandler {
       return this.session.textureManager.readUint8TextureAsFloat(uint8TD);
     }
     return this.session.textureManager.readTexture(textureData, textureData.tensor.type, textureData.channels);
+  }
+
+  pack(input: TextureData): TextureData {
+    // TODO
+  }
+
+  unpack(input: TextureData): TextureData {
+    // TODO
   }
 }

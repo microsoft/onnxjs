@@ -15,6 +15,7 @@ class EnvironmentImpl implements ENV {
   public readonly platform = platform;
 
   public debug = false;
+  public packMode = true;
 }
 
 export const env: ENV = new EnvironmentImpl();

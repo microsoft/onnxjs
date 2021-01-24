@@ -4,13 +4,15 @@
 // tslint:disable:no-require-imports
 
 if (typeof window !== 'undefined' && !onnx.backend.webgl.disabled) {
-  require('./backends/webgl/test_glsl_function_inliner');
-  require('./backends/webgl/test_conv_new');
+  // temp disable tests for pack/unpack debugging
+  // require('./backends/webgl/test_glsl_function_inliner');
+  // require('./backends/webgl/test_conv_new');
+  require('./backends/webgl/test_pack_unpack');
 }
 
-require('./api/onnx');
-require('./api/inference-session');
-require('./api/tensor');
-require('./api/types');
+// require('./api/onnx');
+// require('./api/inference-session');
+// require('./api/tensor');
+// require('./api/types');
 
-require('./opset');
+// require('./opset');

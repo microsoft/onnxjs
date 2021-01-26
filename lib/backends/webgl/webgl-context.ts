@@ -103,7 +103,7 @@ export class WebGLContext {
   readTexture(
       texture: WebGLTexture, width: number, height: number, dataSize: number, dataType: Encoder.DataType,
       channels: number): Encoder.DataArrayType {
-    const gl = this.gl;
+    const gl = this.gl as WebGL2RenderingContext;
     if (!channels) {
       channels = 1;
     }

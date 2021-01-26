@@ -47,6 +47,7 @@ describe('#UnitTest# - pack - Tensor pack', () => {
 
     // verify result.
     // TODO: add more verifications including output value and order
+    // TODO: also different input dimensions for different pack code path
     expect(result).to.not.equal(null);
   });
   it('Test unpack', () => {

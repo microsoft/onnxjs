@@ -1,33 +1,62 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// import {Pack} from '../../../ops/pack';
 import {Tensor} from '../../../tensor';
-// import {FunctionType, GlslValueFunction} from '../glsl-definitions';
 import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
+
+import {getChannels, getChannelValue} from './packing_utils';
 
 export class WebGLPack implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
-    const outputShape = inputs[0].dims.slice();
+    if (inputs.length !== 1) {
+      throw new Error(`Pack kernel should have input tensor count to 1.`);
+    }
+
+    const inputShape = inputs[0].dims;
+
+    // TODO(Du): will need to incoorperate Du's modified version of createTextureLayoutFromShape to get the correct
+    // outputLayout shape
+    const outputLayout = handler.createTextureLayoutFromShape(inputShape, 4, inputShape);
+    const outputShape = outputLayout.shape;
+    const rank = outputShape.length;
+
+    const setup = getSetup(rank, outputShape, inputShape[inputShape.length - 1], inputShape[inputShape.length - 2]);
+
+    const channels = getChannels('rc', rank);
+    const outOfBoundsCondition = getOutOfBoundsCondition(rank, outputShape, channels);
+    const output = getOutput(outputShape, channels);
     const glsl = getGlsl(handler.session.backend.glContext.version);
-    // TODO: write pack shader code
+    const chanelValue = getChannelValue(inputShape[rank - 2], inputShape[rank - 1], glsl.texture2D);
     const shaderSource = `
-      void main() {
-        float v = ${glsl.texture2D}(A, TexCoords).r;
-        ${glsl.output} = vec4(v, 0, 0, 0);
-      }
+        ${chanelValue}
+        void main() {
+          // TODO(TJ): implement getOutputCoords() to map input uv to output xy.
+          //ivec2 rc = getOutputCoords();
+          ivec2 rc = ivec2(0, 0);
+
+          if(${outOfBoundsCondition}) {
+            outputColor = vec4(0);
+          } else {
+            ${setup}
+
+            outputColor = vec4(${output});
+          }
+        }
       `;
+
     return {
       inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])],
-      outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      outputLayout,
       samplers: ['A'],
       shaderSource,
       hasMain: true,
+      // isInputsPacked: false,
+      // isOutputPacked: true,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
@@ -37,5 +66,53 @@ export class WebGLPack implements WebGLOperator {
       outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),
       uniformData: {}
     };
+  }
+}
+
+function getOutOfBoundsCondition(rank: number, shape: ReadonlyArray<number>, dims: string[]): string {
+  if (rank === 1) {
+    return `rc > ${shape[0]}`;
+  }
+
+  let cond = '';
+  for (let i = rank - 2; i < rank; i++) {
+    cond += `${dims[i]} >= ${shape[i]}`;
+    if (i < rank - 1) {
+      cond += '||';
+    }
+  }
+
+  return cond;
+}
+
+function getOutput(shape: ReadonlyArray<number>, dims: string[]): string {
+  const rank = shape.length;
+  if (rank === 1) {
+    return `getA(rc),
+            rc + 1 >= ${shape[0]} ? 0. : getA(rc + 1),
+            0, 0`;
+  }
+
+  return `getA(r, c),
+          cEdge ? 0. : getA(r, cp1),
+          rEdge ? 0. : getA(rp1, c),
+          rEdge || cEdge ? 0. : getA(rp1, cp1)`;
+}
+
+function getSetup(rank: number, outputShape: ReadonlyArray<number>, cols: number, rows: number): string {
+  if (rank === 1) {
+    return '';
+  }
+  // rank >= 2 for width+height pack.
+  else {
+    const setup = `
+    int r = rc.x;
+    int c = rc.y;
+    int rp1 = rc.x + 1;
+    int cp1 = rc.y + 1;
+    bool cEdge = cp1 >= ${cols};
+    bool rEdge = rp1 >= ${rows};
+    `;
+    return setup;
   }
 }

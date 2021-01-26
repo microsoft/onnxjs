@@ -1,33 +1,59 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// import {WebGLUnpack} from '../../../ops/unpack';
 import {Tensor} from '../../../tensor';
-// import {FunctionType, GlslValueFunction} from '../glsl-definitions';
 import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
+
+import {getChannels, getChannelValue} from './packing_utils';
 
 export class WebGLUnpack implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
-    const outputShape = inputs[0].dims.slice();
+    if (inputs.length !== 1) {
+      throw new Error(`Pack kernel should have input tensor count to 1.`);
+    }
+
+    const inputShape = inputs[0].dims;
+
+    // TODO(Du): will need to incoorperate Du's modified version of createTextureLayoutFromShape to get the correct
+    // outputLayout shape
+    const outputLayout = handler.createTextureLayoutFromShape(inputShape, 4, inputShape);
+    const outputShape = outputLayout.shape;
+    const rank = outputShape.length;
+
     const glsl = getGlsl(handler.session.backend.glContext.version);
-    // TODO: write unpack shader code
+    const chanelValue = getChannelValue(inputShape[rank - 2], inputShape[rank - 1], glsl.texture2D, true);
+    const channels = getChannels('rc', rank);
+    const innerDims = channels.slice(-2);
+    const unpackChannel = unpackFromChannel();
+    const coords = rank <= 1 ? 'rc' : `vec2(${innerDims.join(',')})`;
     const shaderSource = `
-      void main() {
-        float v = ${glsl.texture2D}(A, TexCoords).r;
-        ${glsl.output} = vec4(v, 0, 0, 0);
-      }
+        ${chanelValue}
+        ${unpackChannel}
+        void main() {
+          // TODO(TJ): implement getOutputCoords() to map input uv to output xy.
+          //ivec4 rc = getOutputCoords();
+          ivec4 rc = ivec4(0, 0, 0, 0);
+
+          // Sample the texture with the coords to get the rgba channel value.
+          vec4 packedInput = getA(rc.x,rc.y);
+
+          outputColor = vec4(getChannel(packedInput, ${coords}), 0, 0, 0);
+        }
       `;
+
     return {
       inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])],
-      outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      outputLayout,
       samplers: ['A'],
       shaderSource,
       hasMain: true,
+      // isInputsPacked: false,
+      // isOutputPacked: true,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
@@ -40,133 +66,13 @@ export class WebGLUnpack implements WebGLOperator {
   }
 }
 
-// export function glslAbs(): GlslValueFunction {
-//   return glslBuiltinUnary('abs');
-// }
-// export function glslAcos(): GlslValueFunction {
-//   return glslBuiltinUnary('acos');
-// }
-// export function glslAsin(): GlslValueFunction {
-//   return glslBuiltinUnary('asin');
-// }
-// export function glslAtan(): GlslValueFunction {
-//   return glslBuiltinUnary('atan');
-// }
-// export function glslCeil(): GlslValueFunction {
-//   return glslBuiltinUnary('ceil');
-// }
-// export function glslCos(): GlslValueFunction {
-//   return glslBuiltinUnary('cos');
-// }
-// export function glslExp(): GlslValueFunction {
-//   return glslBuiltinUnary('exp');
-// }
-// export function glslFloor(): GlslValueFunction {
-//   return glslBuiltinUnary('floor');
-// }
-// export function glslIdentity(): GlslValueFunction {
-//   const name = `indentity_`;
-//   const body = `
-//   float ${name}(float a) {
-//     return a;
-//   }
-//   vec4 ${name}(vec4 v) {
-//     return v;
-//   }
-//   `;
-//   return {body, name, type: FunctionType.ValueBased};
-// }
-// export function glslLog(): GlslValueFunction {
-//   return glslBuiltinUnary('log');
-// }
-// export function glslNeg(): GlslValueFunction {
-//   const name = `neg_`;
-//   const body = `
-//   float ${name}(float a) {
-//     return -a;
-//   }
-//   vec4 ${name}(vec4 v) {
-//     return -v;
-//   }
-//   `;
-//   return {body, name, type: FunctionType.ValueBased};
-// }
-// export function glslNot(): GlslValueFunction {
-//   const name = `not_`;
-//   const body = `
-//   float ${name}(float a) {
-//     return float( ! bool(a) );
-//   }
-//   bool ${name}(bool a) {
-//     return !a;
-//   }
-//   vec4 ${name}(vec4 v) {
-//     return vec4(!bool(v.x), !bool(v.y), !bool(v.z), !bool(v.w));
-//   }
-//   bvec4 ${name}(bvec4 v) {
-//     return bvec4(!v.x, !v.y, !v.z, !v.w);
-//   }
-//   `;
-//   return {body, name, type: FunctionType.ValueBased};
-// }
-// export function glslSin(): GlslValueFunction {
-//   return glslBuiltinUnary('sin');
-// }
-// export function glslRelu(): GlslValueFunction {
-//   const name = `relu_`;
-//   const body = `
-//   float ${name}(float a) {
-//     return max( a, 0.0 );
-//   }
-//   vec4 ${name}(vec4 v) {
-//     return max( v, 0.0 );
-//   }
-//   `;
-//   return {body, name, type: FunctionType.ValueBased};
-// }
-// export function glslSigmoid(): GlslValueFunction {
-//   const name = `sigmoid_`;
-//   const body = `
-//   float ${name}(float a) {
-//     return 1.0 / (1.0 + exp(-a));
-//   }
-//   vec4 ${name}(vec4 v) {
-//     return 1.0 / (1.0 + exp(-v));
-//   }
-//   `;
-//   return {body, name, type: FunctionType.ValueBased};
-// }
-// export function glslSqrt(): GlslValueFunction {
-//   return glslBuiltinUnary('sqrt');
-// }
-// export function glslTan(): GlslValueFunction {
-//   return glslBuiltinUnary('tan');
-// }
-// export function glslTanh(): GlslValueFunction {
-//   const name = `tanh_`;
-//   const body = `
-//   float ${name}(float a) {
-//     a = clamp(a, -10., 10.);
-//     a = exp(2.*a);
-//     return (a - 1.) / (a + 1.);
-//   }
-//   vec4 ${name}(vec4 v) {
-//     v = clamp(v, -10., 10.);
-//     v = exp(2.*v);
-//     return (v - 1.) / (v + 1.);
-//   }
-//   `;
-//   return {body, name, type: FunctionType.ValueBased};
-// }
-// function glslBuiltinUnary(fname: string): GlslValueFunction {
-//   const name = `${fname}_`;
-//   const body = `
-//   float ${name}(float a) {
-//     return ${fname}(a);
-//   }
-//   vec4 ${name}(vec4 v) {
-//     return ${fname}(v);
-//   }
-//   `;
-//   return {body, name, type: FunctionType.ValueBased};
-// }
+function unpackFromChannel(): string {
+  return `
+  float getChannel(vec4 frag, vec2 innerDims) {
+    vec2 modCoord = mod(innerDims, 2.);
+    return modCoord.x == 0. ?
+      (modCoord.y == 0. ? frag.r : frag.g) :
+      (modCoord.y == 0. ? frag.b : frag.a);
+  }
+  `;
+}

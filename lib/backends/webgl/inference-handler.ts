@@ -5,8 +5,10 @@ import {InferenceHandler} from '../../backend';
 import {Logger} from '../../instrument';
 import {Tensor} from '../../tensor';
 import {ShapeUtil} from '../../util';
+import {WebGLPack} from './ops/pack';
 
 import {WebGLUint8Encode} from './ops/uint8-encode';
+import {WebGLUnpack} from './ops/unpack';
 import {WebGLSessionHandler} from './session-handler';
 import {Encoder} from './texture-data-encoder';
 import {WidthHeightPrefs} from './texture-layout-strategy';
@@ -220,6 +222,9 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   readTexture(textureData: TextureData): Tensor.NumberType {
+    if (textureData.isPacked) {
+      return this.readTexture(this.unpack(textureData));
+    }
     if (!this.session.backend.glContext.isFloat32DownloadSupported) {
       const op = new WebGLUint8Encode();
       const uint8TD = op.runInternal(this, textureData);
@@ -229,10 +234,40 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   pack(input: TextureData): TextureData {
-    // TODO
+    const key = `${input.shape}`;
+    let op = this.session.packOpCache.get(key);
+    if (!op) {
+      op = new WebGLPack();
+      this.session.packOpCache.set(key, op);
+    }
+    let artifact = this.session.programManager.getArtifact(op);
+    if (!artifact) {
+      const programInfo = op.createProgramInfo(this, [input.tensor]);
+      artifact = this.session.programManager.build(programInfo);
+      this.session.programManager.setArtifact(op, artifact);
+    }
+    const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
+    this.runProgram(artifact, runData);
+    // console.log(Array.from(runData.outputTextureData.tensor.data as Float32Array));
+    return runData.outputTextureData;
   }
 
   unpack(input: TextureData): TextureData {
-    // TODO
+    console.log('==unpack==');
+    const key = `${input.shape}`;
+    let op = this.session.unpackOpCache.get(key);
+    if (!op) {
+      op = new WebGLUnpack();
+      this.session.unpackOpCache.set(key, op);
+    }
+    let artifact = this.session.programManager.getArtifact(op);
+    if (!artifact) {
+      const programInfo = op.createProgramInfo(this, [input.tensor]);
+      artifact = this.session.programManager.build(programInfo);
+      this.session.programManager.setArtifact(op, artifact);
+    }
+    const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
+    this.runProgram(artifact, runData);
+    return runData.outputTextureData;
   }
 }

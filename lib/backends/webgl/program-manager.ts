@@ -40,7 +40,7 @@ export class ProgramManager {
     const inputInfo = runData.inputTextureDatas.map((d, i) => `input${i}:[${d.shape}]`).join(', ');
     const outputInfo = `output: [${runData.outputTextureData.shape}]`;
 
-    this.profiler.event('backend', 'ProgramManager.run ${inputInfo} ; ${outputInfo}', () => {
+    this.profiler.event('backend', `ProgramManager.run ${inputInfo} ; ${outputInfo}`, () => {
       const gl = this.glContext.gl;
       const program = buildArtifact.program;
       gl.useProgram(program);

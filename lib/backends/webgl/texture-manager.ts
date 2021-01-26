@@ -45,8 +45,8 @@ export class TextureManager {
     if (layout.isPacked && usage === Encoder.Usage.UploadOnly) {
       throw new Error('not implemented');
     }
-    let width = layout.width;
-    let height = layout.height;
+    const width = layout.width;
+    const height = layout.height;
 
     let key: string|undefined;
     let inUseTextures: WebGLTexture[]|undefined;

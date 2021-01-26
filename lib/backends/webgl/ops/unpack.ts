@@ -17,10 +17,14 @@ export class WebGLUnpack implements WebGLOperator {
       throw new Error(`Pack kernel should have input tensor count to 1.`);
     }
 
+    // const inputTexture = handler.getTextureData(inputs[0].dataId);
+    // if (!inputTexture) {
+    //   throw new Error(`packed input texture must exist`);
+    // }
+
     const inputShape = inputs[0].dims;
 
-    // TODO(Du): will need to incoorperate Du's modified version of createTextureLayoutFromShape to get the correct
-    // outputLayout shape
+    // TODO(Du): look into ways to simplify createTextureLayoutFromShape's signature
     const outputLayout = handler.createTextureLayoutFromShape(inputShape, 4, inputShape);
     const outputShape = outputLayout.shape;
     const rank = outputShape.length;
@@ -30,6 +34,7 @@ export class WebGLUnpack implements WebGLOperator {
     const channels = getChannels('rc', rank);
     const innerDims = channels.slice(-2);
     const unpackChannel = unpackFromChannel();
+    const sourceCoords = getSourceCoords(rank, channels);
     const coords = rank <= 1 ? 'rc' : `vec2(${innerDims.join(',')})`;
     const shaderSource = `
         ${chanelValue}
@@ -40,7 +45,7 @@ export class WebGLUnpack implements WebGLOperator {
           ivec4 rc = ivec4(0, 0, 0, 0);
 
           // Sample the texture with the coords to get the rgba channel value.
-          vec4 packedInput = getA(rc.x,rc.y);
+          vec4 packedInput = getA(${sourceCoords});
 
           outputColor = vec4(getChannel(packedInput, ${coords}), 0, 0, 0);
         }
@@ -52,8 +57,8 @@ export class WebGLUnpack implements WebGLOperator {
       samplers: ['A'],
       shaderSource,
       hasMain: true,
-      // isInputsPacked: false,
-      // isOutputPacked: true,
+      isInputsPacked: false,
+      isOutputPacked: true,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
@@ -75,4 +80,19 @@ function unpackFromChannel(): string {
       (modCoord.y == 0. ? frag.b : frag.a);
   }
   `;
+}
+
+export function getSourceCoords(rank: number, dims: string[]): string {
+  if (rank === 1) {
+    return 'rc';
+  }
+
+  let coords = '';
+  for (let i = 0; i < rank; i++) {
+    coords += dims[i];
+    if (i < rank - 1) {
+      coords += ',';
+    }
+  }
+  return coords;
 }

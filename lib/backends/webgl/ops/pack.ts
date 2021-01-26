@@ -19,9 +19,8 @@ export class WebGLPack implements WebGLOperator {
 
     const inputShape = inputs[0].dims;
 
-    // TODO(Du): will need to incoorperate Du's modified version of createTextureLayoutFromShape to get the correct
-    // outputLayout shape
-    const outputLayout = handler.createTextureLayoutFromShape(inputShape, 4, inputShape);
+    // TODO(Du): look into ways to simplify createTextureLayoutFromShape's signature
+    const outputLayout = handler.createTextureLayoutFromShape(inputShape, 4, inputShape, {isPacked: true});
     const outputShape = outputLayout.shape;
     const rank = outputShape.length;
 
@@ -55,8 +54,8 @@ export class WebGLPack implements WebGLOperator {
       samplers: ['A'],
       shaderSource,
       hasMain: true,
-      // isInputsPacked: false,
-      // isOutputPacked: true,
+      isInputsPacked: false,
+      isOutputPacked: true,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {

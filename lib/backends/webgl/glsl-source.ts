@@ -61,6 +61,31 @@ export function getFragShaderPreamble(version: 1|2): string {
     precision highp sampler2D;
     ${glsl.varyingFrag} vec2 TexCoords;
     ${glsl.outputDeclaration}
+    const vec2 halfCR = vec2(0.5, 0.5);
+
+    // Custom vector types to handle higher dimenalities.
+    struct ivec5
+    {
+      int x;
+      int y;
+      int z;
+      int w;
+      int u;
+    };
+
+    struct ivec6
+    {
+      int x;
+      int y;
+      int z;
+      int w;
+      int u;
+      int v;
+    };
+
+    int imod(int x, int y) {
+      return x - y * (x / y);
+    }
 
     `;
 }

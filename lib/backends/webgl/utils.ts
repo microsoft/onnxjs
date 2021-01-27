@@ -11,3 +11,51 @@ export function getPackedShape(unpackedShape: ReadonlyArray<number>): ReadonlyAr
   const len = unpackedShape.length;
   return unpackedShape.slice(0, len - 1).concat(unpackedShape[len - 1] / 4);
 }
+
+/**
+ * Generates the function name from an input sampler name.
+ * @param samplerName Name of the sampler.
+ */
+export function generateShaderFuncNameFromInputSamplerName(samplerName: string): string {
+  return 'get' + samplerName.charAt(0).toUpperCase() + samplerName.slice(1);
+}
+
+/**
+ * Generates the function name from an input sampler name at output coordinates.
+ * @param samplerName Name of the sampler.
+ */
+export function generateShaderFuncNameFromInputSamplerNameAtOutCoords(samplerName: string): string {
+  return 'get' + samplerName.charAt(0).toUpperCase() + samplerName.slice(1) + 'AtOutCoords';
+}
+
+/** Returns a new input shape (a copy) that has a squeezed logical shape. */
+export function squeezeInputShape(inputShape: ReadonlyArray<number>, squeezedShape: number[]): number[] {
+  // Deep copy.
+  let newInputShape: number[] = JSON.parse(JSON.stringify(inputShape));
+  newInputShape = squeezedShape;
+  return newInputShape;
+}
+
+/** Returns a list of squeezed parameters for shader functions */
+export function getSqueezedParams(params: string[], keptDims: number[]): string {
+  return keptDims.map(d => params[d]).join(', ');
+}
+
+/** Returns the data type for different ranks. */
+export function getCoordsDataType(rank: number): string {
+  if (rank <= 1) {
+    return 'int';
+  } else if (rank === 2) {
+    return 'ivec2';
+  } else if (rank === 3) {
+    return 'ivec3';
+  } else if (rank === 4) {
+    return 'ivec4';
+  } else if (rank === 5) {
+    return 'ivec5';
+  } else if (rank === 6) {
+    return 'ivec6';
+  } else {
+    throw Error(`GPU for rank ${rank} is not yet supported`);
+  }
+}

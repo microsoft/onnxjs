@@ -17,20 +17,18 @@ export class WebGLUnpack implements WebGLOperator {
       throw new Error(`Pack kernel should have input tensor count to 1.`);
     }
 
-    // const inputTexture = handler.getTextureData(inputs[0].dataId);
-    // if (!inputTexture) {
-    //   throw new Error(`packed input texture must exist`);
-    // }
-
-    const inputShape = inputs[0].dims;
+    const inputTexture = handler.getTextureData(inputs[0].dataId);
+    if (!inputTexture) {
+      throw new Error(`packed input texture must exist`);
+    }
 
     // TODO(Du): look into ways to simplify createTextureLayoutFromShape's signature
-    const outputLayout = handler.createTextureLayoutFromShape(inputShape, 4, inputShape);
+    const outputLayout = handler.createTextureLayoutFromShape(inputTexture.unpackedShape);
     const outputShape = outputLayout.shape;
     const rank = outputShape.length;
 
     const glsl = getGlsl(handler.session.backend.glContext.version);
-    const chanelValue = getChannelValue(inputShape[rank - 2], inputShape[rank - 1], glsl.texture2D, true);
+    const chanelValue = getChannelValue(inputTexture.width, inputTexture.height, glsl.texture2D, true);
     const channels = getChannels('rc', rank);
     const innerDims = channels.slice(-2);
     const unpackChannel = unpackFromChannel();

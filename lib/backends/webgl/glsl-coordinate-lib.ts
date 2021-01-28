@@ -441,7 +441,7 @@ export class CoordsGlslLib extends GlslLib {
             return ${glsl.texture2D}(${name}, uv);
           }
         `;
-    return new GlslLibRoutine(source);
+    return new GlslLibRoutine(source, ['coordinates.Sampler1DSnippet']);
   }
 
   /**
@@ -471,7 +471,7 @@ export class CoordsGlslLib extends GlslLib {
           return ${glsl.texture2D}(${name}, uv);
         }
       `;
-    return new GlslLibRoutine(source);
+    return new GlslLibRoutine(source, ['coordinates.Sampler2DSnippet']);
   }
 
   /**
@@ -512,7 +512,7 @@ export class CoordsGlslLib extends GlslLib {
         return ${glsl.texture2D}(${name}, uv);
       }
     `;
-    return new GlslLibRoutine(source);
+    return new GlslLibRoutine(source, ['coordinates.Sampler3DSnippet']);
   }
 
   /**

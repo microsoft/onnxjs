@@ -35,7 +35,7 @@ export class WebGLUnpack implements WebGLOperator {
         ${unpackChannel}
         void main() {
           // TODO(TJ): implement getOutputCoords() to map input uv to output xy.
-          ivec4 rc = getOutputCoords();
+          ivec2 rc = getOutputCoords();
           //ivec4 rc = ivec4(0, 0, 0, 0);
 
           // Sample the texture with the coords to get the rgba channel value.

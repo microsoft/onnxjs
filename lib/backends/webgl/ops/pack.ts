@@ -23,10 +23,10 @@ export class WebGLPack implements WebGLOperator {
     const outputShape = outputLayout.shape;
     const rank = outputShape.length;
 
-    const setup = getSetup(rank, outputShape, inputShape[inputShape.length - 1], inputShape[inputShape.length - 2]);
+    const setup = getSetup(rank, inputShape[inputShape.length - 1], inputShape[inputShape.length - 2]);
 
     const channels = getChannels('rc', rank);
-    const outOfBoundsCondition = getOutOfBoundsCondition(rank, outputShape, channels);
+    const outOfBoundsCondition = getOutOfBoundsCondition(rank, inputShape, channels);
     const output = getOutput(outputShape, channels);
     const shaderSource = `
         void main() {
@@ -94,7 +94,7 @@ function getOutput(shape: ReadonlyArray<number>, dims: string[]): string {
           rEdge || cEdge ? 0. : getA(rp1, cp1)`;
 }
 
-function getSetup(rank: number, outputShape: ReadonlyArray<number>, cols: number, rows: number): string {
+function getSetup(rank: number, cols: number, rows: number): string {
   if (rank === 1) {
     return '';
   }

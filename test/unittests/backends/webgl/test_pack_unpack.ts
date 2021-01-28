@@ -77,7 +77,7 @@ describe('#UnitTest# - pack - Tensor pack', () => {
     expect(resultDataBuffer).to.not.equal(null);
     expect(resultDataBuffer).to.have.lengthOf(elementCount);
     // TODO: enable verifications after code integration.
-    expect(resultDataBuffer).to.deep.equal(new Int32Array([1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]));
+    expect(resultDataBuffer).to.deep.equal(new Int32Array([1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16]));
   });
   it('Test unpack', () => {
     const op = new WebGLUnpack();
@@ -126,6 +126,6 @@ describe('#UnitTest# - pack - Tensor pack', () => {
     expect(result).to.not.equal(null);
     expect(result).to.have.lengthOf(elementCount);
     // TODO: enable verifications after code integration.
-    // expect(result).to.deep.equal(new Int32Array([1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]));
+    // expect(result).to.deep.equal(new Int32Array([1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16]));
   });
 });

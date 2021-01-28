@@ -82,13 +82,17 @@ export class CoordsGlslLib extends GlslLib {
     switch (outShape.length) {
       case 0:
         result[funcName] = this.getOutputScalarCoords();
+        break;
       case 1:
         result[funcName] = this.getOutputPacked1DCoords(outShape as [number], outTexShape as [number, number]);
+        break;
       case 2:
         result[funcName] = this.getOutputPacked2DCoords(outShape as [number, number], outTexShape as [number, number]);
+        break;
       case 3:
         result[funcName] =
             this.getOutputPacked3DCoords(outShape as [number, number, number], outTexShape as [number, number]);
+        break;
       default:
         result[funcName] = this.getOutputPackedNDCoords(outShape, outTexShape as [number, number]);
     }

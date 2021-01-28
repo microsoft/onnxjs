@@ -2,11 +2,10 @@
 // Licensed under the MIT license.
 
 import {Tensor} from '../../../tensor';
-import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 
-import {getChannels, getChannelValue} from './packing_utils';
+import {getChannels} from './packing_utils';
 
 export class WebGLPack implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
@@ -29,14 +28,11 @@ export class WebGLPack implements WebGLOperator {
     const channels = getChannels('rc', rank);
     const outOfBoundsCondition = getOutOfBoundsCondition(rank, outputShape, channels);
     const output = getOutput(outputShape, channels);
-    const glsl = getGlsl(handler.session.backend.glContext.version);
-    const chanelValue = getChannelValue(inputShape[rank - 2], inputShape[rank - 1], glsl.texture2D);
     const shaderSource = `
-        ${chanelValue}
         void main() {
           // TODO(TJ): implement getOutputCoords() to map input uv to output xy.
-          //ivec2 rc = getOutputCoords();
-          ivec2 rc = ivec2(0, 0);
+          ivec2 rc = getOutputCoords();
+          //ivec2 rc = ivec2(0, 0);
 
           if(${outOfBoundsCondition}) {
             outputColor = vec4(0);

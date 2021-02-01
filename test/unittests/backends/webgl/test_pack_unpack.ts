@@ -6,6 +6,7 @@ import {Backend, InferenceHandler, SessionHandler} from '../../../../lib/backend
 import {WebGLInferenceHandler} from '../../../../lib/backends/webgl/inference-handler';
 import {WebGLPack} from '../../../../lib/backends/webgl/ops/pack';
 import {WebGLUnpack} from '../../../../lib/backends/webgl/ops/unpack';
+import {WebGLContext} from '../../../../lib/backends/webgl/webgl-context';
 import {Profiler} from '../../../../lib/instrument';
 import {Tensor} from '../../../../lib/tensor';
 import {ShapeUtil} from '../../../../lib/util';
@@ -19,10 +20,23 @@ function createAscendingArray(size: number): Float32Array {
 }
 
 function createTextureFromArray(
-    gl: WebGLRenderingContext, dataArray: Float32Array, type: GLenum, width: number, height: number) {
+    glContext: WebGLContext, dataArray: Float32Array, type: GLenum, width: number, height: number) {
+  const gl = glContext.gl;
   const texture = gl.createTexture();
+  glContext.checkError();
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, type, width, height, 0, type, gl.UNSIGNED_BYTE, dataArray);
+  glContext.checkError();
+
+  if (glContext.version === 2) {
+    const webgl2Gl = gl as WebGL2RenderingContext;
+    gl.texImage2D(webgl2Gl.TEXTURE_2D, 0, webgl2Gl.RGBA32F, width, height, 0, webgl2Gl.RGBA, webgl2Gl.FLOAT, dataArray);
+  } else {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, dataArray);
+  }
+
+  glContext.checkError();
+  gl.flush();
+  glContext.checkError();
   return texture;
 }
 
@@ -33,7 +47,6 @@ function createArrayFromTexture(
   gl.framebufferTexture2D(
       gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture,
       0);  // 0, we aren't using MIPMAPs
-  // TODO: Check if framebuffer is ready
   gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, resultDataBuffer);
   return resultDataBuffer;
 }
@@ -69,7 +82,7 @@ describe('#UnitTest# - pack - Tensor pack', () => {
     // const result = runData.outputTextureData;
     const resultTexture = runData.outputTextureData.texture;
     const gl = webglInferenceHandler.session.textureManager.glContext.gl;
-    const resultDataBuffer = createArrayFromTexture(gl, resultTexture, outputTextureShape[0], outputTextureShape[1])
+    const resultDataBuffer = createArrayFromTexture(gl, resultTexture, outputTextureShape[0], outputTextureShape[1]);
 
     // verify result.
     // TODO: add more verifications including output value and order
@@ -77,7 +90,8 @@ describe('#UnitTest# - pack - Tensor pack', () => {
     expect(resultDataBuffer).to.not.equal(null);
     expect(resultDataBuffer).to.have.lengthOf(elementCount);
     // TODO: enable verifications after code integration.
-    expect(resultDataBuffer).to.deep.equal(new Int32Array([1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16]));
+    console.log(resultDataBuffer);
+    expect(resultDataBuffer).to.deep.equal(new Float32Array([1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16]));
   });
   it('Test unpack', () => {
     const op = new WebGLUnpack();
@@ -96,7 +110,11 @@ describe('#UnitTest# - pack - Tensor pack', () => {
 
     // manually creat packed texture from inputTensor, and insert in cache
     const gl = webglInferenceHandler.session.textureManager.glContext.gl;
-    const webglTexture = createTextureFromArray(gl, inputData, gl.RGBA, inputTextureShape[0], inputTextureShape[1]);
+    webglInferenceHandler.session.textureManager.glContext.checkError();
+    const webglTexture = createTextureFromArray(
+        webglInferenceHandler.session.textureManager.glContext, inputData, gl.RGBA, inputTextureShape[0],
+        inputTextureShape[1]);
+    webglInferenceHandler.session.textureManager.glContext.checkError();
     const packedShape = inputTextureShape;
     const textureData = {
       width: inputTextureShape[0],
@@ -109,23 +127,37 @@ describe('#UnitTest# - pack - Tensor pack', () => {
       tensor: inputTensor,
       texture: webglTexture!
     };
+
     webglInferenceHandler.setTextureData(inputTensor.dataId, textureData);
+    webglInferenceHandler.session.textureManager.glContext.checkError();
 
     // compile shader code
     const programInfo = op.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor]);
+    webglInferenceHandler.session.textureManager.glContext.checkError();
 
     const artifact = webglInferenceHandler.session.programManager.build(programInfo);
+    webglInferenceHandler.session.textureManager.glContext.checkError();
     webglInferenceHandler.session.programManager.setArtifact(op, artifact);
+    webglInferenceHandler.session.textureManager.glContext.checkError();
 
     // run kernal and get output
     const runData = op.createRunData(webglInferenceHandler, artifact.programInfo, [inputTensor]);
+    webglInferenceHandler.session.textureManager.glContext.checkError();
     webglInferenceHandler.session.programManager.run(artifact, runData);
+    webglInferenceHandler.session.textureManager.glContext.checkError();
     const result = runData.outputTextureData.tensor.data;
+    webglInferenceHandler.session.textureManager.glContext.checkError();
 
+    const resultDataBuffer = createArrayFromTexture(gl, webglTexture!, inputTextureShape[0], inputTextureShape[1]);
+
+    webglInferenceHandler.session.textureManager.glContext.checkError();
     // verify result.
     expect(result).to.not.equal(null);
     expect(result).to.have.lengthOf(elementCount);
     // TODO: enable verifications after code integration.
-    // expect(result).to.deep.equal(new Int32Array([1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16]));
+    expect(resultDataBuffer).to.deep.equal(new Float32Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]));
+
+    console.log(result);
+    expect(result).to.deep.equal(new Float32Array([1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16]));
   });
 });

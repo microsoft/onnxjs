@@ -158,17 +158,17 @@ export class CoordsGlslLib extends GlslLib {
    * 2D output coordinates.
    */
   protected getOutputPacked2DCoords(shape: [number, number], texShape: [number, number]): GlslLibRoutine {
-    const packedTexShape = [Math.ceil(texShape[0] / 2), Math.ceil(texShape[1] / 2)];
     let source = '';
     if (ArrayUtil.arraysEqual(shape, texShape)) {
       source = `
         ivec2 getOutputCoords() {
-          return 2 * ivec2(TexCoords.yx * vec2(${packedTexShape[0]}, ${packedTexShape[1]}));
+          return 2 * ivec2(TexCoords.yx * vec2(${texShape[0]}, ${texShape[1]}));
         }
       `;
       return new GlslLibRoutine(source);
     }
 
+    const packedTexShape = texShape;
     // texels needed to accommodate a logical row
     const texelsInLogicalRow = Math.ceil(shape[1] / 2);
 
@@ -471,14 +471,15 @@ export class CoordsGlslLib extends GlslLib {
 
       return new GlslLibRoutine(inputLayout.isPacked ? packedSampler : unpackedSampler);
     }
-    const packedTexShape = [Math.ceil(texShape[0] / 2), Math.ceil(texShape[1] / 2)];
+    const packedTexShape = texShape;
     const valuesPerRow = Math.ceil(shape[1] / 2);
     const packedSampler = `vec4 ${funcName}(int row, int col) {
       vec2 uv = packedUVfrom2D(${valuesPerRow}, ${packedTexShape[0]}, ${packedTexShape[1]}, row, col);
       return ${glsl.texture2D}(${name}, uv);
     }`;
+    const unpackedTexShape = [Math.ceil(texShape[0] / 2), Math.ceil(texShape[1] / 2)];
     const unpackedSampler = `float ${funcName}(int row, int col) {
-      vec2 uv = packedUVfrom2D(${valuesPerRow}, ${packedTexShape[0]}, ${packedTexShape[1]}, row, col);
+      vec2 uv = packedUVfrom2D(${valuesPerRow}, ${unpackedTexShape[0]}, ${unpackedTexShape[1]}, row, col);
       return ${glsl.texture2D}(${name}, uv).r;
     }`;
     const source = inputLayout.isPacked ? packedSampler : unpackedSampler;

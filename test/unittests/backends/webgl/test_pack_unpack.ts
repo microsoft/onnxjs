@@ -129,24 +129,17 @@ describe('#UnitTest# - pack - Tensor pack', () => {
     };
 
     webglInferenceHandler.setTextureData(inputTensor.dataId, textureData);
-    webglInferenceHandler.session.textureManager.glContext.checkError();
 
     // compile shader code
     const programInfo = op.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor]);
-    webglInferenceHandler.session.textureManager.glContext.checkError();
 
     const artifact = webglInferenceHandler.session.programManager.build(programInfo);
-    webglInferenceHandler.session.textureManager.glContext.checkError();
     webglInferenceHandler.session.programManager.setArtifact(op, artifact);
-    webglInferenceHandler.session.textureManager.glContext.checkError();
 
     // run kernal and get output
     const runData = op.createRunData(webglInferenceHandler, artifact.programInfo, [inputTensor]);
-    webglInferenceHandler.session.textureManager.glContext.checkError();
     webglInferenceHandler.session.programManager.run(artifact, runData);
-    webglInferenceHandler.session.textureManager.glContext.checkError();
     const result = runData.outputTextureData.tensor.data;
-    webglInferenceHandler.session.textureManager.glContext.checkError();
 
     const resultDataBuffer = createArrayFromTexture(gl, webglTexture!, inputTextureShape[0], inputTextureShape[1]);
 

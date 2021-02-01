@@ -587,7 +587,7 @@ export class CoordsGlslLib extends GlslLib {
     this.context.programInfo.inputLayouts.forEach((inputLayout, i) => {
       const name = this.context.programInfo.samplers[i];
       const funcName = generateShaderFuncNameFromInputSamplerName(name);
-      if (this.context.programInfo.isInputsPacked) {
+      if (inputLayout.isPacked) {
         result[funcName] = this.getPackedSamplerFromInput(funcName, name, inputLayout);
       } else {
         result[funcName] = this.getUnpackedSamplerFromInput(funcName, name, inputLayout);
@@ -595,7 +595,7 @@ export class CoordsGlslLib extends GlslLib {
 
       const outCoordFuncName = generateShaderFuncNameFromInputSamplerNameAtOutCoords(name);
       if (inputLayout.unpackedShape.length <= outputLayout.unpackedShape.length) {
-        if (this.context.programInfo.isInputsPacked) {
+        if (inputLayout.isPacked) {
           result[outCoordFuncName] =
               this.getPackedSamplerAtOutputCoords(outCoordFuncName, inputLayout, outputLayout, name);
         } else {

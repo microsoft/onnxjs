@@ -188,7 +188,7 @@ export function parseAxisParam(axis: number|number[], shape: number[]): number[]
 
   // Check for only integers
   assert(
-      axis.every(ax => isInt(ax)),
+      axis.every(isInt),
       () => `All values in axis param must be integers but ` +
           `got axis ${axis}`);
 

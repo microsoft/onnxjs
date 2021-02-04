@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import {Logger} from '../../instrument';
-
+import {assert} from './webgl_utils';
 /** Layout preferences */
 export interface WidthHeightPrefs {
   breakAxis?: number;
@@ -195,11 +195,7 @@ export function parseAxisParam(axis: number|number[], shape: number[]): number[]
   // Handle negative axis.
   return axis.map(a => a < 0 ? rank + a : a);
 }
-export function assert(expr: boolean, msg: () => string) {
-  if (!expr) {
-    throw new Error(typeof msg === 'string' ? msg : msg());
-  }
-}
+
 export function isInt(a: number): boolean {
   return a % 1 === 0;
 }

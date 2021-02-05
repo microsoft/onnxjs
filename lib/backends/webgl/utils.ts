@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-
+import {assert} from './webgl_utils';
 /**
  * Given a non RGBA shape calculate the R version
  * It is assumed that the dimensions are multiples of given channels
@@ -17,6 +17,7 @@ export function getPackedShape(unpackedShape: ReadonlyArray<number>): ReadonlyAr
  * @param samplerName Name of the sampler.
  */
 export function generateShaderFuncNameFromInputSamplerName(samplerName: string): string {
+  assert(typeof samplerName !== 'undefined' && samplerName.length !== 0, () => 'empty string found for sampler name');
   return 'get' + samplerName.charAt(0).toUpperCase() + samplerName.slice(1);
 }
 
@@ -25,6 +26,7 @@ export function generateShaderFuncNameFromInputSamplerName(samplerName: string):
  * @param samplerName Name of the sampler.
  */
 export function generateShaderFuncNameFromInputSamplerNameAtOutCoords(samplerName: string): string {
+  assert(typeof samplerName !== 'undefined' && samplerName.length !== 0, () => 'empty string found for sampler name');
   return 'get' + samplerName.charAt(0).toUpperCase() + samplerName.slice(1) + 'AtOutCoords';
 }
 

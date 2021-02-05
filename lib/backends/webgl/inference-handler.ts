@@ -13,7 +13,6 @@ import {WebGLSessionHandler} from './session-handler';
 import {Encoder} from './texture-data-encoder';
 import {WidthHeightPrefs} from './texture-layout-strategy';
 import {Artifact, RunData, TextureData, TextureLayout, WebGLOperator} from './types';
-import {getPackedShape} from './utils';
 
 export class WebGLInferenceHandler implements InferenceHandler {
   private textureDataCache: Map<Tensor.Id, TextureData>;
@@ -169,9 +168,9 @@ export class WebGLInferenceHandler implements InferenceHandler {
     if (td) {
       return td;
     }
-    return this.createTextureLayoutFromShape(
-        channels === 1 || isPacked ? tensor.dims : getPackedShape(tensor.dims), channels, unpackedShape,
-        isPacked ? {isPacked: true} : undefined);
+    // Assume all tensor's texture layout is unpacked when it's created.
+    // We may revisit this assumption later.
+    return this.createTextureLayoutFromShape(tensor.dims, 1, unpackedShape, {isPacked: false});
   }
   /**
    * Create a TextureLayout object from shape.
@@ -234,6 +233,8 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   pack(input: TextureData): TextureData {
+    console.log('==unpack==');
+
     const key = `${input.shape}`;
     let op = this.session.packOpCache.get(key);
     if (!op) {
@@ -253,7 +254,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   unpack(input: TextureData): TextureData {
-    console.log('==unpack==');
     const key = `${input.shape}`;
     let op = this.session.unpackOpCache.get(key);
     if (!op) {

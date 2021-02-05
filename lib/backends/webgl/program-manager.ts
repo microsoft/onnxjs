@@ -69,6 +69,179 @@ export class ProgramManager {
     return this.profiler.event('backend', 'ProgramManager.build', () => {
       const preprocessor = new GlslPreprocessor(this.glContext, programInfo);
       const fragScript = preprocessor.preprocess();
+      /*const fragScript = `#version 300 es
+      precision highp float;
+      precision highp int;
+      precision highp sampler2D;
+      in vec2 TexCoords;
+      out vec4 outputColor;
+      const vec2 halfCR = vec2(0.5, 0.5);
+
+      // Custom vector types to handle higher dimenalities.
+      struct ivec5
+      {
+        int x;
+        int y;
+        int z;
+        int w;
+        int u;
+      };
+
+      struct ivec6
+      {
+        int x;
+        int y;
+        int z;
+        int w;
+        int u;
+        int v;
+      };
+
+      int imod(int x, int y) {
+        return x - y * (x / y);
+      }
+
+
+      uniform sampler2D A;
+  uniform sampler2D B;
+
+          void bcastMatmulIndices_A(int bcastedIndices[2], out int realIndices[2]) {
+
+            realIndices[1] = bcastedIndices[1];
+            realIndices[0] = bcastedIndices[0];
+          }
+
+
+          void bcastMatmulIndices_B(int bcastedIndices[2], out int realIndices[2]) {
+
+            realIndices[1] = bcastedIndices[1];
+            realIndices[0] = bcastedIndices[0];
+          }
+
+
+        int coordsToOffset(vec2 coords, int width, int height) {
+          float s = coords.s * float(width);
+          float t = coords.t * float(height);
+          int offset = int(t) * width + int(s);
+          return offset;
+        }
+
+
+        void toVec(vec2 texCoords, out int c[2]) {
+          int offset = coordsToOffset(texCoords, 2, 2);
+
+          c[0] = offset / 2;
+          offset -= c[0] * 2;
+          c[1] = offset;
+        }
+        void toVec(int offset, out int c[2]) {
+
+          c[0] = offset / 2;
+          offset -= c[0] * 2;
+          c[1] = offset;
+        }
+
+
+        int indicesToOffset_A(int indices[2]) {
+          int offset = 0;
+
+          offset += indices[1] * 1;
+
+          offset += indices[0] * 4;
+
+          return offset;
+        }
+
+
+        vec2 offsetToCoords(int offset, int width, int height) {
+          int t = offset / width;
+          int s = offset - t*width;
+          vec2 coords = (vec2(s,t) + vec2(0.5,0.5)) / vec2(width, height);
+          return coords;
+        }
+
+  highp float decode(highp vec4 rgba) {
+          return rgba.r;
+        }
+
+
+          float getColorAsFloat(vec4 color) {
+              return decode(color);
+          }
+
+
+          float _A(int m[2]) {
+            int offset = indicesToOffset_A(m);
+            vec2 coords = offsetToCoords(offset, 2, 4);
+            float value = getColorAsFloat(texture(A, coords));
+            return value;
+          }
+
+
+          vec4 _A_Pack(int m[2]) {
+            int offset = indicesToOffset_A(m);
+            vec2 coords = offsetToCoords(offset, 2, 4);
+            return texture(A, coords);
+          }
+
+
+        int indicesToOffset_B(int indices[2]) {
+          int offset = 0;
+
+          offset += indices[1] * 1;
+
+          offset += indices[0] * 2;
+
+          return offset;
+        }
+
+
+          float _B(int m[2]) {
+            int offset = indicesToOffset_B(m);
+            vec2 coords = offsetToCoords(offset, 4, 2);
+            float value = getColorAsFloat(texture(B, coords));
+            return value;
+          }
+
+
+          vec4 _B_Pack(int m[2]) {
+            int offset = indicesToOffset_B(m);
+            vec2 coords = offsetToCoords(offset, 4, 2);
+            return texture(B, coords);
+          }
+
+
+            ivec2 getOutputCoords() {
+              return ivec2(TexCoords.yx * vec2(2, 2));
+            }
+
+
+
+        vec4 process(int indices[2]) {
+            ivec2 rc = getOutputCoords();
+            int a[2];
+            int b[2];
+            bcastMatmulIndices_A(indices, a);
+            bcastMatmulIndices_B(indices, b);
+
+            vec4 value;
+            for (int k=0; k<((4+1)/2); ++k) {
+                a[1] = 0;
+                b[0] = 0;
+                value += _A_Pack(a).rrbb * _B_Pack(b).rgrg;
+                value += _A_Pack(a).ggaa * _B_Pack(b).baba;
+                value = _B_Pack(b).rgba;
+            }
+            return vec4(_B_Pack(b).a,2,3,4);
+        }
+
+    void main() {
+      int indices[2];
+      toVec(TexCoords, indices);
+      vec4 result = vec4(process(indices));
+      outputColor = result;
+    }
+    ` */
       const program = this.compile(fragScript);
       const artifact = {
         programInfo,

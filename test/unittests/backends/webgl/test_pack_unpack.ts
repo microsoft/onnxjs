@@ -53,6 +53,79 @@ function createArrayFromTexture(
   return resultDataBuffer;
 }
 
+function getExpectedElementCount(inputShape: number[]): number {
+  const rank = inputShape.length;
+
+  // TODO: add rank === 0
+
+  // 1D tensor
+  if (rank === 1) {
+    if (inputShape[0] % 2) {
+      return (inputShape[0] + 1) * 2;
+    } else {
+      return inputShape[0] * 2;
+    }
+  }
+  let inputWidth = inputShape[rank - 2];
+  let inputHeight = inputShape[rank - 1];
+  if (rank > 2) {
+    // TODO: add check for squeezing other dims
+    for (let i = 0; i < rank - 2; ++i) {
+      inputWidth *= inputShape[i];
+    }
+  }
+  if (inputWidth % 2) {
+    inputWidth++;
+  }
+  if (inputHeight % 2) {
+    inputHeight++;
+  }
+  return inputWidth * inputHeight;
+}
+
+function generateExpected(inputArray: Float32Array, inputShape: number[]): Float32Array {
+  const rank = inputShape.length;
+
+  let inputWidth = rank === 1 ? inputShape[rank - 1] : inputShape[rank - 2];
+  const inputHeight = rank === 1 ? 1 : inputShape[rank - 1];
+  if (rank > 2) {
+    // TODO: add check for squeezing other dims
+    for (let i = 0; i < rank - 2; ++i) {
+      inputWidth *= inputShape[i];
+    }
+  }
+  const width = inputWidth % 2 ? inputWidth + 1 : inputWidth;
+  const height = inputHeight % 2 ? inputHeight + 1 : inputHeight;
+
+  const result = new Float32Array(width * height);
+  let ii = 0;
+  for (let j = 0; j < height; j += 2) {
+    for (let i = 0; i < width; i += 2) {
+      const index = j * inputWidth + i;
+      result[ii++] = inputArray[index];
+
+      if (i + 1 < inputWidth) {
+        result[ii++] = inputArray[index + 1];
+      } else {
+        result[ii++] = 0;
+      }
+
+      if (j + 1 < inputHeight) {
+        result[ii++] = inputArray[(j + 1) * inputWidth + i];
+      } else {
+        result[ii++] = 0;
+      }
+
+      if (i + 1 < inputWidth && j + 1 < inputHeight) {
+        result[ii++] = inputArray[(j + 1) * inputWidth + i + 1];
+      } else {
+        result[ii++] = 0;
+      }
+    }
+  }
+  return result;
+}
+
 describe('#UnitTest# - pack - Tensor pack', () => {
   before('Initialize Context', async () => {
     const profiler = Profiler.create();
@@ -60,42 +133,70 @@ describe('#UnitTest# - pack - Tensor pack', () => {
     sessionhandler = backend.createSessionHandler({profiler});
     inferenceHandler = sessionhandler.createInferenceHandler();
   });
-  it('Test pack kernal', () => {
-    const op = new WebGLPack();
+  const testDataSet = getTestData();
+  for (let k = 0; k < testDataSet.length; ++k) {
+    const testData = testDataSet[k];
+    describe(`Test pack ${JSON.stringify(testData)}`, () => {});
+    it(`Test pack kernal ${JSON.stringify(testData)}`, () => {
+      const op = new WebGLPack();
 
-    const elementCount = 16;
-    const inputTensorShape = [4, 4];
-    const outputTextureShape = [2, 2];
+      const elementCount = testData.elementCount;
+      const inputData = createAscendingArray(elementCount);
+      const inputTensorShape = testData.inputShape;
+      const outputTextureShape = testData.outputTextureShape;
+      // const elementCount = 16;
+      // const inputTensorShape = [4, 4];
+      // const outputTextureShape = [2, 2];
 
-    // create input data and tensor. The input data will be used to verify if the output tensor contains the same
-    // value but possibly different order depending on our packing algorithm.
-    const inputData = createAscendingArray(elementCount);
-    const inputTensor = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
+      // create input data and tensor. The input data will be used to verify if the output tensor
+      // contains the same value but possibly different order depending on our packing algorithm.
+      // const inputData = createAscendingArray(elementCount);
+      const inputTensor = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
 
-    // compile shader code
-    const programInfo = op.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor]);
-    const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
-    const artifact = webglInferenceHandler.session.programManager.build(programInfo);
-    webglInferenceHandler.session.programManager.setArtifact(op, artifact);
+      // compile shader code
+      const programInfo = op.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor]);
+      const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
+      const artifact = webglInferenceHandler.session.programManager.build(programInfo);
+      webglInferenceHandler.session.programManager.setArtifact(op, artifact);
 
-    // run kernal and get output
-    const runData = op.createRunData(webglInferenceHandler, artifact.programInfo, [inputTensor]);
-    webglInferenceHandler.session.programManager.run(artifact, runData);
-    // const result = runData.outputTextureData;
-    const resultTexture = runData.outputTextureData.texture;
-    const gl = webglInferenceHandler.session.textureManager.glContext.gl;
-    const resultDataBuffer = createArrayFromTexture(gl, resultTexture, outputTextureShape[0], outputTextureShape[1]);
+      // run kernal and get output
+      const runData = op.createRunData(webglInferenceHandler, artifact.programInfo, [inputTensor]);
+      webglInferenceHandler.session.programManager.run(artifact, runData);
+      // const result = runData.outputTextureData;
+      const resultTexture = runData.outputTextureData.texture;
+      const gl = webglInferenceHandler.session.textureManager.glContext.gl;
+      const resultDataBuffer = createArrayFromTexture(gl, resultTexture, outputTextureShape[0], outputTextureShape[1]);
 
-    // verify result.
-    // TODO: add more verifications including output value and order
-    // TODO: also different input dimensions for different pack code path
-    expect(resultDataBuffer).to.not.equal(null);
-    expect(resultDataBuffer).to.have.lengthOf(elementCount);
-    // TODO: enable verifications after code integration.
-    console.log(resultDataBuffer);
-    expect(resultDataBuffer).to.deep.equal(new Float32Array([1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16]));
-  });
-  it('Test unpack', () => {
+      // // test only: download input texture to cpu
+      // // const inputTextData = webglInferenceHandler.getTextureData(inputTensor.dataId);
+      // // const aa = createArrayFromTexture(gl, inputTextData!.texture, 4, 4);
+      // // console.log(aa);
+
+      // verify result.
+      // TODO: add more verifications including output value and order
+      // TODO: also different input dimensions for different pack code path
+      expect(resultDataBuffer).to.not.equal(null);
+
+      const outputElementCount = getExpectedElementCount(testData.inputShape);
+
+      expect(resultDataBuffer).to.have.lengthOf(outputElementCount);
+      // TODO: enable verifications after code integration.
+      for (let i = 0; i < resultDataBuffer.length; ++i) {
+        console.log(resultDataBuffer[i]);
+      }
+
+      const expectedOutput = generateExpected(inputData, testData.inputShape);
+      // expect(resultDataBuffer).to.deep.equal(new Float32Array([1, 2, 5, 6, 3, 4, 7, 8, 9, 10,
+      // 13, 14, 11, 12, 15, 16]));
+      // console.log(expectedOutput);
+      for (let i = 0; i < expectedOutput.length; ++i) {
+        console.log('expected: ', expectedOutput[i]);
+      }
+      expect(resultDataBuffer).to.deep.equal(expectedOutput);
+    });
+  }
+
+  it.skip('Test unpack', () => {
     const op = new WebGLUnpack();
 
     const elementCount = 16;
@@ -103,8 +204,8 @@ describe('#UnitTest# - pack - Tensor pack', () => {
     const inputTextureShape = [2, 2];
     const outputTensorShape = [4, 4];
 
-    // create input data and tensor. The input data will be used to verify if the output tensor contains the same value
-    // but possibly different order depending on our packing algorithm.
+    // create input data and tensor. The input data will be used to verify if the output tensor contains the
+    // same value but possibly different order depending on our packing algorithm.
     const inputData = createAscendingArray(elementCount);
     const inputTensor = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
 
@@ -157,3 +258,32 @@ describe('#UnitTest# - pack - Tensor pack', () => {
     expect(result).to.deep.equal(new Float32Array([1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16]));
   });
 });
+interface TestData {
+  elementCount: number;
+  inputShape: number[];
+  outputTextureShape: number[];
+}
+function getTestData(): TestData[] {
+  return [
+    // test 2D tensor
+    {elementCount: 16, inputShape: [4, 4], outputTextureShape: [2, 2]},
+    {elementCount: 16, inputShape: [2, 8], outputTextureShape: [1, 4]},
+    {elementCount: 16, inputShape: [8, 2], outputTextureShape: [4, 1]},
+    {elementCount: 15, inputShape: [3, 5], outputTextureShape: [2, 3]},
+    {elementCount: 18, inputShape: [3, 6], outputTextureShape: [2, 3]},
+    {elementCount: 10, inputShape: [2, 5], outputTextureShape: [1, 3]},
+    {elementCount: 6, inputShape: [1, 6], outputTextureShape: [1, 3]},
+    {elementCount: 6, inputShape: [6, 1], outputTextureShape: [3, 1]},
+    {elementCount: 5, inputShape: [5, 1], outputTextureShape: [3, 1]},
+    {elementCount: 5, inputShape: [1, 5], outputTextureShape: [1, 3]},
+
+    // test 1D tensor
+    {elementCount: 16, inputShape: [16], outputTextureShape: [1, 8]},
+    {elementCount: 9, inputShape: [9], outputTextureShape: [1, 5]},
+
+    // // // TODO: not working yet
+    // // {elementCount: 16, inputShape: [2, 2, 4], outputTextureShape: [2, 2]},
+    // {elementCount: 24, inputShape: [2, 3, 4], outputTextureShape: [3, 2]},
+    // ADD empty tensor
+  ];
+}

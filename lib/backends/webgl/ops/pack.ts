@@ -4,6 +4,7 @@
 import {Tensor} from '../../../tensor';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
+import {getCoordsDataType} from '../utils';
 
 import {getChannels} from './packing_utils';
 
@@ -23,16 +24,17 @@ export class WebGLPack implements WebGLOperator {
     const outputShape = outputLayout.shape;
     const rank = outputShape.length;
 
-    const setup = getSetup(rank, inputShape[inputShape.length - 1], inputShape[inputShape.length - 2]);
-
+    const coordsDataType = getCoordsDataType(rank);
+    // 47, 17: export function getCoordsDataType(rank: number): string {
     const channels = getChannels('rc', rank);
+    const setup = getSetup(rank, channels, inputShape[inputShape.length - 2], inputShape[inputShape.length - 1]);
+
     const outOfBoundsCondition = getOutOfBoundsCondition(rank, inputShape, channels);
-    const output = getOutput(outputShape, channels);
+    const output = getOutput(inputShape, channels);
     const shaderSource = `
         void main() {
           // TODO(TJ): implement getOutputCoords() to map input uv to output xy.
-          ivec2 rc = getOutputCoords();
-          //ivec2 rc = ivec2(0, 0);
+          ${coordsDataType} rc = getOutputCoords();
 
           if(${outOfBoundsCondition}) {
             outputColor = vec4(0);
@@ -88,25 +90,35 @@ function getOutput(shape: ReadonlyArray<number>, dims: string[]): string {
             0, 0`;
   }
 
-  return `getA(r, c),
-          cEdge ? 0. : getA(r, cp1),
-          rEdge ? 0. : getA(rp1, c),
-          rEdge || cEdge ? 0. : getA(rp1, cp1)`;
+  const coord00 = 'r, c';
+  const coord01 = 'r, cp1';
+  const coord10 = 'rp1, c';
+  const coord11 = 'rp1, cp1';
+  let D = '';
+  if (rank > 2) {
+    for (let i = 0; i < rank - 2; ++i) {
+      D = D + `${dims[i]},`;
+    }
+  }
+  return `getA(${D}${coord00}),
+          rEdge ? 0. : getA(${D}${coord10}),
+          cEdge ? 0. : getA(${D}${coord01}),
+          rEdge || cEdge ? 0. : getA(${D}${coord11})`;
 }
 
-function getSetup(rank: number, cols: number, rows: number): string {
+function getSetup(rank: number, dims: string[], rows: number, cols: number): string {
   if (rank === 1) {
     return '';
   }
   // rank >= 2 for width+height pack.
   else {
     const setup = `
-    int r = rc.x;
-    int c = rc.y;
-    int rp1 = rc.x + 1;
-    int cp1 = rc.y + 1;
-    bool cEdge = cp1 >= ${cols};
+    int r = ${dims[rank - 2]};
+    int c = ${dims[rank - 1]};
+    int rp1 = ${dims[rank - 2]} + 1;
+    int cp1 = ${dims[rank - 1]} + 1;
     bool rEdge = rp1 >= ${rows};
+    bool cEdge = cp1 >= ${cols};
     `;
     return setup;
   }

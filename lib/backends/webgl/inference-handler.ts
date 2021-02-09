@@ -29,9 +29,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     const runData = op.createRunData(this, artifact.programInfo, inputs);
     this.runProgram(artifact, runData);
-    console.log(
-        'run kernels: ',
-        this.createArrayFromTexture(this.session.backend.glContext.gl, runData.outputTextureData.texture, 1, 1));
     return [runData.outputTextureData.tensor];
   }
 
@@ -233,17 +230,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
       return this.session.textureManager.readUint8TextureAsFloat(uint8TD);
     }
     return this.session.textureManager.readTexture(textureData, textureData.tensor.type, textureData.channels);
-  }
-
-  createArrayFromTexture(gl: WebGLRenderingContext, texture: WebGLTexture, width: number, height: number):
-      Float32Array {
-    const resultDataBuffer = new Float32Array(width * height * 4);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.framebufferTexture2D(
-        gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture,
-        0);  // 0, we aren't using MIPMAPs
-    gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, resultDataBuffer);
-    return resultDataBuffer;
   }
 
   pack(input: TextureData): TextureData {

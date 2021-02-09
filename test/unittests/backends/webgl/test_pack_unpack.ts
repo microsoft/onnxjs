@@ -22,11 +22,15 @@ function createAscendingArray(size: number): Float32Array {
 function createTextureFromArray(
     glContext: WebGLContext, dataArray: Float32Array, type: GLenum, width: number, height: number) {
   const gl = glContext.gl;
-  const texture = gl.createTexture();
-  glContext.checkError();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  glContext.checkError();
 
+  // create the texture
+  const texture = gl.createTexture();
+  // bind the texture so the following methods effect this texture.
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   if (glContext.version === 2) {
     const webgl2Gl = gl as WebGL2RenderingContext;
     gl.texImage2D(webgl2Gl.TEXTURE_2D, 0, webgl2Gl.RGBA32F, width, height, 0, webgl2Gl.RGBA, webgl2Gl.FLOAT, dataArray);
@@ -34,8 +38,6 @@ function createTextureFromArray(
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.FLOAT, dataArray);
   }
 
-  glContext.checkError();
-  gl.flush();
   glContext.checkError();
   return texture;
 }
@@ -151,6 +153,7 @@ describe('#UnitTest# - pack - Tensor pack', () => {
     expect(resultDataBuffer).to.deep.equal(new Float32Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]));
 
     console.log(result);
+
     expect(result).to.deep.equal(new Float32Array([1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16]));
   });
 });

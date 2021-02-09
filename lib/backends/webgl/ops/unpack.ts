@@ -34,9 +34,7 @@ export class WebGLUnpack implements WebGLOperator {
     const shaderSource = `
         ${unpackChannel}
         void main() {
-          // TODO(TJ): implement getOutputCoords() to map input uv to output xy.
           ivec2 rc = getOutputCoords();
-          //ivec4 rc = ivec4(0, 0, 0, 0);
 
           // Sample the texture with the coords to get the rgba channel value.
           vec4 packedInput = getA(${sourceCoords});
@@ -51,8 +49,8 @@ export class WebGLUnpack implements WebGLOperator {
       samplers: ['A'],
       shaderSource,
       hasMain: true,
-      isInputsPacked: false,
-      isOutputPacked: true,
+      isInputsPacked: true,
+      isOutputPacked: false,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {

@@ -196,7 +196,7 @@ describe('#UnitTest# - pack - Tensor pack', () => {
     });
   }
 
-  it.skip('Test unpack', () => {
+  it(`Test unpack kernal `, () => {
     const op = new WebGLUnpack();
 
     const elementCount = 16;

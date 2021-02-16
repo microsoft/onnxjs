@@ -163,15 +163,16 @@ export class WebGLInferenceHandler implements InferenceHandler {
   /**
    * Create a TextureLayout object from a tensor. If a related texture data is found, returns the cached texture layout.
    */
-  getOrCreateTextureLayout(tensor: Tensor, channels: 1|4 = 1, isPacked = false, unpackedShape?: ReadonlyArray<number>):
-      TextureLayout {
+  getOrCreateTextureLayout(
+      tensor: Tensor, channels: 1|4 = 1, isPacked = false, unpackedShape?: ReadonlyArray<number>,
+      reverseWH = false): TextureLayout {
     const td = this.getTextureData(tensor.dataId);
     if (td) {
       return td;
     }
     return this.createTextureLayoutFromShape(
         channels === 1 || isPacked ? tensor.dims : getPackedShape(tensor.dims), channels, unpackedShape,
-        isPacked ? {isPacked: true} : undefined);
+        isPacked || reverseWH ? {isPacked, reverseWH} : undefined);
   }
   /**
    * Create a TextureLayout object from shape.
@@ -180,8 +181,13 @@ export class WebGLInferenceHandler implements InferenceHandler {
       shape: ReadonlyArray<number>, channels: 1|4 = 1, unpackedShape?: ReadonlyArray<number>,
       prefs?: WidthHeightPrefs): TextureLayout {
     const isPacked = !!(prefs && prefs.isPacked);
-    const [width, height] =
+    const [texWidth, texHeight] =
         this.session.layoutStrategy.computeTextureWH(isPacked ? unpackedShape || shape : shape, prefs);
+    let [width, height] = [texWidth, texHeight];
+    if (prefs && prefs.reverseWH) {
+      width = texHeight;
+      height = texWidth;
+    }
     const rank = shape.length;
     let inferredDims = shape.slice(0);
     if (rank === 0) {

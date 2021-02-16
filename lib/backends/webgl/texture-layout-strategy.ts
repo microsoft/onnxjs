@@ -7,6 +7,7 @@ import {assert} from './webgl_utils';
 export interface WidthHeightPrefs {
   breakAxis?: number;
   isPacked?: boolean;
+  reverseWH?: boolean;
 }
 /**
  * TextureLayoutStrategy is an abstraction for different plans

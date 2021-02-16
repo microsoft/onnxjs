@@ -238,7 +238,7 @@ export class CoordsGlslLib extends GlslLib {
     }
     source = `
         int getOutputCoords() {
-          ivec2 resTexRC = ivec2(TexCoords.xy *
+          ivec2 resTexRC = ivec2(TexCoords.yx *
                                 vec2(${texShape[0]}, ${texShape[1]}));
           return resTexRC.y * ${texShape[1]} + resTexRC.x;
         }
@@ -296,7 +296,7 @@ export class CoordsGlslLib extends GlslLib {
     if (ArrayUtil.arraysEqual(shape, texShape)) {
       source = `
           ivec2 getOutputCoords() {
-            return ivec2(TexCoords.xy * vec2(${texShape[0]}, ${texShape[1]}));
+            return ivec2(TexCoords.yx * vec2(${texShape[0]}, ${texShape[1]}));
           }
         `;
       return new GlslLibRoutine(source);
@@ -304,7 +304,7 @@ export class CoordsGlslLib extends GlslLib {
     if (shape[1] === 1) {
       source = `
           ivec2 getOutputCoords() {
-            ivec2 resTexRC = ivec2(TexCoords.xy *
+            ivec2 resTexRC = ivec2(TexCoords.yx *
                                   vec2(${texShape[0]}, ${texShape[1]}));
             int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
             return ivec2(index, 0);
@@ -315,7 +315,7 @@ export class CoordsGlslLib extends GlslLib {
     if (shape[0] === 1) {
       source = `
           ivec2 getOutputCoords() {
-            ivec2 resTexRC = ivec2(TexCoords.xy *
+            ivec2 resTexRC = ivec2(TexCoords.yx *
                                   vec2(${texShape[0]}, ${texShape[1]}));
             int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
             return ivec2(0, index);
@@ -325,7 +325,7 @@ export class CoordsGlslLib extends GlslLib {
     }
     source = `
         ivec2 getOutputCoords() {
-          ivec2 resTexRC = ivec2(TexCoords.xy *
+          ivec2 resTexRC = ivec2(TexCoords.yx *
                                 vec2(${texShape[0]}, ${texShape[1]}));
           int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
           int r = index / ${shape[1]};
@@ -392,7 +392,7 @@ export class CoordsGlslLib extends GlslLib {
 
     source = `
         ivec3 getOutputCoords() {
-          ivec2 resTexRC = ivec2(TexCoords.xy *
+          ivec2 resTexRC = ivec2(TexCoords.yx *
                                 vec2(${texShape[0]}, ${texShape[1]}));
           int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
           ${coordsFromIndexSnippet}
@@ -434,7 +434,7 @@ export class CoordsGlslLib extends GlslLib {
 
     source = `
       ivec4 getOutputCoords() {
-          ivec2 resTexRC = ivec2(TexCoords.xy *
+          ivec2 resTexRC = ivec2(TexCoords.yx *
                                 vec2(${texShape[0]}, ${texShape[1]}));
           int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
           ${coordsFromIndexSnippet}
@@ -476,7 +476,7 @@ export class CoordsGlslLib extends GlslLib {
 
     source = `
       ivec5 getOutputCoords() {
-          ivec2 resTexRC = ivec2(TexCoords.xy *
+          ivec2 resTexRC = ivec2(TexCoords.yx *
                                 vec2(${texShape[0]}, ${texShape[1]}));
           int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
           ${coordsFromIndexSnippet}

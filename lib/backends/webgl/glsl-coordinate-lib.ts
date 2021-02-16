@@ -854,7 +854,7 @@ export class CoordsGlslLib extends GlslLib {
     if (tNumC === 1) {
       const source = `
           float ${funcName}(int index) {
-            vec2 uv = vec2(0.5, (float(index) + 0.5)) / ${tNumR}.0);
+            vec2 uv = vec2(0.5, (float(index) + 0.5) / ${tNumR}.0);
             return sampleTexture(${name}, uv);
           }
         `;

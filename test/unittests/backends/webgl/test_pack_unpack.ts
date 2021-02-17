@@ -66,17 +66,21 @@ function getExpectedElementCount(inputShape: number[]): number {
       return inputShape[0] * 2;
     }
   }
-  let inputWidth = inputShape[rank - 2];
-  let inputHeight = inputShape[rank - 1];
-  if (rank > 2) {
-    // TODO: add check for squeezing other dims
-    for (let i = 0; i < rank - 2; ++i) {
-      inputWidth *= inputShape[i];
+
+  // process width
+  let inputWidth = 1;
+  if (rank >= 2) {
+    for (let i = 0; i <= rank - 2; ++i) {
+      if (inputShape[i] % 2) {
+        inputWidth *= (inputShape[i] + 1);
+      } else {
+        inputWidth *= inputShape[i];
+      }
     }
   }
-  if (inputWidth % 2) {
-    inputWidth++;
-  }
+
+  // process height
+  let inputHeight = inputShape[rank - 1];
   if (inputHeight % 2) {
     inputHeight++;
   }
@@ -86,12 +90,12 @@ function getExpectedElementCount(inputShape: number[]): number {
 function generateExpected(inputArray: Float32Array, inputShape: number[]): Float32Array {
   const rank = inputShape.length;
 
-  let inputWidth = rank === 1 ? inputShape[rank - 1] : inputShape[rank - 2];
-  const inputHeight = rank === 1 ? 1 : inputShape[rank - 1];
+  let inputHeight = rank === 1 ? 1 : inputShape[rank - 2];
+  const inputWidth = rank === 1 ? inputShape[rank - 1] : inputShape[rank - 1];
   if (rank > 2) {
     // TODO: add check for squeezing other dims
     for (let i = 0; i < rank - 2; ++i) {
-      inputWidth *= inputShape[i];
+      inputHeight *= inputShape[i];
     }
   }
   const width = inputWidth % 2 ? inputWidth + 1 : inputWidth;
@@ -110,7 +114,7 @@ function generateExpected(inputArray: Float32Array, inputShape: number[]): Float
         result[ii++] = 0;
       }
 
-      if (j + 1 < inputHeight) {
+      if ((j + 1) < inputHeight) {
         result[ii++] = inputArray[(j + 1) * inputWidth + i];
       } else {
         result[ii++] = 0;
@@ -165,7 +169,7 @@ describe('#UnitTest# - pack - Tensor pack', () => {
       // const result = runData.outputTextureData;
       const resultTexture = runData.outputTextureData.texture;
       const gl = webglInferenceHandler.session.textureManager.glContext.gl;
-      const resultDataBuffer = createArrayFromTexture(gl, resultTexture, outputTextureShape[0], outputTextureShape[1]);
+      const resultDataBuffer = createArrayFromTexture(gl, resultTexture, outputTextureShape[1], outputTextureShape[0]);
 
       // // test only: download input texture to cpu
       // // const inputTextData = webglInferenceHandler.getTextureData(inputTensor.dataId);
@@ -281,9 +285,9 @@ function getTestData(): TestData[] {
     {elementCount: 16, inputShape: [16], outputTextureShape: [1, 8]},
     {elementCount: 9, inputShape: [9], outputTextureShape: [1, 5]},
 
-    // // // TODO: not working yet
-    // // {elementCount: 16, inputShape: [2, 2, 4], outputTextureShape: [2, 2]},
-    // {elementCount: 24, inputShape: [2, 3, 4], outputTextureShape: [3, 2]},
+    // // TODO: not working yet
+    // {elementCount: 16, inputShape: [2, 2, 4], outputTextureShape: [2, 2]},
+    // {elementCount: 24, inputShape: [2, 3, 4], outputTextureShape: [4, 2]},
     // ADD empty tensor
   ];
 }

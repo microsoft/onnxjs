@@ -20,16 +20,17 @@ export class WebGLPack implements WebGLOperator {
     const inputShape = inputs[0].dims;
 
     // TODO(Du): look into ways to simplify createTextureLayoutFromShape's signature
-    const outputLayout = handler.createTextureLayoutFromShape(inputShape, 4, inputShape, {isPacked: true});
+    const outputLayout =
+        handler.createTextureLayoutFromShape(inputShape, 4, inputShape, {isPacked: true, reverseWH: true});
     const outputShape = outputLayout.shape;
     const rank = outputShape.length;
 
     const coordsDataType = getCoordsDataType(rank);
-    // 47, 17: export function getCoordsDataType(rank: number): string {
     const channels = getChannels('rc', rank);
     const setup = getSetup(rank, channels, inputShape[inputShape.length - 2], inputShape[inputShape.length - 1]);
 
-    const outOfBoundsCondition = getOutOfBoundsCondition(rank, inputShape, channels);
+    const reversedInputWH = [inputShape[rank - 1], inputShape[rank - 2]];
+    const outOfBoundsCondition = getOutOfBoundsCondition(rank, reversedInputWH, channels);
     const output = getOutput(inputShape, channels);
     const shaderSource = `
         void main() {
@@ -47,7 +48,7 @@ export class WebGLPack implements WebGLOperator {
       `;
 
     return {
-      inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])],
+      inputLayouts: [handler.getOrCreateTextureLayout(inputs[0], 1, false, [], true)],
       outputLayout,
       samplers: ['A'],
       shaderSource,
@@ -73,7 +74,7 @@ function getOutOfBoundsCondition(rank: number, shape: ReadonlyArray<number>, dim
 
   let cond = '';
   for (let i = rank - 2; i < rank; i++) {
-    cond += `${dims[i]} >= ${shape[i]}`;
+    cond += `${dims[i]} >= ${shape[i - rank + 2]}`;
     if (i < rank - 1) {
       cond += '||';
     }
@@ -117,8 +118,8 @@ function getSetup(rank: number, dims: string[], rows: number, cols: number): str
     int c = ${dims[rank - 1]};
     int rp1 = ${dims[rank - 2]} + 1;
     int cp1 = ${dims[rank - 1]} + 1;
-    bool rEdge = rp1 >= ${rows};
-    bool cEdge = cp1 >= ${cols};
+    bool rEdge = rp1 >= ${cols};
+    bool cEdge = cp1 >= ${rows};
     `;
     return setup;
   }

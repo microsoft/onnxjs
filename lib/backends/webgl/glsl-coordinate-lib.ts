@@ -262,7 +262,7 @@ export class CoordsGlslLib extends GlslLib {
 
     const packedTexShape = texShape;
     // texels needed to accommodate a logical row
-    const texelsInLogicalRow = Math.ceil(shape[1] / 2);
+    const texelsInLogicalRow = shape[1];
 
     /**
      * getOutputCoords
@@ -278,9 +278,11 @@ export class CoordsGlslLib extends GlslLib {
           ivec2 resTexRC = ivec2(TexCoords.xy *
                                 vec2(${packedTexShape[0]}, ${packedTexShape[1]}));
 
-          int index = resTexRC.y * ${packedTexShape[1]} + resTexRC.x;
-          int r = 2 * (index / ${texelsInLogicalRow});
-          int c = imod(index, ${texelsInLogicalRow}) * 2;
+          int index = resTexRC.y * ${packedTexShape[0]} + resTexRC.x;
+
+          // reverse r and c order for packed texture
+          int r = imod(index, ${texelsInLogicalRow}) * 2;
+          int c = 2 * (index / ${texelsInLogicalRow});
 
           return ivec2(r, c);
         }
@@ -854,7 +856,7 @@ export class CoordsGlslLib extends GlslLib {
     if (tNumC === 1) {
       const source = `
           float ${funcName}(int index) {
-            vec2 uv = vec2(0.5, (float(index) + 0.5) / ${tNumR}.0);
+            vec2 uv = vec2((float(index) + 0.5) / ${tNumR}.0, 0.5);
             return sampleTexture(${name}, uv);
           }
         `;
@@ -863,7 +865,7 @@ export class CoordsGlslLib extends GlslLib {
     if (tNumR === 1) {
       const source = `
           float ${funcName}(int index) {
-            vec2 uv = vec2(0.5, (float(index) + 0.5) / ${tNumC}.0);
+            vec2 uv = vec2((float(index) + 0.5) / ${tNumC}.0, 0.5);
             return sampleTexture(${name}, uv);
           }
         `;
@@ -912,12 +914,13 @@ export class CoordsGlslLib extends GlslLib {
 
   protected getSampler2D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
     const shape = inputLayout.unpackedShape;
-    const texShape = [inputLayout.width, inputLayout.height];
+
+    // TODO: modify row/col order for other dimensions.
+    const texShape = [inputLayout.height, inputLayout.width];
 
     if (texShape != null && ArrayUtil.arraysEqual(shape, texShape)) {
-      const texNumR = texShape[0];
-      const texNumC = texShape[1];
-      // TODO: modify row/col order for other dimensions.
+      const texNumR = texShape[1];
+      const texNumC = texShape[0];
       const source = `
           float ${funcName}(int row, int col) {
             vec2 uv = (vec2(row, col) + halfCR) / vec2(${texNumR}.0, ${texNumC}.0);
@@ -947,8 +950,8 @@ export class CoordsGlslLib extends GlslLib {
       );
     }
 
-    const texNumR = texShape[0];
-    const texNumC = texShape[1];
+    const texNumR = texShape[1];
+    const texNumC = texShape[0];
     if (texNumC === 1) {
       const source = `
           float ${funcName}(int row, int col) {

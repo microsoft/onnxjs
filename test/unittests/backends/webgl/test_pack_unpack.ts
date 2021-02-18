@@ -68,14 +68,10 @@ function getExpectedElementCount(inputShape: number[]): number {
   }
 
   // process width
-  let inputWidth = 1;
-  if (rank >= 2) {
-    for (let i = 0; i <= rank - 2; ++i) {
-      if (inputShape[i] % 2) {
-        inputWidth *= (inputShape[i] + 1);
-      } else {
-        inputWidth *= inputShape[i];
-      }
+  let inputWidth = inputShape[rank - 2] % 2 ? inputShape[rank - 2] + 1 : inputShape[rank - 2];
+  if (rank > 2) {
+    for (let i = 0; i < rank - 2; ++i) {
+      inputWidth *= inputShape[i];
     }
   }
 
@@ -90,40 +86,43 @@ function getExpectedElementCount(inputShape: number[]): number {
 function generateExpected(inputArray: Float32Array, inputShape: number[]): Float32Array {
   const rank = inputShape.length;
 
-  let inputHeight = rank === 1 ? 1 : inputShape[rank - 2];
-  const inputWidth = rank === 1 ? inputShape[rank - 1] : inputShape[rank - 1];
+  const inputHeight = rank === 1 ? 1 : inputShape[rank - 2];
+  const inputWidth = inputShape[rank - 1];
+  const paddedW = inputWidth % 2 ? inputWidth + 1 : inputWidth;
+  const paddedH = inputHeight % 2 ? inputHeight + 1 : inputHeight;
+
+  let B = 1;
   if (rank > 2) {
-    // TODO: add check for squeezing other dims
     for (let i = 0; i < rank - 2; ++i) {
-      inputHeight *= inputShape[i];
+      B *= inputShape[i];
     }
   }
-  const width = inputWidth % 2 ? inputWidth + 1 : inputWidth;
-  const height = inputHeight % 2 ? inputHeight + 1 : inputHeight;
 
-  const result = new Float32Array(width * height);
+  const result = new Float32Array(B * paddedW * paddedH);
   let ii = 0;
-  for (let j = 0; j < height; j += 2) {
-    for (let i = 0; i < width; i += 2) {
-      const index = j * inputWidth + i;
-      result[ii++] = inputArray[index];
+  for (let b = 0; b < B; ++b) {
+    for (let j = 0; j < paddedH; j += 2) {
+      for (let i = 0; i < paddedW; i += 2) {
+        const index = j * inputWidth + i + b * (inputHeight * inputWidth);
+        result[ii++] = inputArray[index];
 
-      if (i + 1 < inputWidth) {
-        result[ii++] = inputArray[index + 1];
-      } else {
-        result[ii++] = 0;
-      }
+        if (i + 1 < inputWidth) {
+          result[ii++] = inputArray[index + 1];
+        } else {
+          result[ii++] = 0;
+        }
 
-      if ((j + 1) < inputHeight) {
-        result[ii++] = inputArray[(j + 1) * inputWidth + i];
-      } else {
-        result[ii++] = 0;
-      }
+        if ((j + 1) < inputHeight) {
+          result[ii++] = inputArray[(j + 1) * inputWidth + i + b * (inputHeight * inputWidth)];
+        } else {
+          result[ii++] = 0;
+        }
 
-      if (i + 1 < inputWidth && j + 1 < inputHeight) {
-        result[ii++] = inputArray[(j + 1) * inputWidth + i + 1];
-      } else {
-        result[ii++] = 0;
+        if (i + 1 < inputWidth && j + 1 < inputHeight) {
+          result[ii++] = inputArray[(j + 1) * inputWidth + i + 1 + b * (inputHeight * inputWidth)];
+        } else {
+          result[ii++] = 0;
+        }
       }
     }
   }
@@ -269,7 +268,13 @@ interface TestData {
 }
 function getTestData(): TestData[] {
   return [
+    // test 1D tensor
+    {elementCount: 1, inputShape: [1], outputTextureShape: [1, 1]},
+    {elementCount: 16, inputShape: [16], outputTextureShape: [1, 8]},
+    {elementCount: 9, inputShape: [9], outputTextureShape: [1, 5]},
+
     // test 2D tensor
+    {elementCount: 1, inputShape: [1, 1], outputTextureShape: [1, 1]},
     {elementCount: 16, inputShape: [4, 4], outputTextureShape: [2, 2]},
     {elementCount: 16, inputShape: [2, 8], outputTextureShape: [1, 4]},
     {elementCount: 16, inputShape: [8, 2], outputTextureShape: [4, 1]},
@@ -281,13 +286,12 @@ function getTestData(): TestData[] {
     {elementCount: 5, inputShape: [5, 1], outputTextureShape: [3, 1]},
     {elementCount: 5, inputShape: [1, 5], outputTextureShape: [1, 3]},
 
-    // test 1D tensor
-    {elementCount: 16, inputShape: [16], outputTextureShape: [1, 8]},
-    {elementCount: 9, inputShape: [9], outputTextureShape: [1, 5]},
-
-    // // TODO: not working yet
-    // {elementCount: 16, inputShape: [2, 2, 4], outputTextureShape: [2, 2]},
-    // {elementCount: 24, inputShape: [2, 3, 4], outputTextureShape: [4, 2]},
-    // ADD empty tensor
+    // test 3D tensor
+    {elementCount: 1, inputShape: [1, 1, 1], outputTextureShape: [1, 1]},
+    {elementCount: 16, inputShape: [2, 2, 4], outputTextureShape: [2, 2]},
+    {elementCount: 24, inputShape: [2, 3, 4], outputTextureShape: [4, 2]},
+    {elementCount: 30, inputShape: [5, 3, 2], outputTextureShape: [10, 1]},
+    {elementCount: 9, inputShape: [1, 3, 3], outputTextureShape: [2, 2]},
+    // // ADD empty tensor
   ];
 }

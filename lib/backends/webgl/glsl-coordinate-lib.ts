@@ -349,13 +349,14 @@ export class CoordsGlslLib extends GlslLib {
         ivec3 getOutputCoords() {
           ivec2 resTexRC = ivec2(TexCoords.xy *
                                 vec2(${packedTexShape[0]}, ${packedTexShape[1]}));
-          int index = resTexRC.y * ${packedTexShape[1]} + resTexRC.x;
+          int index = resTexRC.y * ${packedTexShape[0]} + resTexRC.x;
 
           int b = index / ${texelsInBatch};
           index -= b * ${texelsInBatch};
 
-          int r = 2 * (index / ${texelsInLogicalRow});
-          int c = imod(index, ${texelsInLogicalRow}) * 2;
+          // reverse r and c order for packed texture
+          int r = imod(index, ${texelsInLogicalRow}) * 2;
+          int c = 2 * (index / ${texelsInLogicalRow});
 
           return ivec3(b, r, c);
         }
@@ -519,8 +520,9 @@ export class CoordsGlslLib extends GlslLib {
         int b = index / ${texelsInBatch};
         index -= b * ${texelsInBatch};
 
-        int r = 2 * (index / ${texelsInLogicalRow});
-        int c = imod(index, ${texelsInLogicalRow}) * 2;
+        // reverse r and c order for packed texture
+        int r = imod(index, ${texelsInLogicalRow}) * 2;
+        int c = 2 * (index / ${texelsInLogicalRow});
 
         return ivec${shape.length}(${coords});
       }
@@ -536,8 +538,8 @@ export class CoordsGlslLib extends GlslLib {
     let funcName = `uvFromFlat`;
     result[funcName] = new GlslLibRoutine(`
     vec2 uvFromFlat(int texNumR, int texNumC, int index) {
-      int texR = index / texNumC;
-      int texC = index - texR * texNumC;
+      int texC = index / texNumR;
+      int texR = index - texC * texNumR;
       // TODO: swap texR, texC order in following function so row is corresponding to u and column is corresponding to v.
       return (vec2(texR, texC) + halfCR) / vec2(texNumR, texNumC);
     }
@@ -1056,7 +1058,7 @@ export class CoordsGlslLib extends GlslLib {
     const source = `
           float ${funcName}(int depth, int row, int col) {
             // Explicitly use integer operations as dot() only works on floats.
-            int index = depth * ${stride0} + row * ${stride1} + col;
+            int index = depth * ${stride0} + col * ${stride1} + row;
             vec2 uv = uvFromFlat(${texNumR}, ${texNumC}, index);
             return sampleTexture(${name}, uv);
           }

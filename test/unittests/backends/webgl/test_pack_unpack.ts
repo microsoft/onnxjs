@@ -167,7 +167,7 @@ describe('#UnitTest# - pack - Tensor pack', () => {
       // const result = runData.outputTextureData;
       const resultTexture = runData.outputTextureData.texture;
       const gl = webglInferenceHandler.session.textureManager.glContext.gl;
-      const resultDataBuffer = createArrayFromTexture(gl, resultTexture, outputTextureShape[0], outputTextureShape[1]);
+      const resultDataBuffer = createArrayFromTexture(gl, resultTexture, outputTextureShape[1], outputTextureShape[0]);
 
       // // test only: download input texture to cpu
       // // const inputTextData = webglInferenceHandler.getTextureData(inputTensor.dataId);

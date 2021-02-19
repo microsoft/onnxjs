@@ -4,6 +4,7 @@
 import {Tensor} from '../../../tensor';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
+import {getCoordsDataType} from '../utils';
 
 import {getChannels} from './packing_utils';
 
@@ -28,13 +29,14 @@ export class WebGLUnpack implements WebGLOperator {
 
     const channels = getChannels('rc', rank);
     const innerDims = channels.slice(-2);
+    const coordsDataType = getCoordsDataType(rank);
     const unpackChannel = unpackFromChannel();
     const sourceCoords = getSourceCoords(rank, channels);
     const coords = rank <= 1 ? 'rc' : `vec2(${innerDims.join(',')})`;
     const shaderSource = `
         ${unpackChannel}
         void main() {
-          ivec2 rc = getOutputCoords();
+          ${coordsDataType} rc = getOutputCoords();
 
           // Sample the texture with the coords to get the rgba channel value.
           vec4 packedInput = getA(${sourceCoords});

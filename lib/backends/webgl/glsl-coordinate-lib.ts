@@ -1020,7 +1020,7 @@ export class CoordsGlslLib extends GlslLib {
 
     const packedSampler = `vec4 ${funcName}(int b, int row, int col) {
       vec2 uv = packedUVfrom3D(
-        ${texNumR}, ${texNumC}, ${texelsInBatch}, ${valuesPerRow}, b, row, col);
+        ${texNumC}, ${texNumR}, ${texelsInBatch}, ${valuesPerRow}, b, row, col);
       return ${glsl.texture2D}(${name}, uv);}`;
     const source = packedSampler;
     return new GlslLibRoutine(source, ['coordinates.packedUVfrom3D']);

@@ -19,7 +19,6 @@ export class WebGLPack implements WebGLOperator {
 
     const inputShape = inputs[0].dims;
 
-    // TODO(Du): look into ways to simplify createTextureLayoutFromShape's signature
     const outputLayout =
         handler.createTextureLayoutFromShape(inputShape, 4, inputShape, {isPacked: true, reverseWH: true});
     const outputShape = outputLayout.shape;
@@ -38,12 +37,10 @@ export class WebGLPack implements WebGLOperator {
     } else {
       reversedInputWH = [inputShape[outputRank - 1], inputShape[outputRank - 2]];
     }
-    // const reversedInputWH = [inputShape[outputRank - 1], inputShape[outputRank - 2]];
     const outOfBoundsCondition = getOutOfBoundsCondition(outputRank, reversedInputWH, channels);
     const output = getOutput(inputShape, channels);
     const shaderSource = `
         void main() {
-          // TODO(TJ): implement getOutputCoords() to map input uv to output xy.
           ${coordsDataType} rc = getOutputCoords();
 
           if(${outOfBoundsCondition}) {
@@ -76,6 +73,9 @@ export class WebGLPack implements WebGLOperator {
   }
 }
 
+/**
+ * check output coordinate location and return false if it is outside input's width/height boundary
+ */
 function getOutOfBoundsCondition(rank: number, shape: ReadonlyArray<number>, dims: string[]): string {
   if (rank === 1) {
     return `rc > ${shape[0]}`;
@@ -92,6 +92,9 @@ function getOutOfBoundsCondition(rank: number, shape: ReadonlyArray<number>, dim
   return cond;
 }
 
+/**
+ * code snippet to sample input texture with output coordiantes
+ */
 function getOutput(shape: ReadonlyArray<number>, dims: string[]): string {
   const rank = shape.length;
 
@@ -121,6 +124,9 @@ function getOutput(shape: ReadonlyArray<number>, dims: string[]): string {
           rEdge || cEdge ? 0. : getA(${D}${coord11})`;
 }
 
+/**
+ * code snippet to setup 4 coordinates and edge conditions
+ */
 function getSetup(rank: number, dims: string[], rows: number, cols: number): string {
   if (rank === 0 || rank === 1) {
     return '';

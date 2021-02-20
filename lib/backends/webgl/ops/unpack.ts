@@ -22,7 +22,6 @@ export class WebGLUnpack implements WebGLOperator {
       throw new Error(`packed input texture must exist`);
     }
 
-    // TODO(Du): look into ways to simplify createTextureLayoutFromShape's signature
     const outputLayout = handler.createTextureLayoutFromShape(inputTexture.unpackedShape);
     const outputShape = outputLayout.shape;
     const rank = outputShape.length;

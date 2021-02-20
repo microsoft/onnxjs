@@ -23,14 +23,23 @@ export class WebGLPack implements WebGLOperator {
     const outputLayout =
         handler.createTextureLayoutFromShape(inputShape, 4, inputShape, {isPacked: true, reverseWH: true});
     const outputShape = outputLayout.shape;
-    const rank = outputShape.length;
+    const inputRank = inputShape.length;
+    const outputRank = outputShape.length;
 
-    const coordsDataType = getCoordsDataType(rank);
-    const channels = getChannels('rc', rank);
-    const setup = getSetup(rank, channels, inputShape[inputShape.length - 2], inputShape[inputShape.length - 1]);
+    const coordsDataType = getCoordsDataType(outputRank);
+    const channels = getChannels('rc', outputRank);
+    const setup = getSetup(outputRank, channels, inputShape[inputShape.length - 2], inputShape[inputShape.length - 1]);
 
-    const reversedInputWH = [inputShape[rank - 1], inputShape[rank - 2]];
-    const outOfBoundsCondition = getOutOfBoundsCondition(rank, reversedInputWH, channels);
+    let reversedInputWH;
+    if (inputRank === 0) {
+      reversedInputWH = [1, 1];
+    } else if (inputRank === 1) {
+      reversedInputWH = [inputShape[0], 1];
+    } else {
+      reversedInputWH = [inputShape[outputRank - 1], inputShape[outputRank - 2]];
+    }
+    // const reversedInputWH = [inputShape[outputRank - 1], inputShape[outputRank - 2]];
+    const outOfBoundsCondition = getOutOfBoundsCondition(outputRank, reversedInputWH, channels);
     const output = getOutput(inputShape, channels);
     const shaderSource = `
         void main() {
@@ -85,6 +94,11 @@ function getOutOfBoundsCondition(rank: number, shape: ReadonlyArray<number>, dim
 
 function getOutput(shape: ReadonlyArray<number>, dims: string[]): string {
   const rank = shape.length;
+
+  if (rank === 0) {
+    return `getA(), 0, 0, 0`;
+  }
+
   if (rank === 1) {
     return `getA(rc),
             rc + 1 >= ${shape[0]} ? 0. : getA(rc + 1),
@@ -108,7 +122,7 @@ function getOutput(shape: ReadonlyArray<number>, dims: string[]): string {
 }
 
 function getSetup(rank: number, dims: string[], rows: number, cols: number): string {
-  if (rank === 1) {
+  if (rank === 0 || rank === 1) {
     return '';
   }
   // rank >= 2 for width+height pack.

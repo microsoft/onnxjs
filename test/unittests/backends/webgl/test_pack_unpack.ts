@@ -56,7 +56,10 @@ function createArrayFromTexture(
 function getExpectedElementCount(inputShape: number[]): number {
   const rank = inputShape.length;
 
-  // TODO: add rank === 0
+  // scalar
+  if (rank === 0) {
+    return 4;
+  }
 
   // 1D tensor
   if (rank === 1) {
@@ -84,6 +87,11 @@ function getExpectedElementCount(inputShape: number[]): number {
 }
 
 function generateExpected(inputArray: Float32Array, inputShape: number[]): Float32Array {
+  if (inputShape.length === 0) {
+    const result = new Float32Array(4);
+    result[0] = inputArray[0];
+    return result;
+  }
   const rank = inputShape.length;
 
   const inputHeight = rank === 1 ? 1 : inputShape[rank - 2];
@@ -268,6 +276,9 @@ interface TestData {
 }
 function getTestData(): TestData[] {
   return [
+    // test scaler
+    {elementCount: 1, inputShape: [], outputTextureShape: [1, 1]},
+
     // test 1D tensor
     {elementCount: 1, inputShape: [1], outputTextureShape: [1, 1]},
     {elementCount: 16, inputShape: [16], outputTextureShape: [1, 8]},
@@ -292,6 +303,6 @@ function getTestData(): TestData[] {
     {elementCount: 24, inputShape: [2, 3, 4], outputTextureShape: [4, 2]},
     {elementCount: 30, inputShape: [5, 3, 2], outputTextureShape: [10, 1]},
     {elementCount: 9, inputShape: [1, 3, 3], outputTextureShape: [2, 2]},
-    // // ADD empty tensor
+
   ];
 }

@@ -53,37 +53,44 @@ function createArrayFromTexture(
   return resultDataBuffer;
 }
 
-function getExpectedElementCount(inputShape: number[]): number {
+function getExpectedElementCount(inputShape: number[], isPacked = true): number {
   const rank = inputShape.length;
 
-  // scalar
-  if (rank === 0) {
-    return 4;
-  }
-
-  // 1D tensor
-  if (rank === 1) {
-    if (inputShape[0] % 2) {
-      return (inputShape[0] + 1) * 2;
-    } else {
-      return inputShape[0] * 2;
+  if (isPacked) {
+    // scalar
+    if (rank === 0) {
+      return 4;
     }
-  }
 
-  // process width
-  let inputWidth = inputShape[rank - 2] % 2 ? inputShape[rank - 2] + 1 : inputShape[rank - 2];
-  if (rank > 2) {
-    for (let i = 0; i < rank - 2; ++i) {
-      inputWidth *= inputShape[i];
+    // 1D tensor
+    if (rank === 1) {
+      if (inputShape[0] % 2) {
+        return (inputShape[0] + 1) * 2;
+      } else {
+        return inputShape[0] * 2;
+      }
     }
-  }
 
-  // process height
-  let inputHeight = inputShape[rank - 1];
-  if (inputHeight % 2) {
-    inputHeight++;
+    // process width
+    let inputWidth = inputShape[rank - 2] % 2 ? inputShape[rank - 2] + 1 : inputShape[rank - 2];
+    if (rank > 2) {
+      for (let i = 0; i < rank - 2; ++i) {
+        inputWidth *= inputShape[i];
+      }
+    }
+    // process height
+    let inputHeight = inputShape[rank - 1];
+    if (inputHeight % 2) {
+      inputHeight++;
+    }
+    return inputWidth * inputHeight;
+  } else {
+    let totalCount = 1;
+    for (let i = 0; i < rank; i++) {
+      totalCount *= inputShape[i];
+    }
+    return totalCount;
   }
-  return inputWidth * inputHeight;
 }
 
 function generateExpected(inputArray: Float32Array, inputShape: number[]): Float32Array {
@@ -206,103 +213,178 @@ describe('#UnitTest# - pack - Tensor pack', () => {
       expect(resultDataBuffer).to.deep.equal(expectedOutput);
     });
   }
+});
 
-  it(`Test unpack kernal `, () => {
-    const op = new WebGLUnpack();
-
-    const elementCount = 16;
-    const inputTensorShape = [4, 4];
-    const inputTextureShape = [2, 2];
-    const outputTensorShape = [4, 4];
-
-    // create input data and tensor. The input data will be used to verify if the output tensor contains the
-    // same value but possibly different order depending on our packing algorithm.
-    const inputData = createAscendingArray(elementCount);
-    const inputTensor = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
-
-    const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
-
-    // manually creat packed texture from inputTensor, and insert in cache
-    const gl = webglInferenceHandler.session.textureManager.glContext.gl;
-    webglInferenceHandler.session.textureManager.glContext.checkError();
-    const webglTexture = createTextureFromArray(
-        webglInferenceHandler.session.textureManager.glContext, inputData, gl.RGBA, inputTextureShape[0],
-        inputTextureShape[1]);
-    webglInferenceHandler.session.textureManager.glContext.checkError();
-    const packedShape = inputTextureShape;
-    const textureData = {
-      width: inputTextureShape[0],
-      height: inputTextureShape[1],
-      channels: 4 as const,
-      isPacked: true,
-      shape: packedShape,
-      strides: ShapeUtil.computeStrides(packedShape),
-      unpackedShape: outputTensorShape,
-      tensor: inputTensor,
-      texture: webglTexture!
-    };
-
-    webglInferenceHandler.setTextureData(inputTensor.dataId, textureData);
-
-    // compile shader code
-    const programInfo = op.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor]);
-
-    const artifact = webglInferenceHandler.session.programManager.build(programInfo);
-    webglInferenceHandler.session.programManager.setArtifact(op, artifact);
-
-    // run kernal and get output
-    const runData = op.createRunData(webglInferenceHandler, artifact.programInfo, [inputTensor]);
-    webglInferenceHandler.session.programManager.run(artifact, runData);
-    const result = runData.outputTextureData.tensor.data;
-
-    const resultDataBuffer = createArrayFromTexture(gl, webglTexture!, inputTextureShape[0], inputTextureShape[1]);
-
-    webglInferenceHandler.session.textureManager.glContext.checkError();
-    // verify result.
-    expect(result).to.not.equal(null);
-    expect(result).to.have.lengthOf(elementCount);
-    // TODO: enable verifications after code integration.
-    expect(resultDataBuffer).to.deep.equal(new Float32Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]));
-
-    console.log(result);
-
-    expect(result).to.deep.equal(new Float32Array([1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16]));
+describe('#UnitTest# - unpack - Tensor unpack', () => {
+  before('Initialize Context', async () => {
+    const profiler = Profiler.create();
+    backend = await Backend('webgl');
+    sessionhandler = backend.createSessionHandler({profiler});
+    inferenceHandler = sessionhandler.createInferenceHandler();
   });
+  const testDataSet = getTestData(false);
+  for (let k = 0; k < testDataSet.length; ++k) {
+    const testData = testDataSet[k];
+    describe(`Test unpack ${JSON.stringify(testData)}`, () => {});
+    it(`Test unpack kernal `, () => {
+      const op = new WebGLUnpack();
+
+      // const elementCount = 16;
+      // const inputTensorShape = [4, 4];
+      // const inputTextureShape = [2, 2];
+      // const outputTensorShape = [4, 4];
+      const elementCount = testData.elementCount;
+      const inputTensorShape = testData.inputShape;
+      const inputTextureShape = testData.inputTextureShape;
+      const outputTensorShape = testData.outputShape;
+
+      // create input data and tensor. The input data will be used to verify if the output tensor contains the
+      // same value but possibly different order depending on our packing algorithm.
+      const inputData = createAscendingArray(elementCount);
+      const inputTensor = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
+
+      const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
+
+      // manually creat packed texture from inputTensor, and insert in cache
+      const gl = webglInferenceHandler.session.textureManager.glContext.gl;
+      webglInferenceHandler.session.textureManager.glContext.checkError();
+      const webglTexture = createTextureFromArray(
+          webglInferenceHandler.session.textureManager.glContext, testData.rawData ? testData.rawData : inputData,
+          gl.RGBA, inputTextureShape[0], inputTextureShape[1]);
+      webglInferenceHandler.session.textureManager.glContext.checkError();
+      const packedShape = inputTextureShape;
+      const textureData = {
+        width: inputTextureShape[0],
+        height: inputTextureShape[1],
+        channels: 4 as const,
+        isPacked: true,
+        shape: packedShape,
+        strides: ShapeUtil.computeStrides(packedShape),
+        unpackedShape: outputTensorShape,
+        tensor: inputTensor,
+        texture: webglTexture!
+      };
+
+      webglInferenceHandler.setTextureData(inputTensor.dataId, textureData);
+
+      // compile shader code
+      const programInfo = op.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor]);
+
+      const artifact = webglInferenceHandler.session.programManager.build(programInfo);
+      webglInferenceHandler.session.programManager.setArtifact(op, artifact);
+
+      // run kernal and get output
+      const runData = op.createRunData(webglInferenceHandler, artifact.programInfo, [inputTensor]);
+      webglInferenceHandler.session.programManager.run(artifact, runData);
+      const result = runData.outputTextureData.tensor.data;
+
+      const resultDataBuffer = createArrayFromTexture(gl, webglTexture!, inputTextureShape[0], inputTextureShape[1]);
+
+      webglInferenceHandler.session.textureManager.glContext.checkError();
+      // verify result.
+      const expectedOutput = testData.useGeneratedOutput ? generateExpected(inputData, testData.inputShape) : inputData;
+      expect(result).to.not.equal(null);
+      expect(result).to.have.lengthOf(elementCount);
+      // TODO: enable verifications after code integration.
+      console.log('resultDataBuffer: ', resultDataBuffer);
+
+      expect(resultDataBuffer).to.deep.equal(testData.rawData ? testData.rawData : inputData);
+      const outputElementCount = getExpectedElementCount(testData.inputShape);
+
+      expect(resultDataBuffer).to.have.lengthOf(outputElementCount);
+
+      console.log('result: ', result);
+      console.log('expectedOutput: ', expectedOutput);
+      console.log('inputData: ', inputData);
+
+      expect(result).to.deep.equal(expectedOutput);
+    });
+  }
 });
 interface TestData {
   elementCount: number;
   inputShape: number[];
+  outputShape: number[];
+  inputTextureShape: number[];
   outputTextureShape: number[];
+  rawData?: Float32Array;
+  useGeneratedOutput?: boolean;
 }
-function getTestData(): TestData[] {
-  return [
-    // test scaler
-    {elementCount: 1, inputShape: [], outputTextureShape: [1, 1]},
+function getTestData(isPacked = true): TestData[] {
+  if (isPacked) {
+    return [
+      // test 1D tensor
+      {elementCount: 1, inputShape: [1], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
+      {elementCount: 16, inputShape: [16], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 8]},
+      {elementCount: 9, inputShape: [9], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 5]},
 
-    // test 1D tensor
-    {elementCount: 1, inputShape: [1], outputTextureShape: [1, 1]},
-    {elementCount: 16, inputShape: [16], outputTextureShape: [1, 8]},
-    {elementCount: 9, inputShape: [9], outputTextureShape: [1, 5]},
+      // test 2D tensor
+      {elementCount: 1, inputShape: [1, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
+      {elementCount: 16, inputShape: [4, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 2]},
+      {elementCount: 16, inputShape: [2, 8], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 4]},
+      {elementCount: 16, inputShape: [8, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
+      {elementCount: 15, inputShape: [3, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
+      {elementCount: 18, inputShape: [3, 6], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
+      {elementCount: 10, inputShape: [2, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
+      {elementCount: 6, inputShape: [1, 6], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
+      {elementCount: 6, inputShape: [6, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [3, 1]},
+      {elementCount: 5, inputShape: [5, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [3, 1]},
+      {elementCount: 5, inputShape: [1, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
 
-    // test 2D tensor
-    {elementCount: 1, inputShape: [1, 1], outputTextureShape: [1, 1]},
-    {elementCount: 16, inputShape: [4, 4], outputTextureShape: [2, 2]},
-    {elementCount: 16, inputShape: [2, 8], outputTextureShape: [1, 4]},
-    {elementCount: 16, inputShape: [8, 2], outputTextureShape: [4, 1]},
-    {elementCount: 15, inputShape: [3, 5], outputTextureShape: [2, 3]},
-    {elementCount: 18, inputShape: [3, 6], outputTextureShape: [2, 3]},
-    {elementCount: 10, inputShape: [2, 5], outputTextureShape: [1, 3]},
-    {elementCount: 6, inputShape: [1, 6], outputTextureShape: [1, 3]},
-    {elementCount: 6, inputShape: [6, 1], outputTextureShape: [3, 1]},
-    {elementCount: 5, inputShape: [5, 1], outputTextureShape: [3, 1]},
-    {elementCount: 5, inputShape: [1, 5], outputTextureShape: [1, 3]},
+      // test 3D tensor
+      {elementCount: 1, inputShape: [1, 1, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
+      {elementCount: 16, inputShape: [2, 2, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 2]},
+      {elementCount: 24, inputShape: [2, 3, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 2]},
+      {elementCount: 30, inputShape: [5, 3, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [10, 1]},
+      {elementCount: 9, inputShape: [1, 3, 3], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 2]},
+      // // ADD empty tensor
+    ];
+  } else {
+    return [
+      // test 2D tensor
+      {
+        elementCount: 16,
+        inputShape: [4, 4],
+        outputShape: [4, 4],
+        inputTextureShape: [2, 2],
+        outputTextureShape: [4, 4],
+        useGeneratedOutput: true,
+      },
+      // {elementCount: 16, inputShape: [2, 8], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 4]},
+      // {elementCount: 16, inputShape: [8, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
+      // {elementCount: 15, inputShape: [3, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
+      // {elementCount: 18, inputShape: [3, 6], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
+      // {elementCount: 10, inputShape: [2, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
+      //{elementCount: 6, inputShape: [1, 6], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
+      //{elementCount: 6, inputShape: [6, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [3, 1]},
+      //{elementCount: 5, inputShape: [5, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [3, 1]},
+      //{elementCount: 5, inputShape: [1, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
 
-    // test 3D tensor
-    {elementCount: 1, inputShape: [1, 1, 1], outputTextureShape: [1, 1]},
-    {elementCount: 16, inputShape: [2, 2, 4], outputTextureShape: [2, 2]},
-    {elementCount: 24, inputShape: [2, 3, 4], outputTextureShape: [4, 2]},
-    {elementCount: 30, inputShape: [5, 3, 2], outputTextureShape: [10, 1]},
-    {elementCount: 9, inputShape: [1, 3, 3], outputTextureShape: [2, 2]},
+      // test 1D tensor
+      //{elementCount: 16, inputShape: [16], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 8]},
+      //{elementCount: 9, inputShape: [9], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 5]},
 
-  ];
+      {
+        elementCount: 16,
+        inputShape: [2, 2, 4],
+        outputShape: [2, 2, 4],
+        inputTextureShape: [2, 2],
+        outputTextureShape: [4, 4],
+        useGeneratedOutput: true,
+      },
+      {
+        elementCount: 24,
+        inputShape: [2, 3, 4],
+        outputShape: [2, 3, 4],
+        inputTextureShape: [2, 4],
+        outputTextureShape: [6, 4],
+        rawData: new Float32Array([
+          1,  2,  5,  6,  3,  4,  7,  8,  9,  10, 0, 0, 11, 12, 0, 0,
+          13, 14, 17, 18, 15, 16, 19, 20, 21, 22, 0, 0, 23, 24, 0, 0
+        ])
+      },
+
+      // ADD empty tensor
+    ];
+  }
 }

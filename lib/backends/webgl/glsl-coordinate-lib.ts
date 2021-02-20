@@ -385,9 +385,9 @@ export class CoordsGlslLib extends GlslLib {
     const coordsFromIndexSnippet =
         strides
             .map((stride, i) => {
-              const line1 = `int ${coordsToCompute[i]} = 'index' / ${stride}`;
+              const line1 = `int ${coordsToCompute[i]} = index / ${stride}`;
               const line2 = i === strides.length - 1 ?
-                  `int ${coordsToCompute[i + 1]} = 'index' - ${coordsToCompute[i]} * ${stride}` :
+                  `int ${coordsToCompute[i + 1]} = index - ${coordsToCompute[i]} * ${stride}` :
                   `index -= ${coordsToCompute[i]} * ${stride}`;
               return `${line1}; ${line2};`;
             })
@@ -395,9 +395,9 @@ export class CoordsGlslLib extends GlslLib {
 
     source = `
         ivec3 getOutputCoords() {
-          ivec2 resTexRC = ivec2(TexCoords.yx *
+          ivec2 resTexRC = ivec2(TexCoords.xy *
                                 vec2(${texShape[0]}, ${texShape[1]}));
-          int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
+          int index = resTexRC.y * ${texShape[0]} + resTexRC.x;
           ${coordsFromIndexSnippet}
           return ivec3(r, c, d);
         }
@@ -427,9 +427,9 @@ export class CoordsGlslLib extends GlslLib {
     const coordsFromIndexSnippet =
         strides
             .map((stride, i) => {
-              const line1 = `int ${coordsToCompute[i]} = 'index' / ${stride}`;
+              const line1 = `int ${coordsToCompute[i]} = index / ${stride}`;
               const line2 = i === strides.length - 1 ?
-                  `int ${coordsToCompute[i + 1]} = 'index' - ${coordsToCompute[i]} * ${stride}` :
+                  `int ${coordsToCompute[i + 1]} = index - ${coordsToCompute[i]} * ${stride}` :
                   `index -= ${coordsToCompute[i]} * ${stride}`;
               return `${line1}; ${line2};`;
             })
@@ -469,9 +469,9 @@ export class CoordsGlslLib extends GlslLib {
     const coordsFromIndexSnippet =
         strides
             .map((stride, i) => {
-              const line1 = `int ${coordsToCompute[i]} = 'index' / ${stride}`;
+              const line1 = `int ${coordsToCompute[i]} = index / ${stride}`;
               const line2 = i === strides.length - 1 ?
-                  `int ${coordsToCompute[i + 1]} = 'index' - ${coordsToCompute[i]} * ${stride}` :
+                  `int ${coordsToCompute[i + 1]} = index - ${coordsToCompute[i]} * ${stride}` :
                   `index -= ${coordsToCompute[i]} * ${stride}`;
               return `${line1}; ${line2};`;
             })
@@ -993,8 +993,8 @@ export class CoordsGlslLib extends GlslLib {
    */
   protected getPackedSampler3D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
     const shape = inputLayout.unpackedShape;
-    const texShape = [inputLayout.width, inputLayout.width];
-    const packedTexShape = [Math.ceil(texShape[0] / 2), Math.ceil(texShape[1] / 2)];
+    const texShape = [inputLayout.width, inputLayout.height];
+    const packedTexShape = [texShape[0], texShape[1]];
     const glsl = getGlsl(this.context.glContext.version);
 
     if (shape[0] === 1) {
@@ -1020,7 +1020,7 @@ export class CoordsGlslLib extends GlslLib {
 
     const packedSampler = `vec4 ${funcName}(int b, int row, int col) {
       vec2 uv = packedUVfrom3D(
-        ${texNumR}, ${texNumC}, ${texelsInBatch}, ${valuesPerRow}, b, row, col);
+        ${texNumC}, ${texNumR}, ${texelsInBatch}, ${valuesPerRow}, b, row, col);
       return ${glsl.texture2D}(${name}, uv);}`;
     const source = packedSampler;
     return new GlslLibRoutine(source, ['coordinates.packedUVfrom3D']);

@@ -32,23 +32,21 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
 
           vec4 value;
           for (int k=0; k<((${sharedDim}+1)/2); ++k) {
-              a[${arank - 1}] = 0;
-              b[${brank - 2}] = 0;
-              //value += _A_Pack(a).rrbb * _B_Pack(b).rgrg;
-              //value += _A_Pack(a).ggaa * _B_Pack(b).baba;
-              value = _B_Pack(b);
-              value = _A_Pack(a);
-
+              a[${arank - 1}] = k;
+              b[${brank - 2}] = k;
+              value += _A_Pack(a).rrbb * _B_Pack(b).rgrg;
+              value += _A_Pack(a).ggaa * _B_Pack(b).baba;
           }
-          //return value;
-          int t[2];
-          t[0]=0;
-          t[1]=0;
-          return _B_Pack(t).rgba;
+          return value;
+      //    int t[2];
+      //    t[0]=0;
+      //    t[0]=1;
+      //    return _B_Pack(t).rgba;
       }`;
     return {
-      inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t, 4, true)),
-      outputLayout: handler.createTextureLayoutFromShape(outputShape, 4, outputShape, {isPacked: true}),
+      inputLayouts: inputs.map((t, i) => handler.getOrCreateTextureLayout(t, 4, true, inputs[i].dims, true)),
+      outputLayout:
+          handler.createTextureLayoutFromShape(outputShape, 4, outputShape, {isPacked: true, reverseWH: true}),
       samplers: ['A', 'B'],
       shaderSource,
       isInputsPacked: true,
@@ -56,7 +54,8 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = inputs.map((t, i) => handler.getOrCreateTextureData(t, programInfo.inputLayouts[i]));
+    const inputTDs =
+        inputs.map((t) => handler.getOrCreateTextureData(t, handler.getOrCreateTextureLayout(t, 1, false, [], true)));
     return {
       inputTextureDatas: inputTDs,
       outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),

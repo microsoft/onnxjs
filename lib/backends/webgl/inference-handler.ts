@@ -13,6 +13,7 @@ import {WebGLSessionHandler} from './session-handler';
 import {Encoder} from './texture-data-encoder';
 import {WidthHeightPrefs} from './texture-layout-strategy';
 import {Artifact, RunData, TextureData, TextureLayout, WebGLOperator} from './types';
+import {getPackedShape} from './utils';
 
 export class WebGLInferenceHandler implements InferenceHandler {
   private textureDataCache: Map<Tensor.Id, TextureData>;
@@ -253,7 +254,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
     this.runProgram(artifact, runData);
-    // console.log(Array.from(runData.outputTextureData.tensor.data as Float32Array));
     return runData.outputTextureData;
   }
 

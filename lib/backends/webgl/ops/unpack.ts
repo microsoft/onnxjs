@@ -30,7 +30,7 @@ export class WebGLUnpack implements WebGLOperator {
     const channels = getChannels('rc', rank);
     const innerDims = channels.slice(-2);
     const coordsDataType = getCoordsDataType(rank);
-    const unpackChannel = unpackFromChannel();
+    const unpackChannel = unpackFromChannel(rank);
     const sourceCoords = getSourceCoords(rank, channels);
     const coords = rank <= 1 ? 'rc' : `vec2(${innerDims.join(',')})`;
     const shaderSource = `
@@ -65,7 +65,15 @@ export class WebGLUnpack implements WebGLOperator {
   }
 }
 
-function unpackFromChannel(): string {
+function unpackFromChannel(rank: number): string {
+  if (rank <= 1) {
+    return `
+    float getChannel(vec4 frag, int dim) {
+      float modCoord = mod(float(dim), 2.);
+      return modCoord == 0. ? frag.r : frag.g;
+    }
+  `;
+  }
   return `
   float getChannel(vec4 frag, vec2 innerDims) {
     vec2 modCoord = mod(innerDims, 2.);

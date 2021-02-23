@@ -219,28 +219,11 @@ export class CoordsGlslLib extends GlslLib {
    * Unpacked 1D output coordinates.
    */
   protected getOutputUnpacked1DCoords(shape: [number], texShape: [number, number]): GlslLibRoutine {
-    let source = ``;
-    if (texShape[0] === 1) {
-      source = `
+    const source = `
         int getOutputCoords() {
-          return int(TexCoords.y * ${texShape[1]}.0);
-        }
-      `;
-      return new GlslLibRoutine(source);
-    }
-    if (texShape[1] === 1) {
-      source = `
-          int getOutputCoords() {
-            return int(TexCoords.x * ${texShape[0]}.0);
-          }
-        `;
-      return new GlslLibRoutine(source);
-    }
-    source = `
-        int getOutputCoords() {
-          ivec2 resTexRC = ivec2(TexCoords.yx *
+          ivec2 resTexRC = ivec2(TexCoords.xy *
                                 vec2(${texShape[0]}, ${texShape[1]}));
-          return resTexRC.y * ${texShape[1]} + resTexRC.x;
+          return resTexRC.y * ${texShape[0]} + resTexRC.x;
         }
       `;
     return new GlslLibRoutine(source);
@@ -294,42 +277,11 @@ export class CoordsGlslLib extends GlslLib {
    * Unpacked 2D output coordinates.
    */
   protected getOutputUnpacked2DCoords(shape: [number, number], texShape: [number, number]): GlslLibRoutine {
-    let source = '';
-    if (ArrayUtil.arraysEqual(shape, texShape)) {
-      source = `
-          ivec2 getOutputCoords() {
-            return ivec2(TexCoords.yx * vec2(${texShape[0]}, ${texShape[1]}));
-          }
-        `;
-      return new GlslLibRoutine(source);
-    }
-    if (shape[1] === 1) {
-      source = `
-          ivec2 getOutputCoords() {
-            ivec2 resTexRC = ivec2(TexCoords.yx *
-                                  vec2(${texShape[0]}, ${texShape[1]}));
-            int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
-            return ivec2(index, 0);
-          }
-        `;
-      return new GlslLibRoutine(source);
-    }
-    if (shape[0] === 1) {
-      source = `
-          ivec2 getOutputCoords() {
-            ivec2 resTexRC = ivec2(TexCoords.yx *
-                                  vec2(${texShape[0]}, ${texShape[1]}));
-            int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
-            return ivec2(0, index);
-          }
-        `;
-      return new GlslLibRoutine(source);
-    }
-    source = `
+    const source = `
         ivec2 getOutputCoords() {
-          ivec2 resTexRC = ivec2(TexCoords.yx *
+          ivec2 resTexRC = ivec2(TexCoords.xy *
                                 vec2(${texShape[0]}, ${texShape[1]}));
-          int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
+          int index = resTexRC.y * ${texShape[0]} + resTexRC.x;
           int r = index / ${shape[1]};
           int c = index - r * ${shape[1]};
           return ivec2(r, c);
@@ -827,7 +779,7 @@ export class CoordsGlslLib extends GlslLib {
    */
   protected getPackedSampler1D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
     const texShape = [inputLayout.width, inputLayout.height];
-    const packedTexShape = [Math.ceil(texShape[0] / 2), Math.ceil(texShape[1] / 2)];
+    const packedTexShape = [texShape[1], texShape[0]];
     const glsl = getGlsl(this.context.glContext.version);
 
     const packedSampler = `vec4 ${funcName}(int index) {
@@ -903,7 +855,7 @@ export class CoordsGlslLib extends GlslLib {
     const packedTexShape = texShape;
     const valuesPerRow = Math.ceil(shape[1] / 2);
     const packedSampler = `vec4 ${funcName}(int row, int col) {
-      vec2 uv = packedUVfrom2D(${valuesPerRow}, ${packedTexShape[0]}, ${packedTexShape[1]}, row, col);
+      vec2 uv = packedUVfrom2D(${valuesPerRow}, ${packedTexShape[1]}, ${packedTexShape[0]}, row, col);
       return ${glsl.texture2D}(${name}, uv);
     }`;
     const source = packedSampler;

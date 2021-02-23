@@ -333,6 +333,16 @@ function getTestData(isPacked = true): TestData[] {
     ];
   } else {
     return [
+      // test 1D tensor
+      {
+        elementCount: 8,
+        inputShape: [8],
+        outputShape: [8],
+        inputTextureShape: [4, 1],
+        outputTextureShape: [1, 8],
+        rawData: new Float32Array([1, 2, 0, 0, 3, 4, 0, 0, 5, 6, 0, 0, 7, 8, 0, 0]),
+      },
+
       // test 2D tensor
       {
         elementCount: 16,
@@ -342,20 +352,24 @@ function getTestData(isPacked = true): TestData[] {
         outputTextureShape: [4, 4],
         useGeneratedOutput: true,
       },
-      // {elementCount: 16, inputShape: [2, 8], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 4]},
-      // {elementCount: 16, inputShape: [8, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
-      // {elementCount: 15, inputShape: [3, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
-      // {elementCount: 18, inputShape: [3, 6], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
-      // {elementCount: 10, inputShape: [2, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
-      //{elementCount: 6, inputShape: [1, 6], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
-      //{elementCount: 6, inputShape: [6, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [3, 1]},
-      //{elementCount: 5, inputShape: [5, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [3, 1]},
-      //{elementCount: 5, inputShape: [1, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
+      {
+        elementCount: 8,
+        inputShape: [2, 4],
+        outputShape: [2, 4],
+        inputTextureShape: [2, 1],
+        outputTextureShape: [2, 4],
+        useGeneratedOutput: true,
+      },
+      {
+        elementCount: 6,
+        inputShape: [2, 3],
+        outputShape: [2, 3],
+        inputTextureShape: [2, 1],
+        outputTextureShape: [2, 3],
+        rawData: new Float32Array([1, 2, 4, 5, 3, 0, 6, 0]),
+      },
 
-      // test 1D tensor
-      //{elementCount: 16, inputShape: [16], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 8]},
-      //{elementCount: 9, inputShape: [9], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 5]},
-
+      // test 3d tensor
       {
         elementCount: 16,
         inputShape: [2, 2, 4],

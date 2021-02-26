@@ -17,6 +17,34 @@ declare interface OnnxWasmBindingJs {
   HEAPU32: Uint32Array;
   HEAPF32: Float32Array;
   HEAPF64: Float64Array;
+
+  stackSave(): number;
+  stackRestore(stack: number): void;
+  stackAlloc(size: number): number;
+
+  UTF8ToString(offset: number): string;
+  lengthBytesUTF8(str: string): number;
+  stringToUTF8(str: string, offset: number, maxBytes: number): void;
+
+  _ort_init(): void;
+
+  _ort_create_session(dataOffset: number, dataLength: number): number;
+  _ort_release_session(sessionHandle: number): void;
+  _ort_get_input_count(sessionHandle: number): number;
+  _ort_get_output_count(sessionHandle: number): number;
+  _ort_get_input_name(sessionHandle: number, index: number): number;
+  _ort_get_output_name(sessionHandle: number, index: number): number;
+
+  _ort_free(stringHandle: number): void;
+
+  _ort_create_tensor(dataType: number, dataOffset: number, dataLength: number, dimsOffset: number, dimsLength: number):
+      number;
+  _ort_get_tensor_data(
+      tensorHandle: number, dataType: number, dataOffset: number, dimsOffset: number, dimsLength: number): void;
+  _ort_release_tensor(tensorHandle: number): void;
+  _ort_run(
+      sessionHandle: number, inputNamesOffset: number, inputsOffset: number, inputCount: number,
+      outputNamesOffset: number, outputCount: number, outputsOffset: number): void;
 }
 
 // an interface to define argument handling
@@ -70,7 +98,7 @@ export function init(): Promise<void> {
 
   return new Promise<void>((resolve, reject) => {
     // tslint:disable-next-line:no-require-imports
-    binding = require('../dist/onnx-wasm') as OnnxWasmBindingJs;
+    binding = require('../dist/onnxruntime_wasm') as OnnxWasmBindingJs;
     binding(binding).then(
         () => {
           // resolve init() promise
@@ -325,6 +353,10 @@ export class WasmBinding {
       binding!._free(this.ptr8);
     }
   }
+}
+
+export function getInstance(): OnnxWasmBindingJs {
+  return binding!;
 }
 
 /**

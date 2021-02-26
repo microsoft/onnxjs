@@ -5,6 +5,7 @@ import {readFile} from 'fs';
 import {promisify} from 'util';
 
 import {Backend, SessionHandlerType} from './backend';
+import {WasmSessionHandler} from './backends/wasm/session-handler';
 import {ExecutionPlan} from './execution-plan';
 import {Graph} from './graph';
 import {Profiler} from './instrument';
@@ -79,6 +80,11 @@ export class Session {
     }
 
     this.profiler.event('session', 'Session.initialize', () => {
+      if ((this.sessionHandler as {run?: unknown}).run) {
+        (this.sessionHandler as WasmSessionHandler).loadModel(modelProtoBlob);
+        return;
+      }
+
       // load graph
       const graphInitializer =
           this.sessionHandler.transformGraph ? this.sessionHandler as Graph.Initializer : undefined;
@@ -104,6 +110,10 @@ export class Session {
     }
 
     return this.profiler.event('session', 'Session.run', async () => {
+      if ((this.sessionHandler as {run?: unknown}).run) {
+        return (this.sessionHandler as WasmSessionHandler).run(inputs);
+      }
+
       const inputTensors = this.normalizeAndValidateInputs(inputs);
 
       const outputTensors = await this._executionPlan.execute(this.sessionHandler, inputTensors);

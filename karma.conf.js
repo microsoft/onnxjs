@@ -48,10 +48,10 @@ module.exports = function (config) {
       { pattern: 'test/data/**/*', included: false, nocache: true },
       { pattern: 'deps/data/data/test/**/*', included: false, nocache: true },
       { pattern: 'deps/onnx/onnx/backend/test/data/**/*', included: false, nocache: true },
-      { pattern: 'dist/onnx-wasm.wasm', included: false },
+      { pattern: 'dist/onnxruntime_wasm.wasm', included: false },
     ],
     proxies: {
-      '/onnx-wasm.wasm': '/base/dist/onnx-wasm.wasm',
+      '/onnxruntime_wasm.wasm': '/base/dist/onnxruntime_wasm.wasm',
       '/onnx-worker.js': '/base/test/onnx-worker.js',
     },
     plugins: karmaPlugins,

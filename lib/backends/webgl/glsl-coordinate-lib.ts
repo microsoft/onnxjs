@@ -541,23 +541,23 @@ export class CoordsGlslLib extends GlslLib {
   protected getInputsSamplingSnippets(): {[name: string]: GlslLibRoutine;} {
     const result: {[name: string]: GlslLibRoutine} = {};
     const outputLayout = this.context.programInfo.outputLayout;
-    this.context.programInfo.inputLayouts.forEach((inputLayout, i) => {
-      const name = this.context.programInfo.samplers[i];
-      const funcName = generateShaderFuncNameFromInputSamplerName(name);
+    this.context.programInfo.samplers.forEach((samplerName, i) => {
+      const inputLayout = this.context.programInfo.inputLayouts[i];
+      const funcName = generateShaderFuncNameFromInputSamplerName(samplerName);
       if (inputLayout.isPacked) {
-        result[funcName] = this.getPackedSamplerFromInput(funcName, name, inputLayout);
+        result[funcName] = this.getPackedSamplerFromInput(funcName, samplerName, inputLayout);
       } else {
-        result[funcName] = this.getUnpackedSamplerFromInput(funcName, name, inputLayout);
+        result[funcName] = this.getUnpackedSamplerFromInput(funcName, samplerName, inputLayout);
       }
 
-      const outCoordFuncName = generateShaderFuncNameFromInputSamplerNameAtOutCoords(name);
+      const outCoordFuncName = generateShaderFuncNameFromInputSamplerNameAtOutCoords(samplerName);
       if (inputLayout.unpackedShape.length <= outputLayout.unpackedShape.length) {
         if (inputLayout.isPacked) {
           result[outCoordFuncName] =
-              this.getPackedSamplerAtOutputCoords(outCoordFuncName, inputLayout, outputLayout, name);
+              this.getPackedSamplerAtOutputCoords(outCoordFuncName, inputLayout, outputLayout, samplerName);
         } else {
           result[outCoordFuncName] =
-              this.getUnpackedSamplerAtOutputCoords(outCoordFuncName, inputLayout, outputLayout, name);
+              this.getUnpackedSamplerAtOutputCoords(outCoordFuncName, inputLayout, outputLayout, samplerName);
         }
       }
     });

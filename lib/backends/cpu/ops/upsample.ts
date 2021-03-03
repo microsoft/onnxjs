@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {Upsample, UpsampleV9} from '../../../ops/upsample';
+// import {Upsample, UpsampleV9} from '../../../ops/upsample';
+import {Upsample} from '../../../ops/upsample';
 import {Tensor} from '../../../tensor';
 import {CpuInferenceHandler} from '../inference-handler';
 
@@ -19,25 +20,25 @@ export class CpuUpsample extends Upsample {
   }
 }
 
-export class CpuUpsampleV9 extends UpsampleV9 {
-  run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const scales = inputs[1].floatData;
+// export class CpuUpsampleV9 extends UpsampleV9 {
+//   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
+//     const scales = inputs[1].floatData;
 
-    if (this.mode === 'linear' && scales.length !== 2 && scales.length !== 4) {
-      throw new Error(`only support 2-D or 4-D upsampling for linear mode`);
-    }
+//     if (this.mode === 'linear' && scales.length !== 2 && scales.length !== 4) {
+//       throw new Error(`only support 2-D or 4-D upsampling for linear mode`);
+//     }
 
-    const xDims = inputs[0].dims;
-    const yDims = xDims.map((dim, i) => Math.floor(dim * scales[i]));
-    const y = new Tensor(yDims, inputs[0].type);
-    if (this.mode === 'nearest') {
-      upsampleNearest(inputs[0].data, y.data, xDims, yDims, [...scales]);
-    } else {
-      upsampleLinear(inputs[0].data, y.data, xDims, yDims, [...scales]);
-    }
-    return [y];
-  }
-}
+//     const xDims = inputs[0].dims;
+//     const yDims = xDims.map((dim, i) => Math.floor(dim * scales[i]));
+//     const y = new Tensor(yDims, inputs[0].type);
+//     if (this.mode === 'nearest') {
+//       upsampleNearest(inputs[0].data, y.data, xDims, yDims, [...scales]);
+//     } else {
+//       upsampleLinear(inputs[0].data, y.data, xDims, yDims, [...scales]);
+//     }
+//     return [y];
+//   }
+// }
 
 function upsampleNearest(
     xData: Tensor.DataTypeMap[Tensor.DataType], yData: Tensor.DataTypeMap[Tensor.DataType],

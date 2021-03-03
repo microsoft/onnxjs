@@ -2,13 +2,16 @@
 // Licensed under the MIT license.
 import {expect} from 'chai';
 
+import {Attribute} from '../../../../lib/attribute';
 import {Backend, InferenceHandler, SessionHandler} from '../../../../lib/backend';
 import {WebGLInferenceHandler} from '../../../../lib/backends/webgl/inference-handler';
 import {WebGLPack} from '../../../../lib/backends/webgl/ops/pack';
+import {WebGLResizePacked} from '../../../../lib/backends/webgl/ops/resize-bilinear-packed';
 import {WebGLUnpack} from '../../../../lib/backends/webgl/ops/unpack';
 import {Profiler} from '../../../../lib/instrument';
 import {Tensor} from '../../../../lib/tensor';
 import {ShapeUtil} from '../../../../lib/util';
+import {createMockGraph} from '../../../test-shared';
 
 import {createArrayFromTexture, createAscendingArray} from './test_utils';
 import {createTextureFromArray, generateExpected, getExpectedElementCount} from './test_utils';
@@ -125,8 +128,12 @@ describe('#UnitTest# - unpack - Tensor unpack', () => {
 
       webglInferenceHandler.setTextureData(inputTensor.dataId, textureData);
 
+      const rio = new Tensor([0], 'float32', undefined, undefined, inputData);
+      const scale = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
+      const resize = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
       // compile shader code
-      const programInfo = op.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor]);
+      const programInfo =
+          op.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor, rio, scale, resize]);
 
       const artifact = webglInferenceHandler.session.programManager.build(programInfo);
       webglInferenceHandler.session.programManager.setArtifact(op, artifact);

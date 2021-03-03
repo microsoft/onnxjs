@@ -13,11 +13,11 @@ class ENV implements Environment {
     return env.debug;
   }
 
-  public set packMode(value: boolean) {
-    env.packMode = value;
+  public set pack(value: boolean) {
+    env.pack = value;
   }
-  public get packMode(): boolean {
-    return env.packMode;
+  public get pack(): boolean {
+    return env.pack;
   }
 }
 

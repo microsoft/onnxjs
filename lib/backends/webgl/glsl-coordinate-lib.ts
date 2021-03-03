@@ -78,10 +78,10 @@ export class CoordsGlslLib extends GlslLib {
 
   protected getOutputSamplingSnippet(): {[name: string]: GlslLibRoutine;} {
     const outputLayout = this.context.programInfo.outputLayout;
-    if (!outputLayout.isPacked) {
-      return this.getUnpackedOutputSamplingSnippet(outputLayout);
-    } else {
+    if (outputLayout.isPacked) {
       return this.getPackedOutputSamplingSnippet(outputLayout);
+    } else {
+      return this.getUnpackedOutputSamplingSnippet(outputLayout);
     }
   }
 
@@ -507,8 +507,7 @@ export class CoordsGlslLib extends GlslLib {
       `);
     funcName = `packedUVfrom2D`;
     result[funcName] = new GlslLibRoutine(`
-      vec2 packedUVfrom2D(int texelsInLogicalRow, int texNumR,
-        int texNumC, int row, int col) {
+      vec2 packedUVfrom2D(int texNumR, int texNumC, int texelsInLogicalRow, int row, int col) {
         int texelIndex = (row / 2) * texelsInLogicalRow + (col / 2);
         int texR = texelIndex / texNumC;
         int texC = texelIndex - texR * texNumC;
@@ -719,17 +718,17 @@ export class CoordsGlslLib extends GlslLib {
     const shape = inputLayout.unpackedShape;
     switch (shape.length) {
       case 0:
-        return this.getSamplerScalar(funcName, name, inputLayout);
+        return this.getUnpackedSamplerScalar(funcName, name, inputLayout);
       case 1:
-        return this.getSampler1D(funcName, name, inputLayout);
+        return this.getUnpackedSampler1D(funcName, name, inputLayout);
       case 2:
-        return this.getSampler2D(funcName, name, inputLayout);
+        return this.getUnpackedSampler2D(funcName, name, inputLayout);
       case 3:
-        return this.getSampler3D(funcName, name, inputLayout);
+        return this.getUnpackedSampler3D(funcName, name, inputLayout);
       case 4:
-        return this.getSampler4D(funcName, name, inputLayout);
+        return this.getUnpackedSampler4D(funcName, name, inputLayout);
       case 5:
-        return this.getSampler5D(funcName, name, inputLayout);
+        return this.getUnpackedSampler5D(funcName, name, inputLayout);
       default:
         // TODO support more dimensionalities
         throw new Error(`Unsupported dimension ${shape.length}-D`);
@@ -752,7 +751,7 @@ export class CoordsGlslLib extends GlslLib {
   /**
    * Unpacked scalar snippet.
    */
-  protected getSamplerScalar(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
+  protected getUnpackedSamplerScalar(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
     const [texNumR, texNumC] = [inputLayout.width, inputLayout.height];
     if (texNumR === 1 && texNumC === 1) {
       const source = `
@@ -794,7 +793,7 @@ export class CoordsGlslLib extends GlslLib {
   /**
    * Unpacked 1D snippet.
    */
-  protected getSampler1D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
+  protected getUnpackedSampler1D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
     const tNumR = inputLayout.width;
     const tNumC = inputLayout.height;
 
@@ -855,7 +854,7 @@ export class CoordsGlslLib extends GlslLib {
     const packedTexShape = texShape;
     const valuesPerRow = Math.ceil(shape[1] / 2);
     const packedSampler = `vec4 ${funcName}(int row, int col) {
-      vec2 uv = packedUVfrom2D(${valuesPerRow}, ${packedTexShape[1]}, ${packedTexShape[0]}, row, col);
+      vec2 uv = packedUVfrom2D(${packedTexShape[1]}, ${packedTexShape[0]}, ${valuesPerRow}, row, col);
       return ${glsl.texture2D}(${name}, uv);
     }`;
     const source = packedSampler;
@@ -866,7 +865,7 @@ export class CoordsGlslLib extends GlslLib {
    * Unpacked 2D snippet.
    */
 
-  protected getSampler2D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
+  protected getUnpackedSampler2D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
     const shape = inputLayout.unpackedShape;
 
     // TODO: modify row/col order for other dimensions.
@@ -982,7 +981,7 @@ export class CoordsGlslLib extends GlslLib {
    * Unpacked 3D snippet.
    */
 
-  protected getSampler3D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
+  protected getUnpackedSampler3D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
     const shape = inputLayout.unpackedShape;
     const stride0 = shape[1] * shape[2];
     const stride1 = shape[2];
@@ -1023,7 +1022,7 @@ export class CoordsGlslLib extends GlslLib {
    * Unpacked 4D snippet.
    */
 
-  protected getSampler4D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
+  protected getUnpackedSampler4D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
     const shape = inputLayout.unpackedShape;
     const stride2 = shape[3];
     const stride1 = shape[2] * stride2;
@@ -1065,7 +1064,7 @@ export class CoordsGlslLib extends GlslLib {
   /**
    * Unpacked 5D snippet.
    */
-  protected getSampler5D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
+  protected getUnpackedSampler5D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
     const shape = inputLayout.unpackedShape;
     const stride3 = shape[4];
     const stride2 = shape[3] * stride3;

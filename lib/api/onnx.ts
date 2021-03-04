@@ -34,6 +34,11 @@ export declare namespace Backend {
      * set or get the texture cache mode
      */
     textureCacheMode?: 'initializerOnly'|'full';
+
+    /**
+     * set or get the packed texture mode
+     */
+    pack?: boolean;
   }
   /**
    * set options for the WebAssembly backend

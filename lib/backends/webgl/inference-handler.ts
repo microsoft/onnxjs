@@ -36,7 +36,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
   runProgram(artifact: Artifact, runData: RunData) {
     // pack/unpack inputs
     runData.inputTextureDatas.forEach(input => {
-      if (input.isPacked && !artifact.programInfo.isInputsPacked) {
+      if (input.isPacked && !artifact.programInfo.expectPackedInputs) {
         // unpack this input
         const unpacked = this.unpack(input);
         input.height = unpacked.height;
@@ -44,7 +44,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
         input.texture = unpacked.texture;
         input.width = unpacked.width;
 
-      } else if (!input.isPacked && artifact.programInfo.isInputsPacked) {
+      } else if (!input.isPacked && artifact.programInfo.expectPackedInputs) {
         // pack this input
         const packed = this.pack(input);
         input.height = packed.height;
@@ -55,7 +55,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
     });
 
     // output should match
-    if (!!runData.outputTextureData.isPacked !== !!artifact.programInfo.isOutputPacked) {
+    if (!!runData.outputTextureData.isPacked !== !!artifact.programInfo.expectPackedoutputs) {
       throw new Error(`output property packed inconsistent`);
     }
 
@@ -254,12 +254,10 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
     this.runProgram(artifact, runData);
-    // console.log(Array.from(runData.outputTextureData.tensor.data as Float32Array));
     return runData.outputTextureData;
   }
 
   unpack(input: TextureData): TextureData {
-    console.log('==unpack==');
     const key = `${input.shape}`;
     let op = this.session.unpackOpCache.get(key);
     if (!op) {

@@ -24,6 +24,13 @@ export function checkInputsShape(inputs: Tensor[], ...expectedDimensions: number
   return true;
 }
 
+// Evaluates the given expression and asserts error message if condition is unmet.
+export function assert(expr: boolean, msg: () => string) {
+  if (!expr) {
+    throw new Error(typeof msg === 'string' ? msg : msg());
+  }
+}
+
 export class ArrayUtil {
   /**
    * Verifies if 2 input arrays contain the same elements.

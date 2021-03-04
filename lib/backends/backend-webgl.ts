@@ -23,6 +23,7 @@ export class WebGLBackend implements Backend, WebGLOptions {
   contextId?: 'webgl'|'webgl2';
   matmulMaxBatchSize?: number;
   textureCacheMode?: 'initializerOnly'|'full';
+  pack?: boolean;
 
   initialize(): boolean {
     try {
@@ -33,7 +34,13 @@ export class WebGLBackend implements Backend, WebGLOptions {
       if (typeof this.textureCacheMode !== 'string') {
         this.textureCacheMode = 'full';
       }
-      Logger.verbose('WebGLBackend', `Created WebGLContext: ${typeof this.glContext}`);
+      if (typeof this.pack !== 'boolean') {
+        this.pack = false;
+      }
+      Logger.verbose(
+          'WebGLBackend',
+          `Created WebGLContext: ${typeof this.glContext} with matmulMaxBatchSize: ${
+              this.matmulMaxBatchSize}; textureCacheMode: ${this.textureCacheMode}; pack: ${this.pack}.`);
       return true;
     } catch (e) {
       Logger.warning('WebGLBackend', `Unable to initialize WebGLBackend. ${e}`);

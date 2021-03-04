@@ -12,13 +12,6 @@ class ENV implements Environment {
   public get debug(): boolean {
     return env.debug;
   }
-
-  public set pack(value: boolean) {
-    env.pack = value;
-  }
-  public get pack(): boolean {
-    return env.pack;
-  }
 }
 
 export const envImpl = new ENV();

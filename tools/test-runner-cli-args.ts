@@ -67,6 +67,7 @@ Options:
  --webgl-context-id            Set the WebGL context ID (webgl/webgl2)
  --webgl-matmul-max-batch-size Set the WebGL matmulMaxBatchSize
  --webgl-texture-cache-mode    Set the WebGL texture cache mode (initializerOnly/full)
+ --webgl-texture-pack-mode     Set the WebGL texture pack mode (true/false)
 
 *** Browser Options ***
 
@@ -340,7 +341,12 @@ function parseWebglOptions(args: minimist.ParsedArgs): Backend.WebGLOptions {
   if (textureCacheMode !== undefined && textureCacheMode !== 'initializerOnly' && textureCacheMode !== 'full') {
     throw new Error('Flag "webgl-texture-cache-mode" is invalid');
   }
-  return {contextId, matmulMaxBatchSize, textureCacheMode};
+  const pack = args['webgl-texture-pack-mode'];
+  if (pack !== undefined && typeof pack !== 'boolean') {
+    throw new Error('Flag "webgl-texture-pack-mode" is invalid');
+  }
+
+  return {contextId, matmulMaxBatchSize, textureCacheMode, pack};
 }
 
 function parseBooleanArg(arg: unknown, defaultValue: boolean): boolean;

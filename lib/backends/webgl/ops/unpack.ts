@@ -6,7 +6,7 @@ import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 import {getCoordsDataType} from '../utils';
 
-import {getChannels} from './packing_utils';
+import {getChannels, unpackFromChannel} from './packing_utils';
 
 export class WebGLUnpack implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
@@ -50,8 +50,8 @@ export class WebGLUnpack implements WebGLOperator {
       samplers: ['A'],
       shaderSource,
       hasMain: true,
-      isInputsPacked: true,
-      isOutputPacked: false,
+      expectPackedInputs: true,
+      expectPackedoutputs: false,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
@@ -62,25 +62,6 @@ export class WebGLUnpack implements WebGLOperator {
       uniformData: {}
     };
   }
-}
-
-function unpackFromChannel(rank: number): string {
-  if (rank <= 1) {
-    return `
-    float getChannel(vec4 frag, int dim) {
-      float modCoord = mod(float(dim), 2.);
-      return modCoord == 0. ? frag.r : frag.g;
-    }
-  `;
-  }
-  return `
-  float getChannel(vec4 frag, vec2 innerDims) {
-    vec2 modCoord = mod(innerDims, 2.);
-    return modCoord.x == 0. ?
-      (modCoord.y == 0. ? frag.r : frag.g) :
-      (modCoord.y == 0. ? frag.b : frag.a);
-  }
-  `;
 }
 
 export function getSourceCoords(rank: number, dims: string[]): string {

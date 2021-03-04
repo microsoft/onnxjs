@@ -445,10 +445,10 @@ export class CoordsGlslLib extends GlslLib {
    * ND output coordinates.
    */
   protected getOutputPackedNDCoords(shape: ReadonlyArray<number>, texShape: [number, number]): GlslLibRoutine {
-    const packedTexShape = [Math.ceil(texShape[0] / 2), Math.ceil(texShape[1] / 2)];
+    const packedTexShape = [texShape[0], texShape[1]];
 
-    const texelsInLogicalRow = Math.ceil(shape[shape.length - 1] / 2);
-    const texelsInBatch = texelsInLogicalRow * Math.ceil(shape[shape.length - 2] / 2);
+    const texelsInLogicalRow = shape[shape.length - 1];
+    const texelsInBatch = texelsInLogicalRow * shape[shape.length - 2];
     let texelsInBatchN = texelsInBatch;
     let batches = ``;
     let coords = 'b, r, c';
@@ -1042,7 +1042,8 @@ export class CoordsGlslLib extends GlslLib {
             return ${funcName}(${getSqueezedParams(params, keptDims)});
           }
         `;
-      return new GlslLibRoutine(source, ['coordinates.sampleTexture']);
+      return new GlslLibRoutine(
+          source, ['coordinates.uvFromFlat', 'coordinates.sampleTexture', 'coordinates.coordsToOffset']);
     }
 
     const texShape = [inputLayout.width, inputLayout.height];
@@ -1050,10 +1051,9 @@ export class CoordsGlslLib extends GlslLib {
     const texNumC = texShape[1];
     const source = `
         float ${funcName}(int row, int col, int depth, int depth2) {
-          int offset_${name} = coordsToOffset(TexCoords, ${texNumR}, ${texNumC});
           int index = row * ${stride0} + col * ${stride1} +
-              depth * ${stride2} + depth2;
-          vec2 uv = uvFromFlat(${texNumR}, ${texNumC}, index + offset_${name});
+              depth2 * ${stride2} + depth;
+          vec2 uv = uvFromFlat(${texNumR}, ${texNumC}, index);
           return sampleTexture(${name}, uv);
         }
       `;
@@ -1093,9 +1093,8 @@ export class CoordsGlslLib extends GlslLib {
     const texNumC = texShape[1];
     const source = `
         float ${funcName}(int row, int col, int depth, int depth2, int depth3) {
-          int offset_${name} = coordsToOffset(TexCoords, ${texNumR}, ${texNumC});
           int index = row * ${stride0} + col * ${stride1} + depth * ${stride2} +
-          depth2 * ${stride3} + depth3 + offset_${name};
+          depth3 * ${stride3} + depth2;
           vec2 uv = uvFromFlat(${texNumR}, ${texNumC}, index);
           return sampleTexture(${name}, uv);
         }

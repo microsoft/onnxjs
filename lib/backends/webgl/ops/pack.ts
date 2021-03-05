@@ -47,7 +47,7 @@ export class WebGLPack implements WebGLOperator {
           ${coordsDataType} rc = getOutputCoords();
 
           if(${outOfBoundsCondition}) {
-            outputColor = vec4(0);
+            ${glsl.output} = vec4(0);
           } else {
             ${setup}
 

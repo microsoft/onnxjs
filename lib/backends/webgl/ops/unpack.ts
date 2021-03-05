@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {Tensor} from '../../../tensor';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 import {getCoordsDataType} from '../utils';
@@ -32,6 +33,7 @@ export class WebGLUnpack implements WebGLOperator {
     const unpackChannel = unpackFromChannel(rank);
     const sourceCoords = getSourceCoords(rank, channels);
     const coords = rank <= 1 ? 'rc' : `vec2(${innerDims.join(',')})`;
+    const glsl = getGlsl(handler.session.backend.glContext.version);
     const shaderSource = `
         ${unpackChannel}
         void main() {
@@ -40,7 +42,7 @@ export class WebGLUnpack implements WebGLOperator {
           // Sample the texture with the coords to get the rgba channel value.
           vec4 packedInput = getA(${sourceCoords});
 
-          outputColor = vec4(getChannel(packedInput, ${coords}), 0, 0, 0);
+          ${glsl.output} = vec4(getChannel(packedInput, ${coords}), 0, 0, 0);
         }
       `;
 

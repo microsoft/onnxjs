@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import {Tensor} from '../../../tensor';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 import {getCoordsDataType} from '../utils';
@@ -39,6 +40,8 @@ export class WebGLPack implements WebGLOperator {
     }
     const outOfBoundsCondition = getOutOfBoundsCondition(outputRank, reversedInputWH, channels);
     const output = getOutput(inputShape, channels);
+
+    const glsl = getGlsl(handler.session.backend.glContext.version);
     const shaderSource = `
         void main() {
           ${coordsDataType} rc = getOutputCoords();
@@ -48,7 +51,7 @@ export class WebGLPack implements WebGLOperator {
           } else {
             ${setup}
 
-            outputColor = vec4(${output});
+            ${glsl.output} = vec4(${output});
           }
         }
       `;

@@ -6,6 +6,7 @@ import {Logger, Profiler} from '../../instrument';
 
 import {GlslPreprocessor} from './glsl-preprocessor';
 import {getVertexShaderSource} from './glsl-source';
+import {TextureLayoutStrategy} from './texture-layout-strategy';
 import {Artifact, ProgramInfo, RunData, TextureData, UniformData, VariableInfo} from './types';
 import {WebGLContext} from './webgl-context';
 
@@ -23,7 +24,9 @@ export class ProgramManager {
   vertexShader: WebGLShader;
   attributesBound: boolean;
 
-  constructor(public profiler: Readonly<Profiler>, public glContext: WebGLContext) {
+  constructor(
+      public profiler: Readonly<Profiler>, public glContext: WebGLContext,
+      public textureLayoutStrategy: TextureLayoutStrategy) {
     this.repo = new Map();
     this.attributesBound = false;
   }
@@ -34,7 +37,10 @@ export class ProgramManager {
     this.repo.set(key, artifact);
   }
   run(buildArtifact: Artifact, runData: RunData): void {
-    this.profiler.event('backend', 'ProgramManager.run', () => {
+    const inputInfo = runData.inputTextureDatas.map((d, i) => `input${i}:[${d.shape}]`).join(', ');
+    const outputInfo = `output: [${runData.outputTextureData.shape}]`;
+
+    this.profiler.event('backend', `ProgramManager.run ${inputInfo} ; ${outputInfo}`, () => {
       const gl = this.glContext.gl;
       const program = buildArtifact.program;
       gl.useProgram(program);
@@ -50,7 +56,6 @@ export class ProgramManager {
       }
       this.profiler.event('backend', 'GlContext.draw()', () => {
         this.doDraw(buildArtifact, runData);
-        gl.flush();
       });
     });
   }

@@ -86,7 +86,7 @@ export class WebGLInstanceNormalization extends InstanceNormalization {
       bLayout: TextureLayout, meanAndVarianceLayout: TextureLayout): ProgramInfo {
     const glsl = getGlsl(inferenceHandler.session.backend.glContext.version);
     const shaderSource = `
-    vec4 getMeanAndVariance(int[2] mv) {
+    vec4 get_MeanAndVariance(int[2] mv) {
       int offset = indicesToOffset_MeanAndVariance(mv);
       vec2 coords = offsetToCoords(offset, ${meanAndVarianceLayout.width}, ${meanAndVarianceLayout.height});
       return ${glsl.texture2D}(MeanAndVariance, coords);
@@ -97,7 +97,7 @@ export class WebGLInstanceNormalization extends InstanceNormalization {
           int mv[2];
           mv[0] = indices[0];
           mv[1] = indices[1];
-          vec4 mean_and_variance = getMeanAndVariance(mv);
+          vec4 mean_and_variance = get_MeanAndVariance(mv);
           float mean = mean_and_variance.r;
           float variance = mean_and_variance.g;
 

@@ -6,6 +6,7 @@ import {onnx} from 'onnx-proto';
 
 import {Graph} from './graph';
 import {Tensor} from './tensor';
+import {TypedArray} from './types';
 
 // check the inputs shape before running an OP.
 // return true when the inputs pass the check
@@ -21,6 +22,33 @@ export function checkInputsShape(inputs: Tensor[], ...expectedDimensions: number
     }
   }
   return true;
+}
+
+// Evaluates the given expression and asserts error message if condition is unmet.
+export function assert(expr: boolean, msg: () => string) {
+  if (!expr) {
+    throw new Error(typeof msg === 'string' ? msg : msg());
+  }
+}
+
+export class ArrayUtil {
+  /**
+   * Verifies if 2 input arrays contain the same elements.
+   * @param n1 Array 1
+   * @param n2 Array 2
+   * @returns Whether these 2 are equal
+   */
+  static arraysEqual(n1: ReadonlyArray<number>|TypedArray, n2: ReadonlyArray<number>|TypedArray) {
+    if (n1.length !== n2.length) {
+      return false;
+    }
+    for (let i = 0; i < n1.length; i++) {
+      if (n1[i] !== n2[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 export class MatMulUtil {
@@ -246,6 +274,27 @@ export class BroadcastUtil {
       }
     }
     return true;
+  }
+
+  /**
+   * Determine the broadcasted dims in input shape based on the given output shape.
+   * Note that this function only returns the broadcasted dims.
+   * @param inputShape The input shape
+   * @param outputShape The output shape
+   * @returns The broadcasted dims in input shape.
+   */
+  static getBroadcastDims(inputShape: ReadonlyArray<number>, outputShape: ReadonlyArray<number>): number[] {
+    const inRank = inputShape.length;
+    const dims: number[] = [];
+    for (let i = 0; i < inRank; i++) {
+      const dim = inRank - 1 - i;
+      const a = inputShape[dim] || 1;
+      const b = outputShape[outputShape.length - 1 - i] || 1;
+      if (b > 1 && a === 1) {
+        dims.unshift(dim);
+      }
+    }
+    return dims;
   }
 }
 

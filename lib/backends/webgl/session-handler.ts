@@ -13,9 +13,9 @@ import {WebGLBackend} from '../backend-webgl';
 import {WebGLInferenceHandler} from './inference-handler';
 import {WEBGL_OP_RESOLVE_RULES} from './op-resolve-rules';
 import {ProgramManager} from './program-manager';
-import {AlwaysKeepOriginalSizeStrategy, TextureLayoutStrategy} from './texture-layout-strategy';
+import {PreferLogicalStrategy, TextureLayoutStrategy} from './texture-layout-strategy';
 import {TextureManager} from './texture-manager';
-import {TextureData} from './types';
+import {TextureData, WebGLOperator} from './types';
 
 export class WebGLSessionHandler implements SessionHandler {
   programManager: ProgramManager;
@@ -23,14 +23,18 @@ export class WebGLSessionHandler implements SessionHandler {
   layoutStrategy: TextureLayoutStrategy;
   textureDataCache: Map<Tensor.Id, TextureData>;
   initializers: Set<Tensor.Id>;
+  packOpCache: Map<string, WebGLOperator>;
+  unpackOpCache: Map<string, WebGLOperator>;
 
   constructor(public readonly backend: WebGLBackend, public readonly context: Session.Context) {
-    this.programManager = new ProgramManager(this.context.profiler, backend.glContext);
-    this.layoutStrategy = new AlwaysKeepOriginalSizeStrategy(backend.glContext.maxTextureSize);
+    this.layoutStrategy = new PreferLogicalStrategy(backend.glContext.maxTextureSize);
+    this.programManager = new ProgramManager(this.context.profiler, backend.glContext, this.layoutStrategy);
     this.textureManager = new TextureManager(
         backend.glContext, this.layoutStrategy, this.context.profiler,
         {reuseTextures: backend.textureCacheMode === 'full'});
     this.textureDataCache = new Map();
+    this.packOpCache = new Map();
+    this.unpackOpCache = new Map();
   }
 
   createInferenceHandler() {

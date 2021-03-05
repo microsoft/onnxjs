@@ -430,9 +430,9 @@ export class CoordsGlslLib extends GlslLib {
 
     source = `
       ivec4 getOutputCoords() {
-          ivec2 resTexRC = ivec2(TexCoords.yx *
+          ivec2 resTexRC = ivec2(TexCoords.xy *
                                 vec2(${texShape[0]}, ${texShape[1]}));
-          int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
+          int index = resTexRC.y * ${texShape[0]} + resTexRC.x;
           ${coordsFromIndexSnippet}
           return ivec4(r, c, d, d2);
         }
@@ -830,8 +830,7 @@ export class CoordsGlslLib extends GlslLib {
     const source = packedSampler;
     return new GlslLibRoutine(source, ['coordinates.packedUVfrom3D']);
   }
-
-  /**
+  /*
    * Packed ND snippet.
    */
   protected getPackedSamplerND(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
@@ -840,9 +839,9 @@ export class CoordsGlslLib extends GlslLib {
     const texShape = [inputLayout.width, inputLayout.height];
     const glsl = getGlsl(this.context.glContext.version);
 
-    const packedTexShape = [Math.ceil(texShape[0] / 2), Math.ceil(texShape[1] / 2)];
-    const texNumR = packedTexShape[0];
-    const texNumC = packedTexShape[1];
+    const packedTexShape = [texShape[0], texShape[1]];
+    const texNumR = packedTexShape[1];
+    const texNumC = packedTexShape[0];
     const valuesPerRow = Math.ceil(shape[rank - 1] / 2);
     let texelsInBatch = valuesPerRow * Math.ceil(shape[rank - 2] / 2);
     let params = `int b, int row, int col`;

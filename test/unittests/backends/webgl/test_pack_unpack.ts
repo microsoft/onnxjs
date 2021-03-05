@@ -202,7 +202,7 @@ describe('#UnitTest# - unpack - Tensor unpack', () => {
   for (let k = 0; k < testDataSet.length; ++k) {
     const testData = testDataSet[k];
     describe(`Test unpack ${JSON.stringify(testData)}`, () => {});
-    it.skip(`Test unpack kernal `, () => {
+    it(`Test unpack kernal `, () => {
       const op = new WebGLUnpack();
 
       const elementCount = testData.elementCount;
@@ -316,7 +316,7 @@ function getTestData(isPacked = true): TestData[] {
     ];
   } else {
     return [
-      // test 1D tensor
+      // // test 1D tensor
       {
         elementCount: 8,
         inputShape: [8],
@@ -326,7 +326,7 @@ function getTestData(isPacked = true): TestData[] {
         rawData: new Float32Array([1, 2, 0, 0, 3, 4, 0, 0, 5, 6, 0, 0, 7, 8, 0, 0]),
       },
 
-      // test 2D tensor
+      // // test 2D tensor
       {
         elementCount: 16,
         inputShape: [4, 4],
@@ -352,7 +352,7 @@ function getTestData(isPacked = true): TestData[] {
         rawData: new Float32Array([1, 2, 4, 5, 3, 0, 6, 0]),
       },
 
-      // test 3d tensor
+      // // test 3d tensor
       {
         elementCount: 16,
         inputShape: [2, 2, 4],
@@ -371,6 +371,23 @@ function getTestData(isPacked = true): TestData[] {
           1,  2,  5,  6,  3,  4,  7,  8,  9,  10, 0, 0, 11, 12, 0, 0,
           13, 14, 17, 18, 15, 16, 19, 20, 21, 22, 0, 0, 23, 24, 0, 0
         ])
+      },
+      // test 4d tensor
+      {
+        elementCount: 32,
+        inputShape: [2, 2, 2, 4],
+        outputShape: [2, 2, 2, 4],
+        inputTextureShape: [2, 4],
+        outputTextureShape: [8, 4],
+        useGeneratedOutput: true,
+      },
+      {
+        elementCount: 64,
+        inputShape: [2, 2, 4, 4],
+        outputShape: [2, 2, 4, 4],
+        inputTextureShape: [2, 8],
+        outputTextureShape: [16, 4],
+        useGeneratedOutput: true,
       },
     ];
   }

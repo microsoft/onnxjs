@@ -159,6 +159,7 @@ describe('#UnitTest# - pack - Tensor pack', () => {
   const os = window.navigator.userAgent;
   console.log(os);
   if (os.indexOf('Mac') !== -1) {
+    console.log('Running pack and unpack is not supported on Mac. Skipping.');
     return;
   }
 
@@ -210,8 +211,8 @@ describe('#UnitTest# - unpack - Tensor unpack', () => {
 
   // TODO support WebGl 1.0 to run it on Mac
   const os = window.navigator.userAgent;
-  console.log(os);
   if (os.indexOf('Mac') !== -1) {
+    console.log('Running pack and unpack is not supported on Mac. Skipping.');
     return;
   }
 

@@ -154,6 +154,14 @@ describe('#UnitTest# - pack - Tensor pack', () => {
     inferenceHandler = sessionhandler.createInferenceHandler();
   });
   const testDataSet = getTestData();
+
+  // TODO support WebGl 1.0 to run it on Mac
+  const os = window.navigator.userAgent;
+  console.log(os);
+  if (os.indexOf('Mac') !== -1) {
+    return;
+  }
+
   for (let k = 0; k < testDataSet.length; ++k) {
     const testData = testDataSet[k];
     describe(`Test pack ${JSON.stringify(testData)}`, () => {});
@@ -199,6 +207,14 @@ describe('#UnitTest# - unpack - Tensor unpack', () => {
     inferenceHandler = sessionhandler.createInferenceHandler();
   });
   const testDataSet = getTestData(false);
+
+  // TODO support WebGl 1.0 to run it on Mac
+  const os = window.navigator.userAgent;
+  console.log(os);
+  if (os.indexOf('Mac') !== -1) {
+    return;
+  }
+
   for (let k = 0; k < testDataSet.length; ++k) {
     const testData = testDataSet[k];
     describe(`Test unpack ${JSON.stringify(testData)}`, () => {});

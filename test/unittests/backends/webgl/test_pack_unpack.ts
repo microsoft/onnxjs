@@ -155,18 +155,18 @@ describe('#UnitTest# - pack - Tensor pack', () => {
   });
   const testDataSet = getTestData();
 
-  // TODO support WebGl 1.0 to run it on Mac
-  const os = window.navigator.userAgent;
-  console.log(os);
-  if (os.indexOf('Mac') !== -1) {
-    console.log('Running pack and unpack is not supported on Mac. Skipping.');
-    return;
-  }
-
   for (let k = 0; k < testDataSet.length; ++k) {
     const testData = testDataSet[k];
     describe(`Test pack ${JSON.stringify(testData)}`, () => {});
     it(`Test pack kernal ${JSON.stringify(testData)}`, () => {
+      const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
+
+      // TODO support WebGl 1.0
+      if (webglInferenceHandler.session.textureManager.glContext.version === 1) {
+        console.log('Running pack with webgl1 is not supported. Skipping.');
+        return;
+      }
+
       const op = new WebGLPack();
 
       const elementCount = testData.elementCount;
@@ -178,7 +178,6 @@ describe('#UnitTest# - pack - Tensor pack', () => {
 
       // compile shader code
       const programInfo = op.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor]);
-      const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
       const artifact = webglInferenceHandler.session.programManager.build(programInfo);
       webglInferenceHandler.session.programManager.setArtifact(op, artifact);
 
@@ -209,17 +208,18 @@ describe('#UnitTest# - unpack - Tensor unpack', () => {
   });
   const testDataSet = getTestData(false);
 
-  // TODO support WebGl 1.0 to run it on Mac
-  const os = window.navigator.userAgent;
-  if (os.indexOf('Mac') !== -1) {
-    console.log('Running pack and unpack is not supported on Mac. Skipping.');
-    return;
-  }
-
   for (let k = 0; k < testDataSet.length; ++k) {
     const testData = testDataSet[k];
     describe(`Test unpack ${JSON.stringify(testData)}`, () => {});
     it(`Test unpack kernal `, () => {
+      const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
+
+      // TODO support WebGl 1.0
+      if (webglInferenceHandler.session.textureManager.glContext.version === 1) {
+        console.log('Running unpack with webgl1 is not supported. Skipping.');
+        return;
+      }
+
       const op = new WebGLUnpack();
 
       const elementCount = testData.elementCount;
@@ -231,8 +231,6 @@ describe('#UnitTest# - unpack - Tensor unpack', () => {
       // same value but possibly different order depending on our packing algorithm.
       const inputData = createAscendingArray(elementCount);
       const inputTensor = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
-
-      const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
 
       // manually creat packed texture from inputTensor, and insert in cache
       const gl = webglInferenceHandler.session.textureManager.glContext.gl;

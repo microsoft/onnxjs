@@ -252,15 +252,16 @@ const UNSUPPORTED_WEBGL_1_TESTS = [
   'test_reshape_reordered_dims',
 ];
 
-export async function runModelTestSet(context: ModelTestContext, testCase: Test.ModelTestCase): Promise<void> {
-  Logger.verbose('TestRunner', `Start to run test data from folder: ${testCase.name}`);
+export async function runModelTestSet(
+    context: ModelTestContext, testCase: Test.ModelTestCase, testName: string): Promise<void> {
+  Logger.verbose('TestRunner', `Start to run test data from folder: ${testName}/${testCase.name}`);
   const validator = new TensorResultValidator(context.backend);
   try {
     if (context.backend === 'webgl') {
       // TODO skipping incompatible tests for now
       if (createWebGLContext(onnx.backend.webgl.contextId).version === 1 &&
-          UNSUPPORTED_WEBGL_1_TESTS.indexOf(testCase.name) !== 0) {
-        Logger.info('TestRunner', `Found incompatible test on webgl 1: ${testCase.name}. Skipping.`);
+          UNSUPPORTED_WEBGL_1_TESTS.indexOf(testName) !== -1) {
+        Logger.info('TestRunner', `Found incompatible test on webgl 1: ${testName} - ${testCase.name}. Skipping.`);
         return;
       }
     }

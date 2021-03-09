@@ -230,7 +230,7 @@ async function initializeSession(
 /**
  * run a single model test case. the inputs/outputs tensors should already been prepared.
  */
-// TODO fix the reshape ops to be compatible with webgl1
+// TODO fix the reshape and flatten ops to be compatible with webgl1
 const UNSUPPORTED_WEBGL_1_TESTS = [
   'test_flatten_axis0',          'test_flatten_axis1',         'test_flatten_axis2',
   'test_flatten_default_axis',   'test_reshape_extended_dims', 'test_reshape_negative_dim',

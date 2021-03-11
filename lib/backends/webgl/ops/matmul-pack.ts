@@ -45,8 +45,8 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
           handler.createTextureLayoutFromShape(outputShape, 4, outputShape, {isPacked: true, reverseWH: true}),
       samplers: ['A', 'B'],
       shaderSource,
-      isInputsPacked: true,
-      isOutputPacked: true,
+      expectPackedInputs: true,
+      expectPackedoutputs: true,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {

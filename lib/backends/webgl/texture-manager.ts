@@ -42,9 +42,9 @@ export class TextureManager {
     const textureDataType = this.toEncoderType(dataType);
 
     const encoder = this.glContext.getEncoder(textureDataType, layout.channels || 1, usage);
-    /*if (layout.isPacked && usage === Encoder.Usage.UploadOnly) {
+    if (layout.isPacked && usage === Encoder.Usage.UploadOnly) {
       throw new Error('not implemented');
-    }*/
+    }
     const width = layout.width;
     const height = layout.height;
 

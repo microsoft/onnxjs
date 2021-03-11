@@ -2,10 +2,12 @@
 // Licensed under the MIT license.
 
 import {Tensor} from '../../../tensor';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
+import {getCoordsDataType} from '../utils';
 
-import {getChannels} from './packing_utils';
+import {getChannels, unpackFromChannel} from './packing_utils';
 
 export class WebGLUnpack implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
@@ -21,25 +23,26 @@ export class WebGLUnpack implements WebGLOperator {
       throw new Error(`packed input texture must exist`);
     }
 
-    // TODO(Du): look into ways to simplify createTextureLayoutFromShape's signature
     const outputLayout = handler.createTextureLayoutFromShape(inputTexture.unpackedShape);
     const outputShape = outputLayout.shape;
     const rank = outputShape.length;
 
     const channels = getChannels('rc', rank);
     const innerDims = channels.slice(-2);
-    const unpackChannel = unpackFromChannel();
+    const coordsDataType = getCoordsDataType(rank);
+    const unpackChannel = unpackFromChannel(rank);
     const sourceCoords = getSourceCoords(rank, channels);
     const coords = rank <= 1 ? 'rc' : `vec2(${innerDims.join(',')})`;
+    const glsl = getGlsl(handler.session.backend.glContext.version);
     const shaderSource = `
         ${unpackChannel}
         void main() {
-          ivec2 rc = getOutputCoords();
+          ${coordsDataType} rc = getOutputCoords();
 
           // Sample the texture with the coords to get the rgba channel value.
           vec4 packedInput = getA(${sourceCoords});
 
-          outputColor = vec4(getChannel(packedInput, ${coords}), 0, 0, 0);
+          ${glsl.output} = vec4(getChannel(packedInput, ${coords}), 0, 0, 0);
         }
       `;
 
@@ -49,8 +52,8 @@ export class WebGLUnpack implements WebGLOperator {
       samplers: ['A'],
       shaderSource,
       hasMain: true,
-      isInputsPacked: true,
-      isOutputPacked: false,
+      expectPackedInputs: true,
+      expectPackedoutputs: false,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
@@ -62,18 +65,6 @@ export class WebGLUnpack implements WebGLOperator {
     };
   }
 }
-
-function unpackFromChannel(): string {
-  return `
-  float getChannel(vec4 frag, vec2 innerDims) {
-    vec2 modCoord = mod(innerDims, 2.);
-    return modCoord.x == 0. ?
-      (modCoord.y == 0. ? frag.r : frag.g) :
-      (modCoord.y == 0. ? frag.b : frag.a);
-  }
-  `;
-}
-
 export function getSourceCoords(rank: number, dims: string[]): string {
   if (rank === 1) {
     return 'rc';

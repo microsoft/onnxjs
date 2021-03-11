@@ -127,8 +127,8 @@ export class WebGLConvPacked extends Conv {
       samplers: ['A'],
       shaderSource,
       hasMain: true,
-      isInputsPacked: true,
-      isOutputPacked: true,
+      expectPackedInputs: true,
+      expectPackedoutputs: true,
     };
   }
 

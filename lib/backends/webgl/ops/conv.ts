@@ -113,6 +113,8 @@ export class WebGLConv extends Conv {
 
     const rank = outputShape.length;
     const im2colDims = WebGLConv.calcIm2ColDims(xshape, kshape, outputShape, 4);
+    console.log('outputShape= ', outputShape);
+    console.log('im2colDims= ', im2colDims);
     const outputLayout = inferenceHandler.createTextureLayoutFromShape(
         im2colDims, 4, [im2colDims[0], im2colDims[1], im2colDims[2], im2colDims[3] * 4], {breakAxis: 3});
     const shaderSource = `

@@ -38,10 +38,6 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
               value += _A_Pack(a).ggaa * _B_Pack(b).baba;
           }
           return value;
-      //    int t[2];
-      //    t[0]=0;
-      //    t[0]=1;
-      //    return _B_Pack(t).rgba;
       }`;
     return {
       inputLayouts: inputs.map((t, i) => handler.getOrCreateTextureLayout(t, 4, true, inputs[i].dims, true)),

@@ -7,16 +7,6 @@ import {Graph} from '../graph';
 import {Operator} from '../operators';
 import {Tensor} from '../tensor';
 
-export declare namespace Upsample {
-  interface GetNearestPixelFunc {
-    (a: number, b: boolean): number;
-  }
-  interface GetOriginalCoordinateFunc {
-    (xResized: number, xScale: number, lengthResized: number, lengthOriginal: number, roiStart: number,
-     roiEnd: number): number;
-  }
-}
-
 export abstract class Upsample implements Operator {
   constructor(protected opset: number) {}
 
@@ -25,6 +15,7 @@ export abstract class Upsample implements Operator {
   initialize(attributes: Attribute, node: Graph.Node, graph: Graph): void {
     this.isResize = (this.opset >= 10);
 
+    // processing node attributes
     this.mode = attributes.getString('mode', 'nearest');
     if (this.mode !== 'nearest' && this.mode !== 'linear' && (this.opset < 11 || this.mode !== 'cubic')) {
       throw new Error(`unrecognized mode: ${this.mode}`);
@@ -70,27 +61,6 @@ export abstract class Upsample implements Operator {
     } else if (this.opset === 9) {
       this.scalesInputIdx = 1;
     }
-
-    // if (this.scalesInputIdx > 0) {
-    //   const scale = graph.getValues()[node.inputs[this.scalesInputIdx]].tensor;
-
-    //   if (scale && scale.dims.length > 0) {
-    //     this.scales = Array.from(scale.floatData);
-    //     scalesValidataion(this.scales, this.mode, this.isResize);
-    //   }
-    // }
-
-    // // roi is only needed when coordinate transformation mode is tf_crop_and_resize
-    // // for all other modes no need to read roi input
-    // if (this.roiInputIdx > 0 && this.needRoiInput) {
-    //   const roi = graph.getValues()[node.inputs[this.roiInputIdx]].tensor;
-    //   if (roi) {
-    //     this.roi = Array.from(roi.floatData);
-    //   }
-    // }
-
-    this.getOriginalCoordinate = getOriginalCoordinateFromResizedCoordinate(this.coordinateTransformMode);
-    this.getNearestPixel = getNearestPixelFromOriginal(this.nearestMode);
   }
 
   checkInputs(inputs: Tensor[]): boolean {
@@ -115,7 +85,7 @@ export abstract class Upsample implements Operator {
     return true;
   }
 
-  protected prepare(inputs: Tensor[]): [number[], number[], ReadonlyArray<number>] {
+  protected prepareInputs(inputs: Tensor[]): [number[], number[], ReadonlyArray<number>] {
     const x = inputs[0];
     const xDims = x.dims;
 
@@ -176,9 +146,6 @@ export abstract class Upsample implements Operator {
   protected scalesInputIdx: number;
   protected sizesInputIdx: number;
   protected roi: number[];
-
-  protected getOriginalCoordinate: Upsample.GetOriginalCoordinateFunc;
-  protected getNearestPixel: Upsample.GetNearestPixelFunc;
 }
 
 function scalesValidataion(scales: number[], mode: string, isResize: boolean) {
@@ -236,41 +203,42 @@ export function computeOutputShape(scales: ReadonlyArray<number>, inputDims: Rea
   return inputDims.map((dim, i) => Math.floor(dim * scales[i]));
 }
 
-function getOriginalCoordinateFromResizedCoordinate(mode: string): Upsample.GetOriginalCoordinateFunc {
-  switch (mode) {
-    case 'asymmetric':
-      return (xResized: number, xScale: number) => xResized / xScale;
-    case 'pytorch_half_pixel':
-      return (xResized: number, xScale: number, lengthResized: number) =>
-                 lengthResized > 1 ? (xResized + 0.5) / xScale - 0.5 : 0.0;
-    case 'tf_half_pixel_for_nn':
-      return (xResized: number, xScale: number) => (xResized + 0.5) / xScale;
-    case 'align_corners':
-      return (xResized: number, xScale: number, lengthResized: number, lengthOriginal: number) =>
-                 lengthResized === 1 ? 0 : xResized * (lengthOriginal - 1) / (lengthResized - 1);
-    case 'tf_crop_and_resize':
-      return (xResized: number, xScale: number, lengthResized: number, lengthOriginal: number, roiStart: number,
-              roiEnd: number) =>
-                 (lengthResized > 1 ? roiStart * (lengthOriginal - 1) +
-                          (xResized * (roiEnd - roiStart) * (lengthOriginal - 1)) / (lengthResized - 1) :
-                                      0.5 * (roiStart + roiEnd) * (lengthOriginal - 1));
-    default:  //'half_pixel'
-      return (xResized: number, xScale: number) => (xResized + 0.5) / xScale - 0.5;
-  }
-}
+// function getOriginalCoordinateFromResizedCoordinate(mode: string): Upsample.GetOriginalCoordinateFunc {
+//   switch (mode) {
+//     case 'asymmetric':
+//       return (xResized: number, xScale: number) => xResized / xScale;
+//     case 'pytorch_half_pixel':
+//       return (xResized: number, xScale: number, lengthResized: number) =>
+//                  lengthResized > 1 ? (xResized + 0.5) / xScale - 0.5 : 0.0;
+//     case 'tf_half_pixel_for_nn':
+//       return (xResized: number, xScale: number) => (xResized + 0.5) / xScale;
+//     case 'align_corners':
+//       return (xResized: number, xScale: number, lengthResized: number, lengthOriginal: number) =>
+//                  lengthResized === 1 ? 0 : xResized * (lengthOriginal - 1) / (lengthResized - 1);
+//     case 'tf_crop_and_resize':
+//       return (xResized: number, xScale: number, lengthResized: number, lengthOriginal: number, roiStart: number,
+//               roiEnd: number) =>
+//                  (lengthResized > 1 ? roiStart * (lengthOriginal - 1) +
+//                           (xResized * (roiEnd - roiStart) * (lengthOriginal - 1)) / (lengthResized - 1) :
+//                                       0.5 * (roiStart + roiEnd) * (lengthOriginal - 1));
+//     default:  //'half_pixel'
+//       return (xResized: number, xScale: number) => (xResized + 0.5) / xScale - 0.5;
+//   }
+// }
 
-function getNearestPixelFromOriginal(mode: string): Upsample.GetNearestPixelFunc {
-  switch (mode) {
-    case '':
-      return (xOriginal: number, isDownSample: boolean) => isDownSample ? Math.ceil(xOriginal) : Math.floor(xOriginal);
-    case 'round_prefer_ceil':
-      return (xOriginal: number) => Math.round(xOriginal);
-    case 'floor':
-      return (xOriginal: number) => Math.floor(xOriginal);
-    case 'ceil':
-      return (xOriginal: number) => Math.ceil(xOriginal);
-    default:  // round_prefer_floor
-      return (xOriginal: number) =>
-                 xOriginal === Math.floor(xOriginal) + 0.5 ? Math.floor(xOriginal) : Math.round(xOriginal);
-  }
-}
+// function getNearestPixelFromOriginal(mode: string): Upsample.GetNearestPixelFunc {
+//   switch (mode) {
+//     case '':
+//       return (xOriginal: number, isDownSample: boolean) => isDownSample ? Math.ceil(xOriginal) :
+//       Math.floor(xOriginal);
+//     case 'round_prefer_ceil':
+//       return (xOriginal: number) => Math.round(xOriginal);
+//     case 'floor':
+//       return (xOriginal: number) => Math.floor(xOriginal);
+//     case 'ceil':
+//       return (xOriginal: number) => Math.ceil(xOriginal);
+//     default:  // round_prefer_floor
+//       return (xOriginal: number) =>
+//                  xOriginal === Math.floor(xOriginal) + 0.5 ? Math.floor(xOriginal) : Math.round(xOriginal);
+//   }
+// }

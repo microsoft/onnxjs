@@ -3,11 +3,12 @@
 
 import {Concat} from '../../../ops/concat';
 import {Tensor} from '../../../tensor';
+import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 import {getCoordsDataType} from '../utils';
 
-import {getChannels} from './packing_utils';
+import {getChannels, unpackFromChannel} from './packing_utils';
 
 export class WebGLPackedConcat extends Concat implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
@@ -41,6 +42,7 @@ export class WebGLPackedConcat extends Concat implements WebGLOperator {
     const rank = outputShape.length;
     const coords = getChannels('coords', rank);
     const dtype = getCoordsDataType(rank);
+    const unpackChannel = unpackFromChannel();
 
     const shapes = inputs.map(i => i.dims);
     const channels = ['x', 'y', 'z', 'w', 'u', 'v'].slice(0, rank);
@@ -80,7 +82,10 @@ export class WebGLPackedConcat extends Concat implements WebGLOperator {
             getX${lastIndex}(${this.getShiftedChannelsSnippet(channels, channel, shift)}),
             vec2(${this.getShiftedChannelsSnippet(lastChannels, channel, shift)}));`;
 
+    const glsl = getGlsl(handler.session.backend.glContext.version);
+
     const shaderSource = `
+        ${unpackChannel}
         float getValue(${channels.map(x => 'int ' + x)}) {
           ${getValueSnippet}
         }
@@ -104,7 +109,7 @@ export class WebGLPackedConcat extends Concat implements WebGLOperator {
               ${coords[rank - 1]} < ${outputShape[rank - 1]}) {
             result.b = getValue(${coords});
           }
-          setOutput(result);
+          ${glsl.output} = result;
         }
       `;
 

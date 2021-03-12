@@ -4,8 +4,9 @@ import {expect} from 'chai';
 
 import {Attribute} from '../../../../lib/attribute';
 import {Backend, InferenceHandler, SessionHandler} from '../../../../lib/backend';
+import {WebGLBackend} from '../../../../lib/backends/backend-webgl';
 import {WebGLInferenceHandler} from '../../../../lib/backends/webgl/inference-handler';
-import {WebGLPackedConcat} from '../../../../lib/backends/webgl/ops/concat_packed';
+import {WebGLConcat} from '../../../../lib/backends/webgl/ops/concat';
 import {Profiler} from '../../../../lib/instrument';
 import {Tensor} from '../../../../lib/tensor';
 import {ShapeUtil} from '../../../../lib/util';
@@ -21,15 +22,31 @@ describe('#UnitTest# - packed concat - Tensor concat', () => {
   before('Initialize Context', async () => {
     const profiler = Profiler.create();
     backend = await Backend('webgl');
+    // Explicitly set to true to trigger packed version
+    (backend as WebGLBackend).pack = true;
     sessionhandler = backend.createSessionHandler({profiler});
     inferenceHandler = sessionhandler.createInferenceHandler();
   });
+
+  // Set it back to false, apparently this state is sticky throughout all the tests running in same browser session..
+  after('Resetting Context', () => {
+    (backend as WebGLBackend).pack = false;
+  });
+
   const testDataSet = getTestData();
   for (let k = 0; k < testDataSet.length; ++k) {
     const testData = testDataSet[k];
     describe(`Test concat ${JSON.stringify(testData)}`, () => {});
     it(`Test packed concat kernel `, () => {
-      const op = new WebGLPackedConcat();
+      const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
+
+      // TODO support WebGl 1.0
+      if (webglInferenceHandler.session.textureManager.glContext.version === 1) {
+        console.log('Running packed concat with webgl1 is not supported. Skipping.');
+        return;
+      }
+
+      const op = new WebGLConcat();
       const attributes = new Attribute(undefined);
       const axis = testData.axis;
       attributes.set('axis', 'int', axis);
@@ -45,8 +62,6 @@ describe('#UnitTest# - packed concat - Tensor concat', () => {
       const inputData = createAscendingArray(elementCount);
       const inputTensorA = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
       const inputTensorB = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
-
-      const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
 
       // manually creat packed texture from inputTensor, and insert in cache
       const gl = webglInferenceHandler.session.textureManager.glContext.gl;
@@ -122,19 +137,7 @@ interface TestData {
 }
 function getTestData(): TestData[] {
   return [
-    // // test 1D tensor
-    // {
-    //   elementCount: 4,
-    //   axis: 0,
-    //   inputShape: [4],
-    //   outputShape: [8],
-    //   inputTextureShape: [2, 1],
-    //   outputTextureShape: [4, 1],
-    //   expectedOutput: new Float32Array([1, 2, 5, 6, 3, 4, 7, 8, 1, 2, 5, 6, 3, 4, 7, 8]),
-    //   rawInput: new Float32Array([1, 2, 0, 0, 5, 6, 0, 0, 3, 4, 0, 0, 7, 8, 0, 0]),
-    // },
-
-    // // test 2D tensor
+    // test 2D tensor
     {
       elementCount: 16,
       axis: 0,
@@ -150,130 +153,174 @@ function getTestData(): TestData[] {
       elementCount: 16,
       axis: 1,
       inputShape: [4, 4],
-      outputShape: [8, 4],
+      outputShape: [4, 8],
       inputTextureShape: [2, 2],
-      outputTextureShape: [2, 2],
+      outputTextureShape: [4, 2],
       expectedOutput: new Float32Array([
         1, 2, 5, 6, 1, 2, 5, 6, 3, 4, 7, 8, 3, 4, 7, 8, 9, 10, 13, 14, 9, 10, 13, 14, 11, 12, 15, 16, 11, 12, 15, 16
       ]),
     },
+    {
+      elementCount: 8,
+      axis: 0,
+      inputShape: [2, 4],
+      outputShape: [4, 4],
+      inputTextureShape: [2, 1],
+      outputTextureShape: [2, 2],
+      expectedOutput: new Float32Array([
+        1,
+        2,
+        5,
+        6,
+        3,
+        4,
+        7,
+        8,
+        1,
+        2,
+        5,
+        6,
+        3,
+        4,
+        7,
+        8,
+      ]),
+    },
+    {
+      elementCount: 8,
+      axis: 1,
+      inputShape: [2, 4],
+      outputShape: [2, 8],
+      inputTextureShape: [2, 1],
+      outputTextureShape: [2, 4],
+      expectedOutput: new Float32Array([
+        1,
+        2,
+        5,
+        6,
+        1,
+        2,
+        5,
+        6,
+        3,
+        4,
+        7,
+        8,
+        3,
+        4,
+        7,
+        8,
+      ]),
+    },
+    {
+      elementCount: 6,
+      axis: 0,
+      inputShape: [2, 3],
+      outputShape: [4, 3],
+      inputTextureShape: [2, 1],
+      outputTextureShape: [2, 2],
+      expectedOutput: new Float32Array([1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6]),
+      rawInput: new Float32Array([1, 2, 4, 5, 3, 0, 6, 0])
+    },
+    {
+      elementCount: 6,
+      axis: 1,
+      inputShape: [2, 3],
+      outputShape: [2, 6],
+      inputTextureShape: [2, 1],
+      outputTextureShape: [2, 2],
+      expectedOutput: new Float32Array([1, 2, 3, 1, 2, 3, 4, 5, 6, 4, 5, 6]),
+      rawInput: new Float32Array([1, 2, 4, 5, 3, 0, 6, 0])
+    },
 
-    // {
-    //   elementCount: 8,
-    //   axis: 0,
-    //   inputShape: [2, 4],
-    //   outputShape: [2, 4],
-    //   inputTextureShape: [2, 1],
-    //   outputTextureShape: [2, 1],
-    //   useGeneratedOutput: true,
-    // },
-    // {
-    //   elementCount: 8,
-    //   axis: 1,
-    //   inputShape: [2, 4],
-    //   outputShape: [2, 4],
-    //   inputTextureShape: [2, 1],
-    //   outputTextureShape: [2, 1],
-    //   useGeneratedOutput: true,
-    // },
-    // {
-    //   elementCount: 6,
-    //   axis: 0,
-    //   inputShape: [2, 3],
-    //   outputShape: [2, 3],
-    //   inputTextureShape: [2, 1],
-    //   outputTextureShape: [2, 3],
-    //   rawData: new Float32Array([1, 2, 4, 5, 3, 0, 6, 0]),
-    // },
-    // {
-    //   elementCount: 6,
-    //   axis: 1,
-    //   inputShape: [2, 3],
-    //   outputShape: [2, 3],
-    //   inputTextureShape: [2, 1],
-    //   outputTextureShape: [2, 3],
-    //   rawData: new Float32Array([1, 2, 4, 5, 3, 0, 6, 0]),
-    // },
+    // test 3d tensor
+    {
+      elementCount: 16,
+      axis: 0,
+      inputShape: [2, 2, 4],
+      outputShape: [4, 2, 4],
+      inputTextureShape: [2, 2],
+      outputTextureShape: [2, 4],
+      expectedOutput: new Float32Array([
+        1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16, 1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16
+      ])
+    },
+    {
+      elementCount: 16,
+      axis: 1,
+      inputShape: [2, 2, 4],
+      outputShape: [2, 4, 4],
+      inputTextureShape: [2, 2],
+      outputTextureShape: [4, 2],
+      expectedOutput: new Float32Array([
+        1, 2, 5, 6, 3, 4, 7, 8, 1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16, 9, 10, 13, 14, 11, 12, 15, 16
+      ])
+    },
+    {
+      elementCount: 16,
+      axis: 2,
+      inputShape: [2, 2, 4],
+      outputShape: [2, 2, 8],
+      inputTextureShape: [2, 2],
+      outputTextureShape: [4, 4],
+      expectedOutput: new Float32Array([
+        1, 2, 5, 6, 1, 2, 5, 6, 3, 4, 7, 8, 3, 4, 7, 8, 9, 10, 13, 14, 9, 10, 13, 14, 11, 12, 15, 16, 11, 12, 15, 16
+      ])
+    },
 
-    // // // test 3d tensor
-    // {
-    //   elementCount: 16,
-    //   axis: 0,
-    //   inputShape: [2, 2, 4],
-    //   outputShape: [2, 2, 4],
-    //   inputTextureShape: [2, 2],
-    //   outputTextureShape: [4, 4],
-    //   useGeneratedOutput: true,
-    // },
-    // {
-    //   elementCount: 16,
-    //   axis: 1,
-    //   inputShape: [2, 2, 4],
-    //   outputShape: [2, 2, 4],
-    //   inputTextureShape: [2, 2],
-    //   outputTextureShape: [4, 4],
-    //   useGeneratedOutput: true,
-    // },
-    // {
-    //   elementCount: 24,
-    //   axis: 0,
-    //   inputShape: [2, 3, 4],
-    //   outputShape: [2, 3, 4],
-    //   inputTextureShape: [2, 4],
-    //   outputTextureShape: [6, 4],
-    //   rawData: new Float32Array([
-    //     1,  2,  5,  6,  3,  4,  7,  8,  9,  10, 0, 0, 11, 12, 0, 0,
-    //     13, 14, 17, 18, 15, 16, 19, 20, 21, 22, 0, 0, 23, 24, 0, 0
-    //   ])
-    // },
-    // {
-    //   elementCount: 24,
-    //   axis: 1,
-    //   inputShape: [2, 3, 4],
-    //   outputShape: [2, 3, 4],
-    //   inputTextureShape: [2, 4],
-    //   outputTextureShape: [6, 4],
-    //   rawData: new Float32Array([
-    //     1,  2,  5,  6,  3,  4,  7,  8,  9,  10, 0, 0, 11, 12, 0, 0,
-    //     13, 14, 17, 18, 15, 16, 19, 20, 21, 22, 0, 0, 23, 24, 0, 0
-    //   ])
-    // },
-    // // test 4d tensor
-    // {
-    //   elementCount: 32,
-    //   axis: 0,
-    //   inputShape: [2, 2, 2, 4],
-    //   outputShape: [2, 2, 2, 4],
-    //   inputTextureShape: [2, 4],
-    //   outputTextureShape: [8, 4],
-    //   useGeneratedOutput: true,
-    // },
-    // {
-    //   elementCount: 32,
-    //   axis: 1,
-    //   inputShape: [2, 2, 2, 4],
-    //   outputShape: [2, 2, 2, 4],
-    //   inputTextureShape: [2, 4],
-    //   outputTextureShape: [8, 4],
-    //   useGeneratedOutput: true,
-    // },
-    // {
-    //   elementCount: 64,
-    //   axis: 0,
-    //   inputShape: [2, 2, 4, 4],
-    //   outputShape: [2, 2, 4, 4],
-    //   inputTextureShape: [2, 8],
-    //   outputTextureShape: [16, 4],
-    //   useGeneratedOutput: true,
-    // },
-    // {
-    //   elementCount: 64,
-    //   axis: 1,
-    //   inputShape: [2, 2, 4, 4],
-    //   outputShape: [2, 2, 4, 4],
-    //   inputTextureShape: [2, 8],
-    //   outputTextureShape: [16, 4],
-    //   useGeneratedOutput: true,
-    // },
+    // test 4d tensor
+    {
+      elementCount: 32,
+      axis: 0,
+      inputShape: [2, 2, 2, 4],
+      outputShape: [4, 2, 2, 4],
+      inputTextureShape: [2, 4],
+      outputTextureShape: [2, 8],
+      expectedOutput: new Float32Array([
+        1,  2,  5,  6,  3,  4,  7,  8,  9,  10, 13, 14, 11, 12, 15, 16, 17, 18, 21, 22, 19, 20,
+        23, 24, 25, 26, 29, 30, 27, 28, 31, 32, 1,  2,  5,  6,  3,  4,  7,  8,  9,  10, 13, 14,
+        11, 12, 15, 16, 17, 18, 21, 22, 19, 20, 23, 24, 25, 26, 29, 30, 27, 28, 31, 32
+      ])
+    },
+    {
+      elementCount: 32,
+      axis: 1,
+      inputShape: [2, 2, 2, 4],
+      outputShape: [2, 4, 2, 4],
+      inputTextureShape: [2, 4],
+      outputTextureShape: [8, 4],
+      expectedOutput: new Float32Array([
+        1,  2,  5,  6,  3,  4,  7,  8,  9,  10, 13, 14, 11, 12, 15, 16, 1,  2,  5,  6,  3,  4,
+        7,  8,  9,  10, 13, 14, 11, 12, 15, 16, 25, 26, 29, 30, 27, 28, 31, 32, 25, 26, 29, 30,
+        27, 28, 31, 32, 25, 26, 29, 30, 27, 28, 31, 32, 25, 26, 29, 30, 27, 28, 31, 32
+      ])
+    },
+
+    {
+      elementCount: 32,
+      axis: 2,
+      inputShape: [2, 2, 2, 4],
+      outputShape: [2, 2, 4, 4],
+      inputTextureShape: [2, 4],
+      outputTextureShape: [8, 4],
+      expectedOutput: new Float32Array([
+        1,  2,  5,  6,  3,  4,  7,  8,  1,  2,  5,  6,  3,  4,  7,  8,  17, 18, 21, 22, 19, 20,
+        23, 24, 17, 18, 21, 22, 19, 20, 23, 24, 25, 26, 29, 30, 27, 28, 31, 32, 25, 26, 29, 30,
+        27, 28, 31, 32, 25, 26, 29, 30, 27, 28, 31, 32, 25, 26, 29, 30, 27, 28, 31, 32
+      ])
+    },
+    {
+      elementCount: 32,
+      axis: 3,
+      inputShape: [2, 2, 2, 4],
+      outputShape: [2, 2, 4, 4],
+      inputTextureShape: [2, 4],
+      outputTextureShape: [8, 4],
+      expectedOutput: new Float32Array([
+        1,  2,  5,  6,  1,  2,  5,  6,  3,  4,  7,  8,  3,  4,  7,  8,  17, 18, 21, 22, 17, 18,
+        21, 22, 19, 20, 23, 24, 19, 20, 23, 24, 25, 26, 29, 30, 25, 26, 29, 30, 27, 28, 31, 32,
+        27, 28, 31, 32, 25, 26, 29, 30, 25, 26, 29, 30, 27, 28, 31, 32, 27, 28, 31, 32
+      ])
+    },
   ];
 }

@@ -1,6 +1,6 @@
 [
   {
-    "name": "ResizeBilinearPacked with '0' and '-1' in the shape tensor input",
+    "name": "ResizeBilinearPacked with mode half_pixel",
     "operator": "Resize",
     "opsets": [
       {
@@ -40,11 +40,6 @@
             "dims": [4],
             "type": "float32"
           }
-          // {
-          //   "data": [],
-          //   "dims": [0],
-          //   "type": "int32"
-          // }
         ],
         "outputs": [
           {
@@ -74,7 +69,7 @@
     ]
   },
   {
-    "name": "ResizeBilinearPacked with '0' and '-1' in the shape tensor input",
+    "name": "ResizeBilinearPacked with mode align_corners",
     "operator": "Resize",
     "opsets": [
       {
@@ -83,7 +78,6 @@
       }
     ],
     "attributes": [
-      // { "name": "scales", "data": [1.0, 1.0, 2.0, 3.0], "type": "floats" },
       {
         "name": "coordinate_transformation_mode",
         "data": "align_corners",
@@ -114,11 +108,6 @@
             "dims": [4],
             "type": "float32"
           }
-          // {
-          //   "data": [],
-          //   "dims": [0],
-          //   "type": "int32"
-          // }
         ],
         "outputs": [
           {
@@ -148,7 +137,7 @@
     ]
   },
   {
-    "name": "ResizeBilinearPacked asymmetric",
+    "name": "ResizeBilinearPacked with asymmetric",
     "operator": "Resize",
     "opsets": [
       {

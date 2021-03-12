@@ -79,9 +79,6 @@ function createResizeProgramInfo(
   switch (coordinateTransformMode) {
     case 'asymmetric':
       getSourceFracIndex = `
-        vec2 getSourceFracIndex(ivec2 coords){
-          return vec2(coords) / scaleWH;
-        }
         vec4 getSourceFracIndex(ivec4 coords){
           return vec4(coords) / scaleWHWH;
         }
@@ -89,9 +86,6 @@ function createResizeProgramInfo(
       break;
     case 'half_pixel':
       getSourceFracIndex = `
-        vec2 getSourceFracIndex(ivec2 coords){
-          return (vec2(coords) + 0.5) / scaleWH - 0.5;
-        }
         vec4 getSourceFracIndex(ivec4 coords){
           return (vec4(coords) + 0.5) / scaleWHWH - 0.5;
         }
@@ -99,12 +93,6 @@ function createResizeProgramInfo(
       break;
     case 'align_corners':
       getSourceFracIndex = `
-        vec2 getSourceFracIndex(ivec2 coords){
-          vec2 resized = vec2(${outputWidth}.0 - 1.0, ${outputHeight}.0 - 1.0);
-          vec2 original = vec2(${inputWidth}.0 - 1.0, ${inputHeight}.0 - 1.0);
-          vec2 new_scale = original / resized;
-          return vec2(coords) * new_scale;
-        }
         vec4 getSourceFracIndex(ivec4 coords){
           vec4 resized = vec4(${outputWidth}.0 - 1.0, ${outputHeight}.0 - 1.0, ${outputWidth}.0 - 1.0, ${
           outputHeight}.0 - 1.0);
@@ -123,7 +111,6 @@ function createResizeProgramInfo(
   const unpackChannel = unpackFromChannel(dim);
   const shader = `
         const vec2 inputWH = vec2(${inputHeight}.0, ${inputWidth}.0);
-        const vec2 scaleWH = vec2(${scalesHeight}.0, ${scalesWidth}.0);
         const vec4 scaleWHWH = vec4(${scalesHeight}.0, ${scalesWidth}.0, ${scalesHeight}.0, ${scalesWidth}.0);
         ${unpackChannel}
         ${getSourceFracIndex}
@@ -136,79 +123,65 @@ function createResizeProgramInfo(
           int batch = rc[0];
           int depth = rc[1];
 
-          // retrieve the 4 coordinates that will be packed in one texel in output texture.
-          // ivec2 x00 = rc.wz;
-          // ivec2 x01 = ivec2(rc.w, rc.z+1);
-          // ivec2 x10 = ivec2(rc.w+1, rc.z);
-          // ivec2 x11 = ivec2(rc.w+1, rc.z + 1);
+          // retrieve the 4 coordinates that is used in the 4 packed output values.
           ivec4 coords = ivec4(rc.wz, rc.w + 1, rc.z + 1);
+
+          // calculate the source index in fraction
           vec4 sourceFrac = getSourceFracIndex(coords);
 
-          // vec2 sourceFracR = getSourceFracIndex(x00);
-          // vec2 sourceFracG = getSourceFracIndex(x01);
-          // vec2 sourceFracB = getSourceFracIndex(x10);
-          // vec2 sourceFracA = getSourceFracIndex(x11);
-
-          ivec4 rr = ivec4(max(sourceFrac.xy, vec2(0.0)), min(inputWH - 1.0, ceil(sourceFrac.xy)));
-          ivec4 gg = ivec4(max(sourceFrac.xw, vec2(0.0)), min(inputWH - 1.0, ceil(sourceFrac.xw)));
-          ivec4 bb = ivec4(max(sourceFrac.zy, vec2(0.0)), min(inputWH - 1.0, ceil(sourceFrac.zy)));
-          ivec4 aa = ivec4(max(sourceFrac.zw, vec2(0.0)), min(inputWH - 1.0, ceil(sourceFrac.zw)));
+          // get the lower and upper bound of the 4 values that will be packed into one texel.
+          ivec4 x00 = ivec4(max(sourceFrac.xy, vec2(0.0)), min(inputWH - 1.0, ceil(sourceFrac.xy)));
+          ivec4 x01 = ivec4(max(sourceFrac.xw, vec2(0.0)), min(inputWH - 1.0, ceil(sourceFrac.xw)));
+          ivec4 x10 = ivec4(max(sourceFrac.zy, vec2(0.0)), min(inputWH - 1.0, ceil(sourceFrac.zy)));
+          ivec4 x11 = ivec4(max(sourceFrac.zw, vec2(0.0)), min(inputWH - 1.0, ceil(sourceFrac.zw)));
 
           bool hasNextRow = rc.w < ${outputHeight - 1};
           bool hasNextCol = rc.z < ${outputWidth - 1};
 
+          // pack x00, x01, x10, x11's top-left corner into one vec4 structure
           vec4 topLeft = vec4(
-            getAValue(batch, depth, rr.x, rr.y),
-            hasNextCol ? getAValue(batch, depth, gg.x, gg.y)
+            getAValue(batch, depth, x00.x, x00.y),
+            hasNextCol ? getAValue(batch, depth, x01.x, x01.y)
                       : 0.0,
-            hasNextRow ? getAValue(batch, depth, bb.x, bb.y)
+            hasNextRow ? getAValue(batch, depth, x10.x, x10.y)
                       : 0.0,
             (hasNextRow && hasNextCol) ?
-              getAValue(batch, depth, aa.x, aa.y) : 0.0);
+              getAValue(batch, depth, x11.x, x11.y) : 0.0);
 
+          // pack x00, x01, x10, x11's top-right corner into one vec4 structure
           vec4 topRight = vec4(
-            getAValue(batch, depth, rr.x, rr.w),
-            hasNextCol ? getAValue(batch, depth, gg.x, gg.w)
+            getAValue(batch, depth, x00.x, x00.w),
+            hasNextCol ? getAValue(batch, depth, x01.x, x01.w)
                       : 0.0,
-            hasNextRow ? getAValue(batch, depth, bb.x, bb.w)
+            hasNextRow ? getAValue(batch, depth, x10.x, x10.w)
                       : 0.0,
             (hasNextRow && hasNextCol) ?
-              getAValue(batch, depth, aa.x, aa.w) : 0.0);
+              getAValue(batch, depth, x11.x, x11.w) : 0.0);
 
+          // pack x00, x01, x10, x11's bottom-left corner into one vec4 structure
           vec4 bottomLeft = vec4(
-            getAValue(batch, depth, rr.z, rr.y),
-            hasNextCol ? getAValue(batch, depth, gg.z, gg.y)
+            getAValue(batch, depth, x00.z, x00.y),
+            hasNextCol ? getAValue(batch, depth, x01.z, x01.y)
                       : 0.0,
-            hasNextRow ? getAValue(batch, depth, bb.z, bb.y)
+            hasNextRow ? getAValue(batch, depth, x10.z, x10.y)
                       : 0.0,
             (hasNextRow && hasNextCol) ?
-              getAValue(batch, depth, aa.z, aa.y) : 0.0);
+              getAValue(batch, depth, x11.z, x11.y) : 0.0);
 
-
-
+          // pack x00, x01, x10, x11's bottom-right corner into one vec4 structure
           vec4 bottomRight = vec4(
-            getAValue(batch, depth, rr.z, rr.w),
-            hasNextCol ? getAValue(batch, depth, gg.z, gg.w)
+            getAValue(batch, depth, x00.z, x00.w),
+            hasNextCol ? getAValue(batch, depth, x01.z, x01.w)
                       : 0.0,
-            hasNextRow ? getAValue(batch, depth, bb.z, bb.w)
+            hasNextRow ? getAValue(batch, depth, x10.z, x10.w)
                       : 0.0,
             (hasNextRow && hasNextCol) ?
-              getAValue(batch, depth, aa.z, aa.w) : 0.0);
+              getAValue(batch, depth, x11.z, x11.w) : 0.0);
 
-
-          // vec4 fracX = vec4(sourceFracR.x, sourceFracG.x, sourceFracB.x, sourceFracA.x) ;
-          // fracX = fracX - floor(fracX);
-          // vec4 fracY = vec4(sourceFracR.y, sourceFracG.y, sourceFracB.y, sourceFracA.y);
-          // fracY = fracY - floor(fracY);
-
-          // vec4 clampX = clamp(fracX, vec4(0.0), vec4(1.0));
-          // vec4 clampY = clamp(fracY, vec4(0.0), vec4(1.0));
+          // calculate the interpolation fraction on u and v direction
           vec4 frac = vec4(sourceFrac) - floor(sourceFrac);
           vec4 clampFrac = clamp(frac, vec4(0.0), vec4(1.0));
 
-          // vec4 top = mix(topLeft, topRight, clampY);
-          // vec4 bottom = mix(bottomLeft, bottomRight, clampY);
-          // vec4 newValue = mix(top, bottom, clampX);
           vec4 top = mix(topLeft, topRight, clampFrac.ywyw);
           vec4 bottom = mix(bottomLeft, bottomRight, clampFrac.ywyw);
           vec4 newValue = mix(top, bottom, clampFrac.xxzz);

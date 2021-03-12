@@ -2,16 +2,13 @@
 // Licensed under the MIT license.
 import {expect} from 'chai';
 
-import {Attribute} from '../../../../lib/attribute';
 import {Backend, InferenceHandler, SessionHandler} from '../../../../lib/backend';
 import {WebGLInferenceHandler} from '../../../../lib/backends/webgl/inference-handler';
 import {WebGLPack} from '../../../../lib/backends/webgl/ops/pack';
-import {WebGLResizePacked} from '../../../../lib/backends/webgl/ops/resize-packed';
 import {WebGLUnpack} from '../../../../lib/backends/webgl/ops/unpack';
 import {Profiler} from '../../../../lib/instrument';
 import {Tensor} from '../../../../lib/tensor';
 import {ShapeUtil} from '../../../../lib/util';
-import {createMockGraph} from '../../../test-shared';
 
 import {createArrayFromTexture, createAscendingArray} from './test_utils';
 import {createTextureFromArray, generateExpected, getExpectedElementCount} from './test_utils';

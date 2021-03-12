@@ -2,11 +2,13 @@
 // Licensed under the MIT license.
 
 import {assert} from 'chai';
+
 import {Upsample} from '../../../ops/upsample';
 import {Tensor} from '../../../tensor';
 import {getGlsl, Glsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {Artifact, ProgramInfo, RunData, TextureLayout, WebGLOperator} from '../types';
+import {getCoordsDataType} from '../utils';
 
 import {unpackFromChannel} from './packing_utils';
 
@@ -108,6 +110,7 @@ function createResizeProgramInfo(
       throw new Error(`resize (packed) does not support coordinateTransformMode: '${coordinateTransformMode}'`);
   }
 
+  const coordsDataType = getCoordsDataType(dim);
   const unpackChannel = unpackFromChannel(dim);
   const shader = `
         const vec2 inputWH = vec2(${inputHeight}.0, ${inputWidth}.0);
@@ -118,7 +121,7 @@ function createResizeProgramInfo(
           return getChannel(getA(x10, r, c, d), vec2(c, d));
         }
         void main() {
-          ivec4 rc = getOutputCoords();
+          ${coordsDataType} rc = getOutputCoords();
 
           int batch = rc[0];
           int depth = rc[1];
@@ -186,7 +189,7 @@ function createResizeProgramInfo(
           vec4 bottom = mix(bottomLeft, bottomRight, clampFrac.ywyw);
           vec4 newValue = mix(top, bottom, clampFrac.xxzz);
 
-          outputColor = vec4(newValue);
+          ${glsl.output} = vec4(newValue);
         }
       `;
   return {

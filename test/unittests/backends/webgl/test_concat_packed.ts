@@ -117,6 +117,7 @@ interface TestData {
   inputTextureShape: number[];
   outputTextureShape: number[];
   expectedOutput: Float32Array;
+  // If empty, the test will use auto-generated data.
   rawInput?: Float32Array;
 }
 function getTestData(): TestData[] {

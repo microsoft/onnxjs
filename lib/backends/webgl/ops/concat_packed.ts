@@ -64,10 +64,6 @@ export class WebGLPackedConcat extends Concat implements WebGLOperator {
       }`;
     for (let i = 1; i < offsets.length; i++) {
       const shift = offsets[i - 1];
-      // Note: the >= comparison below may seem unnecessary given the check
-      // above but is needed to workaround branch execution issues on some
-      // devices. It makes all the conditions exclusive without relying on
-      // execution order.
       getValueSnippet += `
           if (${channel} < ${offsets[i]}  && ${channel} >= ${offsets[i - 1]}) {
             return getChannel(

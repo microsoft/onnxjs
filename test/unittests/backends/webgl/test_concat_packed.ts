@@ -101,7 +101,6 @@ describe('#UnitTest# - packed concat - Tensor concat', () => {
       webglInferenceHandler.session.textureManager.glContext.checkError();
       // verify result.
       const expectedOutput = testData.expectedOutput;
-      console.log('result: ', result);
       expect(result).to.not.equal(null);
 
       expect(result).to.have.lengthOf(elementCount * 2);

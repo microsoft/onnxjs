@@ -125,12 +125,8 @@ describe('#UnitTest# - unpack - Tensor unpack', () => {
 
       webglInferenceHandler.setTextureData(inputTensor.dataId, textureData);
 
-      const rio = new Tensor([0], 'float32', undefined, undefined, inputData);
-      const scale = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
-      const resize = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
       // compile shader code
-      const programInfo =
-          op.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor, rio, scale, resize]);
+      const programInfo = op.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor]);
 
       const artifact = webglInferenceHandler.session.programManager.build(programInfo);
       webglInferenceHandler.session.programManager.setArtifact(op, artifact);

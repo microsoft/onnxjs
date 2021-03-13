@@ -111,7 +111,7 @@ function createResizeProgramInfo(
   }
 
   const coordsDataType = getCoordsDataType(dim);
-  const unpackChannel = unpackFromChannel(dim);
+  const unpackChannel = unpackFromChannel();
   const shader = `
         const vec2 inputWH = vec2(${inputHeight}.0, ${inputWidth}.0);
         const vec4 scaleWHWH = vec4(${scalesHeight}.0, ${scalesWidth}.0, ${scalesHeight}.0, ${scalesWidth}.0);

@@ -4,10 +4,10 @@
 // tslint:disable:no-require-imports
 
 if (typeof window !== 'undefined' && !onnx.backend.webgl.disabled) {
-  // temp disable tests for pack/unpack debugging
-  // require('./backends/webgl/test_glsl_function_inliner');
-  // require('./backends/webgl/test_conv_new');
+  require('./backends/webgl/test_glsl_function_inliner');
+  require('./backends/webgl/test_conv_new');
   require('./backends/webgl/test_pack_unpack');
+  require('./backends/webgl/test_concat_packed');
 }
 
 // require('./api/onnx');

@@ -33,7 +33,7 @@ export class WebGLIm2ColPacked implements WebGLOperator {
     const rank = this.convOutputShape.length;
     const im2colShape = [wshape[1] * wshape[2] * wshape[3], this.convOutputShape[2] * this.convOutputShape[3]];
     const itemsPerBlockRow = xshape[1] * wshape[3];
-    const unpackChannel = unpackFromChannel(2);
+    const unpackChannel = unpackFromChannel();
     let unrolled = ``;
 
     for (let row = 0; row <= 1; row++) {
@@ -55,7 +55,6 @@ export class WebGLIm2ColPacked implements WebGLOperator {
 
                 ch = int(mod(float(pos), ${xshape[1]}.));
                   innerDims = vec2(d0, d1);
-                  //d0=0, d1=2
                   result[${row * 2 + col}] = getChannel(
                     getA(0, ch, int(innerDims.x),
                     int(innerDims.y)), innerDims);
@@ -75,8 +74,6 @@ export class WebGLIm2ColPacked implements WebGLOperator {
         vec4 result = vec4(0.0);
         int blockIndex, pos, offsetY, d0, offsetX, d1, ch;
         vec2 innerDims;
-        //TexCoords.xy: [0.5, 0.25], [0.5, 0.75]
-        //rc.xy: [0, 0], [0, 2]
         ${unrolled}
         outputColor = result;
     }

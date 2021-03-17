@@ -30,7 +30,7 @@ export class WebGLUnpack implements WebGLOperator {
     const channels = getChannels('rc', rank);
     const innerDims = channels.slice(-2);
     const coordsDataType = getCoordsDataType(rank);
-    const unpackChannel = unpackFromChannel(rank);
+    const unpackChannel = unpackFromChannel();
     const sourceCoords = getSourceCoords(rank, channels);
     const coords = rank <= 1 ? 'rc' : `vec2(${innerDims.join(',')})`;
     const glsl = getGlsl(handler.session.backend.glContext.version);

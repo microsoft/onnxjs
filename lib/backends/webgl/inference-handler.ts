@@ -55,7 +55,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
     });
 
     // output should match
-    if (!!runData.outputTextureData.isPacked !== !!artifact.programInfo.expectPackedoutputs) {
+    if (!!runData.outputTextureData.isPacked !== !!artifact.programInfo.expectPackedOutputs) {
       throw new Error(`output property packed inconsistent`);
     }
 

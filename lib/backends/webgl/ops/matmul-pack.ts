@@ -12,6 +12,8 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
     return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
+    const hasBias = inputs.length > 2;
+    const processBias = hasBias ? `value += getBiasAtOutCoords();` : ``;
     const aShape = inputs[0].dims;
     const bShape = inputs[1].dims;
     const outputShape = BroadcastUtil.calcShape(aShape, bShape, true);
@@ -24,7 +26,6 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
     const sharedDim = aShape[aShape.length - 1];
     const shaderSource = `
       vec4 process(int indices[${rank}]) {
-          ivec2 rc = getOutputCoords();
           int a[${arank}];
           int b[${brank}];
           bcastMatmulIndices_A(indices, a);
@@ -37,13 +38,14 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
               value += _A_Pack(a).rrbb * _B_Pack(b).rgrg;
               value += _A_Pack(a).ggaa * _B_Pack(b).baba;
           }
+          ${processBias}
           return value;
       }`;
     return {
       inputLayouts: inputs.map((t, i) => handler.getOrCreateTextureLayout(t, 4, true, inputs[i].dims, true)),
       outputLayout:
           handler.createTextureLayoutFromShape(outputShape, 4, outputShape, {isPacked: true, reverseWH: true}),
-      samplers: ['A', 'B'],
+      samplers: hasBias ? ['A', 'B', 'Bias'] : ['A', 'B'],
       shaderSource,
       expectPackedInputs: true,
       expectPackedoutputs: true,

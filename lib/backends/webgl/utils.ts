@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-import {assert} from './webgl_utils';
+import {assert} from '../../util';
 /**
  * Given a non RGBA shape calculate the R version
  * It is assumed that the dimensions are multiples of given channels

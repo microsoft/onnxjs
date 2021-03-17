@@ -38,29 +38,25 @@ export class WebGLInferenceHandler implements InferenceHandler {
   runProgram(artifact: Artifact, runData: RunData) {
     // pack/unpack inputs
     runData.inputTextureDatas.forEach(input => {
-      if (input.isPacked && !artifact.programInfo.isInputsPacked) {
-        const unpackedTd = this.unpackedTextureDataCache.get(input.tensor.dataId);
-        if (unpackedTd) {
-          input = unpackedTd;
-        } else {
-          // unpack this input
-          input = this.unpack(input);
-          this.setTextureData(input.tensor.dataId, input, false);
-        }
-      } else if (!input.isPacked && artifact.programInfo.isInputsPacked) {
+      if (input.isPacked && !artifact.programInfo.expectPackedInputs) {
+        // unpack this input
+        const unpacked = this.unpack(input);
+        input.height = unpacked.height;
+        input.isPacked = unpacked.isPacked;
+        input.texture = unpacked.texture;
+        input.width = unpacked.width;
+      } else if (!input.isPacked && artifact.programInfo.expectPackedInputs) {
         // pack this input
-        const packedTd = this.packedTextureDataCache.get(input.tensor.dataId);
-        if (packedTd) {
-          input = packedTd;
-        } else {
-          input = this.pack(input);
-          this.setTextureData(input.tensor.dataId, input, true);
-        }
+        const packed = this.pack(input);
+        input.height = packed.height;
+        input.isPacked = packed.isPacked;
+        input.texture = packed.texture;
+        input.width = packed.width;
       }
     });
 
     // output should match
-    if (!!runData.outputTextureData.isPacked !== !!artifact.programInfo.isOutputPacked) {
+    if (!!runData.outputTextureData.isPacked !== !!artifact.programInfo.expectPackedoutputs) {
       throw new Error(`output property packed inconsistent`);
     }
 
@@ -169,17 +165,19 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   /**
-   * Create a TextureLayout object from a tensor. If a related texture data is found, returns the cached texture layout.
+   * Create a TextureLayout object from a tensor. If a related texture data is found, returns the cached texture
+   * layout.
    */
-  getOrCreateTextureLayout(tensor: Tensor, channels: 1|4 = 1, isPacked = false, unpackedShape?: ReadonlyArray<number>):
-      TextureLayout {
-    const td = this.getTextureData(tensor.dataId, isPacked);
+  getOrCreateTextureLayout(
+      tensor: Tensor, channels: 1|4 = 1, isPacked = false, unpackedShape?: ReadonlyArray<number>,
+      reverseWH = false): TextureLayout {
+    const td = this.getTextureData(tensor.dataId);
     if (td) {
       return td;
     }
     return this.createTextureLayoutFromShape(
         channels === 1 || isPacked ? tensor.dims : getPackedShape(tensor.dims), channels, unpackedShape,
-        isPacked ? {isPacked: true} : undefined);
+        isPacked || reverseWH ? {isPacked, reverseWH} : undefined);
   }
   /**
    * Create a TextureLayout object from shape.
@@ -188,8 +186,13 @@ export class WebGLInferenceHandler implements InferenceHandler {
       shape: ReadonlyArray<number>, channels: 1|4 = 1, unpackedShape?: ReadonlyArray<number>,
       prefs?: WidthHeightPrefs): TextureLayout {
     const isPacked = !!(prefs && prefs.isPacked);
-    const [width, height] =
+    const [texWidth, texHeight] =
         this.session.layoutStrategy.computeTextureWH(isPacked ? unpackedShape || shape : shape, prefs);
+    let [width, height] = [texWidth, texHeight];
+    if (prefs && prefs.reverseWH) {
+      width = texHeight;
+      height = texWidth;
+    }
     const rank = shape.length;
     let inferredDims = shape.slice(0);
     if (rank === 0) {
@@ -258,12 +261,10 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
     this.runProgram(artifact, runData);
-    // console.log(Array.from(runData.outputTextureData.tensor.data as Float32Array));
     return runData.outputTextureData;
   }
 
   unpack(input: TextureData): TextureData {
-    console.log('==unpack==');
     const key = `${input.shape}`;
     let op = this.session.unpackOpCache.get(key);
     if (!op) {

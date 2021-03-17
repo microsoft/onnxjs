@@ -2,11 +2,12 @@
 // Licensed under the MIT license.
 
 import {Logger} from '../../instrument';
-import {assert} from './webgl_utils';
+import {assert} from '../../util';
 /** Layout preferences */
 export interface WidthHeightPrefs {
   breakAxis?: number;
   isPacked?: boolean;
+  reverseWH?: boolean;
 }
 /**
  * TextureLayoutStrategy is an abstraction for different plans

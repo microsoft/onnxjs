@@ -25,6 +25,7 @@ export class WebGLSessionHandler implements SessionHandler {
   initializers: Set<Tensor.Id>;
   packOpCache: Map<string, WebGLOperator>;
   unpackOpCache: Map<string, WebGLOperator>;
+  pack?: boolean;
 
   constructor(public readonly backend: WebGLBackend, public readonly context: Session.Context) {
     this.layoutStrategy = new PreferLogicalStrategy(backend.glContext.maxTextureSize);
@@ -35,6 +36,7 @@ export class WebGLSessionHandler implements SessionHandler {
     this.textureDataCache = new Map();
     this.packOpCache = new Map();
     this.unpackOpCache = new Map();
+    this.pack = backend.pack;
   }
 
   createInferenceHandler() {

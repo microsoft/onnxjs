@@ -6,7 +6,6 @@ import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 import {getCoordsDataType} from '../utils';
-
 import {getChannels, unpackFromChannel} from './packing_utils';
 
 export class WebGLUnpack implements WebGLOperator {
@@ -65,6 +64,7 @@ export class WebGLUnpack implements WebGLOperator {
     };
   }
 }
+
 export function getSourceCoords(rank: number, dims: string[]): string {
   if (rank === 1) {
     return 'rc';

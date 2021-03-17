@@ -105,12 +105,11 @@ ${fragShaderScript}
     return program;
   }
   bindOutput(td: TextureData): void {
-    const width = td.width;
-    const height = td.height;
     Logger.verbose(
         'ProrgramManager',
-        `Binding output texture to Framebuffer: w/h=${width}/${height}, shape=${td.shape}, type=${td.tensor.type}`);
-    this.glContext.attachFramebuffer(td.texture, width, height);
+        `Binding output texture to Framebuffer: w/h=${td.width}/${td.height}, shape=${td.shape}, type=${
+            td.tensor.type}`);
+    this.glContext.attachFramebuffer(td.texture, td.width, td.height);
   }
   bindAttributes(attribLocations: Artifact.AttribLocations): void {
     const positionHandle = attribLocations.position;

@@ -83,7 +83,17 @@ export class WebGLInferenceHandler implements InferenceHandler {
       }
       // graph inputs or initializers
       // TODO: fix an unhalting loop here
-      td = this.createTextureData(layout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly, isPacked);
+      // td = this.createTextureData(layout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly,
+      // isPacked);
+      if (isPacked) {
+        const unpackedTextureLayout = this.getOrCreateTextureLayout(tensor, 1, false, [], true);
+        const unpackedTextureData = this.createTextureData(
+            unpackedTextureLayout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly);
+        td = this.pack(unpackedTextureData);
+        // td = this.createTextureData(layout, tensor.type);
+      } else {
+        td = this.createTextureData(layout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly, isPacked);
+      }
     } else {
       Logger.verbose('InferenceHandler', `Retrieving TextureData from cache: [${tensor.dims}]`);
     }

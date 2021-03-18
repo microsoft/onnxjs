@@ -25,6 +25,7 @@ describe('#UnitTest# - pack - Tensor pack', () => {
     inferenceHandler = sessionhandler.createInferenceHandler();
   });
   const testDataSet = getTestData();
+
   for (let k = 0; k < testDataSet.length; ++k) {
     const testData = testDataSet[k];
     describe(`Test pack ${JSON.stringify(testData)}`, () => {});
@@ -43,6 +44,7 @@ describe('#UnitTest# - pack - Tensor pack', () => {
       const inputData = createAscendingArray(elementCount);
       const inputTensorShape = testData.inputShape;
       const outputTextureShape = testData.outputTextureShape;
+
       const inputTensor = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
 
       // compile shader code

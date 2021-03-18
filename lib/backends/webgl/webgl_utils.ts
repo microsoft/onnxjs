@@ -2,12 +2,6 @@ import {Tensor} from '../../../lib/tensor';
 import {WebGLInferenceHandler} from './inference-handler';
 import {WebGLPack} from './ops/pack';
 
-export function assert(expr: boolean, msg: () => string) {
-  if (!expr) {
-    throw new Error(typeof msg === 'string' ? msg : msg());
-  }
-}
-
 // this is un-optimized version of reshape: unpack + create_new_tensor + pack_with_new_shape
 // TODO: optimize it.
 export function reshape(inferenceHandler: WebGLInferenceHandler, input: Tensor, shape: number[]): Tensor {

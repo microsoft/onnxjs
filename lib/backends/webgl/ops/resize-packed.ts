@@ -31,8 +31,10 @@ export class WebGLResizePacked extends Upsample implements WebGLOperator {
   }
 
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTD =
-        handler.getOrCreateTextureData(inputs[0], handler.getOrCreateTextureLayout(inputs[0], 1, false, [], true));
+    // const inputTD =
+    //     handler.getOrCreateTextureData(inputs[0], handler.getOrCreateTextureLayout(inputs[0], 1, false, [], true));
+    // const inputTD = handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0], true);
+    const inputTD = handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0], true);
     const outputTD = handler.createTextureDataFromLayout(programInfo.outputLayout, inputTD.tensor.type);
     return {inputTextureDatas: [inputTD], outputTextureData: outputTD, uniformData: {}};
   }

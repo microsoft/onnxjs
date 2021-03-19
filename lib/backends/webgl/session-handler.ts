@@ -21,7 +21,8 @@ export class WebGLSessionHandler implements SessionHandler {
   programManager: ProgramManager;
   textureManager: TextureManager;
   layoutStrategy: TextureLayoutStrategy;
-  textureDataCache: Map<Tensor.Id, TextureData>;
+  packedTextureDataCache: Map<Tensor.Id, TextureData>;
+  unpackedTextureDataCache: Map<Tensor.Id, TextureData>;
   initializers: Set<Tensor.Id>;
   packOpCache: Map<string, WebGLOperator>;
   unpackOpCache: Map<string, WebGLOperator>;
@@ -33,7 +34,8 @@ export class WebGLSessionHandler implements SessionHandler {
     this.textureManager = new TextureManager(
         backend.glContext, this.layoutStrategy, this.context.profiler,
         {reuseTextures: backend.textureCacheMode === 'full'});
-    this.textureDataCache = new Map();
+    this.packedTextureDataCache = new Map();
+    this.unpackedTextureDataCache = new Map();
     this.packOpCache = new Map();
     this.unpackOpCache = new Map();
     this.pack = backend.pack;
@@ -49,18 +51,28 @@ export class WebGLSessionHandler implements SessionHandler {
   isInitializer(tensorId: Tensor.Id): boolean {
     return this.initializers ? this.initializers.has(tensorId) : false;
   }
-  getTextureData(tensorId: Tensor.Id): TextureData|undefined {
-    return this.textureDataCache.get(tensorId);
+  getTextureData(tensorId: Tensor.Id, isPacked: boolean): TextureData|undefined {
+    if (isPacked) {
+      return this.packedTextureDataCache.get(tensorId);
+    } else {
+      return this.unpackedTextureDataCache.get(tensorId);
+    }
   }
-  setTextureData(tensorId: Tensor.Id, textureData: TextureData): void {
+  setTextureData(tensorId: Tensor.Id, textureData: TextureData, isPacked = false): void {
     Logger.verbose('WebGLSessionHandler', 'Storing Texture data in cache');
-    this.textureDataCache.set(tensorId, textureData);
+    if (isPacked) {
+      this.packedTextureDataCache.set(tensorId, textureData);
+    } else {
+      this.unpackedTextureDataCache.set(tensorId, textureData);
+    }
   }
   dispose(): void {
     this.programManager.dispose();
     this.textureManager.clearActiveTextures();
-    this.textureDataCache.forEach(td => this.textureManager.releaseTexture(td, true));
-    this.textureDataCache = new Map();
+    this.packedTextureDataCache.forEach(td => this.textureManager.releaseTexture(td, true));
+    this.packedTextureDataCache = new Map();
+    this.unpackedTextureDataCache.forEach(td => this.textureManager.releaseTexture(td, true));
+    this.unpackedTextureDataCache = new Map();
   }
   resolve(node: Graph.Node, opsets: ReadonlyArray<OpSet>, graph: Graph): Operator {
     const op = resolveOperator(node, opsets, WEBGL_OP_RESOLVE_RULES);

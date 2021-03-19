@@ -690,7 +690,7 @@ export class CoordsGlslLib extends GlslLib {
           return ${texFuncSnippet}(${unpackedCoordsSnippet});
         }
       `;
-    return new GlslLibRoutine(source);
+    return new GlslLibRoutine(source, ['coordinates.getOutputCoords']);
   }
 
   /**

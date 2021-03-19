@@ -37,23 +37,31 @@ export class WebGLInferenceHandler implements InferenceHandler {
 
   runProgram(artifact: Artifact, runData: RunData) {
     // pack/unpack inputs
-    runData.inputTextureDatas.forEach(input => {
+    for (let i = 0; i < runData.inputTextureDatas.length; ++i) {
+      const input = runData.inputTextureDatas[i];
       if (input.isPacked && !artifact.programInfo.expectPackedInputs) {
-        // unpack this input
-        const unpacked = this.unpack(input);
-        input.height = unpacked.height;
-        input.isPacked = unpacked.isPacked;
-        input.texture = unpacked.texture;
-        input.width = unpacked.width;
+        runData.inputTextureDatas[i] = this.unpack(input);
       } else if (!input.isPacked && artifact.programInfo.expectPackedInputs) {
-        // pack this input
-        const packed = this.pack(input);
-        input.height = packed.height;
-        input.isPacked = packed.isPacked;
-        input.texture = packed.texture;
-        input.width = packed.width;
+        runData.inputTextureDatas[i] = this.pack(input);
       }
-    });
+    }
+    // runData.inputTextureDatas.forEach(input => {
+    //   if (input.isPacked && !artifact.programInfo.expectPackedInputs) {
+    //     // unpack this input
+    //     const unpacked = this.unpack(input);
+    //     input.height = unpacked.height;
+    //     input.isPacked = unpacked.isPacked;
+    //     input.texture = unpacked.texture;
+    //     input.width = unpacked.width;
+    //   } else if (!input.isPacked && artifact.programInfo.expectPackedInputs) {
+    //     // pack this input
+    //     const packed = this.pack(input);
+    //     input.height = packed.height;
+    //     input.isPacked = packed.isPacked;
+    //     input.texture = packed.texture;
+    //     input.width = packed.width;
+    //   }
+    // });
 
     // output should match
     if (!!runData.outputTextureData.isPacked !== !!artifact.programInfo.expectPackedoutputs) {
@@ -85,15 +93,26 @@ export class WebGLInferenceHandler implements InferenceHandler {
       // TODO: fix an unhalting loop here
       // td = this.createTextureData(layout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly,
       // isPacked);
-      if (isPacked) {
-        const unpackedTextureLayout = this.getOrCreateTextureLayout(tensor, 1, false, [], true);
-        const unpackedTextureData = this.createTextureData(
-            unpackedTextureLayout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly);
-        td = this.pack(unpackedTextureData);
-        // td = this.createTextureData(layout, tensor.type);
-      } else {
-        td = this.createTextureData(layout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly, isPacked);
+      td = this.getTextureData(tensor.dataId, !isPacked);
+      if (!td) {
+        if (isPacked) {
+          const unpackedTextureLayout = this.getOrCreateTextureLayout(tensor, 1, false, [], true);
+          const unpackedTextureData = this.createTextureData(
+              unpackedTextureLayout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly);
+          td = this.pack(unpackedTextureData);
+        } else {
+          td = this.createTextureData(
+              layout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly, isPacked);
+        }
       }
+      // if (isPacked) {
+      //   const unpackedTextureLayout = this.getOrCreateTextureLayout(tensor, 1, false, [], true);
+      //   const unpackedTextureData = this.createTextureData(
+      //       unpackedTextureLayout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly);
+      //   td = this.pack(unpackedTextureData);
+      //   // td = this.createTextureData(layout, tensor.type);
+      // } else {
+      // }
     } else {
       Logger.verbose('InferenceHandler', `Retrieving TextureData from cache: [${tensor.dims}]`);
     }
@@ -164,12 +183,12 @@ export class WebGLInferenceHandler implements InferenceHandler {
 
   getTextureData(tensorId: Tensor.Id, isPacked = false): TextureData|undefined {
     return this.session.isInitializer(tensorId) ?
-        this.session.getTextureData(tensorId) :
+        this.session.getTextureData(tensorId, isPacked) :
         isPacked ? this.packedTextureDataCache.get(tensorId) : this.unpackedTextureDataCache.get(tensorId);
   }
   setTextureData(tensorId: Tensor.Id, td: TextureData, isPacked = false): void {
     if (this.session.isInitializer(tensorId)) {
-      this.session.setTextureData(tensorId, td);
+      this.session.setTextureData(tensorId, td, isPacked);
     } else {
       isPacked ? this.packedTextureDataCache.set(tensorId, td) : this.unpackedTextureDataCache.set(tensorId, td);
     }

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {Attribute} from '../../../attribute';
 import {Logger} from '../../../instrument';
 import {Conv} from '../../../ops/conv';
 import {Tensor} from '../../../tensor';
@@ -14,12 +15,19 @@ import {WebGLMatMulPacked} from './matmul-pack';
 export class WebGLConvPacked extends Conv {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     const xshape = inputs[0].dims.slice();
-    if (xshape.length !== 4 && xshape[0] !== 1 && this.group !== 1) {
+    if (xshape.length !== 4 || xshape[0] !== 1 || this.group !== 1) {
       const conv = new WebGLConv();
+      const attrs = new Attribute(undefined);
+      attrs.set('autoPad', 'string', this.autoPad);
+      attrs.set('dilation', 'ints', this.dilations);
+      attrs.set('group', 'int', this.group);
+      attrs.set('kernelShape', 'ints', this.kernelShape);
+      attrs.set('pads', 'ints', this.pads);
+      attrs.set('strides', 'ints', this.strides);
+      conv.initialize(attrs);
       return conv.run(inferenceHandler, inputs);
     }
 
-    // For single batch 2D conv
     const kshape = inputs[1].dims.slice();
     // if kernelShape is not specified in the attributes of this op, infer it from the weight tensor dims
     if (this.kernelShape.length === 0) {

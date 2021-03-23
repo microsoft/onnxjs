@@ -26,23 +26,23 @@ declare interface OnnxWasmBindingJs {
   lengthBytesUTF8(str: string): number;
   stringToUTF8(str: string, offset: number, maxBytes: number): void;
 
-  _ort_init(): void;
+  _OrtInit(): void;
 
-  _ort_create_session(dataOffset: number, dataLength: number): number;
-  _ort_release_session(sessionHandle: number): void;
-  _ort_get_input_count(sessionHandle: number): number;
-  _ort_get_output_count(sessionHandle: number): number;
-  _ort_get_input_name(sessionHandle: number, index: number): number;
-  _ort_get_output_name(sessionHandle: number, index: number): number;
+  _OrtCreateSession(dataOffset: number, dataLength: number): number;
+  _OrtReleaseSession(sessionHandle: number): void;
+  _OrtGetInputCount(sessionHandle: number): number;
+  _OrtGetOutputCount(sessionHandle: number): number;
+  _OrtGetInputName(sessionHandle: number, index: number): number;
+  _OrtGetOutputName(sessionHandle: number, index: number): number;
 
-  _ort_free(stringHandle: number): void;
+  _OrtFree(stringHandle: number): void;
 
-  _ort_create_tensor(dataType: number, dataOffset: number, dataLength: number, dimsOffset: number, dimsLength: number):
+  _OrtCreateTensor(dataType: number, dataOffset: number, dataLength: number, dimsOffset: number, dimsLength: number):
       number;
-  _ort_get_tensor_data(
-      tensorHandle: number, dataType: number, dataOffset: number, dimsOffset: number, dimsLength: number): void;
-  _ort_release_tensor(tensorHandle: number): void;
-  _ort_run(
+  _OrtGetTensorData(tensorHandle: number, dataType: number, dataOffset: number, dimsOffset: number, dimsLength: number):
+      void;
+  _OrtReleaseTensor(tensorHandle: number): void;
+  _OrtRun(
       sessionHandle: number, inputNamesOffset: number, inputsOffset: number, inputCount: number,
       outputNamesOffset: number, outputCount: number, outputsOffset: number): void;
 }

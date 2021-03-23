@@ -34,32 +34,32 @@ export class WasmSessionHandler implements SessionHandler {
   loadModel(model: Uint8Array) {
     const wasm = getInstance();
     if (!this.ortInit) {
-      wasm._ort_init();
+      wasm._OrtInit();
       this.ortInit = true;
     }
 
     const modelDataOffset = wasm._malloc(model.byteLength);
     try {
       wasm.HEAPU8.set(model, modelDataOffset);
-      this.sessionHandle = wasm._ort_create_session(modelDataOffset, model.byteLength);
+      this.sessionHandle = wasm._OrtCreateSession(modelDataOffset, model.byteLength);
     } finally {
       wasm._free(modelDataOffset);
     }
 
-    const inputCount = wasm._ort_get_input_count(this.sessionHandle);
-    const outputCount = wasm._ort_get_output_count(this.sessionHandle);
+    const inputCount = wasm._OrtGetInputCount(this.sessionHandle);
+    const outputCount = wasm._OrtGetOutputCount(this.sessionHandle);
 
     this.inputNames = [];
     this.inputNamesUTF8Encoded = [];
     this.outputNames = [];
     this.outputNamesUTF8Encoded = [];
     for (let i = 0; i < inputCount; i++) {
-      const name = wasm._ort_get_input_name(this.sessionHandle, i);
+      const name = wasm._OrtGetInputName(this.sessionHandle, i);
       this.inputNamesUTF8Encoded.push(name);
       this.inputNames.push(wasm.UTF8ToString(name));
     }
     for (let i = 0; i < outputCount; i++) {
-      const name = wasm._ort_get_output_name(this.sessionHandle, i);
+      const name = wasm._OrtGetOutputName(this.sessionHandle, i);
       this.outputNamesUTF8Encoded.push(name);
       this.outputNames.push(wasm.UTF8ToString(name));
     }
@@ -103,7 +103,7 @@ export class WasmSessionHandler implements SessionHandler {
       try {
         let dimIndex = dimsOffset / 4;
         dims.forEach(d => wasm.HEAP32[dimIndex++] = d);
-        const tensor = wasm._ort_create_tensor(
+        const tensor = wasm._OrtCreateTensor(
             ProtoUtil.tensorDataTypeStringToEnum(inputs[i].type), dataOffset, data.byteLength, dimsOffset, dims.length);
         inputValues.push(tensor);
       } finally {
@@ -130,7 +130,7 @@ export class WasmSessionHandler implements SessionHandler {
         wasm.HEAP32[outputNamesIndex++] = this.outputNamesUTF8Encoded[i];
       }
 
-      wasm._ort_run(
+      wasm._OrtRun(
           this.sessionHandle, inputNamesOffset, inputValuesOffset, inputCount, outputNamesOffset, outputCount,
           outputValuesOffset);
 
@@ -143,7 +143,7 @@ export class WasmSessionHandler implements SessionHandler {
         // stack allocate 4 pointer value
         const tensorDataOffset = wasm.stackAlloc(4 * 4);
         try {
-          wasm._ort_get_tensor_data(
+          wasm._OrtGetTensorData(
               tensor, tensorDataOffset, tensorDataOffset + 4, tensorDataOffset + 8, tensorDataOffset + 12);
           let tensorDataIndex = tensorDataOffset / 4;
           const dataType = wasm.HEAPU32[tensorDataIndex++];
@@ -154,7 +154,7 @@ export class WasmSessionHandler implements SessionHandler {
           for (let i = 0; i < dimsLength; i++) {
             dims.push(wasm.HEAPU32[dimsOffset / 4 + i]);
           }
-          wasm._ort_free(dimsOffset);
+          wasm._OrtFree(dimsOffset);
 
           const t = new Tensor(dims, ProtoUtil.tensorDataTypeFromProto(dataType));
           new Uint8Array(t.numberData.buffer, t.numberData.byteOffset, t.numberData.byteLength)
@@ -164,10 +164,10 @@ export class WasmSessionHandler implements SessionHandler {
           wasm.stackRestore(beforeGetTensorDataStack);
         }
 
-        wasm._ort_release_tensor(tensor);
+        wasm._OrtReleaseTensor(tensor);
       }
 
-      inputValues.forEach(t => wasm._ort_release_tensor(t));
+      inputValues.forEach(t => wasm._OrtReleaseTensor(t));
       inputDataOffsets.forEach(i => wasm._free(i));
 
       return output;
@@ -178,15 +178,15 @@ export class WasmSessionHandler implements SessionHandler {
   dispose() {
     const wasm = getInstance();
     if (this.inputNamesUTF8Encoded) {
-      this.inputNamesUTF8Encoded.forEach(str => wasm._ort_free(str));
+      this.inputNamesUTF8Encoded.forEach(str => wasm._OrtFree(str));
       this.inputNamesUTF8Encoded = [];
     }
     if (this.outputNamesUTF8Encoded) {
-      this.outputNamesUTF8Encoded.forEach(str => wasm._ort_free(str));
+      this.outputNamesUTF8Encoded.forEach(str => wasm._OrtFree(str));
       this.outputNamesUTF8Encoded = [];
     }
     if (this.sessionHandle) {
-      wasm._ort_release_session(this.sessionHandle);
+      wasm._OrtReleaseSession(this.sessionHandle);
       this.sessionHandle = 0;
     }
   }

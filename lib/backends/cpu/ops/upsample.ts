@@ -1,12 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {Attribute} from '../../../attribute';
-import {Graph} from '../../../graph';
 import {Upsample} from '../../../ops/upsample';
 import {Tensor} from '../../../tensor';
 import {CpuInferenceHandler} from '../inference-handler';
-
+/*
 export declare namespace Upsample {
   interface GetNearestPixelFunc {
     (a: number, b: boolean): number;
@@ -15,20 +13,14 @@ export declare namespace Upsample {
     (xResized: number, xScale: number, lengthResized: number, lengthOriginal: number, roiStart: number,
      roiEnd: number): number;
   }
-}
+}*/
 
 export class CpuUpsample extends Upsample {
   run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
-    const [roi, scales, yDims] = this.prepareInputs(inputs);
+    const [roi, scales, yDims] = this.prepare(inputs);
     const y = new Tensor(yDims, inputs[0].type);
     this.compute(inputs[0], y, roi, scales);
     return [y];
-  }
-
-  initialize(attributes: Attribute, node: Graph.Node, graph: Graph): void {
-    super.initialize(attributes, node, graph);
-    this.getOriginalCoordinate = getOriginalCoordinateFromResizedCoordinate(this.coordinateTransformMode);
-    this.getNearestPixel = getNearestPixelFromOriginal(this.nearestMode);
   }
 
   compute(x: Tensor, y: Tensor, roi: ReadonlyArray<number>, scales: ReadonlyArray<number>): void {
@@ -446,44 +438,5 @@ function upsampleBiCubic(
       // clear the cache when moving to the next channel
       coeffTo1DinterpolationMap.clear();
     }
-  }
-}
-
-function getOriginalCoordinateFromResizedCoordinate(mode: string): Upsample.GetOriginalCoordinateFunc {
-  switch (mode) {
-    case 'asymmetric':
-      return (xResized: number, xScale: number) => xResized / xScale;
-    case 'pytorch_half_pixel':
-      return (xResized: number, xScale: number, lengthResized: number) =>
-                 lengthResized > 1 ? (xResized + 0.5) / xScale - 0.5 : 0.0;
-    case 'tf_half_pixel_for_nn':
-      return (xResized: number, xScale: number) => (xResized + 0.5) / xScale;
-    case 'align_corners':
-      return (xResized: number, xScale: number, lengthResized: number, lengthOriginal: number) =>
-                 lengthResized === 1 ? 0 : xResized * (lengthOriginal - 1) / (lengthResized - 1);
-    case 'tf_crop_and_resize':
-      return (xResized: number, xScale: number, lengthResized: number, lengthOriginal: number, roiStart: number,
-              roiEnd: number) =>
-                 (lengthResized > 1 ? roiStart * (lengthOriginal - 1) +
-                          (xResized * (roiEnd - roiStart) * (lengthOriginal - 1)) / (lengthResized - 1) :
-                                      0.5 * (roiStart + roiEnd) * (lengthOriginal - 1));
-    default:  //'half_pixel'
-      return (xResized: number, xScale: number) => (xResized + 0.5) / xScale - 0.5;
-  }
-}
-
-function getNearestPixelFromOriginal(mode: string): Upsample.GetNearestPixelFunc {
-  switch (mode) {
-    case '':
-      return (xOriginal: number, isDownSample: boolean) => isDownSample ? Math.ceil(xOriginal) : Math.floor(xOriginal);
-    case 'round_prefer_ceil':
-      return (xOriginal: number) => Math.round(xOriginal);
-    case 'floor':
-      return (xOriginal: number) => Math.floor(xOriginal);
-    case 'ceil':
-      return (xOriginal: number) => Math.ceil(xOriginal);
-    default:  // round_prefer_floor
-      return (xOriginal: number) =>
-                 xOriginal === Math.floor(xOriginal) + 0.5 ? Math.floor(xOriginal) : Math.round(xOriginal);
   }
 }

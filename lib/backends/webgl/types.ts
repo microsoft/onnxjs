@@ -79,7 +79,7 @@ export interface ProgramInfo {
   params?: {[name: string]: number|number[]|string};
 
   expectPackedInputs?: boolean;
-  expectPackedoutputs?: boolean;
+  expectPackedOutputs?: boolean;
 }
 
 export interface VariableInfo {

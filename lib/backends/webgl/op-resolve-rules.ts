@@ -21,7 +21,8 @@ import {WebGLMatMul} from './ops/matmul';
 import {WebGLPad} from './ops/pad';
 import {WebGLAveragePool, WebGLGlobalAveragePool, WebGLGlobalMaxPool, WebGLMaxPool} from './ops/pool';
 import * as reduceOps from './ops/reduce';
-import {WebGLReshape} from './ops/reshape';
+// import {WebGLReshape} from './ops/reshape';
+import {WebGLReshapePacked} from './ops/reshape-packed';
 import {WebGLResizePacked} from './ops/resize-packed';
 import {WebGLSlice, WebGLSliceV10} from './ops/slice';
 import {WebGLSoftmax} from './ops/softmax';
@@ -84,7 +85,7 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['ReduceSum', '', '1+', () => new reduceOps.WebGLReduceSum()],
   ['ReduceSumSquare', '', '1+', () => new reduceOps.WebGLReduceSumSquare()],
   ['Relu', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslRelu())],
-  ['Reshape', '', '5+', () => new WebGLReshape()],
+  ['Reshape', '', '5+', () => new WebGLReshapePacked()],
   ['Resize', '', '10', () => new WebGLResizePacked(10)],
   ['Resize', '', '11+', () => new WebGLResizePacked(11)],
   ['Sigmoid', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslSigmoid())],

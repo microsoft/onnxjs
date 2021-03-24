@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Reshape with '0' and '-1' in the shape tensor input",
+    "operator": "Reshape",
+    "attributes": [],
+    "cases": [
+      {
+        "name": "Scalar to 2D",
+        "inputs": [
+          {
+            "data": [1, 2, 3, 4, 5, 6, 7, 8],
+            "dims": [1, 2, 4],
+            "type": "float32"
+          },
+          {
+            "data": [1, 4, 2],
+            "dims": [3],
+            "type": "int32"
+          }
+        ],
+        "outputs": [
+          {
+            "data": [1, 2, 3, 4, 5, 6, 7, 8],
+            "dims": [1, 4, 2],
+            "type": "float32"
+          }
+        ]
+      }
+
+    ]
+  }
+]

@@ -810,12 +810,13 @@ export class CoordsGlslLib extends GlslLib {
       // Deep copy of input texture layout.
       const newInputLayout: TextureLayout = JSON.parse(JSON.stringify(inputLayout));
       newInputLayout.unpackedShape = newInputShape;
-      const packedSampler = `${this.getPackedSamplerFromInput(funcName, name, newInputLayout).routineBody}
+      const samplerRoutine = this.getPackedSamplerFromInput(funcName, name, newInputLayout);
+      const packedSampler = `${samplerRoutine.routineBody}
       vec4 ${funcName}(int b, int row, int col) {
         return ${funcName}(${getSqueezedParams(params, keptDims)});
       } `;
       const source = packedSampler;
-      return new GlslLibRoutine(source);
+      return new GlslLibRoutine(source, samplerRoutine.dependencies);
     }
     const texNumR = packedTexShape[0];
     const texNumC = packedTexShape[1];

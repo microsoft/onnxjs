@@ -1013,13 +1013,14 @@ export class CoordsGlslLib extends GlslLib {
       // Deep copy of input texture layout.
       const newInputLayout: TextureLayout = JSON.parse(JSON.stringify(inputLayout));
       newInputLayout.unpackedShape = newInputShape;
+      const routine = this.getUnpackedSamplerFromInput(funcName, name, newInputLayout);
       const source = `
-          ${this.getUnpackedSamplerFromInput(funcName, name, newInputLayout).routineBody}
+          ${routine.routineBody}
           float ${funcName}(int depth, int row, int col) {
             return ${funcName}(${getSqueezedParams(params, keptDims)});
           }
         `;
-      return new GlslLibRoutine(source, ['coordinates.sampleTexture']);
+      return new GlslLibRoutine(source, routine.dependencies);
     }
 
     const texNumR = inputLayout.width;

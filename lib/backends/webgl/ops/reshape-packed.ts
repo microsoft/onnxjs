@@ -26,7 +26,7 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
 
     let mainLoop = ``;
     // TODO: optimize the loop
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 1; i++) {
       let thisRC = `thisRC = rc;`;
       if (i > 1) {
         thisRC += `thisRC.z += 1;`;
@@ -40,13 +40,29 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
         ${i > 0 ? `if(thisRC.y < rows && thisRC.z < cols){` : ''}
           int flatIndex = getFlatIndex(thisRC);
 
-          ivec3 inputRC = inputCoordsFromReshapedOutCoords(flatIndex);
-          vec2 inputRCInnerDims = vec2(float(inputRC.y),float(inputRC.z));
 
-          //result[${i}] = getChannel(getA(inputRC.x, inputRC.z, inputRC.y), inputRCInnerDims);
-          vec4 t = getA(inputRC.x, inputRC.y, inputRC.z);
-          result[${i}] = t[0];
-          //result[${i}] = float(flatIndex);
+            if(flatIndex <4){
+              vec4 t = getA(0, 0, 2);
+              result = t;
+            }
+            else{
+              vec4 t = getA(0, 1, 0);
+              result[0] = t[0];
+              result[1] = t[1];
+              result[2] = t[2];
+              result[3] = t[3];
+            }
+
+          // ivec3 inputRC = inputCoordsFromReshapedOutCoords(flatIndex);
+          // vec2 inputRCInnerDims = vec2(float(inputRC.y),float(inputRC.z));
+
+          // // reverse inputRC.z and inputRC.y's order as input's width and height is reversed
+          // //result[${i}] = getChannel(getA(inputRC.x, inputRC.z, inputRC.y), inputRCInnerDims);
+          // vec4 t = getA(inputRC.x, inputRC.z, inputRC.y);
+          // result = t;
+          // //result[${i}] = float(inputRC.y);
+          // //result[${i}] = float(flatIndex);
+          // //result[${i}] = t[${i}];
 
         ${i > 0 ? '}' : ''}
       `;
@@ -86,13 +102,13 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
       samplers: ['A'],
       shaderSource,
       hasMain: true,
-      expectPackedInputs: false,
+      expectPackedInputs: true,
       expectPackedoutputs: true,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
     const inputTDs =
-        [handler.getOrCreateTextureData(inputs[0], handler.getOrCreateTextureLayout(inputs[0], 1, false, [], true))];
+        [handler.getOrCreateTextureData(inputs[0], handler.getOrCreateTextureLayout(inputs[0], 1, false, [], false))];
     return {
       inputTextureDatas: inputTDs,
       outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),

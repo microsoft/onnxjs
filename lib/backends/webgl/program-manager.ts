@@ -69,6 +69,9 @@ export class ProgramManager {
     return this.profiler.event('backend', 'ProgramManager.build', () => {
       const preprocessor = new GlslPreprocessor(this.glContext, programInfo);
       const fragScript = preprocessor.preprocess();
+      // if (fragScript.indexOf('test place holder resize') !== -1) {
+      //   console.log(fragScript);
+      // }
       const program = this.compile(fragScript);
       const artifact = {
         programInfo,

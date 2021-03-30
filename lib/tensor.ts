@@ -6,6 +6,8 @@ import {onnx} from 'onnx-proto';
 
 import {ProtoUtil, ShapeUtil} from './util';
 
+// let globalId = 0;
+
 export declare namespace Tensor {
   export interface DataTypeMap {
     bool: Uint8Array;

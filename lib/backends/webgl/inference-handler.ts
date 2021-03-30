@@ -177,6 +177,9 @@ export class WebGLInferenceHandler implements InferenceHandler {
                   undefined, undefined, tensorId),
       texture
     };
+    // if (textureData.tensor.data[0] === -2.892231) {
+    //   console.log('FOUND IT!!!!!!');
+    // }
     this.setTextureData(textureData.tensor.dataId, textureData, layout.isPacked);
     return textureData;
   }
@@ -200,7 +203,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
   getOrCreateTextureLayout(
       tensor: Tensor, channels: 1|4 = 1, isPacked = false, unpackedShape?: ReadonlyArray<number>,
       reverseWH = false): TextureLayout {
-    const td = this.getTextureData(tensor.dataId);
+    const td = this.getTextureData(tensor.dataId, isPacked);
     if (td) {
       return td;
     }
@@ -277,8 +280,10 @@ export class WebGLInferenceHandler implements InferenceHandler {
 
   pack(input: TextureData): TextureData {
     const key = `${input.shape}`;
+    // console.log('[PACK] trying to retrieve PACK of key', key);
     let op = this.session.packOpCache.get(key);
     if (!op) {
+      // console.log('[PACK] retrieve failed. Creating with key', key);
       op = new WebGLPack();
       this.session.packOpCache.set(key, op);
     }
@@ -295,8 +300,10 @@ export class WebGLInferenceHandler implements InferenceHandler {
 
   unpack(input: TextureData): TextureData {
     const key = `${input.shape}`;
+    // console.log('[UNPACK] trying to retrieve UNPACK of key', key);
     let op = this.session.unpackOpCache.get(key);
     if (!op) {
+      // console.log('[UNPACK] retrieve failed. Creating with key', key);
       op = new WebGLUnpack();
       this.session.unpackOpCache.set(key, op);
     }

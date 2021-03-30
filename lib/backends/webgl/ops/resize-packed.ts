@@ -14,7 +14,12 @@ import {unpackFromChannel} from './packing_utils';
 
 export class WebGLResizePacked extends Upsample implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return inferenceHandler.run(this, inputs);
+    // return inferenceHandler.run(this, inputs);
+    console.log(
+        '**** input: ', inputs[0].dims, inputs[0].data[0], inputs[0].data[1], inputs[0].data[2], inputs[0].data[3]);
+    const t = inferenceHandler.run(this, inputs);
+    console.log('**** output: ', t[0].dims, t[0].data[0], t[0].data[1], t[0].data[2], t[0].data[3]);
+    return t;
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const inputLayout = handler.getOrCreateTextureLayout(inputs[0], 4, true, inputs[0].dims, true);
@@ -25,6 +30,37 @@ export class WebGLResizePacked extends Upsample implements WebGLOperator {
         handler.createTextureLayoutFromShape(outputShape, 4, outputShape, {isPacked: true, reverseWH: true});
 
     const glsl = getGlsl(handler.session.backend.glContext.version);
+
+
+    // if (inputs[0].dims[3] === 80) {
+    //   const shader = `
+    //   float getChannel(vec4 frag, vec2 innerDims) {
+    //     vec2 modCoord = mod(innerDims, 2.);
+    //     return modCoord.x == 0. ?
+    //       (modCoord.y == 0. ? frag.r : frag.g) :
+    //       (modCoord.y == 0. ? frag.b : frag.a);
+    //   }
+    //   float getAValue(int x10, int r, int c, int d) {
+    //     return getChannel(getA(x10, r, c, d), vec2(c, d));
+    //   }
+    //     // test place holder resize
+    //     void main() {
+    //       ivec4 rc = getOutputCoords();
+    //       // float temp = getAValue(rc.x, rc.y, rc.z, rc.w);
+    //       // outputColor = vec4(-2.8922317028045654, -3.7117879390716553, -3.520329475402832, -4.175983428955078);
+    //       outputColor = getA(0, 0, 0, 0);
+    //     }
+    //       `;
+    //   return {
+    //     inputLayouts: [inputLayout],
+    //     outputLayout,
+    //     samplers: ['A'],
+    //     shaderSource: shader,
+    //     hasMain: true,
+    //     expectPackedInputs: true,
+    //     expectPackedOutputs: true,
+    //   };
+    // }
     return createResizeProgramInfo(
         glsl, this.mode, inputLayout, outputLayout, scales, roi, this.useExtrapolation, this.extrapolationValue,
         this.cubicCoefficientA, this.excludeOutside, this.coordinateTransformMode);
@@ -59,6 +95,7 @@ function createResizeProgramInfo(
     }`
     };
   }
+
   const outputShape = outputLayout.unpackedShape;
   const dim = outputShape.length;
   assert(dim >= 2);
@@ -122,6 +159,7 @@ function createResizeProgramInfo(
         float getAValue(int x10, int r, int c, int d) {
           return getChannel(getA(x10, r, c, d), vec2(c, d));
         }
+        // test place holder resize
         void main() {
           ${coordsDataType} rc = getOutputCoords();
 

@@ -18,7 +18,7 @@ export class WebGLUnpack implements WebGLOperator {
       throw new Error(`Pack kernel should have input tensor count to 1.`);
     }
 
-    const inputTexture = handler.getTextureData(inputs[0].dataId);
+    const inputTexture = handler.getTextureData(inputs[0].dataId, true);
     if (!inputTexture) {
       throw new Error(`packed input texture must exist`);
     }
@@ -47,7 +47,7 @@ export class WebGLUnpack implements WebGLOperator {
       `;
 
     return {
-      inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])],
+      inputLayouts: [handler.getOrCreateTextureLayout(inputs[0], 4, true, inputs[0].dims, true)],
       outputLayout,
       samplers: ['A'],
       shaderSource,

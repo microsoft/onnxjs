@@ -28,7 +28,8 @@ export class WebGLConcat extends Concat implements WebGLOperator {
 
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     if (inferenceHandler.session.pack && inputs[0].dims.length > 1) {
-      return inferenceHandler.run(this.packedImpl, inputs);
+      // return inferenceHandler.run(this.packedImpl, inputs);
+      return inferenceHandler.run(this.unpackedImpl, inputs);
     } else {
       return inferenceHandler.run(this.unpackedImpl, inputs);
     }
@@ -36,14 +37,16 @@ export class WebGLConcat extends Concat implements WebGLOperator {
 
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     if (handler.session.pack && inputs[0].dims.length > 1) {
-      return this.packedImpl.createProgramInfo(handler, inputs);
+      // return this.packedImpl.createProgramInfo(handler, inputs);
+      return this.unpackedImpl.createProgramInfo(handler, inputs);
     } else {
       return this.unpackedImpl.createProgramInfo(handler, inputs);
     }
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
     if (handler.session.pack && inputs[0].dims.length > 1) {
-      return this.packedImpl.createRunData(handler, programInfo, inputs);
+      // return this.packedImpl.createRunData(handler, programInfo, inputs);
+      return this.unpackedImpl.createRunData(handler, programInfo, inputs);
     } else {
       return this.unpackedImpl.createRunData(handler, programInfo, inputs);
     }

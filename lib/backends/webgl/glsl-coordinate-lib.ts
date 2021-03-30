@@ -943,6 +943,16 @@ export class CoordsGlslLib extends GlslLib {
     // const texShape = inputLayout.reversedWH && inputLayout.reversedWH ? [inputLayout.height, inputLayout.width] :
     //                                                                     [inputLayout.width, inputLayout.height];
     const texShape = [inputLayout.height, inputLayout.width];
+    // if (inputLayout.height === 48 && inputLayout.width === 80 && shape[0] === 48 && shape[1] === 80) {
+    //   const source = `
+    //       // test here la la la 2
+    //       float ${funcName}(int row, int col) {
+    //         vec2 uv = (vec2(col, row) + halfCR) / vec2(48.0, 80.0);
+    //         return sampleTexture(${name}, uv);
+    //       }
+    //     `;
+    //   return new GlslLibRoutine(source, ['coordinates.sampleTexture']);
+    // }
 
     if (texShape != null && ArrayUtil.arraysEqual(shape, texShape)) {
       const texNumR = texShape[1];
@@ -987,24 +997,26 @@ export class CoordsGlslLib extends GlslLib {
         `;
       return new GlslLibRoutine(source, ['coordinates.sampleTexture', 'coordinates.coordsToOffset']);
     }
-    if (texNumR === 1) {
-      const source = `
-          float ${funcName}(int row, int col) {
-            int offset_${name} = coordsToOffset(TexCoords, ${texNumR}, ${texNumC});
-            float index = dot(vec3(row, col, offset_${name}), vec3(${shape[1]}, 1, 1));
-            vec2 uv = vec2((index + 0.5) / ${texNumC}.0, 0.5);
-            return sampleTexture(${name}, uv);
-          }
-        `;
-      return new GlslLibRoutine(source, ['coordinates.sampleTexture', 'coordinates.coordsToOffset']);
-    }
+    // if (inputLayout.height === 80 && inputLayout.width === 48 && shape[0] === 48 && shape[1] === 80) {
+    //   const source = `
+    //       // test here la la la
+    //       float ${funcName}(int row, int col) {
+    //         vec2 uv = (vec2(col, row) + halfCR) / vec2(48.0, 80.0);
+    //         return sampleTexture(${name}, uv);
+    //       }
+    //     `;
+    //   return new GlslLibRoutine(source, ['coordinates.sampleTexture']);
+    // }
+
     const source = `
         float ${funcName}(int row, int col) {
           // Explicitly use integer operations as dot() only works on floats.
-          int offset_${name} = coordsToOffset(TexCoords, ${texNumR}, ${texNumC});
-          int index = row * ${shape[1]} + col + offset_${name};
+         // int offset_${name} = coordsToOffset(TexCoords, ${texNumR}, ${texNumC});
+          int index = col * ${shape[1]} + row;
           vec2 uv = uvFromFlat(${texNumR}, ${texNumC}, index);
-          return sampleTexture(${name}, uv);
+          float t= sampleTexture(${name}, uv);
+          //return float(index);
+          return t;
         }
       `;
     return new GlslLibRoutine(

@@ -26,6 +26,11 @@ describe('#UnitTest# - pack - Tensor pack', () => {
   });
   const testDataSet = getTestData();
 
+  // iterate through different input texture layout.
+  // 'hw-reverted' is the new texture layout all packed kernels use
+  // 'hw-unreverted' is the old texture layout existing unpacked kernels use
+  // before we unify those two texture layout, pack kernel should be able to handle
+  // both texture layout correctly
   const textureLayout = ['hw-reverted', 'hw-unreverted'];
 
   for (let w = 0; w < textureLayout.length; ++w) {
@@ -52,11 +57,14 @@ describe('#UnitTest# - pack - Tensor pack', () => {
 
         // test old texture layout with width and height not inverted
         if (w === 1) {
-          // use inputTensorShape to create a texture layout that is unpacked (channel===1) && hw unreverted.
+          console.log('Testing unreverted HW input texture');
+
+          // use inputTensorShape to create a texture layout that is unpacked(channel === 1)&& hw unreverted.
           const inputUnpackedLayout = webglInferenceHandler.createTextureLayoutFromShape(inputTensorShape);
 
-          // create texture data from the layout. The texture data is cached for later used in the packed kernel
-          // webglInferenceHandler.createTextureDataFromLayout(inputLayout, inputTensor.type);
+          // create texture data from the layout. The texture data is cached inside inference handler such that
+          // when pack kernel is invoked, it will read this texture data from cache instead of creating it from
+          // scratch
           webglInferenceHandler.createTextureDataFromLayoutBindTensor(
               inputUnpackedLayout, inputTensor.type, inputTensor.numberData, inputTensor);
         }
@@ -78,21 +86,8 @@ describe('#UnitTest# - pack - Tensor pack', () => {
 
         const outputElementCount = getExpectedElementCount(testData.inputShape);
         expect(resultDataBuffer).to.have.lengthOf(outputElementCount);
-        // console.log(resultDataBuffer);
         const expectedOutput = generateExpected(inputData, testData.inputShape);
         expect(resultDataBuffer).to.deep.equal(expectedOutput);
-        // for (let i = 0; i < elementCount; ++i) {
-        //   console.log('actual: ', resultDataBuffer[i]);
-        // }
-        // for (let i = 0; i < elementCount; ++i) {
-        //   console.log('expected: ', expectedOutput[i]);
-        // }
-        // for (let i = 0; i < elementCount; ++i) {
-        //   if (resultDataBuffer[i] !== expectedOutput[i]) {
-        //     console.log('error at ', i, ': actual: ', resultDataBuffer[i], ', expected: ', expectedOutput[i], '\n');
-        //     break;
-        //   }
-        // }
       });
     }
   }
@@ -110,7 +105,7 @@ describe('#UnitTest# - unpack - Tensor unpack', () => {
   for (let k = 0; k < testDataSet.length; ++k) {
     const testData = testDataSet[k];
     describe(`Test unpack ${JSON.stringify(testData)}`, () => {});
-    it(`Test unpack kernal `, () => {
+    it(`Test unpack kernal ${testData.inputShape}`, () => {
       const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
 
       // TODO support WebGl 1.0
@@ -222,11 +217,19 @@ function getTestData(isPacked = true): TestData[] {
 
       // test 4D tensor
       {elementCount: 1, inputShape: [1, 1, 1, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
+      {elementCount: 15, inputShape: [1, 1, 3, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
       {elementCount: 16, inputShape: [1, 2, 2, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 2]},
       {elementCount: 32, inputShape: [2, 2, 2, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 2]},
       {elementCount: 36, inputShape: [2, 2, 3, 3], outputShape: [], inputTextureShape: [], outputTextureShape: [8, 2]},
       {elementCount: 80, inputShape: [2, 5, 2, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [10, 2]},
       {elementCount: 12, inputShape: [2, 1, 3, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
+      {
+        elementCount: 3840,
+        inputShape: [1, 1, 48, 80],
+        outputShape: [],
+        inputTextureShape: [],
+        outputTextureShape: [24, 40]
+      },
     ];
   } else {
     return [
@@ -241,7 +244,6 @@ function getTestData(isPacked = true): TestData[] {
       },
 
       // // test 2D tensor
-      {elementCount: 15, inputShape: [1, 1, 3, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
       {
         elementCount: 16,
         inputShape: [4, 4],

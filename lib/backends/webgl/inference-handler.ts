@@ -308,7 +308,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
       console.log('****pack input', inputResult[0], inputResult[4], inputResult[8], inputResult[12]);
       const result =
           createArrayFromTexture(this.session.textureManager.glContext.gl, runData.outputTextureData.texture, 40, 24);
-      console.log('****pack output', result[0], result[1], result[4], result[5]);
+      console.log('****pack output', result[0], result[1], result[2], result[3]);
     }
 
     return runData.outputTextureData;

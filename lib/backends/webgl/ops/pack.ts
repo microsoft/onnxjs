@@ -23,11 +23,11 @@ export class WebGLPack implements WebGLOperator {
 
     const inputShape = inputs[0].dims;
 
-    const isTarget = (inputs[0].dims.length === 4 && inputs[0].dims[1] === 1 && inputs[0].dims[3] === 80);
+    // const isTarget = (inputs[0].dims.length === 4 && inputs[0].dims[1] === 1 && inputs[0].dims[3] === 80);
     let mark = '';
-    if (isTarget) {
-      mark = '// test place holder resize';
-    }
+    // if (isTarget) {
+    mark = '// test place holder resize';
+    //}
     const outputLayout =
         handler.createTextureLayoutFromShape(inputShape, 4, inputShape, {isPacked: true, reverseWH: true});
     const outputShape = outputLayout.shape;
@@ -49,14 +49,14 @@ export class WebGLPack implements WebGLOperator {
     const outOfBoundsCondition = getOutOfBoundsCondition(outputRank, reversedInputWH, channels);
     let output = getOutput(inputShape, channels);
 
-    if (isTarget) {
-      output = `
-      getA(rc.x,rc.y,r, c),
-          rEdge ? 0. : getA(rc.x,rc.y,r, cp1),
-          cEdge ? 0. : getA(rc.x,rc.y,rp1, c),
-          rEdge || cEdge ? 0. : getA(rc.x,rc.y,rp1, cp1)
-      `;
-    }
+    // if (isTarget) {
+    //   output = `
+    //   getA(rc.x,rc.y,r, c),
+    //       rEdge ? 0. : getA(rc.x,rc.y,r, cp1),
+    //       cEdge ? 0. : getA(rc.x,rc.y,rp1, c),
+    //       rEdge || cEdge ? 0. : getA(rc.x,rc.y,rp1, cp1)
+    //   `;
+    // }
 
     const glsl = getGlsl(handler.session.backend.glContext.version);
     const shaderSource = `
@@ -74,15 +74,15 @@ export class WebGLPack implements WebGLOperator {
         }
       `;
 
-    const inputLayout = handler.getOrCreateTextureLayout(inputs[0], 1, false, []);
-    // const inputLayout = handler.getOrCreateTextureLayout(inputs[0], 1, false, [], true);
-    if (outputLayout.shape.length === 4 && outputLayout.shape[0] === 1 && outputLayout.shape[1] === 1 &&
-        outputLayout.shape[2] === 24 && outputLayout.shape[3] === 40) {
-      const width = inputLayout.width;
-      const height = inputLayout.height;
-      inputLayout.width = height;
-      inputLayout.height = width;
-    }
+    // const inputLayout = handler.getOrCreateTextureLayout(inputs[0], 1, false, []);
+    const inputLayout = handler.getOrCreateTextureLayout(inputs[0], 1, false, [], true);
+    // if (outputLayout.shape.length === 4 && outputLayout.shape[0] === 1 && outputLayout.shape[1] === 1 &&
+    //     outputLayout.shape[2] === 24 && outputLayout.shape[3] === 40) {
+    //   const width = inputLayout.width;
+    //   const height = inputLayout.height;
+    //   inputLayout.width = height;
+    //   inputLayout.height = width;
+    // }
     // if texture layout is created and cache by previous unpacked kernels, the created textureLayout's
     // width and height is not reverted. Then here we need to manually revert it.
     // If the texture layout is new and not cached, we create it and revert its width and height

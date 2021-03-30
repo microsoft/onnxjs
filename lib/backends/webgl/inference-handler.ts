@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {createArrayFromTexture} from '../../../test/unittests/backends/webgl/test_utils';
 import {InferenceHandler} from '../../backend';
 import {Logger} from '../../instrument';
 import {Tensor} from '../../tensor';
 import {ShapeUtil} from '../../util';
-import {WebGLPack} from './ops/pack';
 
+import {WebGLPack} from './ops/pack';
 import {WebGLUint8Encode} from './ops/uint8-encode';
 import {WebGLUnpack} from './ops/unpack';
 import {WebGLSessionHandler} from './session-handler';
@@ -14,6 +15,7 @@ import {Encoder} from './texture-data-encoder';
 import {WidthHeightPrefs} from './texture-layout-strategy';
 import {Artifact, RunData, TextureData, TextureLayout, WebGLOperator} from './types';
 import {getPackedShape} from './utils';
+
 
 export class WebGLInferenceHandler implements InferenceHandler {
   private packedTextureDataCache: Map<Tensor.Id, TextureData>;
@@ -159,7 +161,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
    * @param tensorId the tensor ID of the shared tensor data
    */
   createSharedTextureData(
-      layout: TextureLayout, dataType: Tensor.DataType, texture: WebGLTexture, tensorId: Tensor.Id,
+      layout: TextureLayout, dataType: Tensor.DataType, texture: WebGLTexture, tensorId?: Tensor.Id,
       isPacked = false): TextureData {
     return this.createTextureDataFromTexture(layout, dataType, texture, undefined, tensorId);
   }
@@ -196,7 +198,9 @@ export class WebGLInferenceHandler implements InferenceHandler {
       isPacked ? this.packedTextureDataCache.set(tensorId, td) : this.unpackedTextureDataCache.set(tensorId, td);
     }
   }
-
+  isTextureLayoutCached(tensor: Tensor, isPacked = false): boolean {
+    return !!this.getTextureData(tensor.dataId, isPacked);
+  }
   /**
    * Create a TextureLayout object from a tensor. If a related texture data is found, returns the cached texture layout.
    */
@@ -295,6 +299,18 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
     this.runProgram(artifact, runData);
+
+    if (runData.outputTextureData.tensor.dims.length === 4 && runData.outputTextureData.tensor.dims[0] === 1 &&
+        runData.outputTextureData.tensor.dims[1] === 1 && runData.outputTextureData.tensor.dims[2] === 48 &&
+        runData.outputTextureData.tensor.dims[3] === 80) {
+      const inputResult = createArrayFromTexture(
+          this.session.textureManager.glContext.gl, runData.inputTextureDatas[0].texture, 80, 48);
+      console.log('****pack input', inputResult[0], inputResult[4], inputResult[8], inputResult[12]);
+      const result =
+          createArrayFromTexture(this.session.textureManager.glContext.gl, runData.outputTextureData.texture, 40, 24);
+      console.log('****pack output', result[0], result[1], result[4], result[5]);
+    }
+
     return runData.outputTextureData;
   }
 
@@ -315,6 +331,18 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
     this.runProgram(artifact, runData);
+
+    if (runData.outputTextureData.tensor.dims.length === 4 && runData.outputTextureData.tensor.dims[0] === 1 &&
+        runData.outputTextureData.tensor.dims[1] === 1 && runData.outputTextureData.tensor.dims[2] === 96 &&
+        runData.outputTextureData.tensor.dims[3] === 160) {
+      const inputResult = createArrayFromTexture(
+          this.session.textureManager.glContext.gl, runData.inputTextureDatas[0].texture, 80, 48);
+      console.log('****unpack input', inputResult[0], inputResult[1], inputResult[4], inputResult[5]);
+      const result =
+          createArrayFromTexture(this.session.textureManager.glContext.gl, runData.outputTextureData.texture, 96, 160);
+      console.log('****unpack output', result[0], result[4], result[8], result[12]);
+    }
+
     return runData.outputTextureData;
   }
 }

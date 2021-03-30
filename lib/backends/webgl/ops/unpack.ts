@@ -34,7 +34,13 @@ export class WebGLUnpack implements WebGLOperator {
     const sourceCoords = getSourceCoords(rank, channels);
     const coords = rank <= 1 ? 'rc' : `vec2(${innerDims.join(',')})`;
     const glsl = getGlsl(handler.session.backend.glContext.version);
+    const isTarget = (inputs[0].dims.length === 4 && inputs[0].dims[1] === 1 && inputs[0].dims[3] === 160);
+    let mark = '';
+    if (isTarget) {
+      mark = '// test place holder 0 resize';
+    }
     const shaderSource = `
+    ${mark}
         ${unpackChannel}
         void main() {
           ${coordsDataType} rc = getOutputCoords();

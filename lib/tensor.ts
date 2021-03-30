@@ -6,7 +6,7 @@ import {onnx} from 'onnx-proto';
 
 import {ProtoUtil, ShapeUtil} from './util';
 
-// let globalId = 0;
+export let globalId = 0;
 
 export declare namespace Tensor {
   export interface DataTypeMap {
@@ -31,16 +31,22 @@ export declare namespace Tensor {
   export type FloatType = Tensor.DataTypeMap['float32']|Tensor.DataTypeMap['float64'];
   export type NumberType = BooleanType|IntegerType|FloatType;
 
-  export interface Id {
-    // this field helps typescript to perform type check, comparing to use `Id` as an alias of object.
-    _tensorDataId_unused?: never;
-  }
+  // export interface Id {
+  //   // this field helps typescript to perform type check, comparing to use `Id` as an alias of object.
+  //   _tensorDataId_unused?: never;
+  // }
+  // export interface Id {
+  //   numberId: number;
+  // }
+  export type Id = number;
 }
 
 type TensorData = Tensor.DataTypeMap[Tensor.DataType];
 
-type DataProvider = (id: Tensor.Id) => TensorData;
-type AsyncDataProvider = (id: Tensor.Id) => Promise<TensorData>;
+// type DataProvider = (id: Tensor.Id) => TensorData;
+// type AsyncDataProvider = (id: Tensor.Id) => Promise<TensorData>;
+type DataProvider = (id: number) => TensorData;
+type AsyncDataProvider = (id: number) => Promise<TensorData>;
 
 export class Tensor {
   /**
@@ -169,7 +175,9 @@ export class Tensor {
       /**
        * get the data ID that used to map to a tensor data
        */
-      public readonly dataId: Tensor.Id = {}) {
+      // public readonly dataId: Tensor.Id = {}) {
+      public readonly dataId: number = globalId) {
+    globalId += 1;
     this.size = ShapeUtil.validateDimsAndCalcSize(dims);
     const size = this.size;
     const empty = (dataProvider === undefined && asyncDataProvider === undefined && cache === undefined);

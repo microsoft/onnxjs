@@ -18,7 +18,7 @@ export class WebGLResizePacked extends Upsample implements WebGLOperator {
     console.log(
         '**** input: ', inputs[0].dims, inputs[0].data[0], inputs[0].data[1], inputs[0].data[2], inputs[0].data[3]);
     const t = inferenceHandler.run(this, inputs);
-    console.log('**** output: ', t[0].dims, t[0].data[0], t[0].data[1], t[0].data[2], t[0].data[3]);
+    console.log('**** output: ', t[0].dims, t[0].data[0], t[0].data[1], t[0].data[2], t[0].data[3], t[0].data[4]);
     return t;
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
@@ -31,7 +31,6 @@ export class WebGLResizePacked extends Upsample implements WebGLOperator {
 
     const glsl = getGlsl(handler.session.backend.glContext.version);
 
-
     // if (inputs[0].dims[3] === 80) {
     //   const shader = `
     //   float getChannel(vec4 frag, vec2 innerDims) {
@@ -43,12 +42,13 @@ export class WebGLResizePacked extends Upsample implements WebGLOperator {
     //   float getAValue(int x10, int r, int c, int d) {
     //     return getChannel(getA(x10, r, c, d), vec2(c, d));
     //   }
-    //     // test place holder resize
+    //     // test place 0 holder resize
     //     void main() {
     //       ivec4 rc = getOutputCoords();
-    //       // float temp = getAValue(rc.x, rc.y, rc.z, rc.w);
+    //       vec4 temp = getA(rc.x, rc.y, rc.z, rc.w);
+    //       outputColor = temp;
     //       // outputColor = vec4(-2.8922317028045654, -3.7117879390716553, -3.520329475402832, -4.175983428955078);
-    //       outputColor = getA(0, 0, 0, 0);
+    //       //outputColor = vec4(float(rc.x), float(rc.y), 0.0, 0.0);
     //     }
     //       `;
     //   return {
@@ -159,7 +159,7 @@ function createResizeProgramInfo(
         float getAValue(int x10, int r, int c, int d) {
           return getChannel(getA(x10, r, c, d), vec2(c, d));
         }
-        // test place holder resize
+        // test place holder 0 resize
         void main() {
           ${coordsDataType} rc = getOutputCoords();
 

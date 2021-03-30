@@ -52,15 +52,16 @@ export class Session {
 
       this._model = new Model();
       if (typeof arg === 'string') {
+        const isOrtFormat = arg.slice(-4) === '.ort' ? true : false;
         if (typeof fetch === 'undefined') {
           // node
           const buf = await promisify(readFile)(arg);
-          this.initialize(Buffer.from(buf));
+          this.initialize(Buffer.from(buf), isOrtFormat);
         } else {
           // browser
           const response = await fetch(arg);
           const buf = await response.arrayBuffer();
-          this.initialize(Buffer.from(buf));
+          this.initialize(Buffer.from(buf), isOrtFormat);
         }
       } else if (!ArrayBuffer.isView(arg)) {
         // load model from ArrayBuffer
@@ -73,7 +74,7 @@ export class Session {
     });
   }
 
-  private initialize(modelProtoBlob: Buffer): void {
+  private initialize(modelProtoBlob: Buffer, isOrtFormat?: boolean): void {
     if (this._initialized) {
       throw new Error('already initialized');
     }
@@ -82,7 +83,11 @@ export class Session {
       // load graph
       const graphInitializer =
           this.sessionHandler.transformGraph ? this.sessionHandler as Graph.Initializer : undefined;
-      this._model.load(modelProtoBlob, graphInitializer);
+      if (isOrtFormat) {
+        this._model.loadFromOrtFormat(modelProtoBlob, graphInitializer);
+      } else {
+        this._model.load(modelProtoBlob, graphInitializer);
+      }
 
       // graph is completely initialzied at this stage , let the interested handlers know
       if (this.sessionHandler.onGraphInitialized) {

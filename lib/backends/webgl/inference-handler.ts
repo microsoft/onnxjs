@@ -258,7 +258,8 @@ export class WebGLInferenceHandler implements InferenceHandler {
       isPacked,
       shape: inferredDims,
       strides: ShapeUtil.computeStrides(inferredDims),
-      unpackedShape
+      unpackedShape,
+      reversedWH: (prefs && prefs.reverseWH)
     };
   }
 

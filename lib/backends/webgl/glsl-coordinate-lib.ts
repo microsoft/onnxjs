@@ -891,6 +891,8 @@ export class CoordsGlslLib extends GlslLib {
    * Unpacked 1D snippet.
    */
   protected getUnpackedSampler1D(funcName: string, name: string, inputLayout: TextureLayout): GlslLibRoutine {
+    // const tNumR = inputLayout.reversedWH ? inputLayout.width : inputLayout.height;
+    // const tNumC = inputLayout.reversedWH ? inputLayout.height : inputLayout.width;
     const tNumR = inputLayout.width;
     const tNumC = inputLayout.height;
 
@@ -915,7 +917,7 @@ export class CoordsGlslLib extends GlslLib {
     if (tNumR === 1) {
       const source = `
           float ${funcName}(int index) {
-            vec2 uv = vec2((float(index) + 0.5) / ${tNumC}.0, 0.5);
+            vec2 uv = vec2(0.5, (float(index) + 0.5) / ${tNumC}.0);
             return sampleTexture(${name}, uv);
           }
         `;
@@ -938,6 +940,8 @@ export class CoordsGlslLib extends GlslLib {
     const shape = inputLayout.unpackedShape;
 
     // TODO: modify row/col order for other dimensions.
+    // const texShape = inputLayout.reversedWH && inputLayout.reversedWH ? [inputLayout.height, inputLayout.width] :
+    //                                                                     [inputLayout.width, inputLayout.height];
     const texShape = [inputLayout.height, inputLayout.width];
 
     if (texShape != null && ArrayUtil.arraysEqual(shape, texShape)) {
@@ -960,16 +964,14 @@ export class CoordsGlslLib extends GlslLib {
       const newInputLayout: TextureLayout = JSON.parse(JSON.stringify(inputLayout));
       newInputLayout.unpackedShape = newInputShape;
 
-      const params = ['row', 'col'];
+      const params = ['col', 'row'];
       const source = `
           ${this.getUnpackedSamplerFromInput(funcName, name, newInputLayout).routineBody}
           float ${funcName}(int row, int col) {
             return ${funcName}(${getSqueezedParams(params, keptDims)});
           }
         `;
-      return new GlslLibRoutine(
-          source,
-      );
+      return new GlslLibRoutine(source, ['coordinates.sampleTexture']);
     }
 
     const texNumR = texShape[1];

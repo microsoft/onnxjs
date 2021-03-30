@@ -160,6 +160,7 @@ interface TestData {
   outputTextureShape: number[];
   rawData?: Float32Array;
   useGeneratedOutput?: boolean;
+  invertedHW?: boolean;
 }
 function getTestData(isPacked = true): TestData[] {
   if (isPacked) {
@@ -213,6 +214,7 @@ function getTestData(isPacked = true): TestData[] {
       },
 
       // // test 2D tensor
+      {elementCount: 15, inputShape: [1, 1, 3, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
       {
         elementCount: 16,
         inputShape: [4, 4],

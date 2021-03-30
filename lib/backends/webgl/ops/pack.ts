@@ -75,7 +75,7 @@ export class WebGLPack implements WebGLOperator {
       `;
 
     // const inputLayout = handler.getOrCreateTextureLayout(inputs[0], 1, false, []);
-    const inputLayout = handler.getOrCreateTextureLayout(inputs[0], 1, false, [], true);
+    // const inputLayout = handler.getOrCreateTextureLayout(inputs[0], 1, false, []);
     // if (outputLayout.shape.length === 4 && outputLayout.shape[0] === 1 && outputLayout.shape[1] === 1 &&
     //     outputLayout.shape[2] === 24 && outputLayout.shape[3] === 40) {
     //   const width = inputLayout.width;
@@ -87,16 +87,16 @@ export class WebGLPack implements WebGLOperator {
     // width and height is not reverted. Then here we need to manually revert it.
     // If the texture layout is new and not cached, we create it and revert its width and height
     // in getOrCreateTextureLayout.
-    // let inputLayout;
-    // if (handler.isTextureLayoutCached(inputs[0], false)) {
-    //   inputLayout = handler.getOrCreateTextureLayout(inputs[0], 1, false);
-    //   const width = inputLayout.width;
-    //   const height = inputLayout.height;
-    //   inputLayout.width = height;
-    //   inputLayout.height = width;
-    // } else {
-    //   inputLayout = handler.getOrCreateTextureLayout(inputs[0], 1, false, [], true);
-    // }
+    let inputLayout;
+    if (handler.isTextureLayoutCached(inputs[0], false)) {
+      inputLayout = handler.getOrCreateTextureLayout(inputs[0], 1, false);
+      const width = inputLayout.width;
+      const height = inputLayout.height;
+      inputLayout.width = height;
+      inputLayout.height = width;
+    } else {
+      inputLayout = handler.getOrCreateTextureLayout(inputs[0], 1, false, [], true);
+    }
     return {
       inputLayouts: [inputLayout],
       outputLayout,

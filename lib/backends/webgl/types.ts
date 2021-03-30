@@ -42,8 +42,6 @@ export interface TextureLayout {
    * the original shape(dims) of the corresponding tensor
    */
   unpackedShape: ReadonlyArray<number>;
-
-  reversedWH?: boolean;
 }
 export interface TextureData extends TextureLayout {
   tensor: Tensor;

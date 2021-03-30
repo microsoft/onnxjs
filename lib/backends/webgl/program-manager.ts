@@ -69,7 +69,6 @@ export class ProgramManager {
     return this.profiler.event('backend', 'ProgramManager.build', () => {
       const preprocessor = new GlslPreprocessor(this.glContext, programInfo);
       const fragScript = preprocessor.preprocess();
-      console.log(fragScript);
       const program = this.compile(fragScript);
       const artifact = {
         programInfo,

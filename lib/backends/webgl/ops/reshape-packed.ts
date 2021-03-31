@@ -26,7 +26,7 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
 
     let mainLoop = ``;
     // TODO: optimize the loop
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < 4; i++) {
       let thisRC = `thisRC = rc;`;
       if (i > 1) {
         thisRC += `thisRC.z += 1;`;
@@ -40,29 +40,10 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
         ${i > 0 ? `if(thisRC.y < rows && thisRC.z < cols){` : ''}
           int flatIndex = getFlatIndex(thisRC);
 
+          ivec3 inputRC = inputCoordsFromReshapedOutCoords(flatIndex);
+          vec2 inputRCInnerDims = vec2(float(inputRC.y),float(inputRC.z));
 
-            if(flatIndex <4){
-              vec4 t = getA(0, 0, 2);
-              result = t;
-            }
-            else{
-              vec4 t = getA(0, 1, 0);
-              result[0] = t[0];
-              result[1] = t[1];
-              result[2] = t[2];
-              result[3] = t[3];
-            }
-
-          // ivec3 inputRC = inputCoordsFromReshapedOutCoords(flatIndex);
-          // vec2 inputRCInnerDims = vec2(float(inputRC.y),float(inputRC.z));
-
-          // // reverse inputRC.z and inputRC.y's order as input's width and height is reversed
-          // //result[${i}] = getChannel(getA(inputRC.x, inputRC.z, inputRC.y), inputRCInnerDims);
-          // vec4 t = getA(inputRC.x, inputRC.z, inputRC.y);
-          // result = t;
-          // //result[${i}] = float(inputRC.y);
-          // //result[${i}] = float(flatIndex);
-          // //result[${i}] = t[${i}];
+          result[${i}] = getChannel(getA(inputRC.x, inputRC.y, inputRC.z), inputRCInnerDims);
 
         ${i > 0 ? '}' : ''}
       `;
@@ -71,14 +52,15 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
     const inputShape = inputs[0].dims;
     const squeezedInputShape = processDims3D(inputShape);
 
-    // const outputShape = inputs[1].integerData;  // TODO: double check inputs[1] should not be uploaded
-    // const outputShape = inputShape;  // TODO: double check inputs[1] should not be uploaded
+    // TODO: double check inputs[1] should not be uploaded
     const outputShape = ShapeUtil.calculateReshapedDims(inputs[0].dims, inputs[1].integerData);
     const squeezedOutputShape = processDims3D(outputShape);
-    let shaderSource = `
+
+    const shaderSource = `
       ${getReshapedInputCoords(squeezedInputShape)}
       ${getFlatIndexFrom3D(squeezedOutputShape)}
       ${unpackFromChannel()}
+      // testing 6 here
       void main() {
         ivec3 rc = getOutputCoords();
 
@@ -103,7 +85,7 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
       shaderSource,
       hasMain: true,
       expectPackedInputs: true,
-      expectPackedoutputs: true,
+      expectPackedOutputs: true,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
@@ -118,7 +100,7 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
 }
 
 function processDims3D(shpae: readonly number[]|ReadonlyArray<number>|Tensor.IntegerType): [number, number, number] {
-  // TODO: why we need it to be 2D?
+  // TODO: squeeze other shapes to 2D case
   const batchDims = shpae.length > 3 ? shpae.slice(0, shpae.length - 2) : [1];
   let batch = 1;
   for (let i = 0; i < batchDims.length; ++i) {

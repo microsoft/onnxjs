@@ -23,6 +23,17 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
     if (inputs.length !== 2) {
       throw new Error(`resize kernel should have input tensor count to 2.`);
     }
+    const originInputShape = inputs[0].dims;
+    const inputShape3D = processDims3D(inputs[0].dims);
+    inputs[0].dims = inputShape3D;
+    const inputLayout = handler.getOrCreateTextureLayout2(inputShape3D, 4, true, inputShape3D, true);
+
+    // TODO: double check inputs[1] should not be uploaded
+    const outputShape = ShapeUtil.calculateReshapedDims(originInputShape, inputs[1].integerData);
+    const squeezedOutputShape = processDims3D(outputShape);
+
+    const outputLayout = handler.createTextureLayoutFromShape(
+        squeezedOutputShape, 4, squeezedOutputShape, {isPacked: true, reverseWH: true});
 
     let mainLoop = ``;
     // TODO: optimize the loop
@@ -49,15 +60,11 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
       `;
     }
     const glsl = getGlsl(handler.session.backend.glContext.version);
-    const inputShape = inputs[0].dims;
-    const squeezedInputShape = processDims3D(inputShape);
-
-    // TODO: double check inputs[1] should not be uploaded
-    const outputShape = ShapeUtil.calculateReshapedDims(inputs[0].dims, inputs[1].integerData);
-    const squeezedOutputShape = processDims3D(outputShape);
+    // const inputShape = inputs[0].dims;
+    // const squeezedInputShape = processDims3D(inputShape);
 
     const shaderSource = `
-      ${getReshapedInputCoords(squeezedInputShape)}
+      ${getReshapedInputCoords(inputShape3D)}
       ${getFlatIndexFrom3D(squeezedOutputShape)}
       ${unpackFromChannel()}
       // testing 6 here
@@ -76,10 +83,8 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
       }
     `;
 
-    const outputLayout =
-        handler.createTextureLayoutFromShape(outputShape, 4, outputShape, {isPacked: true, reverseWH: true});
     return {
-      inputLayouts: [handler.getOrCreateTextureLayout(inputs[0], 4, true, inputs[0].dims, true)],
+      inputLayouts: [inputLayout],
       outputLayout,
       samplers: ['A'],
       shaderSource,
@@ -101,7 +106,7 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
 
 function processDims3D(shpae: readonly number[]|ReadonlyArray<number>|Tensor.IntegerType): [number, number, number] {
   // TODO: squeeze other shapes to 2D case
-  const batchDims = shpae.length > 3 ? shpae.slice(0, shpae.length - 2) : [1];
+  const batchDims = shpae.length >= 3 ? shpae.slice(0, shpae.length - 2) : [1];
   let batch = 1;
   for (let i = 0; i < batchDims.length; ++i) {
     batch *= batchDims[i];

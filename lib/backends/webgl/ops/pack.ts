@@ -43,6 +43,7 @@ export class WebGLPack implements WebGLOperator {
 
     const glsl = getGlsl(handler.session.backend.glContext.version);
     const shaderSource = `
+    //TEST TEST
         void main() {
           ${coordsDataType} rc = getOutputCoords();
 

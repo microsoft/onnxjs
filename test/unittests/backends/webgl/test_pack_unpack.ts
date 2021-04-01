@@ -26,7 +26,7 @@ describe('#UnitTest# - reshape - Tensor pack', () => {
     inferenceHandler = sessionhandler.createInferenceHandler();
   });
 
-  it(`Test pack kernal`, () => {
+  it.skip(`Test pack kernal`, () => {
     const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
 
     const op = new WebGLReshapePacked();
@@ -95,7 +95,7 @@ describe('#UnitTest# - pack - Tensor pack', () => {
   // both texture layout correctly
   const textureLayout = ['hw-reverted', 'hw-unreverted'];
 
-  for (let w = 0; w < textureLayout.length; ++w) {
+  for (let w = 0; w < 2; ++w) {
     for (let k = 0; k < testDataSet.length; ++k) {
       const testData = testDataSet[k];
       describe(`Test pack`, () => {});
@@ -149,9 +149,71 @@ describe('#UnitTest# - pack - Tensor pack', () => {
         const outputElementCount = getExpectedElementCount(testData.inputShape);
         expect(resultDataBuffer).to.have.lengthOf(outputElementCount);
         const expectedOutput = generateExpected(inputData, testData.inputShape);
+        for (let i = 0; i < outputElementCount; ++i) {
+          console.log(resultDataBuffer[i]);
+        }
         expect(resultDataBuffer).to.deep.equal(expectedOutput);
       });
     }
+  }
+});
+
+describe('#UnitTest# - pack-unpack round trip', () => {
+  before('Initialize Context', async () => {
+    const profiler = Profiler.create();
+    backend = await Backend('webgl');
+    sessionhandler = backend.createSessionHandler({profiler});
+    inferenceHandler = sessionhandler.createInferenceHandler();
+  });
+  const testDataSet = getTestData();
+
+  for (let k = 0; k < testDataSet.length; ++k) {
+    const testData = testDataSet[k];
+    describe(`Test pack-unpack ${JSON.stringify(testData)}`, () => {});
+    it.skip(`Test pack-unpack round trip ${JSON.stringify(testData)}`, () => {
+      const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
+
+      // TODO support WebGl 1.0
+      if (webglInferenceHandler.session.textureManager.glContext.version === 1) {
+        console.log('Running pack with webgl1 is not supported. Skipping.');
+        return;
+      }
+
+      const packOp = new WebGLPack();
+
+      const elementCount = testData.elementCount;
+      const inputData = createAscendingArray(elementCount);
+      const inputTensorShape = testData.inputShape;
+
+      const inputTensor = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
+
+      // compile pack shader code
+      let programInfo = packOp.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor]);
+      let artifact = webglInferenceHandler.session.programManager.build(programInfo);
+      webglInferenceHandler.session.programManager.setArtifact(packOp, artifact);
+
+      // run pack kernal and get output
+      let runData = packOp.createRunData(webglInferenceHandler, artifact.programInfo, [inputTensor]);
+      webglInferenceHandler.session.programManager.run(artifact, runData);
+
+      // create unpack kernel
+      const unpackOp = new WebGLUnpack();
+
+      // compile unpack shader code
+      programInfo =
+          unpackOp.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [runData.outputTextureData.tensor]);
+      artifact = webglInferenceHandler.session.programManager.build(programInfo);
+      webglInferenceHandler.session.programManager.setArtifact(unpackOp, artifact);
+
+      // run unpack kernal and get output
+      runData = unpackOp.createRunData(webglInferenceHandler, artifact.programInfo, [runData.outputTextureData.tensor]);
+      webglInferenceHandler.session.programManager.run(artifact, runData);
+
+      const resultData = runData.outputTextureData.tensor.data;
+      expect(resultData).to.not.equal(null);
+      expect(resultData).to.have.lengthOf(testData.elementCount);
+      expect(runData.outputTextureData.tensor.data).to.deep.equal(inputTensor.data);
+    });
   }
 });
 
@@ -167,7 +229,7 @@ describe('#UnitTest# - unpack - Tensor unpack', () => {
   for (let k = 0; k < testDataSet.length; ++k) {
     const testData = testDataSet[k];
     describe(`Test unpack ${JSON.stringify(testData)}`, () => {});
-    it(`Test unpack kernal ${testData.inputShape}`, () => {
+    it.skip(`Test unpack kernal ${testData.inputShape}`, () => {
       const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
 
       // TODO support WebGl 1.0
@@ -250,48 +312,53 @@ function getTestData(isPacked = true): TestData[] {
   if (isPacked) {
     return [
       // test scalar
-      {elementCount: 1, inputShape: [], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
+      // {elementCount: 1, inputShape: [], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
+      {elementCount: 8, inputShape: [1, 4, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 1]},
+      {elementCount: 8, inputShape: [4, 2, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
+      {elementCount: 8, inputShape: [4, 1, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
 
-      // test 1D tensor
-      {elementCount: 1, inputShape: [1], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
-      {elementCount: 16, inputShape: [16], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 8]},
-      {elementCount: 9, inputShape: [9], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 5]},
+      // // test 1D tensor
+      // {elementCount: 1, inputShape: [1], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
+      // {elementCount: 16, inputShape: [16], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 8]},
+      // {elementCount: 9, inputShape: [9], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 5]},
 
-      // test 2D tensor
-      {elementCount: 1, inputShape: [1, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
-      {elementCount: 16, inputShape: [4, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 2]},
-      {elementCount: 16, inputShape: [2, 8], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 4]},
-      {elementCount: 16, inputShape: [8, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
-      {elementCount: 15, inputShape: [3, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
-      {elementCount: 18, inputShape: [3, 6], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
-      {elementCount: 10, inputShape: [2, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
-      {elementCount: 6, inputShape: [1, 6], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
-      {elementCount: 6, inputShape: [6, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [3, 1]},
-      {elementCount: 5, inputShape: [5, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [3, 1]},
-      {elementCount: 5, inputShape: [1, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
+      // // test 2D tensor
+      // {elementCount: 1, inputShape: [1, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
+      // {elementCount: 16, inputShape: [4, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 2]},
+      // {elementCount: 16, inputShape: [2, 8], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 4]},
+      // {elementCount: 16, inputShape: [8, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
+      // {elementCount: 15, inputShape: [3, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
+      // {elementCount: 18, inputShape: [3, 6], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
+      // {elementCount: 10, inputShape: [2, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
+      // {elementCount: 6, inputShape: [1, 6], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
+      // {elementCount: 6, inputShape: [6, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [3, 1]},
+      // {elementCount: 5, inputShape: [5, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [3, 1]},
+      // {elementCount: 5, inputShape: [1, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 3]},
 
-      // test 3D tensor
-      {elementCount: 1, inputShape: [1, 1, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
-      {elementCount: 16, inputShape: [2, 2, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 2]},
-      {elementCount: 24, inputShape: [2, 3, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 2]},
-      {elementCount: 30, inputShape: [5, 3, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [10, 1]},
-      {elementCount: 9, inputShape: [1, 3, 3], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 2]},
+      // // test 3D tensor
+      // {elementCount: 1, inputShape: [1, 1, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
+      // {elementCount: 16, inputShape: [2, 2, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [2,
+      // 2]}, {elementCount: 24, inputShape: [2, 3, 4], outputShape: [], inputTextureShape: [], outputTextureShape:
+      // [4, 2]}, {elementCount: 30, inputShape: [5, 3, 2], outputShape: [], inputTextureShape: [],
+      // outputTextureShape: [10, 1]}, {elementCount: 9, inputShape: [1, 3, 3], outputShape: [], inputTextureShape:
+      // [], outputTextureShape: [2, 2]},
 
-      // test 4D tensor
-      {elementCount: 1, inputShape: [1, 1, 1, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
-      {elementCount: 15, inputShape: [1, 1, 3, 5], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 3]},
-      {elementCount: 16, inputShape: [1, 2, 2, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 2]},
-      {elementCount: 32, inputShape: [2, 2, 2, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 2]},
-      {elementCount: 36, inputShape: [2, 2, 3, 3], outputShape: [], inputTextureShape: [], outputTextureShape: [8, 2]},
-      {elementCount: 80, inputShape: [2, 5, 2, 4], outputShape: [], inputTextureShape: [], outputTextureShape: [10, 2]},
-      {elementCount: 12, inputShape: [2, 1, 3, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
-      {
-        elementCount: 3840,
-        inputShape: [1, 1, 48, 80],
-        outputShape: [],
-        inputTextureShape: [],
-        outputTextureShape: [24, 40]
-      },
+      // // test 4D tensor
+      // {elementCount: 1, inputShape: [1, 1, 1, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [1,
+      // 1]}, {elementCount: 15, inputShape: [1, 1, 3, 5], outputShape: [], inputTextureShape: [], outputTextureShape:
+      // [2, 3]}, {elementCount: 16, inputShape: [1, 2, 2, 4], outputShape: [], inputTextureShape: [],
+      // outputTextureShape: [2, 2]}, {elementCount: 32, inputShape: [2, 2, 2, 4], outputShape: [], inputTextureShape:
+      // [], outputTextureShape: [4, 2]}, {elementCount: 36, inputShape: [2, 2, 3, 3], outputShape: [],
+      // inputTextureShape: [], outputTextureShape: [8, 2]}, {elementCount: 80, inputShape: [2, 5, 2, 4], outputShape:
+      // [], inputTextureShape: [], outputTextureShape: [10, 2]}, {elementCount: 12, inputShape: [2, 1, 3, 2],
+      // outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
+      // {
+      //   elementCount: 3840,
+      //   inputShape: [1, 1, 48, 80],
+      //   outputShape: [],
+      //   inputTextureShape: [],
+      //   outputTextureShape: [24, 40]
+      // },
     ];
   } else {
     return [

@@ -1009,15 +1009,17 @@ export class CoordsGlslLib extends GlslLib {
     const squeezedShape = newShape;
     if (squeezedShape.length < shape.length) {
       const newInputShape = squeezeInputShape(shape, squeezedShape);
-      const params = ['batch', 'row', 'col'];
+      const params = ['batch', 'col', 'row'];
       // Deep copy of input texture layout.
       const newInputLayout: TextureLayout = JSON.parse(JSON.stringify(inputLayout));
       newInputLayout.unpackedShape = newInputShape;
       const routine = this.getUnpackedSamplerFromInput(funcName, name, newInputLayout);
+      // TODO: revisit the logic here to make it simpler
+      const revDims = keptDims.reverse();
       const source = `
           ${routine.routineBody}
-          float ${funcName}(int depth, int row, int col) {
-            return ${funcName}(${getSqueezedParams(params, keptDims)});
+          float ${funcName}(int batch, int row, int col) {
+            return ${funcName}(${getSqueezedParams(params, revDims)});
           }
         `;
       return new GlslLibRoutine(source, routine.dependencies);

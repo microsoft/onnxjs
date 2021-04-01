@@ -158,7 +158,7 @@ export class Tensor {
       /**
        * get the dimensions of the tensor
        */
-      public readonly dims: ReadonlyArray<number>,
+      public dims: ReadonlyArray<number>,
       /**
        * get the type of the tensor
        */

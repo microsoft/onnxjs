@@ -116,7 +116,7 @@ export class WebGLPackedConcat extends Concat implements WebGLOperator {
       shaderSource,
       hasMain: true,
       expectPackedInputs: true,
-      expectPackedoutputs: true
+      expectPackedOutputs: true
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {

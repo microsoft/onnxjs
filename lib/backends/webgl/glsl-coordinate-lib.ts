@@ -916,7 +916,7 @@ export class CoordsGlslLib extends GlslLib {
     if (tNumR === 1) {
       const source = `
           float ${funcName}(int index) {
-            vec2 uv = vec2((float(index) + 0.5) / ${tNumC}.0, 0.5);
+            vec2 uv = vec2(0.5, (float(index) + 0.5) / ${tNumC}.0);
             return sampleTexture(${name}, uv);
           }
         `;
@@ -961,16 +961,14 @@ export class CoordsGlslLib extends GlslLib {
       const newInputLayout: TextureLayout = JSON.parse(JSON.stringify(inputLayout));
       newInputLayout.unpackedShape = newInputShape;
 
-      const params = ['row', 'col'];
+      const params = ['col', 'row'];
       const source = `
           ${this.getUnpackedSamplerFromInput(funcName, name, newInputLayout).routineBody}
           float ${funcName}(int row, int col) {
             return ${funcName}(${getSqueezedParams(params, keptDims)});
           }
         `;
-      return new GlslLibRoutine(
-          source,
-      );
+      return new GlslLibRoutine(source, ['coordinates.sampleTexture']);
     }
 
     const texNumR = texShape[1];
@@ -986,22 +984,10 @@ export class CoordsGlslLib extends GlslLib {
         `;
       return new GlslLibRoutine(source, ['coordinates.sampleTexture', 'coordinates.coordsToOffset']);
     }
-    if (texNumR === 1) {
-      const source = `
-          float ${funcName}(int row, int col) {
-            int offset_${name} = coordsToOffset(TexCoords, ${texNumR}, ${texNumC});
-            float index = dot(vec3(row, col, offset_${name}), vec3(${shape[1]}, 1, 1));
-            vec2 uv = vec2((index + 0.5) / ${texNumC}.0, 0.5);
-            return sampleTexture(${name}, uv);
-          }
-        `;
-      return new GlslLibRoutine(source, ['coordinates.sampleTexture', 'coordinates.coordsToOffset']);
-    }
+
     const source = `
         float ${funcName}(int row, int col) {
-          // Explicitly use integer operations as dot() only works on floats.
-          int offset_${name} = coordsToOffset(TexCoords, ${texNumR}, ${texNumC});
-          int index = row * ${shape[1]} + col + offset_${name};
+          int index = col * ${shape[1]} + row;
           vec2 uv = uvFromFlat(${texNumR}, ${texNumC}, index);
           return sampleTexture(${name}, uv);
         }

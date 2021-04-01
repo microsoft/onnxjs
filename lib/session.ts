@@ -83,11 +83,7 @@ export class Session {
       // load graph
       const graphInitializer =
           this.sessionHandler.transformGraph ? this.sessionHandler as Graph.Initializer : undefined;
-      if (isOrtFormat) {
-        this._model.loadFromOrtFormat(modelProtoBlob, graphInitializer);
-      } else {
-        this._model.load(modelProtoBlob, graphInitializer);
-      }
+      this._model.load(modelProtoBlob, graphInitializer, isOrtFormat);
 
       // graph is completely initialzied at this stage , let the interested handlers know
       if (this.sessionHandler.onGraphInitialized) {

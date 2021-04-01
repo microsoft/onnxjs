@@ -4,7 +4,8 @@
 import {onnx} from 'onnx-proto';
 
 import {Attribute} from './attribute';
-import {onnxruntime} from './ort_format_schema';
+import {onnxruntime} from './ortSchema/ort_generated';
+import ortFbs = onnxruntime.experimental.fbs;
 import {Tensor} from './tensor';
 import {LongUtil, ProtoUtil} from './util';
 
@@ -75,7 +76,7 @@ export const Graph = {
   /**
    * construct a graph from a graph protobuf type
    */
-  from: (graphProto: onnx.IGraphProto|onnxruntime.experimental.fbs.Graph, initializer?: Graph.Initializer) =>
+  from: (graphProto: onnx.IGraphProto|ortFbs.Graph, initializer?: Graph.Initializer) =>
       new GraphImpl(graphProto, initializer),
 };
 
@@ -104,13 +105,13 @@ class Value implements Graph.Value {
 }
 
 class Node implements Graph.Node {
-  constructor(_nodeProto: onnx.INodeProto|onnxruntime.experimental.fbs.Node, name?: string) {
+  constructor(_nodeProto: onnx.INodeProto|ortFbs.Node, name?: string) {
     if (_nodeProto instanceof onnx.NodeProto) {
       this.name = _nodeProto.name;
       this.opType = _nodeProto.opType;
       this.attributes = new Attribute(_nodeProto.attribute);
-    } else if (_nodeProto instanceof onnxruntime.experimental.fbs.Node) {
-      this.name = name ? name : _nodeProto.name()!;
+    } else if (_nodeProto instanceof ortFbs.Node) {
+      this.name = name ?? _nodeProto.name()!;
       this.opType = _nodeProto.opType()!;
       this.attributes = new Attribute(ProtoUtil.tensorAttributesFromORTFormat(_nodeProto));
     }
@@ -139,19 +140,13 @@ class GraphImpl implements Graph, Graph.Transformer {
 
   private _nodes: Node[];
 
-  constructor(graph: onnx.IGraphProto|onnxruntime.experimental.fbs.Graph, graphInitializer?: Graph.Initializer) {
+  constructor(graph: onnx.IGraphProto|ortFbs.Graph, graphInitializer?: Graph.Initializer) {
     if (!graph) {
       throw new TypeError('graph is empty');
     }
 
     // build the graph - will throw exceptions if something fatal is detected
-    if (graph instanceof onnx.GraphProto) {
-      this.buildGraph(graph);
-    } else if (graph instanceof onnxruntime.experimental.fbs.Graph) {
-      this.buildGraphFromOrtFormat(graph);
-    } else {
-      throw new TypeError('Graph type is not supported.');
-    }
+    this.buildGraph(graph);
 
     // execute any transformation logic for the graph (if applicable)
     this.transformGraph(graphInitializer);
@@ -184,7 +179,17 @@ class GraphImpl implements Graph, Graph.Transformer {
     return this._nodes;
   }
 
-  private buildGraph(graph: onnx.IGraphProto) {
+  private buildGraph(graph: onnx.IGraphProto|ortFbs.Graph) {
+    // build the graph - will throw exceptions if something fatal is detected
+    if (graph instanceof onnx.GraphProto) {
+      this.buildGraphFromOnnxFormat(graph);
+    } else if (graph instanceof ortFbs.Graph) {
+      this.buildGraphFromOrtFormat(graph);
+    } else {
+      throw new TypeError('Graph type is not supported.');
+    }
+  }
+  private buildGraphFromOnnxFormat(graph: onnx.IGraphProto) {
     const dataIndices = new Map<string, number>();
     this._allData = [];
 
@@ -336,7 +341,7 @@ class GraphImpl implements Graph, Graph.Transformer {
     return true;
   }
 
-  private buildGraphFromOrtFormat(graph: onnxruntime.experimental.fbs.Graph) {
+  private buildGraphFromOrtFormat(graph: ortFbs.Graph) {
     const dataIndices = new Map<string, number>();
     this._allData = [];
 
@@ -362,10 +367,10 @@ class GraphImpl implements Graph, Graph.Transformer {
         if (graph.nodeArgs(j)?.name() === inputName) {
           const value = new Value();
           const valueType = graph.nodeArgs(j)?.type()?.valueType();
-          if (valueType !== onnxruntime.experimental.fbs.TypeInfoValue.tensor_type) {
+          if (valueType !== ortFbs.TypeInfoValue.tensor_type) {
             throw new Error('Unexpected value type for the nodeArg.');
           }
-          const valueInfo = graph.nodeArgs(j)?.type()?.value(new onnxruntime.experimental.fbs.TensorTypeAndShape());
+          const valueInfo = graph.nodeArgs(j)?.type()?.value(new ortFbs.TensorTypeAndShape());
           const type = ProtoUtil.tensorDataTypeFromProto(valueInfo?.elemType()!);
           const shape = valueInfo?.shape();
           const dims = [];
@@ -383,10 +388,10 @@ class GraphImpl implements Graph, Graph.Transformer {
     for (let i = 0; i < graph.initializersLength(); i++) {
       const initializer = graph.initializers(i)!;
       let index = dataIndices.get(initializer.name()!);
-      const dims = ProtoUtil.tensorDimsFromORTFormat(initializer);
-      const type = ProtoUtil.tensorDataTypeFromProto(initializer.dataType());
       if (index === undefined) {
         const value = new Value();
+        const dims = ProtoUtil.tensorDimsFromORTFormat(initializer);
+        const type = ProtoUtil.tensorDataTypeFromProto(initializer.dataType());
         value.type = {shape: {dims}, tensorType: type};
         index = this._allData.push(value) - 1;
         dataIndices.set(initializer.name()!, index);

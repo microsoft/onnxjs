@@ -6,7 +6,7 @@ import Long from 'long';
 import {onnx} from 'onnx-proto';
 
 import {Graph} from './graph';
-import {onnxruntime} from './ort_format_schema';
+import {onnxruntime} from './ortSchema/ort_generated';
 import {Tensor} from './tensor';
 import {TypedArray} from './types';
 

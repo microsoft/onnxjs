@@ -6,14 +6,23 @@ import {onnx} from 'onnx-proto';
 
 import {Graph} from './graph';
 import {OpSet} from './opset';
-import {onnxruntime} from './ort_format_schema';
+import {onnxruntime} from './ortSchema/ort_generated';
+import ortFbs = onnxruntime.experimental.fbs;
 import {LongUtil} from './util';
 
 export class Model {
   // empty model
   constructor() {}
 
-  load(buf: Buffer, graphInitializer?: Graph.Initializer): void {
+  load(buf: Buffer, graphInitializer?: Graph.Initializer, isOrtFormat?: boolean): void {
+    if (!isOrtFormat) {
+      this.loadFromOnnxFormat(buf, graphInitializer);
+    } else {
+      this.loadFromOrtFormat(buf, graphInitializer);
+    }
+  }
+
+  private loadFromOnnxFormat(buf: Buffer, graphInitializer?: Graph.Initializer): void {
     const modelProto = onnx.ModelProto.decode(buf);
     const irVersion = LongUtil.longToNumber(modelProto.irVersion);
     if (irVersion < 3) {
@@ -27,9 +36,9 @@ export class Model {
     this._graph = Graph.from(modelProto.graph!, graphInitializer);
   }
 
-  loadFromOrtFormat(buf: Buffer, graphInitializer?: Graph.Initializer): void {
+  private loadFromOrtFormat(buf: Buffer, graphInitializer?: Graph.Initializer): void {
     const fb = new flatbuffers.ByteBuffer(buf);
-    const ortModel = onnxruntime.experimental.fbs.InferenceSession.getRootAsInferenceSession(fb).model()!;
+    const ortModel = ortFbs.InferenceSession.getRootAsInferenceSession(fb).model()!;
     const irVersion = LongUtil.longToNumber(ortModel.irVersion());
     if (irVersion < 3) {
       throw new Error('only support ONNX model with IR_VERSION>=3');

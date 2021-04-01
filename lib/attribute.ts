@@ -3,7 +3,8 @@
 
 import Long from 'long';
 import {onnx} from 'onnx-proto';
-import {onnxruntime} from './ort_format_schema';
+import {onnxruntime} from './ortSchema/ort_generated';
+import ortFbs = onnxruntime.experimental.fbs;
 
 import {Tensor} from './tensor';
 import {LongUtil} from './util';
@@ -28,13 +29,13 @@ type ValueTypes = Attribute.DataTypeMap[Attribute.DataType];
 type Value = [ValueTypes, Attribute.DataType];
 
 export class Attribute {
-  constructor(attributes: onnx.IAttributeProto[]|null|undefined|onnxruntime.experimental.fbs.Attribute[]) {
+  constructor(attributes: onnx.IAttributeProto[]|ortFbs.Attribute[]|null|undefined) {
     this._attributes = new Map();
     if (attributes !== null && attributes !== undefined) {
       for (const attr of attributes) {
         if (attr instanceof onnx.AttributeProto) {
           this._attributes.set(attr.name, [Attribute.getValue(attr), Attribute.getType(attr)]);
-        } else if (attr instanceof onnxruntime.experimental.fbs.Attribute) {
+        } else if (attr instanceof ortFbs.Attribute) {
           this._attributes.set(attr.name()!, [Attribute.getValue(attr), Attribute.getType(attr)]);
         }
       }
@@ -97,41 +98,37 @@ export class Attribute {
     return valueAndType[0] as V;
   }
 
-  private static getType(attr: onnx.IAttributeProto|onnxruntime.experimental.fbs.Attribute): Attribute.DataType {
-    const type =
-        attr instanceof onnx.AttributeProto ? (attr).type : (attr as onnxruntime.experimental.fbs.Attribute).type();
+  private static getType(attr: onnx.IAttributeProto|ortFbs.Attribute): Attribute.DataType {
+    const type = attr instanceof onnx.AttributeProto ? (attr).type : (attr as ortFbs.Attribute).type();
     switch (type) {
-      case onnx.AttributeProto.AttributeType.FLOAT|onnxruntime.experimental.fbs.AttributeType.FLOAT:
+      case onnx.AttributeProto.AttributeType.FLOAT|ortFbs.AttributeType.FLOAT:
         return 'float';
-      case onnx.AttributeProto.AttributeType.INT|onnxruntime.experimental.fbs.AttributeType.INT:
+      case onnx.AttributeProto.AttributeType.INT|ortFbs.AttributeType.INT:
         return 'int';
-      case onnx.AttributeProto.AttributeType.STRING|onnxruntime.experimental.fbs.AttributeType.STRING:
+      case onnx.AttributeProto.AttributeType.STRING|ortFbs.AttributeType.STRING:
         return 'string';
-      case onnx.AttributeProto.AttributeType.TENSOR|onnxruntime.experimental.fbs.AttributeType.TENSOR:
+      case onnx.AttributeProto.AttributeType.TENSOR|ortFbs.AttributeType.TENSOR:
         return 'tensor';
-      case onnx.AttributeProto.AttributeType.FLOATS|onnxruntime.experimental.fbs.AttributeType.FLOATS:
+      case onnx.AttributeProto.AttributeType.FLOATS|ortFbs.AttributeType.FLOATS:
         return 'floats';
-      case onnx.AttributeProto.AttributeType.INTS|onnxruntime.experimental.fbs.AttributeType.INTS:
+      case onnx.AttributeProto.AttributeType.INTS|ortFbs.AttributeType.INTS:
         return 'ints';
-      case onnx.AttributeProto.AttributeType.STRINGS|onnxruntime.experimental.fbs.AttributeType.STRINGS:
+      case onnx.AttributeProto.AttributeType.STRINGS|ortFbs.AttributeType.STRINGS:
         return 'strings';
-      case onnx.AttributeProto.AttributeType.TENSORS|onnxruntime.experimental.fbs.AttributeType.TENSORS:
+      case onnx.AttributeProto.AttributeType.TENSORS|ortFbs.AttributeType.TENSORS:
         return 'tensors';
       default:
         throw new Error(`attribute type is not supported yet: ${onnx.AttributeProto.AttributeType[type]}`);
     }
   }
 
-  private static getValue(attr: onnx.IAttributeProto|onnxruntime.experimental.fbs.Attribute) {
-    const attrType =
-        attr instanceof onnx.AttributeProto ? attr.type : (attr as onnxruntime.experimental.fbs.Attribute).type();
+  private static getValue(attr: onnx.IAttributeProto|ortFbs.Attribute) {
+    const attrType = attr instanceof onnx.AttributeProto ? attr.type : (attr as ortFbs.Attribute).type();
     if (attrType === onnx.AttributeProto.AttributeType.GRAPH || attrType === onnx.AttributeProto.AttributeType.GRAPHS) {
       throw new Error('graph attribute is not supported yet');
     }
 
-    const value = attr instanceof onnx.AttributeProto ?
-        this.getValueNoCheck(attr) :
-        this.getValueNoCheckFromOrtFormat(attr as onnxruntime.experimental.fbs.Attribute);
+    const value = this.getValueNoCheck(attr);
 
     // cast LONG to number
     if (attrType === onnx.AttributeProto.AttributeType.INT && LongUtil.isLong(value)) {
@@ -154,7 +151,7 @@ export class Attribute {
     // cast onnx.TensorProto to onnxjs.Tensor
     if (attrType === onnx.AttributeProto.AttributeType.TENSOR) {
       return attr instanceof onnx.AttributeProto ? Tensor.fromProto(value as onnx.ITensorProto) :
-                                                   Tensor.fromOrtTensor(value as onnxruntime.experimental.fbs.Tensor);
+                                                   Tensor.fromOrtTensor(value as ortFbs.Tensor);
     }
 
     // cast onnx.TensorProto[] to onnxjs.Tensor[]
@@ -162,15 +159,16 @@ export class Attribute {
       if (attr instanceof onnx.AttributeProto) {
         const tensorProtos = value as onnx.ITensorProto[];
         return tensorProtos.map(value => Tensor.fromProto(value));
-      } else if (attr instanceof onnxruntime.experimental.fbs.Attribute) {
-        const tensorProtos = value as onnxruntime.experimental.fbs.Tensor[];
+      } else if (attr instanceof ortFbs.Attribute) {
+        const tensorProtos = value as ortFbs.Tensor[];
         return tensorProtos.map(value => Tensor.fromOrtTensor(value));
       }
     }
 
     // cast Uint8Array to string
     if (attrType === onnx.AttributeProto.AttributeType.STRING) {
-      // string in onnx attribute is of uint8array type
+      // string in onnx attribute is of uint8array type, so we need to convert it to string below. While in ort format,
+      // string attributes are returned as string, so no conversion is needed.
       if (attr instanceof onnx.AttributeProto) {
         const utf8String = value as Uint8Array;
         return Buffer.from(utf8String.buffer, utf8String.byteOffset, utf8String.byteLength).toString();
@@ -179,7 +177,8 @@ export class Attribute {
 
     // cast Uint8Array[] to string[]
     if (attrType === onnx.AttributeProto.AttributeType.STRINGS) {
-      // strings in onnx attribute is uint8array[]
+      // strings in onnx attribute is returned as uint8array[], so we need to convert it to string[] below. While in ort
+      // format strings attributes are returned as string[], so no conversion is needed.
       if (attr instanceof onnx.AttributeProto) {
         const utf8Strings = value as Uint8Array[];
         return utf8Strings.map(
@@ -190,7 +189,12 @@ export class Attribute {
     return value as ValueTypes;
   }
 
-  private static getValueNoCheck(attr: onnx.IAttributeProto) {
+  private static getValueNoCheck(attr: onnx.IAttributeProto|ortFbs.Attribute) {
+    return attr instanceof (onnx.AttributeProto) ? this.getValueNoCheckFromOnnxFormat(attr) :
+                                                   this.getValueNoCheckFromOrtFormat(attr as ortFbs.Attribute);
+  }
+
+  private static getValueNoCheckFromOnnxFormat(attr: onnx.IAttributeProto) {
     switch (attr.type!) {
       case onnx.AttributeProto.AttributeType.FLOAT:
         return attr.f;
@@ -217,39 +221,39 @@ export class Attribute {
     }
   }
 
-  private static getValueNoCheckFromOrtFormat(attr: onnxruntime.experimental.fbs.Attribute) {
+  private static getValueNoCheckFromOrtFormat(attr: ortFbs.Attribute) {
     switch (attr.type()) {
-      case onnxruntime.experimental.fbs.AttributeType.FLOAT:
+      case ortFbs.AttributeType.FLOAT:
         return attr.f();
-      case onnxruntime.experimental.fbs.AttributeType.INT:
+      case ortFbs.AttributeType.INT:
         return attr.i();
-      case onnxruntime.experimental.fbs.AttributeType.STRING:
+      case ortFbs.AttributeType.STRING:
         return attr.s();
-      case onnxruntime.experimental.fbs.AttributeType.TENSOR:
+      case ortFbs.AttributeType.TENSOR:
         return attr.t();
-      case onnxruntime.experimental.fbs.AttributeType.GRAPH:
+      case ortFbs.AttributeType.GRAPH:
         return attr.g();
-      case onnxruntime.experimental.fbs.AttributeType.FLOATS:
+      case ortFbs.AttributeType.FLOATS:
         return attr.floatsArray();
-      case onnxruntime.experimental.fbs.AttributeType.INTS:
+      case ortFbs.AttributeType.INTS:
         const ints = [];
         for (let i = 0; i < attr.intsLength(); i++) {
           ints.push(attr.ints(i)!);
         }
         return ints;
-      case onnxruntime.experimental.fbs.AttributeType.STRINGS:
+      case ortFbs.AttributeType.STRINGS:
         const strings = [];
         for (let i = 0; i < attr.stringsLength(); i++) {
           strings.push(attr.strings(i));
         }
         return strings;
-      case onnxruntime.experimental.fbs.AttributeType.TENSORS:
+      case ortFbs.AttributeType.TENSORS:
         const tensors = [];
         for (let i = 0; i < attr.tensorsLength(); i++) {
           tensors.push(attr.tensors(i)!);
         }
         return tensors;
-      case onnxruntime.experimental.fbs.AttributeType.GRAPHS:
+      case ortFbs.AttributeType.GRAPHS:
         // TODO: Subgraph not supported yet.
         const graphs = [];
         for (let i = 0; i < attr.graphsLength(); i++) {
@@ -257,7 +261,7 @@ export class Attribute {
         }
         return graphs;
       default:
-        throw new Error(`unsupported attribute type: ${onnxruntime.experimental.fbs.AttributeType[attr.type()]}`);
+        throw new Error(`unsupported attribute type: ${ortFbs.AttributeType[attr.type()]}`);
     }
   }
 

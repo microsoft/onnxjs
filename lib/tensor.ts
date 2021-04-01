@@ -3,7 +3,8 @@
 
 import Long from 'long';
 import {onnx} from 'onnx-proto';
-import {onnxruntime} from './ort_format_schema';
+import {onnxruntime} from './ortSchema/ort_generated';
+import ortFbs = onnxruntime.experimental.fbs;
 
 import {ProtoUtil, ShapeUtil} from './util';
 
@@ -309,7 +310,7 @@ export class Tensor {
     return new Tensor(dims, type, undefined, undefined, data);
   }
 
-  static fromOrtTensor(ortTensor: onnxruntime.experimental.fbs.Tensor) {
+  static fromOrtTensor(ortTensor: ortFbs.Tensor) {
     if (!ortTensor) {
       throw new Error('cannot construct Value from an empty tensor');
     }
@@ -371,22 +372,22 @@ function sizeof(type: Tensor.DataType): number {
   }
 }
 
-function sizeofProto(type: onnx.TensorProto.DataType|onnxruntime.experimental.fbs.TensorDataType): number {
+function sizeofProto(type: onnx.TensorProto.DataType|ortFbs.TensorDataType): number {
   switch (type) {
-    case onnx.TensorProto.DataType.UINT8|onnxruntime.experimental.fbs.TensorDataType.UINT8:
-    case onnx.TensorProto.DataType.INT8|onnxruntime.experimental.fbs.TensorDataType.INT8:
-    case onnx.TensorProto.DataType.BOOL|onnxruntime.experimental.fbs.TensorDataType.BOOL:
+    case onnx.TensorProto.DataType.UINT8|ortFbs.TensorDataType.UINT8:
+    case onnx.TensorProto.DataType.INT8|ortFbs.TensorDataType.INT8:
+    case onnx.TensorProto.DataType.BOOL|ortFbs.TensorDataType.BOOL:
       return 1;
-    case onnx.TensorProto.DataType.UINT16|onnxruntime.experimental.fbs.TensorDataType.UINT16:
-    case onnx.TensorProto.DataType.INT16|onnxruntime.experimental.fbs.TensorDataType.INT16:
+    case onnx.TensorProto.DataType.UINT16|ortFbs.TensorDataType.UINT16:
+    case onnx.TensorProto.DataType.INT16|ortFbs.TensorDataType.INT16:
       return 2;
-    case onnx.TensorProto.DataType.FLOAT|onnxruntime.experimental.fbs.TensorDataType.FLOAT:
-    case onnx.TensorProto.DataType.INT32|onnxruntime.experimental.fbs.TensorDataType.INT32:
-    case onnx.TensorProto.DataType.UINT32|onnxruntime.experimental.fbs.TensorDataType.UINT32:
+    case onnx.TensorProto.DataType.FLOAT|ortFbs.TensorDataType.FLOAT:
+    case onnx.TensorProto.DataType.INT32|ortFbs.TensorDataType.INT32:
+    case onnx.TensorProto.DataType.UINT32|ortFbs.TensorDataType.UINT32:
       return 4;
-    case onnx.TensorProto.DataType.INT64|onnxruntime.experimental.fbs.TensorDataType.INT64:
-    case onnx.TensorProto.DataType.DOUBLE|onnxruntime.experimental.fbs.TensorDataType.DOUBLE:
-    case onnx.TensorProto.DataType.UINT64|onnxruntime.experimental.fbs.TensorDataType.UINT64:
+    case onnx.TensorProto.DataType.INT64|ortFbs.TensorDataType.INT64:
+    case onnx.TensorProto.DataType.DOUBLE|ortFbs.TensorDataType.DOUBLE:
+    case onnx.TensorProto.DataType.UINT64|ortFbs.TensorDataType.UINT64:
       return 8;
     default:
       throw new Error(`cannot calculate sizeof() on type ${onnx.TensorProto.DataType[type]}`);
@@ -423,15 +424,15 @@ function dataviewConstructor(type: Tensor.DataType) {
 }
 
 // convert a long number to a 32-bit integer (cast-down)
-function longToNumber(i: Long, type: onnx.TensorProto.DataType|onnxruntime.experimental.fbs.TensorDataType): number {
+function longToNumber(i: Long, type: onnx.TensorProto.DataType|ortFbs.TensorDataType): number {
   // INT64, UINT32, UINT64
-  if (type === onnx.TensorProto.DataType.INT64 || type === onnxruntime.experimental.fbs.TensorDataType.INT64) {
+  if (type === onnx.TensorProto.DataType.INT64 || type === ortFbs.TensorDataType.INT64) {
     if (i.greaterThanOrEqual(2147483648) || i.lessThan(-2147483648)) {
       throw new TypeError('int64 is not supported');
     }
   } else if (
-      type === onnx.TensorProto.DataType.UINT32 || type === onnxruntime.experimental.fbs.TensorDataType.UINT32 ||
-      type === onnx.TensorProto.DataType.UINT64 || type === onnxruntime.experimental.fbs.TensorDataType.UINT64) {
+      type === onnx.TensorProto.DataType.UINT32 || type === ortFbs.TensorDataType.UINT32 ||
+      type === onnx.TensorProto.DataType.UINT64 || type === ortFbs.TensorDataType.UINT64) {
     if (i.greaterThanOrEqual(4294967296) || i.lessThan(0)) {
       throw new TypeError('uint64 is not supported');
     }
@@ -443,31 +444,29 @@ function longToNumber(i: Long, type: onnx.TensorProto.DataType|onnxruntime.exper
 }
 
 // read one value from TensorProto
-function readProto(
-    view: DataView, type: onnx.TensorProto.DataType|onnxruntime.experimental.fbs.TensorDataType,
-    byteOffset: number): number {
+function readProto(view: DataView, type: onnx.TensorProto.DataType|ortFbs.TensorDataType, byteOffset: number): number {
   switch (type) {
-    case onnx.TensorProto.DataType.BOOL|onnxruntime.experimental.fbs.TensorDataType.BOOL:
-    case onnx.TensorProto.DataType.UINT8|onnxruntime.experimental.fbs.TensorDataType.UINT8:
+    case onnx.TensorProto.DataType.BOOL|ortFbs.TensorDataType.BOOL:
+    case onnx.TensorProto.DataType.UINT8|ortFbs.TensorDataType.UINT8:
       return view.getUint8(byteOffset);
-    case onnx.TensorProto.DataType.INT8|onnxruntime.experimental.fbs.TensorDataType.INT8:
+    case onnx.TensorProto.DataType.INT8|ortFbs.TensorDataType.INT8:
       return view.getInt8(byteOffset);
-    case onnx.TensorProto.DataType.UINT16|onnxruntime.experimental.fbs.TensorDataType.UINT16:
+    case onnx.TensorProto.DataType.UINT16|ortFbs.TensorDataType.UINT16:
       return view.getUint16(byteOffset, true);
-    case onnx.TensorProto.DataType.INT16|onnxruntime.experimental.fbs.TensorDataType.INT16:
+    case onnx.TensorProto.DataType.INT16|ortFbs.TensorDataType.INT16:
       return view.getInt16(byteOffset, true);
-    case onnx.TensorProto.DataType.FLOAT|onnxruntime.experimental.fbs.TensorDataType.FLOAT:
+    case onnx.TensorProto.DataType.FLOAT|ortFbs.TensorDataType.FLOAT:
       return view.getFloat32(byteOffset, true);
-    case onnx.TensorProto.DataType.INT32|onnxruntime.experimental.fbs.TensorDataType.INT32:
+    case onnx.TensorProto.DataType.INT32|ortFbs.TensorDataType.INT32:
       return view.getInt32(byteOffset, true);
-    case onnx.TensorProto.DataType.UINT32|onnxruntime.experimental.fbs.TensorDataType.UINT32:
+    case onnx.TensorProto.DataType.UINT32|ortFbs.TensorDataType.UINT32:
       return view.getUint32(byteOffset, true);
-    case onnx.TensorProto.DataType.INT64|onnxruntime.experimental.fbs.TensorDataType.INT64:
+    case onnx.TensorProto.DataType.INT64|ortFbs.TensorDataType.INT64:
       return longToNumber(
           Long.fromBits(view.getUint32(byteOffset, true), view.getUint32(byteOffset + 4, true), false), type);
-    case onnx.TensorProto.DataType.DOUBLE|onnxruntime.experimental.fbs.TensorDataType.DOUBLE:
+    case onnx.TensorProto.DataType.DOUBLE|ortFbs.TensorDataType.DOUBLE:
       return view.getFloat64(byteOffset, true);
-    case onnx.TensorProto.DataType.UINT64|onnxruntime.experimental.fbs.TensorDataType.UINT64:
+    case onnx.TensorProto.DataType.UINT64|ortFbs.TensorDataType.UINT64:
       return longToNumber(
           Long.fromBits(view.getUint32(byteOffset, true), view.getUint32(byteOffset + 4, true), true), type);
     default:

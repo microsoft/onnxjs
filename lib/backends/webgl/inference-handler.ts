@@ -270,7 +270,13 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   unpack(input: TextureData): TextureData {
-    const key = `${input.shape}`;
+    // For unpacked kernel, cache it by using input's unpackedShape as cache key.
+    // Note that we need to use input.unpackedShape instead of input.shape here,
+    // as the shape infers the packed texture shape. Different unpackedShape can have the
+    // same packed texture shape. For example, for unpacked shape, both [2, 3] and
+    // [2, 4] has the same packed shape [1, 2], but those two shapes should have different
+    // unpack shaders.
+    const key = `${input.unpackedShape}`;
     let op = this.session.unpackOpCache.get(key);
     if (!op) {
       op = new WebGLUnpack();

@@ -138,28 +138,28 @@ interface TestData {
 function getTestData(): TestData[] {
   return [
     // test 2D tensor
-    // {
-    //   elementCount: 16,
-    //   axis: 0,
-    //   inputShape: [4, 4],
-    //   outputShape: [2, 8],
-    //   inputTextureShape: [2, 2],
-    //   outputTextureShape: [2, 4],
-    //   expectedOutput: new Float32Array([
-    //     1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16, 1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16
-    //   ]),
-    // },
-    // {
-    //   elementCount: 16,
-    //   axis: 1,
-    //   inputShape: [4, 4],
-    //   outputShape: [1, 16],
-    //   inputTextureShape: [2, 2],
-    //   outputTextureShape: [4, 2],
-    //   expectedOutput: new Float32Array([
-    //     1, 2, 5, 6, 1, 2, 5, 6, 3, 4, 7, 8, 3, 4, 7, 8, 9, 10, 13, 14, 9, 10, 13, 14, 11, 12, 15, 16, 11, 12, 15, 16
-    //   ]),
-    // },
+    {
+      elementCount: 16,
+      axis: 0,
+      inputShape: [4, 4],
+      outputShape: [2, 8],
+      inputTextureShape: [2, 2],
+      outputTextureShape: [2, 4],
+      expectedOutput: new Float32Array([
+        1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16, 1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 13, 14, 11, 12, 15, 16
+      ]),
+    },
+    {
+      elementCount: 16,
+      axis: 1,
+      inputShape: [4, 4],
+      outputShape: [1, 16],
+      inputTextureShape: [2, 2],
+      outputTextureShape: [4, 2],
+      expectedOutput: new Float32Array([
+        1, 2, 5, 6, 1, 2, 5, 6, 3, 4, 7, 8, 3, 4, 7, 8, 9, 10, 13, 14, 9, 10, 13, 14, 11, 12, 15, 16, 11, 12, 15, 16
+      ]),
+    },
     {
       elementCount: 8,
       axis: 0,

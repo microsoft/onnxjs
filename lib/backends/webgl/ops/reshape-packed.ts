@@ -10,6 +10,8 @@ import {ShapeUtil} from '../../../util';
 import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
+import {TextureLayout} from '../types';
+
 import {unpackFromChannel} from './packing_utils';
 // import {getCoordsDataType} from '../utils';
 
@@ -25,15 +27,25 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
     }
     const originInputShape = inputs[0].dims;
     const inputShape3D = processDims3D(inputs[0].dims);
-    inputs[0].dims = inputShape3D;
-    const inputLayout = handler.getOrCreateTextureLayout2(inputShape3D, 4, true, inputShape3D, true);
+    let inputLayout: TextureLayout;
+    if (originInputShape.length === 3) {
+      inputLayout = handler.getOrCreateTextureLayout(inputs[0], 4, true, originInputShape, true);
+    } else {
+      // if originShape is not a 3D shape, create texture layout from the processed shape.
+      inputLayout = handler.getOrCreateTextureLayout2(inputShape3D, 4, true, inputShape3D, true);
+    }
+
+    // inputs[0].dims = inputShape3D;
+    // const inputLayout = handler.getOrCreateTextureLayout2(inputShape3D, 4, true, inputShape3D, true);
 
     // TODO: double check inputs[1] should not be uploaded
-    const outputShape = ShapeUtil.calculateReshapedDims(originInputShape, inputs[1].integerData);
-    const squeezedOutputShape = processDims3D(outputShape);
+    this.outputShape = ShapeUtil.calculateReshapedDims(originInputShape, inputs[1].integerData);
+    const squeezedOutputShape = processDims3D(this.outputShape);
 
     const outputLayout = handler.createTextureLayoutFromShape(
         squeezedOutputShape, 4, squeezedOutputShape, {isPacked: true, reverseWH: true});
+    this.originalOutputLayout =
+        handler.createTextureLayoutFromShape(this.outputShape, 4, this.outputShape, {isPacked: true, reverseWH: true});
 
     let mainLoop = ``;
     // TODO: optimize the loop
@@ -98,10 +110,12 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
         [handler.getOrCreateTextureData(inputs[0], handler.getOrCreateTextureLayout(inputs[0], 1, false, [], false))];
     return {
       inputTextureDatas: inputTDs,
-      outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),
+      outputTextureData: handler.createTextureDataFromLayout(this.originalOutputLayout, inputTDs[0].tensor.type),
       uniformData: {}
     };
   }
+  protected outputShape: ReadonlyArray<number>;
+  private originalOutputLayout: TextureLayout;
 }
 
 function processDims3D(shpae: readonly number[]|ReadonlyArray<number>|Tensor.IntegerType): [number, number, number] {

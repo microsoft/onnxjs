@@ -158,9 +158,9 @@ export class ProgramManager {
       //       rEdge || cEdge ? 0. : getA(rc.x,rp1, cp1));
       //       }
       //     }`;
-      if (fragScript.indexOf('TEST TEST') !== -1) {
-        console.log(fragScript);
-      }
+      // if (fragScript.indexOf('TEST TEST') !== -1) {
+      //   console.log(fragScript);
+      // }
       const program = this.compile(fragScript);
       const artifact = {
         programInfo,

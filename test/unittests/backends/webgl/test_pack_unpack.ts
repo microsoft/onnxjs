@@ -313,9 +313,13 @@ function getTestData(isPacked = true): TestData[] {
     return [
       // test scalar
       // {elementCount: 1, inputShape: [], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},
-      {elementCount: 8, inputShape: [1, 4, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 1]},
-      {elementCount: 8, inputShape: [4, 2, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
-      {elementCount: 8, inputShape: [4, 1, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
+
+      // {elementCount: 8, inputShape: [1, 4, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [2, 1]},
+      // {elementCount: 8, inputShape: [4, 2, 1], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
+      // {elementCount: 8, inputShape: [4, 1, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
+
+      {elementCount: 8, inputShape: [4, 1, 1, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
+      // {elementCount: 8, inputShape: [4, 1, 2], outputShape: [], inputTextureShape: [], outputTextureShape: [4, 1]},
 
       // // test 1D tensor
       // {elementCount: 1, inputShape: [1], outputShape: [], inputTextureShape: [], outputTextureShape: [1, 1]},

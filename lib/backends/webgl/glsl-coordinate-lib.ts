@@ -1060,23 +1060,25 @@ export class CoordsGlslLib extends GlslLib {
     const stride1 = shape[2] * stride2;
     const stride0 = shape[1] * stride1;
 
-    const {newShape, keptDims} = squeezeShape(shape as number[]);
-    if (newShape.length < shape.length) {
-      const newInputShape = squeezeInputShape(shape, newShape);
-      const params = ['row', 'col', 'depth', 'depth2'];
-      // Deep copy of input texture layout.
-      const newInputLayout: TextureLayout = JSON.parse(JSON.stringify(inputLayout));
-      newInputLayout.unpackedShape = newInputShape;
-      // TODO: revisit the logic here to make it simpler
-      const source = `
-          ${this.getUnpackedSamplerFromInput(funcName, name, newInputLayout).routineBody}
-          float ${funcName}(int row, int col, int depth, int depth2) {
-            return ${funcName}(${getSqueezedParams(params, keptDims)});
-          }
-        `;
-      return new GlslLibRoutine(
-          source, ['coordinates.uvFromFlat', 'coordinates.sampleTexture', 'coordinates.coordsToOffset']);
-    }
+    //
+    // TODO: re-enable this shortcut once the index calculation bug is fixed.
+    //
+    // const {newShape, keptDims} = squeezeShape(shape as number[]);
+    // if (newShape.length < shape.length) {
+    //   const newInputShape = squeezeInputShape(shape, newShape);
+    //   const params = ['row', 'col', 'depth', 'depth2'];
+    //   // Deep copy of input texture layout.
+    //   const newInputLayout: TextureLayout = JSON.parse(JSON.stringify(inputLayout));
+    //   newInputLayout.unpackedShape = newInputShape;
+    //   const source = `
+    //       ${this.getUnpackedSamplerFromInput(funcName, name, newInputLayout).routineBody}
+    //       float ${funcName}(int row, int col, int depth, int depth2) {
+    //         return ${funcName}(${getSqueezedParams(params, keptDims)});
+    //       }
+    //     `;
+    //   return new GlslLibRoutine(
+    //       source, ['coordinates.uvFromFlat', 'coordinates.sampleTexture', 'coordinates.coordsToOffset']);
+    // }
 
     const texNumR = inputLayout.width;
     const texNumC = inputLayout.height;

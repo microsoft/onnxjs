@@ -32,7 +32,7 @@ export class WebGLIm2ColPacked implements WebGLOperator {
     const colDim = 3;
     const rank = this.convOutputShape.length;
     const im2colShape = [wshape[1] * wshape[2] * wshape[3], this.convOutputShape[2] * this.convOutputShape[3]];
-    const itemsPerBlockRow = xshape[1] * wshape[3];
+    const kernelSize = wshape[2] * wshape[3];
     const unpackChannel = unpackFromChannel();
     let unrolled = ``;
 
@@ -44,16 +44,16 @@ export class WebGLIm2ColPacked implements WebGLOperator {
 
           if(blockIndex < ${im2colShape[1]} && pos < ${im2colShape[0]}) {
             offsetY = int(blockIndex / (${this.convOutputShape[rank - 1]})) * ${this.strides[0]} - ${this.pads[1]};
-            d0 = offsetY + ${this.dilations[0]} * (pos / ${itemsPerBlockRow});
+            d0 = offsetY + ${this.dilations[0]} * (int(mod(float(pos), ${kernelSize}.)) / ${wshape[2]} );
 
             if(d0 < ${xshape[rowDim]} && d0 >= 0) {
               offsetX = int(mod(float(blockIndex), ${this.convOutputShape[rank - 1]}.) * ${this.strides[1]}. - ${
             this.pads[0]}.);
-              d1 = offsetX + ${this.dilations[1]} * (int(mod(float(pos), ${itemsPerBlockRow}.) / ${xshape[1]}.));
+              d1 = offsetX + ${this.dilations[1]} * (int(mod(mod(float(pos), ${kernelSize}.), ${wshape[2]}.)));
 
               if(d1 < ${xshape[colDim]} && d1 >= 0) {
 
-                ch = int(mod(float(pos), ${xshape[1]}.));
+                ch = int(float(pos)/ ${kernelSize}.);
                   innerDims = vec2(d0, d1);
                   result[${row * 2 + col}] = getChannel(
                     getA(0, ch, int(innerDims.x),
@@ -86,7 +86,7 @@ export class WebGLIm2ColPacked implements WebGLOperator {
       shaderSource,
       hasMain: true,
       expectPackedInputs: true,
-      expectPackedoutputs: true,
+      expectPackedOutputs: true,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {

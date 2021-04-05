@@ -984,6 +984,7 @@ export class CoordsGlslLib extends GlslLib {
         `;
       return new GlslLibRoutine(source, ['coordinates.sampleTexture', 'coordinates.coordsToOffset']);
     }
+
     if (texNumR === 1) {
       const source = `
           float ${funcName}(int row, int col) {

@@ -175,17 +175,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
         isPacked || reverseWH ? {isPacked, reverseWH} : undefined);
   }
 
-  getOrCreateTextureLayout2(
-      tensorShape: ReadonlyArray<number>,
-      channels: 1|4 = 1,
-      isPacked = false,
-      unpackedShape?: ReadonlyArray<number>,
-      reverseWH = false,
-      ): TextureLayout {
-    return this.createTextureLayoutFromShape(
-        channels === 1 || isPacked ? tensorShape : getPackedShape(tensorShape), channels, unpackedShape,
-        isPacked || reverseWH ? {isPacked, reverseWH} : undefined);
-  }
   /**
    * Create a TextureLayout object from shape.
    */

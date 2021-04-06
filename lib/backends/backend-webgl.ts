@@ -37,6 +37,7 @@ export class WebGLBackend implements Backend, WebGLOptions {
       if (typeof this.pack !== 'boolean') {
         this.pack = false;
       }
+      this.pack = true;
       Logger.verbose(
           'WebGLBackend',
           `Created WebGLContext: ${typeof this.glContext} with matmulMaxBatchSize: ${

@@ -16,7 +16,6 @@ import {WidthHeightPrefs} from './texture-layout-strategy';
 import {Artifact, RunData, TextureData, TextureLayout, WebGLOperator} from './types';
 import {getPackedShape} from './utils';
 
-
 export class WebGLInferenceHandler implements InferenceHandler {
   private packedTextureDataCache: Map<Tensor.Id, TextureData>;
   private unpackedTextureDataCache: Map<Tensor.Id, TextureData>;
@@ -37,7 +36,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
     return [runData.outputTextureData.tensor];
   }
 
-  runProgram(artifact: Artifact, runData: RunData) {
+  checkAndUpdateTextureForm(artifact: Artifact, runData: RunData) {
     // pack/unpack inputs
     for (let i = 0; i < runData.inputTextureDatas.length; ++i) {
       const input = runData.inputTextureDatas[i];
@@ -47,6 +46,18 @@ export class WebGLInferenceHandler implements InferenceHandler {
         runData.inputTextureDatas[i] = this.pack(input);
       }
     }
+  }
+  runProgram(artifact: Artifact, runData: RunData) {
+    // pack/unpack inputs
+    // for (let i = 0; i < runData.inputTextureDatas.length; ++i) {
+    //   const input = runData.inputTextureDatas[i];
+    //   if (input.isPacked && !artifact.programInfo.expectPackedInputs) {
+    //     runData.inputTextureDatas[i] = this.unpack(input);
+    //   } else if (!input.isPacked && artifact.programInfo.expectPackedInputs) {
+    //     runData.inputTextureDatas[i] = this.pack(input);
+    //   }
+    // }
+    this.checkAndUpdateTextureForm(artifact, runData);
     // runData.inputTextureDatas.forEach(input => {
     //   if (input.isPacked && !artifact.programInfo.expectPackedInputs) {
     //     // unpack this input
@@ -301,9 +312,9 @@ export class WebGLInferenceHandler implements InferenceHandler {
     const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
     this.runProgram(artifact, runData);
 
-    if (runData.outputTextureData.tensor.dims.length === 4 && runData.outputTextureData.tensor.dims[0] === 1 &&
-        runData.outputTextureData.tensor.dims[1] === 1 && runData.outputTextureData.tensor.dims[2] === 48 &&
-        runData.outputTextureData.tensor.dims[3] === 80) {
+    if (runData.inputTextureDatas[0].tensor.dims.length === 4 && runData.inputTextureDatas[0].tensor.dims[0] === 1 &&
+        runData.inputTextureDatas[0].tensor.dims[1] === 24 && runData.inputTextureDatas[0].tensor.dims[2] === 48 &&
+        runData.inputTextureDatas[0].tensor.dims[3] === 80) {
       const inputResult = createArrayFromTexture(
           this.session.textureManager.glContext.gl, runData.inputTextureDatas[0].texture, 80, 48);
       console.log('****pack input', inputResult[0], inputResult[4], inputResult[8], inputResult[12]);
@@ -316,7 +327,8 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   unpack(input: TextureData): TextureData {
-    const key = `${input.shape}`;
+    // const key = `${input.shape}`;
+    const key = `${input.unpackedShape}`;
     // console.log('[UNPACK] trying to retrieve UNPACK of key', key);
     let op = this.session.unpackOpCache.get(key);
     if (!op) {
@@ -334,13 +346,13 @@ export class WebGLInferenceHandler implements InferenceHandler {
     this.runProgram(artifact, runData);
 
     if (runData.outputTextureData.tensor.dims.length === 4 && runData.outputTextureData.tensor.dims[0] === 1 &&
-        runData.outputTextureData.tensor.dims[1] === 1 && runData.outputTextureData.tensor.dims[2] === 96 &&
-        runData.outputTextureData.tensor.dims[3] === 160) {
+        runData.outputTextureData.tensor.dims[1] === 24 && runData.outputTextureData.tensor.dims[2] === 48 &&
+        runData.outputTextureData.tensor.dims[3] === 80) {
       const inputResult = createArrayFromTexture(
-          this.session.textureManager.glContext.gl, runData.inputTextureDatas[0].texture, 80, 48);
+          this.session.textureManager.glContext.gl, runData.inputTextureDatas[0].texture, 40, 24);
       console.log('****unpack input', inputResult[0], inputResult[1], inputResult[4], inputResult[5]);
       const result =
-          createArrayFromTexture(this.session.textureManager.glContext.gl, runData.outputTextureData.texture, 96, 160);
+          createArrayFromTexture(this.session.textureManager.glContext.gl, runData.outputTextureData.texture, 48, 80);
       console.log('****unpack output', result[0], result[4], result[8], result[12]);
     }
 

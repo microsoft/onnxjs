@@ -143,9 +143,9 @@ export class ProgramManager {
       //       //outputColor = vec4(rc.z, 0, 0, 0);
       //       outputColor = vec4(getChannel(packedInput, vec2(rc.z,rc.w)), 0, 0, 0);
       //     }`;
-      if (fragScript.indexOf('test place holder resize') !== -1) {
-        console.log(fragScript);
-      }
+      // if (fragScript.indexOf('test place holder resize') !== -1) {
+      //   console.log(fragScript);
+      // }
       const program = this.compile(fragScript);
       const artifact = {
         programInfo,

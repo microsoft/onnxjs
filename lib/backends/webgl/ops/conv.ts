@@ -22,22 +22,9 @@ export class WebGLConv extends Conv {
       }
     }
     const runDatas = this.createRunDatas(inferenceHandler, this.artifacts.map(a => a.programInfo), inputs);
-
     inferenceHandler.checkAndUpdateTextureForm(this.artifacts[0], runDatas[0]);
     programManager.run(this.artifacts[0], runDatas[0]);
     programManager.run(this.artifacts[1], runDatas[1]);
-    // if (runDatas[1].outputTextureData.tensor.dims[3] === 80) {
-    //   console.log(
-    //       '*** from conv: ', runDatas[1].outputTextureData.tensor.dims, runDatas[1].outputTextureData.tensor.data[0],
-    //       runDatas[1].outputTextureData.tensor.data[1], runDatas[1].outputTextureData.tensor.data[2],
-    //       runDatas[1].outputTextureData.tensor.data[3]);
-    // }
-    // if (runDatas[1].outputTextureData.tensor.dims[1] === 1 && runDatas[1].outputTextureData.tensor.dims[3] === 80) {
-    //   console.log(
-    //       '*** from conv: ', runDatas[1].outputTextureData.tensor.dims, runDatas[1].outputTextureData.tensor.data[0],
-    //       runDatas[1].outputTextureData.tensor.data[1], runDatas[1].outputTextureData.tensor.data[2],
-    //       runDatas[1].outputTextureData.tensor.data[3]);
-    // }
     return [runDatas[1].outputTextureData.tensor];
   }
   createProgramInfos(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo[] {

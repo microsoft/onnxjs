@@ -1,10 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {flatbuffers} from 'flatbuffers';
 import Long from 'long';
 import {onnx} from 'onnx-proto';
 
 import {Graph} from './graph';
+import {onnxruntime} from './ortSchema/ort_generated';
 import {Tensor} from './tensor';
 import {TypedArray} from './types';
 
@@ -371,27 +373,28 @@ export class GemmUtil {
 }
 
 export class ProtoUtil {
-  static tensorDataTypeFromProto(typeProto: onnx.TensorProto.DataType): Tensor.DataType {
+  static tensorDataTypeFromProto(typeProto: onnx.TensorProto.DataType|
+                                 onnxruntime.experimental.fbs.TensorDataType): Tensor.DataType {
     switch (typeProto) {
-      case onnx.TensorProto.DataType.INT8:
+      case onnx.TensorProto.DataType.INT8|onnxruntime.experimental.fbs.TensorDataType.INT8:
         return 'int8';
-      case onnx.TensorProto.DataType.UINT8:
+      case onnx.TensorProto.DataType.UINT8|onnxruntime.experimental.fbs.TensorDataType.UINT8:
         return 'uint8';
-      case onnx.TensorProto.DataType.BOOL:
+      case onnx.TensorProto.DataType.BOOL|onnxruntime.experimental.fbs.TensorDataType.BOOL:
         return 'bool';
-      case onnx.TensorProto.DataType.INT16:
+      case onnx.TensorProto.DataType.INT16|onnxruntime.experimental.fbs.TensorDataType.INT16:
         return 'int16';
-      case onnx.TensorProto.DataType.UINT16:
+      case onnx.TensorProto.DataType.UINT16|onnxruntime.experimental.fbs.TensorDataType.UINT16:
         return 'uint16';
-      case onnx.TensorProto.DataType.INT32:
+      case onnx.TensorProto.DataType.INT32|onnxruntime.experimental.fbs.TensorDataType.INT32:
         return 'int32';
-      case onnx.TensorProto.DataType.UINT32:
+      case onnx.TensorProto.DataType.UINT32|onnxruntime.experimental.fbs.TensorDataType.UINT32:
         return 'uint32';
-      case onnx.TensorProto.DataType.FLOAT:
+      case onnx.TensorProto.DataType.FLOAT|onnxruntime.experimental.fbs.TensorDataType.FLOAT:
         return 'float32';
-      case onnx.TensorProto.DataType.DOUBLE:
+      case onnx.TensorProto.DataType.DOUBLE|onnxruntime.experimental.fbs.TensorDataType.DOUBLE:
         return 'float64';
-      case onnx.TensorProto.DataType.STRING:
+      case onnx.TensorProto.DataType.STRING|onnxruntime.experimental.fbs.TensorDataType.STRING:
         return 'string';
 
       // For INT64/UINT64, reduce their value to 32-bits.
@@ -417,11 +420,36 @@ export class ProtoUtil {
       shape: {dims: ProtoUtil.tensorDimsFromProto(valueType.shape!.dim!.map(d => d.dimValue!))}
     };
   }
+
+  static tensorDimsFromORTFormat(tensor: onnxruntime.experimental.fbs.Tensor) {
+    const dims = [];
+    for (let i = 0; i < tensor.dimsLength(); i++) {
+      dims.push(LongUtil.longToNumber(tensor.dims(i)!));
+    }
+    return dims;
+  }
+
+  static tensorAttributesFromORTFormat(node: onnxruntime.experimental.fbs.Node) {
+    const attributes = [];
+    for (let i = 0; i < node.attributesLength(); i++) {
+      attributes.push(node.attributes(i)!);
+    }
+    return attributes;
+  }
 }
 
 export class LongUtil {
-  static longToNumber(n: Long|number) {
-    return Long.isLong(n) ? n.toNumber() : n;
+  static longToNumber(n: Long|flatbuffers.Long|number) {
+    if (Long.isLong(n)) {
+      return n.toNumber();
+    } else if (n instanceof flatbuffers.Long) {
+      return Long.fromValue({low: n.low, high: n.high, unsigned: true}).toNumber();
+    }
+    return n;
+  }
+  // tslint:disable-next-line:no-any
+  static isLong(n: any) {
+    return Long.isLong(n) || n instanceof flatbuffers.Long;
   }
 }
 

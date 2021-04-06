@@ -31,12 +31,14 @@
   "author": "fs-eire",
   "license": "MIT",
   "dependencies": {
+    "flatbuffers": "^1.12.0",
     "onnx-proto": "^4.0.4",
     "platform": "^1.3.6"
   },
   "devDependencies": {
     "@chiragrupani/karma-chromium-edge-launcher": "^2.0.0",
     "@types/chai": "^4.2.12",
+    "@types/flatbuffers": "^1.10.0",
     "@types/fs-extra": "^9.0.1",
     "@types/karma": "^5.0.0",
     "@types/long": "^4.0.1",

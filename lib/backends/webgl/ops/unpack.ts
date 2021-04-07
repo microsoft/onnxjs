@@ -52,7 +52,7 @@ export class WebGLUnpack implements WebGLOperator {
       shaderSource,
       hasMain: true,
       expectPackedInputs: true,
-      expectPackedoutputs: false,
+      expectPackedOutputs: false,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {

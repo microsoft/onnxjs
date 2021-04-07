@@ -52,7 +52,7 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
       samplers: hasBias ? ['A', 'B', 'Bias'] : ['A', 'B'],
       shaderSource,
       expectPackedInputs: true,
-      expectPackedoutputs: true,
+      expectPackedOutputs: true,
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {

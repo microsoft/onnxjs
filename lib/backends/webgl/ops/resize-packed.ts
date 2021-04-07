@@ -199,6 +199,6 @@ function createResizeProgramInfo(
     shaderSource: shader,
     hasMain: true,
     expectPackedInputs: true,
-    expectPackedoutputs: true,
+    expectPackedOutputs: true,
   };
 }

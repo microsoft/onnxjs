@@ -128,14 +128,17 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
   private originalOutputLayout: TextureLayout;
 }
 
-function processDims3D(shpae: readonly number[]|ReadonlyArray<number>|Tensor.IntegerType): [number, number, number] {
+function processDims3D(shape: readonly number[]|ReadonlyArray<number>|Tensor.IntegerType): [number, number, number] {
+  if (shape.length === 0) {
+    return [1, 1, 1];
+  }
   // TODO: squeeze other shapes to 2D case
-  const batchDims = shpae.length >= 3 ? shpae.slice(0, shpae.length - 2) : [1];
+  const batchDims = shape.length >= 3 ? shape.slice(0, shape.length - 2) : [1];
   let batch = 1;
   for (let i = 0; i < batchDims.length; ++i) {
     batch *= batchDims[i];
   }
-  return [batch, shpae.length > 1 ? shpae[shpae.length - 2] : 1, shpae[shpae.length - 1]];
+  return [batch, shape.length > 1 ? shape[shape.length - 2] : 1, shape[shape.length - 1]];
 }
 function getReshapedInputCoords(shape: [number, number, number]): string {
   const strides = ShapeUtil.computeStrides(shape);

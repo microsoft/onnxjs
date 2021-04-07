@@ -13,10 +13,14 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const hasBias = inputs.length > 2;
-    const processBias = hasBias ? `value += getBiasAtOutCoords();` : ``;
+    const processBias = hasBias ? `value += vec4(getBias(a[0]*2).xx, getBias(a[0]*2).yy);` : ``;
     const aShape = inputs[0].dims;
     const bShape = inputs[1].dims;
     const outputShape = BroadcastUtil.calcShape(aShape, bShape, true);
+    console.log('outputShape', outputShape);
+    console.log('aShape', aShape);
+    console.log('bShape', bShape);
+
     if (!outputShape) {
       throw new Error('Can\'t use matmul on the given tensors');
     }
@@ -52,7 +56,8 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = inputs.map((t, i) => handler.getOrCreateTextureData(t, programInfo.inputLayouts[i], true));
+    const inputTDs =
+        inputs.map((t) => handler.getOrCreateTextureData(t, handler.getOrCreateTextureLayout(t, 1, false, [], true)));
     return {
       inputTextureDatas: inputTDs,
       outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),

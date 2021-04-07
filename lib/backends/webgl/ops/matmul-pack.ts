@@ -17,9 +17,6 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
     const aShape = inputs[0].dims;
     const bShape = inputs[1].dims;
     const outputShape = BroadcastUtil.calcShape(aShape, bShape, true);
-    console.log('outputShape', outputShape);
-    console.log('aShape', aShape);
-    console.log('bShape', bShape);
 
     if (!outputShape) {
       throw new Error('Can\'t use matmul on the given tensors');

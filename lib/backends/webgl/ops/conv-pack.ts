@@ -46,7 +46,7 @@ export class WebGLConvPacked extends Conv {
     const outputShape = WebGLConv.calcOutputShape(xshape, kshape, this.dilations, this.pads, this.strides);
     const im2col = new WebGLIm2ColPacked(outputShape, kshape, this.dilations, this.pads, this.strides);
     const im2colOutput: Tensor[] = im2col.run(inferenceHandler, [inputs[0], inputs[1]]);
-    console.log('conv_pack input 0-2:', inputs[0].data[0], inputs[0].data[1], inputs[0].data[2]);
+    // console.log('conv_pack input 0-2:', inputs[0].data[0], inputs[0].data[1], inputs[0].data[2]);
     //, inputs[0].data[3], inputs[0].data[4], inputs[0].data[5], inputs[0].data[6], inputs[0].data[7]);
     /*console.log(
         'im2col output 0-17:', im2colOutput[0].data[0], im2colOutput[0].data[1], im2colOutput[0].data[2],

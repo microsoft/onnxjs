@@ -15,10 +15,10 @@ import {unpackFromChannel} from './packing_utils';
 export class WebGLResizePacked extends Upsample implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     // return inferenceHandler.run(this, inputs);
-    console.log(
-        '**** input: ', inputs[0].dims, inputs[0].data[0], inputs[0].data[1], inputs[0].data[2], inputs[0].data[3]);
+    // console.log(
+    //  '**** input: ', inputs[0].dims, inputs[0].data[0], inputs[0].data[1], inputs[0].data[2], inputs[0].data[3]);
     const t = inferenceHandler.run(this, inputs);
-    console.log('**** output: ', t[0].dims, t[0].data[0], t[0].data[1], t[0].data[2], t[0].data[3], t[0].data[4]);
+    // console.log('**** output: ', t[0].dims, t[0].data[0], t[0].data[1], t[0].data[2], t[0].data[3], t[0].data[4]);
     return t;
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {

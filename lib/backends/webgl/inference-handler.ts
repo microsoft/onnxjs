@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {createArrayFromTexture} from '../../../test/unittests/backends/webgl/test_utils';
 import {InferenceHandler} from '../../backend';
 import {Logger} from '../../instrument';
 import {Tensor} from '../../tensor';
@@ -296,6 +295,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   pack(input: TextureData): TextureData {
+    console.log('packing... ');
     const key = `${input.shape}`;
     // console.log('[PACK] trying to retrieve PACK of key', key);
     let op = this.session.packOpCache.get(key);
@@ -312,18 +312,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
     this.runProgram(artifact, runData);
-
-    if (runData.inputTextureDatas[0].tensor.dims.length === 4 && runData.inputTextureDatas[0].tensor.dims[0] === 1 &&
-        runData.inputTextureDatas[0].tensor.dims[1] === 24 && runData.inputTextureDatas[0].tensor.dims[2] === 48 &&
-        runData.inputTextureDatas[0].tensor.dims[3] === 80) {
-      const inputResult = createArrayFromTexture(
-          this.session.textureManager.glContext.gl, runData.inputTextureDatas[0].texture, 80, 48);
-      console.log('****pack input', inputResult[0], inputResult[4], inputResult[8], inputResult[12]);
-      const result =
-          createArrayFromTexture(this.session.textureManager.glContext.gl, runData.outputTextureData.texture, 40, 24);
-      console.log('****pack output', result[0], result[1], result[2], result[3]);
-    }
-
     return runData.outputTextureData;
   }
 
@@ -334,6 +322,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
     // same packed texture shape. For example, for unpacked shape, both [2, 3] and
     // [2, 4] has the same packed shape [1, 2], but those two shapes should have different
     // unpack shaders.
+    console.log('unpacking ...');
     const key = `${input.unpackedShape}`;
     let op = this.session.unpackOpCache.get(key);
     if (!op) {
@@ -349,17 +338,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
     this.runProgram(artifact, runData);
-
-    if (runData.outputTextureData.tensor.dims.length === 4 && runData.outputTextureData.tensor.dims[0] === 1 &&
-        runData.outputTextureData.tensor.dims[1] === 24 && runData.outputTextureData.tensor.dims[2] === 48 &&
-        runData.outputTextureData.tensor.dims[3] === 80) {
-      const inputResult = createArrayFromTexture(
-          this.session.textureManager.glContext.gl, runData.inputTextureDatas[0].texture, 40, 24);
-      console.log('****unpack input', inputResult[0], inputResult[1], inputResult[4], inputResult[5]);
-      const result =
-          createArrayFromTexture(this.session.textureManager.glContext.gl, runData.outputTextureData.texture, 48, 80);
-      console.log('****unpack output', result[0], result[4], result[8], result[12]);
-    }
 
     return runData.outputTextureData;
   }

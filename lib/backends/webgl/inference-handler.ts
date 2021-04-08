@@ -18,9 +18,14 @@ import {getPackedShape} from './utils';
 export class WebGLInferenceHandler implements InferenceHandler {
   private packedTextureDataCache: Map<Tensor.Id, TextureData>;
   private unpackedTextureDataCache: Map<Tensor.Id, TextureData>;
+  private pack2unpackMap: Map<Tensor.Id, Tensor.Id>;
+  private unpack2packMap: Map<Tensor.Id, Tensor.Id>;
   constructor(public session: WebGLSessionHandler) {
     this.packedTextureDataCache = new Map();
     this.unpackedTextureDataCache = new Map();
+
+    this.pack2unpackMap = new Map();
+    this.unpack2packMap = new Map();
   }
 
   run(op: WebGLOperator, inputs: Tensor[]): Tensor[] {
@@ -295,7 +300,11 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   pack(input: TextureData): TextureData {
-    console.log('packing... ');
+    const cachedId = this.unpack2packMap.get(input.tensor.dataId);
+    if (cachedId) {
+      return this.packedTextureDataCache.get(cachedId)!;
+    }
+    // console.log('packing... ');
     const key = `${input.shape}`;
     // console.log('[PACK] trying to retrieve PACK of key', key);
     let op = this.session.packOpCache.get(key);
@@ -312,17 +321,22 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
     this.runProgram(artifact, runData);
+    this.unpack2packMap.set(input.tensor.dataId, runData.outputTextureData.tensor.dataId);
     return runData.outputTextureData;
   }
 
   unpack(input: TextureData): TextureData {
+    const cachedId = this.pack2unpackMap.get(input.tensor.dataId);
+    if (cachedId) {
+      return this.unpackedTextureDataCache.get(cachedId)!;
+    }
     // For unpacked kernel, cache it by using input's unpackedShape as cache key.
     // Note that we need to use input.unpackedShape instead of input.shape here,
     // as the shape infers the packed texture shape. Different unpackedShape can have the
     // same packed texture shape. For example, for unpacked shape, both [2, 3] and
     // [2, 4] has the same packed shape [1, 2], but those two shapes should have different
     // unpack shaders.
-    console.log('unpacking ...');
+    // console.log('unpacking ...');
     const key = `${input.unpackedShape}`;
     let op = this.session.unpackOpCache.get(key);
     if (!op) {
@@ -338,7 +352,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
     this.runProgram(artifact, runData);
-
+    this.pack2unpackMap.set(input.tensor.dataId, runData.outputTextureData.tensor.dataId);
     return runData.outputTextureData;
   }
 }

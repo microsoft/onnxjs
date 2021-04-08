@@ -26,6 +26,10 @@ export class WebGLIm2ColPacked implements WebGLOperator {
     return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
+    if (inputs.length !== 2) {
+      throw new Error(`Im2Col kernel should have two input tensors`);
+    }
+
     const xshape = inputs[0].dims.slice();
     const wshape = inputs[1].dims.slice();
     const rowDim = 2;

@@ -8,7 +8,7 @@ import {WebGLBatchNormalization} from './ops/batch-normalization';
 import * as binaryOps from './ops/binary-op';
 import {WebGLClip} from './ops/clip';
 import {WebGLConcat} from './ops/concat';
-// import {WebGLConv} from './ops/conv';
+import {WebGLConv} from './ops/conv';
 import {WebGLConvPacked} from './ops/conv-pack';
 import {WebGLDropout} from './ops/dropout';
 import {WebGLElu} from './ops/elu';
@@ -49,7 +49,7 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Ceil', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslCeil())],
   ['Clip', '', '6-10', () => new WebGLClip()],
   ['Concat', '', '4+', () => new WebGLConcat()],
-  ['Conv', '', '1+', () => new WebGLConvPacked()],
+  ['Conv', '', '1+', () => new WebGLConv()],
   ['ConvPacked', '', '1+', () => new WebGLConvPacked()],
   ['Cos', '', '7+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslCos())],
   ['Div', '', '7+', () => new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslDiv())],

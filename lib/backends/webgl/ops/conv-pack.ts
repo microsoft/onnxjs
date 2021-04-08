@@ -1,22 +1,30 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// import {assert} from 'chai';
 import {Attribute} from '../../../attribute';
 import {Logger} from '../../../instrument';
 import {Conv} from '../../../ops/conv';
 import {Tensor} from '../../../tensor';
 import {PoolConvUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {reshape} from '../webgl_utils';
+import {Artifact, ProgramInfo} from '../types';
 import {WebGLConv} from './conv';
 import {WebGLIm2ColPacked} from './im2col-pack';
 import {WebGLMatMulPacked} from './matmul-pack';
+import {WebGLReshapePacked} from './reshape-packed';
 
 export class WebGLConvPacked extends Conv {
+  protected artifacts: Artifact[];
+  protected programInfo: ProgramInfo[];
+
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
+    const programManager = inferenceHandler.session.programManager;
     const xshape = inputs[0].dims.slice();
-    if (xshape.length !== 4 || xshape[0] !== 1 || this.group !== 1 ||
-        (this.kernelShape[0] === 1 && this.kernelShape[1] === 1)) {
+    if (
+        xshape.length !== 4 || xshape[0] !== 1 || this.group !== 1
+        //|| (this.kernelShape[0] === 1 && this.kernelShape[1] === 1)) {
+    ) {
       const conv = new WebGLConv();
       const attrs = new Attribute(undefined);
       attrs.set('autoPad', 'string', this.autoPad);
@@ -45,30 +53,66 @@ export class WebGLConvPacked extends Conv {
 
     const outputShape = WebGLConv.calcOutputShape(xshape, kshape, this.dilations, this.pads, this.strides);
     const im2col = new WebGLIm2ColPacked(outputShape, kshape, this.dilations, this.pads, this.strides);
-    const im2colOutput: Tensor[] = im2col.run(inferenceHandler, [inputs[0], inputs[1]]);
-    // console.log('conv_pack input 0-2:', inputs[0].data[0], inputs[0].data[1], inputs[0].data[2]);
-    //, inputs[0].data[3], inputs[0].data[4], inputs[0].data[5], inputs[0].data[6], inputs[0].data[7]);
-    /*console.log(
-        'im2col output 0-17:', im2colOutput[0].data[0], im2colOutput[0].data[1], im2colOutput[0].data[2],
-        im2colOutput[0].data[3], im2colOutput[0].data[4], im2colOutput[0].data[5], im2colOutput[0].data[6],
-        im2colOutput[0].data[7], im2colOutput[0].data[8], im2colOutput[0].data[9], im2colOutput[0].data[10],
-        im2colOutput[0].data[11], im2colOutput[0].data[12], im2colOutput[0].data[13], im2colOutput[0].data[14],
-        im2colOutput[0].data[15], im2colOutput[0].data[16], im2colOutput[0].data[17]);*/
-    const kernelReshaped = reshape(inferenceHandler, inputs[1], [kshape[0], kshape[1] * kshape[2] * kshape[3]]);
-    /*console.log(
-        'kernel reshaped 0-7:', kernelReshaped.data[0], kernelReshaped.data[1], kernelReshaped.data[2],
-        kernelReshaped.data[3], kernelReshaped.data[4], kernelReshaped.data[5], kernelReshaped.data[6],
-        kernelReshaped.data[7]);*/
     const matmul = new WebGLMatMulPacked();
-    const matmulOutput = inputs.length === 3 ?
-        matmul.run(inferenceHandler, [kernelReshaped, im2colOutput[0], inputs[2]]) :
-        matmul.run(inferenceHandler, [kernelReshaped, im2colOutput[0]]);
-    const res = [reshape(inferenceHandler, matmulOutput[0], outputShape)];
-    /*console.log(
-        'ConvPack Output 0-7:', res[0].data[0], res[0].data[1], res[0].data[2], res[0].data[3], res[0].data[4],
-        res[0].data[5], res[0].data[6], res[0].data[7]);*/
-    // console.log('convPack output 61437-61439:', res[0].data[61437], res[0].data[61438], res[0].data[61439]);
+    const reshape = new WebGLReshapePacked();
+    // shape for kernel reshape
+    const shape = new Tensor([2], 'int32');
+    shape.data[0] = kshape[0];
+    shape.data[1] = kshape[1] * kshape[2] * kshape[3];
 
-    return res;
+    // assert(this.artifacts.length < 5, 'ConvPacked kernel shouldn\'t have more than 4 artifacts.');
+    if (!this.artifacts) {
+      this.artifacts = [];
+      this.programInfo = [];
+      this.programInfo[0] = im2col.createProgramInfo(inferenceHandler, [inputs[0], inputs[1]]);
+      this.artifacts[0] = programManager.build(this.programInfo[0]);
+
+      this.programInfo[1] = reshape.createProgramInfo(inferenceHandler, [inputs[1], shape]);
+      this.artifacts[1] = programManager.build(this.programInfo[1]);
+    }
+
+    // run im2col
+    const runDataIm2col = im2col.createRunData(inferenceHandler, this.programInfo[0], [inputs[0], inputs[1]]);
+    inferenceHandler.checkAndUpdateTextureForm(this.artifacts[0], runDataIm2col);
+    programManager.run(this.artifacts[0], runDataIm2col);
+    const im2colOutput = runDataIm2col.outputTextureData.tensor;
+
+    // reshape kernel
+    const runDataKernelReshape = reshape.createRunData(inferenceHandler, this.programInfo[1], [inputs[1], shape]);
+    inferenceHandler.checkAndUpdateTextureForm(this.artifacts[1], runDataKernelReshape);
+    programManager.run(this.artifacts[1], runDataKernelReshape);
+    const kernelReshaped = runDataKernelReshape.outputTextureData.tensor;
+
+    // run matmul
+    const hasBias = (inputs.length === 3);
+    if (this.artifacts.length === 2) {
+      this.programInfo[2] = matmul.createProgramInfo(
+          inferenceHandler, hasBias ? [kernelReshaped, im2colOutput, inputs[2]] : [kernelReshaped, im2colOutput]);
+      this.artifacts[2] = programManager.build(this.programInfo[2]);
+    }
+    const runDataMatmul = matmul.createRunData(
+        inferenceHandler, this.programInfo[2],
+        hasBias ? [kernelReshaped, im2colOutput, inputs[2]] : [kernelReshaped, im2colOutput]);
+    inferenceHandler.checkAndUpdateTextureForm(this.artifacts[2], runDataMatmul);
+    programManager.run(this.artifacts[2], runDataMatmul);
+    const matmulOutput = runDataMatmul.outputTextureData.tensor;
+
+    // reshape output
+    const outputShapeTensor = new Tensor([outputShape.length], 'int32');
+    // outputShape.map((i) => outputShapeTensor.data[i] = outputShape[i]);
+
+    for (let i = 0; i < outputShape.length; i++) {
+      outputShapeTensor.data[i] = outputShape[i];
+    }
+
+    if (this.artifacts.length === 3) {
+      this.programInfo[3] = reshape.createProgramInfo(inferenceHandler, [matmulOutput, outputShapeTensor]);
+      this.artifacts[3] = programManager.build(this.programInfo[3]);
+    }
+    const runDataOutputReshape =
+        reshape.createRunData(inferenceHandler, this.programInfo[3], [matmulOutput, outputShapeTensor]);
+    inferenceHandler.checkAndUpdateTextureForm(this.artifacts[3], runDataOutputReshape);
+    programManager.run(this.artifacts[3], runDataOutputReshape);
+    return [runDataOutputReshape.outputTextureData.tensor];
   }
 }

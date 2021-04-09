@@ -5,12 +5,14 @@ import {InferenceHandler} from '../../backend';
 import {Logger} from '../../instrument';
 import {Tensor} from '../../tensor';
 import {ShapeUtil} from '../../util';
+import {WebGLPack} from './ops/pack';
 
 import {WebGLUint8Encode} from './ops/uint8-encode';
+import {WebGLUnpack} from './ops/unpack';
 import {WebGLSessionHandler} from './session-handler';
 import {Encoder} from './texture-data-encoder';
 import {WidthHeightPrefs} from './texture-layout-strategy';
-import {TextureData, TextureLayout, WebGLOperator} from './types';
+import {Artifact, RunData, TextureData, TextureLayout, WebGLOperator} from './types';
 import {getPackedShape} from './utils';
 
 export class WebGLInferenceHandler implements InferenceHandler {
@@ -27,8 +29,37 @@ export class WebGLInferenceHandler implements InferenceHandler {
       this.session.programManager.setArtifact(op, artifact);
     }
     const runData = op.createRunData(this, artifact.programInfo, inputs);
-    this.session.programManager.run(artifact, runData);
+    this.runProgram(artifact, runData);
     return [runData.outputTextureData.tensor];
+  }
+
+  runProgram(artifact: Artifact, runData: RunData) {
+    // pack/unpack inputs
+    runData.inputTextureDatas.forEach(input => {
+      if (input.isPacked && !artifact.programInfo.expectPackedInputs) {
+        // unpack this input
+        const unpacked = this.unpack(input);
+        input.height = unpacked.height;
+        input.isPacked = unpacked.isPacked;
+        input.texture = unpacked.texture;
+        input.width = unpacked.width;
+
+      } else if (!input.isPacked && artifact.programInfo.expectPackedInputs) {
+        // pack this input
+        const packed = this.pack(input);
+        input.height = packed.height;
+        input.isPacked = packed.isPacked;
+        input.texture = packed.texture;
+        input.width = packed.width;
+      }
+    });
+
+    // output should match
+    if (!!runData.outputTextureData.isPacked !== !!artifact.programInfo.expectPackedOutputs) {
+      throw new Error(`output property packed inconsistent`);
+    }
+
+    this.session.programManager.run(artifact, runData);
   }
 
   /**
@@ -132,36 +163,59 @@ export class WebGLInferenceHandler implements InferenceHandler {
   /**
    * Create a TextureLayout object from a tensor. If a related texture data is found, returns the cached texture layout.
    */
-  getOrCreateTextureLayout(tensor: Tensor, channels: 1|2|3|4 = 1, unpackedShape?: ReadonlyArray<number>):
-      TextureLayout {
+  getOrCreateTextureLayout(
+      tensor: Tensor, channels: 1|4 = 1, isPacked = false, unpackedShape?: ReadonlyArray<number>,
+      reverseWH = false): TextureLayout {
     const td = this.getTextureData(tensor.dataId);
     if (td) {
       return td;
     }
     return this.createTextureLayoutFromShape(
-        channels === 1 ? tensor.dims.slice() : getPackedShape(tensor.dims.slice()), channels, unpackedShape);
+        channels === 1 || isPacked ? tensor.dims : getPackedShape(tensor.dims), channels, unpackedShape,
+        isPacked || reverseWH ? {isPacked, reverseWH} : undefined);
   }
+
   /**
    * Create a TextureLayout object from shape.
    */
   createTextureLayoutFromShape(
-      shape: ReadonlyArray<number>, channels: 1|2|3|4 = 1, unpackedShape?: ReadonlyArray<number>,
+      shape: ReadonlyArray<number>, channels: 1|4 = 1, unpackedShape?: ReadonlyArray<number>,
       prefs?: WidthHeightPrefs): TextureLayout {
-    const [width, height] = this.session.layoutStrategy.computeTextureWH(shape, prefs);
-    let inferredDims = shape;
-    if (shape.length === 0) {
+    const isPacked = !!(prefs && prefs.isPacked);
+    const [texWidth, texHeight] =
+        this.session.layoutStrategy.computeTextureWH(isPacked ? unpackedShape || shape : shape, prefs);
+    let [width, height] = [texWidth, texHeight];
+    if (prefs && prefs.reverseWH) {
+      width = texHeight;
+      height = texWidth;
+    }
+    const rank = shape.length;
+    let inferredDims = shape.slice(0);
+    if (rank === 0) {
       inferredDims = [1];
     }
     if (channels === 1) {
       // unpackedShape will take `shape` and not `inferredDims` so as to create a scalar Tensor if need be
       unpackedShape = shape;
+    } else if (isPacked) {
+      if (channels !== 4) {
+        throw new Error('a packed texture must be 4-channel');
+      }
+      unpackedShape = shape;
+      if (rank > 0) {
+        inferredDims[rank - 1] = Math.ceil(inferredDims[rank - 1] / 2);
+      }
+      if (rank > 1) {
+        inferredDims[rank - 2] = Math.ceil(inferredDims[rank - 2] / 2);
+      }
     } else if (!unpackedShape) {
       throw new Error('Unpacked shape is needed when using channels > 1');
     }
     return {
       width,
       height,
-      channels: channels ? channels : 1,
+      channels,
+      isPacked,
       shape: inferredDims,
       strides: ShapeUtil.computeStrides(inferredDims),
       unpackedShape
@@ -175,11 +229,56 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   readTexture(textureData: TextureData): Tensor.NumberType {
+    if (textureData.isPacked) {
+      return this.readTexture(this.unpack(textureData));
+    }
     if (!this.session.backend.glContext.isFloat32DownloadSupported) {
       const op = new WebGLUint8Encode();
       const uint8TD = op.runInternal(this, textureData);
       return this.session.textureManager.readUint8TextureAsFloat(uint8TD);
     }
     return this.session.textureManager.readTexture(textureData, textureData.tensor.type, textureData.channels);
+  }
+
+  pack(input: TextureData): TextureData {
+    const key = `${input.shape}`;
+    let op = this.session.packOpCache.get(key);
+    if (!op) {
+      op = new WebGLPack();
+      this.session.packOpCache.set(key, op);
+    }
+    let artifact = this.session.programManager.getArtifact(op);
+    if (!artifact) {
+      const programInfo = op.createProgramInfo(this, [input.tensor]);
+      artifact = this.session.programManager.build(programInfo);
+      this.session.programManager.setArtifact(op, artifact);
+    }
+    const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
+    this.runProgram(artifact, runData);
+    return runData.outputTextureData;
+  }
+
+  unpack(input: TextureData): TextureData {
+    // For unpacked kernel, cache it by using input's unpackedShape as cache key.
+    // Note that we need to use input.unpackedShape instead of input.shape here,
+    // as the shape infers the packed texture shape. Different unpackedShape can have the
+    // same packed texture shape. For example, for unpacked shape, both [2, 3] and
+    // [2, 4] has the same packed shape [1, 2], but those two shapes should have different
+    // unpack shaders.
+    const key = `${input.unpackedShape}`;
+    let op = this.session.unpackOpCache.get(key);
+    if (!op) {
+      op = new WebGLUnpack();
+      this.session.unpackOpCache.set(key, op);
+    }
+    let artifact = this.session.programManager.getArtifact(op);
+    if (!artifact) {
+      const programInfo = op.createProgramInfo(this, [input.tensor]);
+      artifact = this.session.programManager.build(programInfo);
+      this.session.programManager.setArtifact(op, artifact);
+    }
+    const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
+    this.runProgram(artifact, runData);
+    return runData.outputTextureData;
   }
 }

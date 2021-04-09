@@ -1,11 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {flatbuffers} from 'flatbuffers';
 import Long from 'long';
 import {onnx} from 'onnx-proto';
 
 import {Graph} from './graph';
+import {onnxruntime} from './ortSchema/ort_generated';
 import {Tensor} from './tensor';
+import {TypedArray} from './types';
 
 // check the inputs shape before running an OP.
 // return true when the inputs pass the check
@@ -21,6 +24,33 @@ export function checkInputsShape(inputs: Tensor[], ...expectedDimensions: number
     }
   }
   return true;
+}
+
+// Evaluates the given expression and asserts error message if condition is unmet.
+export function assert(expr: boolean, msg: () => string) {
+  if (!expr) {
+    throw new Error(typeof msg === 'string' ? msg : msg());
+  }
+}
+
+export class ArrayUtil {
+  /**
+   * Verifies if 2 input arrays contain the same elements.
+   * @param n1 Array 1
+   * @param n2 Array 2
+   * @returns Whether these 2 are equal
+   */
+  static arraysEqual(n1: ReadonlyArray<number>|TypedArray, n2: ReadonlyArray<number>|TypedArray) {
+    if (n1.length !== n2.length) {
+      return false;
+    }
+    for (let i = 0; i < n1.length; i++) {
+      if (n1[i] !== n2[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 export class MatMulUtil {
@@ -247,6 +277,27 @@ export class BroadcastUtil {
     }
     return true;
   }
+
+  /**
+   * Determine the broadcasted dims in input shape based on the given output shape.
+   * Note that this function only returns the broadcasted dims.
+   * @param inputShape The input shape
+   * @param outputShape The output shape
+   * @returns The broadcasted dims in input shape.
+   */
+  static getBroadcastDims(inputShape: ReadonlyArray<number>, outputShape: ReadonlyArray<number>): number[] {
+    const inRank = inputShape.length;
+    const dims: number[] = [];
+    for (let i = 0; i < inRank; i++) {
+      const dim = inRank - 1 - i;
+      const a = inputShape[dim] || 1;
+      const b = outputShape[outputShape.length - 1 - i] || 1;
+      if (b > 1 && a === 1) {
+        dims.unshift(dim);
+      }
+    }
+    return dims;
+  }
 }
 
 // copy array helper
@@ -322,27 +373,28 @@ export class GemmUtil {
 }
 
 export class ProtoUtil {
-  static tensorDataTypeFromProto(typeProto: onnx.TensorProto.DataType): Tensor.DataType {
+  static tensorDataTypeFromProto(typeProto: onnx.TensorProto.DataType|
+                                 onnxruntime.experimental.fbs.TensorDataType): Tensor.DataType {
     switch (typeProto) {
-      case onnx.TensorProto.DataType.INT8:
+      case onnx.TensorProto.DataType.INT8|onnxruntime.experimental.fbs.TensorDataType.INT8:
         return 'int8';
-      case onnx.TensorProto.DataType.UINT8:
+      case onnx.TensorProto.DataType.UINT8|onnxruntime.experimental.fbs.TensorDataType.UINT8:
         return 'uint8';
-      case onnx.TensorProto.DataType.BOOL:
+      case onnx.TensorProto.DataType.BOOL|onnxruntime.experimental.fbs.TensorDataType.BOOL:
         return 'bool';
-      case onnx.TensorProto.DataType.INT16:
+      case onnx.TensorProto.DataType.INT16|onnxruntime.experimental.fbs.TensorDataType.INT16:
         return 'int16';
-      case onnx.TensorProto.DataType.UINT16:
+      case onnx.TensorProto.DataType.UINT16|onnxruntime.experimental.fbs.TensorDataType.UINT16:
         return 'uint16';
-      case onnx.TensorProto.DataType.INT32:
+      case onnx.TensorProto.DataType.INT32|onnxruntime.experimental.fbs.TensorDataType.INT32:
         return 'int32';
-      case onnx.TensorProto.DataType.UINT32:
+      case onnx.TensorProto.DataType.UINT32|onnxruntime.experimental.fbs.TensorDataType.UINT32:
         return 'uint32';
-      case onnx.TensorProto.DataType.FLOAT:
+      case onnx.TensorProto.DataType.FLOAT|onnxruntime.experimental.fbs.TensorDataType.FLOAT:
         return 'float32';
-      case onnx.TensorProto.DataType.DOUBLE:
+      case onnx.TensorProto.DataType.DOUBLE|onnxruntime.experimental.fbs.TensorDataType.DOUBLE:
         return 'float64';
-      case onnx.TensorProto.DataType.STRING:
+      case onnx.TensorProto.DataType.STRING|onnxruntime.experimental.fbs.TensorDataType.STRING:
         return 'string';
 
       // For INT64/UINT64, reduce their value to 32-bits.
@@ -368,11 +420,36 @@ export class ProtoUtil {
       shape: {dims: ProtoUtil.tensorDimsFromProto(valueType.shape!.dim!.map(d => d.dimValue!))}
     };
   }
+
+  static tensorDimsFromORTFormat(tensor: onnxruntime.experimental.fbs.Tensor) {
+    const dims = [];
+    for (let i = 0; i < tensor.dimsLength(); i++) {
+      dims.push(LongUtil.longToNumber(tensor.dims(i)!));
+    }
+    return dims;
+  }
+
+  static tensorAttributesFromORTFormat(node: onnxruntime.experimental.fbs.Node) {
+    const attributes = [];
+    for (let i = 0; i < node.attributesLength(); i++) {
+      attributes.push(node.attributes(i)!);
+    }
+    return attributes;
+  }
 }
 
 export class LongUtil {
-  static longToNumber(n: Long|number) {
-    return Long.isLong(n) ? n.toNumber() : n;
+  static longToNumber(n: Long|flatbuffers.Long|number) {
+    if (Long.isLong(n)) {
+      return n.toNumber();
+    } else if (n instanceof flatbuffers.Long) {
+      return Long.fromValue({low: n.low, high: n.high, unsigned: true}).toNumber();
+    }
+    return n;
+  }
+  // tslint:disable-next-line:no-any
+  static isLong(n: any) {
+    return Long.isLong(n) || n instanceof flatbuffers.Long;
   }
 }
 

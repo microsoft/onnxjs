@@ -244,7 +244,7 @@ function modelTestFromFolder(
       const stat = fs.lstatSync(thisFullPath);
       if (stat.isFile()) {
         const ext = path.extname(thisPath);
-        if (ext.toLowerCase() === '.onnx') {
+        if (ext.toLowerCase() === '.onnx' || ext.toLowerCase() === '.ort') {
           if (modelUrl === null) {
             modelUrl = path.join(TEST_DATA_BASE, path.relative(TEST_ROOT, thisFullPath));
             if (FILE_CACHE_ENABLED && !fileCache[modelUrl] && stat.size <= FILE_CACHE_MAX_FILE_SIZE) {
@@ -324,7 +324,7 @@ function tryLocateModelTestFolder(searchPattern: string): string {
 
   // pick the first folder that matches the pattern
   for (const folderCandidate of folderCandidates) {
-    const modelCandidates = globby.sync('*.onnx', {onlyFiles: true, cwd: folderCandidate});
+    const modelCandidates = globby.sync('*.{onnx,ort}', {onlyFiles: true, cwd: folderCandidate});
     if (modelCandidates && modelCandidates.length === 1) {
       return folderCandidate;
     }
@@ -563,6 +563,9 @@ function saveConfig(config: Test.Config) {
   }
   if (config.options.webgl && config.options.webgl.textureCacheMode !== undefined) {
     setOptions += `onnx.backend.webgl.textureCacheMode = ${JSON.stringify(config.options.webgl.textureCacheMode)};`;
+  }
+  if (config.options.webgl && config.options.webgl.pack !== undefined) {
+    setOptions += `onnx.backend.webgl.pack = ${JSON.stringify(config.options.webgl.pack)};`;
   }
   if (config.options.wasm && config.options.wasm.worker !== undefined) {
     setOptions += `onnx.backend.wasm.worker = ${JSON.stringify(config.options.wasm.worker)};`;

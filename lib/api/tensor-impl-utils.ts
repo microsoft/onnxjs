@@ -15,7 +15,11 @@ export function fromInternalTensor(internalTensor: InternalTensor): ApiTensor {
       return new ApiTensor(new Float32Array(internalTensor.floatData), 'float32', internalTensor.dims);
     case 'string':
       return new ApiTensor(internalTensor.stringData, 'string', internalTensor.dims);
-    case 'int8' || 'uint8' || 'int16' || 'uint16' || 'uint32':
+    case 'int8':
+    case 'uint8':
+    case 'int16':
+    case 'uint16':
+    case 'uint32':
       return new ApiTensor(new Int32Array(internalTensor.integerData), 'int32', internalTensor.dims);
     case 'int32':
       return new ApiTensor(internalTensor.integerData as Int32Array, 'int32', internalTensor.dims);
@@ -57,7 +61,7 @@ export function matchElementType(type: TensorInterface.Type, element: TensorInte
 }
 
 export function validateIndices(indices: ReadonlyArray<number>) {
-  if (indices.length < 0 || indices.length > 6) {
+  if (indices.length > 6) {
     throw new RangeError(`Only rank 0 to 6 is supported for tensor shape.`);
   }
   for (const n of indices) {

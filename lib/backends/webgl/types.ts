@@ -27,6 +27,10 @@ export interface TextureLayout {
    */
   channels: 1|2|3|4;
   /**
+   * whether in packed mode or not
+   */
+  isPacked?: boolean;
+  /**
    * the normalized shape
    */
   shape: ReadonlyArray<number>;
@@ -73,6 +77,9 @@ export interface ProgramInfo {
    */
   hasMain?: boolean;
   params?: {[name: string]: number|number[]|string};
+
+  expectPackedInputs?: boolean;
+  expectPackedOutputs?: boolean;
 }
 
 export interface VariableInfo {

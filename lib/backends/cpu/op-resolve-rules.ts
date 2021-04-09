@@ -33,7 +33,7 @@ import {CpuTranspose} from './ops/transpose';
 import * as unaryOps from './ops/unary-op';
 import {CpuUnaryOp} from './ops/unary-op';
 import {CpuUnsqueeze} from './ops/unsqueeze';
-import {CpuUpsample, CpuUpsampleV9} from './ops/upsample';
+import {CpuUpsample} from './ops/upsample';
 
 export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Abs', '', '6+', () => new CpuUnaryOp(NUMBER_TYPES, unaryOps.abs)],
@@ -71,6 +71,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['InstanceNormalization', '', '6+', () => new CpuInstanceNormalization()],
   ['IsNaN', '', '9+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.isNan, undefined, 'bool')],
   ['LeakyRelu', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.leakyRelu, unaryOps.leakyReluInitializer)],
+  ['Less', '', '7+', () => new CpuBinaryOp(NUMBER_TYPES, (a, b) => a < b ? 1 : 0, undefined, 'bool')],
   ['Log', '', '6+', () => new CpuUnaryOp(FLOAT_TYPES, unaryOps.log)],
   ['LRN', '', '1+', () => new CpuLrn()],
   ['MatMul', '', '1+', () => new CpuMatMul()],
@@ -109,7 +110,7 @@ export const CPU_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Tile', '', '6+', () => new CpuTile()],
   ['Transpose', '', '1+', () => new CpuTranspose()],
   ['Unsqueeze', '', '1+', () => new CpuUnsqueeze()],
-  ['Upsample', '', '7-8', () => new CpuUpsample()],
-  ['Upsample', '', '9', () => new CpuUpsampleV9()],
+  ['Upsample', '', '7-8', () => new CpuUpsample(7)],
+  ['Upsample', '', '9', () => new CpuUpsample(9)],
   ['Xor', '', '7+', () => new CpuBinaryOp(['bool'], (e1, e2) => (e1 ^ e2))],
 ];

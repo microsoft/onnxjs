@@ -42,11 +42,16 @@ export class TextureManager {
     const textureDataType = this.toEncoderType(dataType);
 
     const encoder = this.glContext.getEncoder(textureDataType, layout.channels || 1, usage);
+    if (layout.isPacked && usage === Encoder.Usage.UploadOnly) {
+      throw new Error('not implemented');
+    }
+    const width = layout.width;
+    const height = layout.height;
 
     let key: string|undefined;
     let inUseTextures: WebGLTexture[]|undefined;
     if (this.config.reuseTextures) {
-      key = `${layout.width}x${layout.height}_${encoder.format}_${encoder.internalFormat}_${encoder.textureType}`;
+      key = `${width}x${height}_${encoder.format}_${encoder.internalFormat}_${encoder.textureType}`;
       inUseTextures = this.inUseTextures.get(key);
       if (!inUseTextures) {
         inUseTextures = [];
@@ -58,16 +63,14 @@ export class TextureManager {
         const texture = idleTextures.pop()!;
         inUseTextures.push(texture);
         if (usage === Encoder.Usage.UploadOnly) {
-          this.glContext.updateTexture(
-              texture, layout.width, layout.height, encoder, this.toTextureData(dataType, data)!);
+          this.glContext.updateTexture(texture, width, height, encoder, this.toTextureData(dataType, data)!);
         }
         return texture;
       }
     }
 
     Logger.verbose('TextureManager', `Creating new texture of size ${layout.width}x${layout.height}`);
-    const texture =
-        this.glContext.allocateTexture(layout.width, layout.height, encoder, this.toTextureData(dataType, data));
+    const texture = this.glContext.allocateTexture(width, height, encoder, this.toTextureData(dataType, data));
 
     if (this.config.reuseTextures) {
       inUseTextures!.push(texture);

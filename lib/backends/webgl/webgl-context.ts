@@ -280,8 +280,8 @@ export class WebGLContext {
       -1.0, 1.0,  0.0, 0.0, 1.0,  // upper left
       -1.0, -1.0, 0.0, 0.0, 0.0,  // lower left
       1.0,  1.0,  0.0, 1.0, 1.0,  // upper right
-      1.0,  -1.0, 0.0, 1.0, 0.0
-    ]);  // lower right
+      1.0,  -1.0, 0.0, 1.0, 0.0   // lower right
+    ]);
   }
   private createVertexbuffer(): WebGLBuffer {
     const gl = this.gl;

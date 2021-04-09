@@ -8,9 +8,10 @@ import {WebGLBatchNormalization} from './ops/batch-normalization';
 import * as binaryOps from './ops/binary-op';
 import {WebGLClip} from './ops/clip';
 import {WebGLConcat} from './ops/concat';
-import {WebGLConv} from './ops/conv';
+// import {WebGLConv} from './ops/conv';
 import {WebGLConvPacked} from './ops/conv-pack';
 import {WebGLDropout} from './ops/dropout';
+import {WebGLDummyOp} from './ops/dummyOp';
 import {WebGLElu} from './ops/elu';
 import {WebGLFlatten} from './ops/flatten';
 import {WebGLGather} from './ops/gather';
@@ -49,7 +50,7 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Ceil', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslCeil())],
   ['Clip', '', '6-10', () => new WebGLClip()],
   ['Concat', '', '4+', () => new WebGLConcat()],
-  ['Conv', '', '1+', () => new WebGLConv()],
+  ['Conv', '', '1+', () => new WebGLConvPacked()],
   ['ConvPacked', '', '1+', () => new WebGLConvPacked()],
   ['Cos', '', '7+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslCos())],
   ['Div', '', '7+', () => new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslDiv())],
@@ -88,7 +89,8 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['ReduceProd', '', '1+', () => new reduceOps.WebGLReduceProd()],
   ['ReduceSum', '', '1+', () => new reduceOps.WebGLReduceSum()],
   ['ReduceSumSquare', '', '1+', () => new reduceOps.WebGLReduceSumSquare()],
-  ['Relu', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslRelu())],
+  // ['Relu', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslRelu())],
+  ['Relu', '', '6+', () => new WebGLDummyOp()],
   ['Reshape', '', '5+', () => new WebGLReshapePacked()],
   ['Resize', '', '10', () => new WebGLResizePacked(10)],
   ['Resize', '', '11+', () => new WebGLResizePacked(11)],

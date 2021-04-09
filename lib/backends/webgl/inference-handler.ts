@@ -114,10 +114,16 @@ export class WebGLInferenceHandler implements InferenceHandler {
       if (!td) {
         if (isPacked) {
           const unpackedTextureLayout = this.getOrCreateTextureLayout(tensor, 1, false, [], true);
+          if (unpackedTextureLayout === undefined) {
+            console.log('***** testing data here');
+          }
           const unpackedTextureData = this.createTextureData(
               unpackedTextureLayout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly);
           td = this.pack(unpackedTextureData);
         } else {
+          if (layout === undefined) {
+            console.log('***** testing data here2');
+          }
           td = this.createTextureData(
               layout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly, isPacked);
         }
@@ -300,10 +306,21 @@ export class WebGLInferenceHandler implements InferenceHandler {
   }
 
   pack(input: TextureData): TextureData {
-    const cachedId = this.unpack2packMap.get(input.tensor.dataId);
-    if (cachedId) {
-      return this.packedTextureDataCache.get(cachedId)!;
+    const tensorId = input.tensor.dataId;
+    const isInitializer = this.session.isInitializer(tensorId);
+    if (isInitializer) {
+      const cachedId = this.session.unpack2packMap.get(input.tensor.dataId);
+      if (cachedId) {
+        return this.session.getTextureData(cachedId, true)!;
+      }
+
+    } else {
+      const cachedId = this.unpack2packMap.get(input.tensor.dataId);
+      if (cachedId) {
+        return this.getTextureData(cachedId, true)!;
+      }
     }
+
     // console.log('packing... ');
     const key = `${input.shape}`;
     // console.log('[PACK] trying to retrieve PACK of key', key);
@@ -321,15 +338,33 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
     this.runProgram(artifact, runData);
-    this.unpack2packMap.set(input.tensor.dataId, runData.outputTextureData.tensor.dataId);
+    if (isInitializer) {
+      // this.session.setTextureData(tensorId: Tensor.Id, textureData: TextureData, isPacked = false)
+      this.session.addInitializer(runData.outputTextureData.tensor.dataId);
+      this.setTextureData(runData.outputTextureData.tensor.dataId, runData.outputTextureData, true);
+      this.session.unpack2packMap.set(input.tensor.dataId, runData.outputTextureData.tensor.dataId);
+    } else {
+      this.unpack2packMap.set(input.tensor.dataId, runData.outputTextureData.tensor.dataId);
+    }
     return runData.outputTextureData;
   }
 
   unpack(input: TextureData): TextureData {
-    const cachedId = this.pack2unpackMap.get(input.tensor.dataId);
-    if (cachedId) {
-      return this.unpackedTextureDataCache.get(cachedId)!;
+    const tensorId = input.tensor.dataId;
+    const isInitializer = this.session.isInitializer(tensorId);
+    if (isInitializer) {
+      const cachedId = this.session.pack2unpackMap.get(input.tensor.dataId);
+      if (cachedId) {
+        return this.session.getTextureData(cachedId, false)!;
+      }
+
+    } else {
+      const cachedId = this.pack2unpackMap.get(input.tensor.dataId);
+      if (cachedId) {
+        return this.getTextureData(cachedId, false)!;
+      }
     }
+
     // For unpacked kernel, cache it by using input's unpackedShape as cache key.
     // Note that we need to use input.unpackedShape instead of input.shape here,
     // as the shape infers the packed texture shape. Different unpackedShape can have the
@@ -352,7 +387,14 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
     const runData = op.createRunData(this, artifact.programInfo, [input.tensor]);
     this.runProgram(artifact, runData);
-    this.pack2unpackMap.set(input.tensor.dataId, runData.outputTextureData.tensor.dataId);
+    if (isInitializer) {
+      this.session.addInitializer(runData.outputTextureData.tensor.dataId);
+      this.setTextureData(runData.outputTextureData.tensor.dataId, runData.outputTextureData, true);
+      this.session.pack2unpackMap.set(input.tensor.dataId, runData.outputTextureData.tensor.dataId);
+    } else {
+      this.pack2unpackMap.set(input.tensor.dataId, runData.outputTextureData.tensor.dataId);
+    }
+
     return runData.outputTextureData;
   }
 }

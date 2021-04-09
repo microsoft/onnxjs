@@ -40,7 +40,6 @@ export class TextureManager {
   createTextureFromLayout(
       dataType: Tensor.DataType, layout: TextureLayout, data?: Tensor.NumberType, usage?: Encoder.Usage) {
     const textureDataType = this.toEncoderType(dataType);
-
     const encoder = this.glContext.getEncoder(textureDataType, layout.channels || 1, usage);
     if (layout.isPacked && usage === Encoder.Usage.UploadOnly) {
       throw new Error('not implemented');

@@ -11,12 +11,17 @@ import {WebGLInferenceHandler} from '../inference-handler';
 import {Artifact, ProgramInfo} from '../types';
 import {WebGLConv} from './conv';
 import {WebGLIm2ColPacked} from './im2col-pack';
-import {WebGLMatMulPacked} from './matmul-pack';
+import {WebGLFusedMatMulPacked} from './matmul-pack';
 import {WebGLReshapePacked} from './reshape-packed';
 
 export class WebGLConvPacked extends Conv {
   protected artifacts: Artifact[];
   protected programInfo: ProgramInfo[];
+
+  protected fallbackArtifact: Artifact[];
+  protected fallbackProgramInfo: ProgramInfo[];
+
+  protected fallbackConv: WebGLConv;
 
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     const programManager = inferenceHandler.session.programManager;
@@ -25,16 +30,35 @@ export class WebGLConvPacked extends Conv {
         xshape.length !== 4 || xshape[0] !== 1 || this.group !== 1
         //|| (this.kernelShape[0] === 1 && this.kernelShape[1] === 1)) {
     ) {
-      const conv = new WebGLConv();
-      const attrs = new Attribute(undefined);
-      attrs.set('autoPad', 'string', this.autoPad);
-      attrs.set('dilation', 'ints', this.dilations);
-      attrs.set('group', 'int', this.group);
-      attrs.set('kernelShape', 'ints', this.kernelShape);
-      attrs.set('pads', 'ints', this.pads);
-      attrs.set('strides', 'ints', this.strides);
-      conv.initialize(attrs);
-      return conv.run(inferenceHandler, inputs);
+      if (!this.fallbackConv) {
+        this.fallbackConv = new WebGLConv();
+        const attrs = new Attribute(undefined);
+        attrs.set('autoPad', 'string', this.autoPad);
+        attrs.set('dilation', 'ints', this.dilations);
+        attrs.set('group', 'int', this.group);
+        attrs.set('kernelShape', 'ints', this.kernelShape);
+        attrs.set('pads', 'ints', this.pads);
+        attrs.set('strides', 'ints', this.strides);
+        this.fallbackConv.initialize(attrs);
+      }
+      return this.fallbackConv.run(inferenceHandler, inputs);
+
+      // if (!this.fallbackArtifact) {
+      //   this.fallbackArtifact = [];
+      //   this.fallbackProgramInfo = this.fallbackConv.createProgramInfos(inferenceHandler, inputs);
+      //   for (let i = 0; i < this.fallbackProgramInfo.length; ++i) {
+      //     const artifact = inferenceHandler.session.programManager.build(this.fallbackProgramInfo[i]);
+      //     this.artifacts.push(artifact);
+      //   }
+      // }
+
+      // const runDatas =
+      //     this.fallbackConv.createRunDatas(inferenceHandler, this.fallbackArtifact.map(a => a.programInfo), inputs);
+
+      // inferenceHandler.checkAndUpdateTextureForm(this.artifacts[0], runDatas[0]);
+      // programManager.run(this.fallbackArtifact[0], runDatas[0]);
+      // programManager.run(this.fallbackArtifact[1], runDatas[1]);
+      // return [runDatas[1].outputTextureData.tensor];
     }
 
     const kshape = inputs[1].dims.slice();
@@ -53,7 +77,8 @@ export class WebGLConvPacked extends Conv {
 
     const outputShape = WebGLConv.calcOutputShape(xshape, kshape, this.dilations, this.pads, this.strides);
     const im2col = new WebGLIm2ColPacked(outputShape, kshape, this.dilations, this.pads, this.strides);
-    const matmul = new WebGLMatMulPacked();
+    // const matmul = new WebGLMatMulPacked();
+    const matmul = new WebGLFusedMatMulPacked();
     const reshape = new WebGLReshapePacked();
     // shape for kernel reshape
     const shape = new Tensor([2], 'int32');
@@ -79,7 +104,7 @@ export class WebGLConvPacked extends Conv {
 
     // reshape kernel
     const runDataKernelReshape = reshape.createRunData(inferenceHandler, this.programInfo[1], [inputs[1], shape]);
-    inferenceHandler.checkAndUpdateTextureForm(this.artifacts[1], runDataKernelReshape);
+    // inferenceHandler.checkAndUpdateTextureForm(this.artifacts[1], runDataKernelReshape);
     programManager.run(this.artifacts[1], runDataKernelReshape);
     const kernelReshaped = runDataKernelReshape.outputTextureData.tensor;
 
@@ -111,7 +136,7 @@ export class WebGLConvPacked extends Conv {
     }
     const runDataOutputReshape =
         reshape.createRunData(inferenceHandler, this.programInfo[3], [matmulOutput, outputShapeTensor]);
-    inferenceHandler.checkAndUpdateTextureForm(this.artifacts[3], runDataOutputReshape);
+    // inferenceHandler.checkAndUpdateTextureForm(this.artifacts[3], runDataOutputReshape);
     programManager.run(this.artifacts[3], runDataOutputReshape);
     return [runDataOutputReshape.outputTextureData.tensor];
   }

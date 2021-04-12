@@ -58,10 +58,9 @@ To debug on an Android device, please refer to the following steps:
 - follow the steps above to debug.
 
 ### Performance profiling
+
 To profile the kernel level execution time, please run the following command:
+
 npm test -- model <model_name> --profile
 
-It generates raw perf data for each kernel, you may want use tools/parse-profiler.ts to parse it, e.g.:
-
-npm test -- model resnet50 -b=webgl --perf --profile > resnet50_perf.txt
-node tools/parse-profiler.js < resnet50_perf.txt > parsed_resnet50_perf.txt
+It generates raw perf data for each kernel, you may want use tools/parse-profiler.ts to parse it.

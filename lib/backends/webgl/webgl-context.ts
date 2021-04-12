@@ -479,7 +479,7 @@ export class WebGLContext {
       return query;
     } else {
       // TODO: add webgl 1 handling.
-      throw new Error(`Not support WebGL 2`);
+      throw new Error('WebGL1 profiling currently not supported.');
     }
   }
 
@@ -491,7 +491,7 @@ export class WebGLContext {
       return;
     } else {
       // TODO: add webgl 1 handling.
-      throw new Error(`Not support WebGL 2`);
+      throw new Error('WebGL1 profiling currently not supported');
     }
   }
 
@@ -505,7 +505,7 @@ export class WebGLContext {
       disjoint = gl2.getParameter(ext.GPU_DISJOINT_EXT);
     } else {
       // TODO: add webgl 1 handling.
-      throw new Error(`Not support WebGL 2`);
+      throw new Error('WebGL1 profiling currently not supported');
     }
 
     return available && !disjoint;
@@ -518,7 +518,7 @@ export class WebGLContext {
       timeElapsed = gl2.getQueryParameter(query, gl2.QUERY_RESULT);
     } else {
       // TODO: add webgl 1 handling.
-      throw new Error(`Not support WebGL 2`);
+      throw new Error('WebGL1 profiling currently not supported');
     }
     // return miliseconds
     return timeElapsed / 1000000;

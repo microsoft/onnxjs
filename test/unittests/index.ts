@@ -8,6 +8,7 @@ if (typeof window !== 'undefined' && !onnx.backend.webgl.disabled) {
   require('./backends/webgl/test_conv_new');
   require('./backends/webgl/test_pack_unpack');
   require('./backends/webgl/test_concat_packed');
+  require('./backends/webgl/test_reshape_packed');
 }
 
 // require('./api/onnx');

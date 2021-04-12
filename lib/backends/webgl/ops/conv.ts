@@ -22,6 +22,7 @@ export class WebGLConv extends Conv {
       }
     }
     const runDatas = this.createRunDatas(inferenceHandler, this.artifacts.map(a => a.programInfo), inputs);
+    inferenceHandler.checkAndUpdateTextureForm(this.artifacts[0], runDatas[0]);
     programManager.run(this.artifacts[0], runDatas[0]);
     programManager.run(this.artifacts[1], runDatas[1]);
     return [runDatas[1].outputTextureData.tensor];

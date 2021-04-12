@@ -22,6 +22,8 @@ export class WebGLUnpack implements WebGLOperator {
       throw new Error(`packed input texture must exist`);
     }
 
+    const inputLayout = handler.getOrCreateTextureLayout(inputs[0], 4, true);
+    const isScalar = (inputLayout.unpackedShape.length === 0);
     const outputLayout = handler.createTextureLayoutFromShape(inputTexture.unpackedShape);
     const outputShape = outputLayout.shape;
     const rank = outputShape.length;
@@ -30,7 +32,7 @@ export class WebGLUnpack implements WebGLOperator {
     const innerDims = channels.slice(-2);
     const coordsDataType = getCoordsDataType(rank);
     const unpackChannel = unpackFromChannel();
-    const sourceCoords = getSourceCoords(rank, channels);
+    const sourceCoords = isScalar ? '' : getSourceCoords(rank, channels);
     const coords = rank <= 1 ? 'rc' : `vec2(${innerDims.join(',')})`;
     const glsl = getGlsl(handler.session.backend.glContext.version);
     const shaderSource = `

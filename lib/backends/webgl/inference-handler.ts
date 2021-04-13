@@ -33,7 +33,13 @@ export class WebGLInferenceHandler implements InferenceHandler {
     return [runData.outputTextureData.tensor];
   }
 
-  runProgram(artifact: Artifact, runData: RunData) {
+  /**
+   * Check the runData's input texture mode with the program's artifact.
+   * If the artifact expects a packed input, while the RunData's input
+   * is unpacked, perform a pack operation on this input to align the
+   * texture mode with artifact. Similar on unpacked input.
+   */
+  checkAndUpdateTextureForm(artifact: Artifact, runData: RunData) {
     // pack/unpack inputs
     runData.inputTextureDatas.forEach(input => {
       if (input.isPacked && !artifact.programInfo.expectPackedInputs) {
@@ -53,6 +59,11 @@ export class WebGLInferenceHandler implements InferenceHandler {
         input.width = packed.width;
       }
     });
+  }
+  runProgram(artifact: Artifact, runData: RunData) {
+    // if the runData has different expected texture pack/unpack mode, process pack/unpack
+    // operation on the texture before executing the kernel.
+    this.checkAndUpdateTextureForm(artifact, runData);
 
     // output should match
     if (!!runData.outputTextureData.isPacked !== !!artifact.programInfo.expectPackedOutputs) {

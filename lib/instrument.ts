@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {WebGLContext} from './backends/webgl/webgl-context';
+
 export declare namespace Logger {
   export interface SeverityTypeMap {
     verbose: 'v';
@@ -232,17 +234,28 @@ export declare namespace Profiler {
   export type EventCategory = 'session'|'node'|'op'|'backend';
 
   export interface Event {
-    end(): void;
+    end(): void|Promise<void>;
   }
 }
+// TODO
+// class WebGLEvent implements Profiler.Event {}
 
 class Event implements Profiler.Event {
   constructor(
       public category: Profiler.EventCategory, public name: string, public startTime: number,
-      private endCallback: (e: Event) => void) {}
+      private endCallback: (e: Event) => void|Promise<void>, public timer?: WebGLQuery, public ctx?: WebGLContext) {}
 
   end() {
-    this.endCallback(this);
+    return this.endCallback(this);
+  }
+
+  async checkTimer(): Promise<number> {
+    if (this.ctx === undefined || this.timer === undefined) {
+      throw new Error('No webgl timer found');
+    } else {
+      this.ctx.endTimer();
+      return this.ctx.waitForQueryAndGetTime(this.timer);
+    }
   }
 }
 
@@ -283,11 +296,12 @@ export class Profiler {
   }
 
   // create an event scope for the specific function
-  event<T>(category: Profiler.EventCategory, name: string, func: () => T): T;
-  event<T>(category: Profiler.EventCategory, name: string, func: () => Promise<T>): Promise<T>;
+  event<T>(category: Profiler.EventCategory, name: string, func: () => T, ctx?: WebGLContext): T;
+  event<T>(category: Profiler.EventCategory, name: string, func: () => Promise<T>, ctx?: WebGLContext): Promise<T>;
 
-  event<T>(category: Profiler.EventCategory, name: string, func: () => T | Promise<T>): T|Promise<T> {
-    const event = this._started ? this.begin(category, name) : undefined;
+  event<T>(category: Profiler.EventCategory, name: string, func: () => T | Promise<T>, ctx?: WebGLContext): T
+      |Promise<T> {
+    const event = this._started ? this.begin(category, name, ctx) : undefined;
     let isPromise = false;
 
     try {
@@ -299,44 +313,67 @@ export class Profiler {
         return new Promise<T>((resolve, reject) => {
           (res as Promise<T>)
               .then(
-                  value => {  // fulfilled
+                  async value => {  // fulfilled
+                    if (event) {
+                      await event.end();
+                    }
                     resolve(value);
-                    if (event) {
-                      event.end();
-                    }
                   },
-                  reason => {  // rejected
-                    reject(reason);
+                  async reason => {  // rejected
                     if (event) {
-                      event.end();
+                      await event.end();
                     }
+                    reject(reason);
                   });
         });
       }
-
+      if (!isPromise && event) {
+        const eventRes = event.end();
+        if (eventRes && typeof eventRes.then === 'function') {
+          return new Promise<T>((resolve, reject) => {
+            (eventRes).then(
+                () => {  // fulfilled
+                  resolve(res);
+                },
+                (reason) => {  // rejected
+                  reject(reason);
+                });
+          });
+        }
+      }
       return res;
 
     } finally {
-      if (!isPromise && event) {
-        event.end();
-      }
     }
   }
 
   // begin an event
-  begin(category: Profiler.EventCategory, name: string): Event {
+  begin(category: Profiler.EventCategory, name: string, ctx?: WebGLContext): Event {
     if (!this._started) {
       throw new Error('profiler is not started yet');
     }
-    const startTime = now();
-    this.flush(startTime);
-    return new Event(category, name, startTime, e => this.end(e));
+    if (ctx === undefined) {
+      const startTime = now();
+      this.flush(startTime);
+      return new Event(category, name, startTime, e => this.endSync(e));
+    } else {
+      const timer: WebGLQuery = ctx.beginTimer();
+      return new Event(category, name, 0, e => this.end(e), timer, ctx);
+    }
   }
 
   // end the specific event
-  private end(event: Event) {
+  private async end(event: Event): Promise<void> {
+    const endTime: number = await event.checkTimer();
     if (this._timingEvents.length < this._maxNumberEvents) {
-      const endTime = now();
+      this._timingEvents.push(new EventRecord(event.category, event.name, event.startTime, endTime));
+      this.flush(endTime);
+    }
+  }
+
+  private endSync(event: Event): void {
+    const endTime: number = now();
+    if (this._timingEvents.length < this._maxNumberEvents) {
       this._timingEvents.push(new EventRecord(event.category, event.name, event.startTime, endTime));
       this.flush(endTime);
     }

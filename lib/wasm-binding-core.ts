@@ -76,8 +76,16 @@ export interface PerformanceData {
   endTimeFunc?: number;
 }
 
+// an interface to load wasm into global window instance
+declare global {
+  interface Window {
+    onnxWasmBindingJs?: OnnxWasmBindingJs;
+    onnxWasmThreadsBindingJs?: OnnxWasmBindingJs;
+  }
+}
+
 // some global parameters to deal with wasm binding initialization
-let binding: OnnxWasmBindingJs|undefined;
+let onnxWasmBindingJs: OnnxWasmBindingJs|undefined;
 let initialized = false;
 let initializing = false;
 
@@ -86,7 +94,7 @@ let initializing = false;
  *
  * this function should be called before any other calls to the WASM binding.
  */
-export function init(): Promise<void> {
+export function init(numWorkers: number): Promise<void> {
   if (initialized) {
     return Promise.resolve();
   }
@@ -97,19 +105,36 @@ export function init(): Promise<void> {
   initializing = true;
 
   return new Promise<void>((resolve, reject) => {
-    // tslint:disable-next-line:no-require-imports
-    binding = require('../dist/onnxruntime_wasm') as OnnxWasmBindingJs;
-    binding(binding).then(
-        () => {
-          // resolve init() promise
-          resolve();
-          initializing = false;
-          initialized = true;
-        },
-        err => {
-          initializing = false;
-          reject(err);
-        });
+    if (typeof window !== 'undefined') {  // Browser
+      if (numWorkers > 0 && window.hasOwnProperty('onnxWasmThreadsBindingJs')) {
+        onnxWasmBindingJs = window.onnxWasmThreadsBindingJs as OnnxWasmBindingJs;
+      } else if (window.hasOwnProperty('onnxWasmBindingJs')) {
+        onnxWasmBindingJs = window.onnxWasmBindingJs as OnnxWasmBindingJs;
+      }
+    } else {  // Node
+      if (numWorkers > 0) {
+        // tslint:disable-next-line:no-require-imports
+        onnxWasmBindingJs = require('../dist/onnxruntime_wasm_threads') as OnnxWasmBindingJs;
+      } else {
+        // tslint:disable-next-line:no-require-imports
+        onnxWasmBindingJs = require('../dist/onnxruntime_wasm') as OnnxWasmBindingJs;
+      }
+    }
+    if (typeof onnxWasmBindingJs === 'undefined') {
+      throw new Error('Wasm is not defined');
+    }
+    onnxWasmBindingJs(onnxWasmBindingJs)
+        .then(
+            () => {
+              // resolve init() promise
+              resolve();
+              initializing = false;
+              initialized = true;
+            },
+            err => {
+              initializing = false;
+              reject(err);
+            });
   });
 }
 
@@ -138,13 +163,13 @@ export class WasmBinding {
     if (size > this.numBytesAllocated) {
       this.expandMemory(size);
     }
-    WasmBinding.ccallSerialize(binding!.HEAPU8.subarray(this.ptr8, this.ptr8 + size), offset, params);
+    WasmBinding.ccallSerialize(onnxWasmBindingJs!.HEAPU8.subarray(this.ptr8, this.ptr8 + size), offset, params);
 
     const startTimeFunc = now();
     this.func(functionName, this.ptr8);
     const endTimeFunc = now();
 
-    WasmBinding.ccallDeserialize(binding!.HEAPU8.subarray(this.ptr8, this.ptr8 + size), offset, params);
+    WasmBinding.ccallDeserialize(onnxWasmBindingJs!.HEAPU8.subarray(this.ptr8, this.ptr8 + size), offset, params);
     const endTime = now();
 
     return {startTime, endTime, startTimeFunc, endTimeFunc};
@@ -164,14 +189,14 @@ export class WasmBinding {
     }
 
     // copy input memory (data) to WASM heap
-    binding!.HEAPU8.subarray(this.ptr8, this.ptr8 + size).set(data);
+    onnxWasmBindingJs!.HEAPU8.subarray(this.ptr8, this.ptr8 + size).set(data);
 
     const startTimeFunc = now();
     this.func(functionName, this.ptr8);
     const endTimeFunc = now();
 
     // copy Wasm heap to output memory (data)
-    data.set(binding!.HEAPU8.subarray(this.ptr8, this.ptr8 + size));
+    data.set(onnxWasmBindingJs!.HEAPU8.subarray(this.ptr8, this.ptr8 + size));
     const endTime = now();
 
     return {startTime, endTime, startTimeFunc, endTimeFunc};
@@ -179,7 +204,7 @@ export class WasmBinding {
 
   protected func(functionName: string, ptr8: number): void {
     // tslint:disable-next-line:no-any
-    const func = (binding as any)[functionName] as (data: number) => void;
+    const func = (onnxWasmBindingJs as any)[functionName] as (data: number) => void;
     func(ptr8);
   }
 
@@ -335,11 +360,11 @@ export class WasmBinding {
   private expandMemory(minBytesRequired: number) {
     // free already held memory if applicable
     if (this.ptr8 !== 0) {
-      binding!._free(this.ptr8);
+      onnxWasmBindingJs!._free(this.ptr8);
     }
     // current simplistic strategy is to allocate 2 times the minimum bytes requested
     this.numBytesAllocated = 2 * minBytesRequired;
-    this.ptr8 = binding!._malloc(this.numBytesAllocated);
+    this.ptr8 = onnxWasmBindingJs!._malloc(this.numBytesAllocated);
     if (this.ptr8 === 0) {
       throw new Error('Unable to allocate requested amount of memory. Failing.');
     }
@@ -350,13 +375,13 @@ export class WasmBinding {
       throw new Error(`wasm not initialized. please ensure 'init()' is called.`);
     }
     if (this.ptr8 !== 0) {
-      binding!._free(this.ptr8);
+      onnxWasmBindingJs!._free(this.ptr8);
     }
   }
 }
 
 export function getInstance(): OnnxWasmBindingJs {
-  return binding!;
+  return onnxWasmBindingJs!;
 }
 
 /**

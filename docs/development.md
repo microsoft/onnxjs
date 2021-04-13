@@ -23,7 +23,8 @@ Please follow the following steps to running tests:
 1. run `npm ci` in the root folder of the repo.
 2. (Optional) build WebAssembly backend:
    1. build ONNX Runtime WebAssembly and copy files "onnxruntime_wasm.\*" to /dist/.
-   2. run `npm run build` in the root folder of the repo to enable WebAssebmly features.
+   2. if building ONNX Runtime WebAssembly with multi-threads support, copy files "onnxruntime_wasm_threads.\*" to /dist/.
+   3. run `npm run build` in the root folder of the repo to enable WebAssebmly features.
 3. run `npm test` to run suite0 test cases and check the console output.
    - if (2) is not run, please run `npm test -- -b=cpu,webgl` to skip WebAssebmly tests
 

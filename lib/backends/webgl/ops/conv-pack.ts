@@ -13,20 +13,25 @@ import {WebGLIm2ColPacked} from './im2col-pack';
 import {WebGLMatMulPacked} from './matmul-pack';
 
 export class WebGLConvPacked extends Conv {
+  unpackedImpl: WebGLConv;
+  constructor() {
+    super();
+    this.unpackedImpl = new WebGLConv();
+  }
+
+  initialize(attributes: Attribute): void {
+    super.initialize(attributes);
+    this.unpackedImpl.initialize(attributes);
+  }
+
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     const xshape = inputs[0].dims.slice();
-    if (xshape.length !== 4 || xshape[0] !== 1 || this.group !== 1 ||
-        (this.kernelShape[0] === 1 && this.kernelShape[1] === 1)) {
-      const conv = new WebGLConv();
-      const attrs = new Attribute(undefined);
-      attrs.set('autoPad', 'string', this.autoPad);
-      attrs.set('dilation', 'ints', this.dilations);
-      attrs.set('group', 'int', this.group);
-      attrs.set('kernelShape', 'ints', this.kernelShape);
-      attrs.set('pads', 'ints', this.pads);
-      attrs.set('strides', 'ints', this.strides);
-      conv.initialize(attrs);
-      return conv.run(inferenceHandler, inputs);
+    const fallback =
+        (xshape.length !== 4 || xshape[0] !== 1 || this.group !== 1 ||
+         (this.kernelShape[0] === 1 && this.kernelShape[1] === 1));
+
+    if (fallback || !inferenceHandler.session.pack) {
+      return this.unpackedImpl.run(inferenceHandler, inputs);
     }
 
     const kshape = inputs[1].dims.slice();

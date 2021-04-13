@@ -6,10 +6,20 @@ import {Tensor} from '../../../tensor';
 import {BroadcastUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
+import {WebGLMatMulPacked} from './matmul-pack';
 
 export class WebGLMatMul extends MatMul implements WebGLOperator {
+  packedImpl: WebGLMatMulPacked;
+  constructor() {
+    super();
+    this.packedImpl = new WebGLMatMulPacked();
+  }
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return inferenceHandler.run(this, inputs);
+    if (inferenceHandler.session.pack) {
+      return inferenceHandler.run(this.packedImpl, inputs);
+    } else {
+      return inferenceHandler.run(this, inputs);
+    }
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const aShape = inputs[0].dims;

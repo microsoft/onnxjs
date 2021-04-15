@@ -105,7 +105,7 @@ export class WebGLConvPacked extends Conv {
 
     // reshape kernel
     const runDataKernelReshape = reshape.createRunData(inferenceHandler, this.programInfo[1], [inputs[1], shape]);
-    // inferenceHandler.checkAndUpdateTextureForm(this.artifacts[1], runDataKernelReshape);
+    inferenceHandler.checkAndUpdateTextureForm(this.artifacts[1], runDataKernelReshape);
     programManager.run(this.artifacts[1], runDataKernelReshape);
     const kernelReshaped = runDataKernelReshape.outputTextureData.tensor;
 
@@ -137,7 +137,7 @@ export class WebGLConvPacked extends Conv {
     }
     const runDataOutputReshape =
         reshape.createRunData(inferenceHandler, this.programInfo[3], [matmulOutput, outputShapeTensor]);
-    // inferenceHandler.checkAndUpdateTextureForm(this.artifacts[3], runDataOutputReshape);
+    inferenceHandler.checkAndUpdateTextureForm(this.artifacts[3], runDataOutputReshape);
     programManager.run(this.artifacts[3], runDataOutputReshape);
     return [runDataOutputReshape.outputTextureData.tensor];
   }

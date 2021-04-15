@@ -19,12 +19,10 @@ import {WebGLImageScaler} from './ops/image-scaler';
 import {WebGLInstanceNormalization} from './ops/instance-normalization';
 import {WebGLLeakyRelu} from './ops/leaky-relu';
 import {WebGLMatMul} from './ops/matmul';
-import {WebGLMatMulPacked} from './ops/matmul-pack';
 import {WebGLPad} from './ops/pad';
 import {WebGLAveragePool, WebGLGlobalAveragePool, WebGLGlobalMaxPool, WebGLMaxPool} from './ops/pool';
 import * as reduceOps from './ops/reduce';
 import {WebGLReshape} from './ops/reshape';
-// import {WebGLReshapePacked} from './ops/reshape-packed';
 import {WebGLResizePacked} from './ops/resize-packed';
 import {WebGLSlice, WebGLSliceV10} from './ops/slice';
 import {WebGLSoftmax} from './ops/softmax';
@@ -72,7 +70,6 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Less', '', '7+', () => new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslLess(), undefined, 'bool')],
   ['Log', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslLog())],
   ['MatMul', '', '1+', () => new WebGLMatMul()],
-  ['MatMulPacked', '', '1+', () => new WebGLMatMulPacked()],
   ['MaxPool', '', '1-9', () => new WebGLMaxPool()],  // TODO: support new attributes for MaxPool-8 and MaxPool-10
   ['Mul', '', '7+', () => new binaryOps.WebGLBinaryOp(NUMBER_TYPES, binaryOps.glslMul())],
   ['Neg', '', '6+', () => new unaryOps.WebGLUnaryOp(NUMBER_TYPES, unaryOps.glslNeg())],

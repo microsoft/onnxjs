@@ -6,7 +6,7 @@ import {Tensor} from '../../../tensor';
 import {BroadcastUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
-
+// TODO: fix broadcasting
 export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     return inferenceHandler.run(this, inputs);
@@ -22,20 +22,20 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
       throw new Error('Can\'t use matmul on the given tensors');
     }
     const rank = outputShape.length;
-    const arank = aShape.length;
-    const brank = bShape.length;
+    const aRank = aShape.length;
+    const bRank = bShape.length;
     const sharedDim = aShape[aShape.length - 1];
     const shaderSource = `
       vec4 process(int indices[${rank}]) {
-          int a[${arank}];
-          int b[${brank}];
+          int a[${aRank}];
+          int b[${bRank}];
           bcastMatmulIndices_A(indices, a);
           bcastMatmulIndices_B(indices, b);
 
           vec4 value;
           for (int k=0; k<((${sharedDim}+1)/2); ++k) {
-              a[${arank - 1}] = k;
-              b[${brank - 2}] = k;
+              a[${aRank - 1}] = k;
+              b[${bRank - 2}] = k;
               value += _A_Pack(a).rrbb * _B_Pack(b).rgrg;
               value += _A_Pack(a).ggaa * _B_Pack(b).baba;
           }

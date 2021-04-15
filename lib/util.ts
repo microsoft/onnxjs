@@ -1080,6 +1080,7 @@ export class PoolConvUtil {
     if (!autoPad) {
       return;
     }
+
     if (pads.length !== 2 * (inputDims.length - 2)) {
       throw new Error('length of pads should be twice the length of data dimensions');
     }

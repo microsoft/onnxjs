@@ -11,7 +11,7 @@ import {WebGLConcat} from './ops/concat';
 // import {WebGLConv} from './ops/conv';
 import {WebGLConvPacked} from './ops/conv-pack';
 import {WebGLDropout} from './ops/dropout';
-import {WebGLDummyOp} from './ops/dummyOp';
+// import {WebGLDummyOp} from './ops/dummyOp';
 import {WebGLElu} from './ops/elu';
 import {WebGLFlatten} from './ops/flatten';
 import {WebGLGather} from './ops/gather';
@@ -89,8 +89,8 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['ReduceProd', '', '1+', () => new reduceOps.WebGLReduceProd()],
   ['ReduceSum', '', '1+', () => new reduceOps.WebGLReduceSum()],
   ['ReduceSumSquare', '', '1+', () => new reduceOps.WebGLReduceSumSquare()],
-  // ['Relu', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslRelu())],
-  ['Relu', '', '6+', () => new WebGLDummyOp()],
+  ['Relu', '', '6+', () => new unaryOps.WebGLUnaryOp(FLOAT_TYPES, unaryOps.glslRelu())],
+  // ['Relu', '', '6+', () => new WebGLDummyOp()],
   ['Reshape', '', '5+', () => new WebGLReshapePacked()],
   ['Resize', '', '10', () => new WebGLResizePacked(10)],
   ['Resize', '', '11+', () => new WebGLResizePacked(11)],

@@ -11,7 +11,8 @@ import {WebGLInferenceHandler} from '../inference-handler';
 import {Artifact, ProgramInfo} from '../types';
 import {WebGLConv} from './conv';
 import {WebGLIm2ColPacked} from './im2col-pack';
-import {WebGLFusedMatMulPacked} from './matmul-pack';
+import {WebGLMatMulPacked} from './matmul-pack';
+// import {WebGLMatMul} from './matmul';
 import {WebGLReshapePacked} from './reshape-packed';
 
 export class WebGLConvPacked extends Conv {
@@ -77,8 +78,8 @@ export class WebGLConvPacked extends Conv {
 
     const outputShape = WebGLConv.calcOutputShape(xshape, kshape, this.dilations, this.pads, this.strides);
     const im2col = new WebGLIm2ColPacked(outputShape, kshape, this.dilations, this.pads, this.strides);
-    // const matmul = new WebGLMatMulPacked();
-    const matmul = new WebGLFusedMatMulPacked();
+    const matmul = new WebGLMatMulPacked();
+    // const matmul = new WebGLFusedMatMulPacked();
     const reshape = new WebGLReshapePacked();
     // shape for kernel reshape
     const shape = new Tensor([2], 'int32');

@@ -58,9 +58,9 @@ export class WebGLContext {
   allocateTexture(width: number, height: number, encoder: DataEncoder, data?: Encoder.DataArrayType): WebGLTexture {
     const gl = this.gl;
     // create the texture
-    if (data) {
-      console.log('**** upload texture [allocateTexture]');
-    }
+    // if (data) {
+    //   console.log('**** upload texture [allocateTexture]');
+    // }
 
     const texture = gl.createTexture();
     // bind the texture so the following methods effect this texture.
@@ -84,7 +84,7 @@ export class WebGLContext {
     const gl = this.gl;
     gl.bindTexture(gl.TEXTURE_2D, texture);
     const buffer = encoder.encode(data, width * height);
-    console.log('**** upload texture [updateTexture]');
+    // console.log('**** upload texture [updateTexture]');
     gl.texSubImage2D(
         gl.TEXTURE_2D,
         0,  // level
@@ -123,7 +123,7 @@ export class WebGLContext {
         gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture,
         0);  // 0, we aren't using MIPMAPs
     // TODO: Check if framebuffer is ready
-    console.log('***** read pixels');
+    // console.log('***** read pixels');
     gl.readPixels(0, 0, width, height, gl.RGBA, encoder.textureType, buffer);
     this.checkError();
     // unbind FB
@@ -175,7 +175,7 @@ export class WebGLContext {
     }
 
     gl.shaderSource(shader, shaderSource);
-    console.log('***** compile shader');
+    // console.log('***** compile shader');
     gl.compileShader(shader);
     if (gl.getShaderParameter(shader, gl.COMPILE_STATUS) === false) {
       throw new Error(`Failed to compile shader: ${gl.getShaderInfoLog(shader)}`);

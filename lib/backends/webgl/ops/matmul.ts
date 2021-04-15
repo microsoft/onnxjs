@@ -10,16 +10,41 @@ import {WebGLMatMulPacked} from './matmul-pack';
 
 export class WebGLMatMul extends MatMul implements WebGLOperator {
   packedImpl: WebGLMatMulPacked;
+  unpackedImpl: WebGLUnpackedMatMul;
   constructor() {
     super();
     this.packedImpl = new WebGLMatMulPacked();
+    this.unpackedImpl = new WebGLUnpackedMatMul();
   }
+
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     if (inferenceHandler.session.pack) {
       return inferenceHandler.run(this.packedImpl, inputs);
     } else {
-      return inferenceHandler.run(this, inputs);
+      return inferenceHandler.run(this.unpackedImpl, inputs);
     }
+  }
+
+  createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
+    if (handler.session.pack && inputs[0].dims.length > 1) {
+      return this.packedImpl.createProgramInfo(handler, inputs);
+    } else {
+      return this.unpackedImpl.createProgramInfo(handler, inputs);
+    }
+  }
+
+  createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
+    if (handler.session.pack && inputs[0].dims.length > 1) {
+      return this.packedImpl.createRunData(handler, programInfo, inputs);
+    } else {
+      return this.unpackedImpl.createRunData(handler, programInfo, inputs);
+    }
+  }
+}
+
+export class WebGLUnpackedMatMul extends MatMul implements WebGLOperator {
+  run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
+    return inferenceHandler.run(this, inputs);
   }
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const aShape = inputs[0].dims;

@@ -6,7 +6,7 @@ import {Tensor} from '../../../tensor';
 import {BroadcastUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
-
+// TODO: fix broadcasting
 export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     return inferenceHandler.run(this, inputs);

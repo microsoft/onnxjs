@@ -1,16 +1,140 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {Attribute} from '../../../attribute';
 import {Logger} from '../../../instrument';
 import {Conv} from '../../../ops/conv';
 import {Tensor} from '../../../tensor';
 import {PoolConvUtil} from '../../../util';
 import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {Artifact, ProgramInfo, RunData, TextureLayout} from '../types';
+import {Artifact, ProgramInfo, RunData, TextureLayout, WebGLOperator} from '../types';
 import {WebGLContext} from '../webgl-context';
 
 export class WebGLConv extends Conv {
+  unpackedGroupedConvImpl: WebGLUnpackedGroupedConv;
+  unpackedConvImpl: WebGLUnpackedConv;
+
+  constructor() {
+    super();
+    this.unpackedGroupedConvImpl = new WebGLUnpackedGroupedConv();
+    this.unpackedConvImpl = new WebGLUnpackedConv();
+  }
+
+  initialize(attributes: Attribute): void {
+    super.initialize(attributes);
+    this.unpackedGroupedConvImpl.initialize(attributes);
+    this.unpackedConvImpl.initialize(attributes);
+  }
+
+  run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
+    if (this.group > 1) {
+      return inferenceHandler.run(this.unpackedGroupedConvImpl, inputs);
+    } else {
+      return this.unpackedConvImpl.run(inferenceHandler, inputs);
+    }
+  }
+
+  createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo[] {
+    if (this.group > 1) {
+      return [this.unpackedGroupedConvImpl.createProgramInfo(handler, inputs)];
+    } else {
+      return this.unpackedConvImpl.createProgramInfos(handler, inputs);
+    }
+  }
+  createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo[], inputs: Tensor[]): RunData[] {
+    if (handler.session.pack && inputs[0].dims.length > 1) {
+      return [this.unpackedGroupedConvImpl.createRunData(handler, programInfo[0], inputs)];
+    } else {
+      return this.unpackedConvImpl.createRunDatas(handler, programInfo, inputs);
+    }
+  }
+}
+export class WebGLUnpackedGroupedConv extends Conv implements WebGLOperator {
+  run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
+    console.log('yes, it is.');
+    return inferenceHandler.run(this, inputs);
+  }
+
+  createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
+    const hasBias = inputs.length > 2;
+    const processBias = hasBias ? `dotProd += getBias(output_channel);` : ``;
+    const xShape = inputs[0].dims.slice();
+    const wShape = inputs[1].dims.slice();
+    const outputChannelsPerGroup = wShape[0] / this.group;
+    // if kernelShape is not specified in the attributes of this op, infer it from the weight tensor dims
+    if (this.kernelShape.length === 0) {
+      for (let i = 2; i < wShape.length; ++i) {
+        this.kernelShape.push(wShape[i]);
+      }
+    }
+    PoolConvUtil.adjustPadsBasedOnAutoPad(
+        inputs[0].dims, this.strides, this.dilations, this.kernelShape, this.pads, this.autoPad);
+    Logger.verbose(
+        'Conv',
+        `autpPad:${this.autoPad}, dilations:${this.dilations}, group:${this.group}, kernelShape:${
+            this.kernelShape}, pads:${this.pads}, strides:${this.strides}`);
+    const outputShape = WebGLUnpackedConv.calcOutputShape(xShape, wShape, this.dilations, this.pads, this.strides);
+    const shaderSource = `
+    const ivec2 strides = ivec2(${this.strides[0]}, ${this.strides[1]});
+    const ivec2 pads = ivec2(${this.pads[0]}, ${this.pads[1]});
+
+    void main() {
+      ivec4 coords = getOutputCoords();
+      int batch = coords.x;
+      int output_channel = coords.y;
+      ivec2 xRCCorner = coords.zw * strides - pads;
+      int group_id = output_channel / ${outputChannelsPerGroup};
+
+      int xRCorner = xRCCorner.y;
+      int xCCorner = xRCCorner.x;
+      float dotProd = 0.0;
+      for (int wInChannel = 0; wInChannel < ${wShape[1]}; wInChannel++) {
+        int input_channel = group_id * ${wShape[1]} + wInChannel;
+        for (int wHeight = 0; wHeight < ${wShape[2]}; wHeight++) {
+          int xHeight = xRCorner + wHeight * ${this.dilations[0]};
+
+          if (xHeight < 0 || xHeight >= ${xShape[2]}) {
+            continue;
+          }
+
+          for (int wWidth = 0; wWidth < ${wShape[3]}; wWidth++) {
+            int xWidth = xCCorner + wWidth * ${this.dilations[1]};
+
+            if (xWidth < 0 || xWidth >= ${xShape[3]}) {
+              continue;
+            }
+
+            float xVal = getX(batch, input_channel, xHeight, xWidth);
+            float wVal = getW(output_channel, wInChannel, wHeight, wWidth);
+            dotProd += xVal * wVal;
+          }
+        }
+      }
+      ${processBias}
+      outputColor = vec4(dotProd, .0, .0, .0);
+    }
+`;
+    return {
+      inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t)),
+      outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      samplers: hasBias ? ['X', 'W', 'Bias'] : ['X', 'W'],
+      shaderSource,
+      hasMain: true,
+    };
+  }
+
+  createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
+    const inputTDs = inputs.map((t, i) => handler.getOrCreateTextureData(t, programInfo.inputLayouts[i]));
+    return {
+      inputTextureDatas: inputTDs,
+      outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),
+      uniformData: {}
+    };
+  }
+}
+
+export class WebGLUnpackedConv extends Conv {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     const programManager = inferenceHandler.session.programManager;
     if (!this.artifacts) {
@@ -43,7 +167,7 @@ export class WebGLConv extends Conv {
         'Conv',
         `autpPad:${this.autoPad}, dilations:${this.dilations}, group:${this.group}, kernelShape:${
             this.kernelShape}, pads:${this.pads}, strides:${this.strides}`);
-    const outputShape = WebGLConv.calcOutputShape(xshape, kshape, this.dilations, this.pads, this.strides);
+    const outputShape = WebGLUnpackedConv.calcOutputShape(xshape, kshape, this.dilations, this.pads, this.strides);
     const im2colProgramInfo = this.createIm2ColProgramInfo(inferenceHandler, inputs, outputShape);
     const dotProductProgramInfo =
         this.createDotProductProgramInfo(inferenceHandler, im2colProgramInfo.outputLayout, inputs, outputShape);
@@ -56,7 +180,7 @@ export class WebGLConv extends Conv {
     if (!kTD) {
       Logger.verbose('Conv', 'Did not find the adjustedKernel texture in the cache. Creating rew.');
       const newKernelData =
-          WebGLConv.prepKernelForDotProduct(k.dims.slice(), this.group, 4, k.floatData as Float32Array);
+          WebGLUnpackedConv.prepKernelForDotProduct(k.dims.slice(), this.group, 4, k.floatData as Float32Array);
       // hack: should use graph transformer to rewrite initializer K
       kTD = inferenceHandler.createTextureDataFromLayoutBindTensor(
           programInfos[1].inputLayouts[1], k.type, newKernelData, k);
@@ -113,7 +237,7 @@ export class WebGLConv extends Conv {
     const kshape = inputs[1].dims.slice();
 
     const rank = outputShape.length;
-    const im2colDims = WebGLConv.calcIm2ColDims(xshape, kshape, outputShape, 4);
+    const im2colDims = WebGLUnpackedConv.calcIm2ColDims(xshape, kshape, outputShape, 4);
     const outputLayout = inferenceHandler.createTextureLayoutFromShape(
         im2colDims, 4, [im2colDims[0], im2colDims[1], im2colDims[2], im2colDims[3] * 4], {breakAxis: 3});
     const shaderSource = `

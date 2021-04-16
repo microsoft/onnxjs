@@ -23,6 +23,8 @@ export class WebGLSessionHandler implements SessionHandler {
   layoutStrategy: TextureLayoutStrategy;
   packedTextureDataCache: Map<Tensor.Id, TextureData>;
   unpackedTextureDataCache: Map<Tensor.Id, TextureData>;
+  pack2unpackMap: Map<Tensor.Id, Tensor.Id>;
+  unpack2packMap: Map<Tensor.Id, Tensor.Id>;
   initializers: Set<Tensor.Id>;
   packOpCache: Map<string, WebGLOperator>;
   unpackOpCache: Map<string, WebGLOperator>;
@@ -39,6 +41,8 @@ export class WebGLSessionHandler implements SessionHandler {
     this.packOpCache = new Map();
     this.unpackOpCache = new Map();
     this.pack = backend.pack;
+    this.pack2unpackMap = new Map();
+    this.unpack2packMap = new Map();
   }
 
   createInferenceHandler() {
@@ -50,6 +54,9 @@ export class WebGLSessionHandler implements SessionHandler {
   }
   isInitializer(tensorId: Tensor.Id): boolean {
     return this.initializers ? this.initializers.has(tensorId) : false;
+  }
+  addInitializer(tensorId: Tensor.Id): void {
+    this.initializers.add(tensorId);
   }
   getTextureData(tensorId: Tensor.Id, isPacked: boolean): TextureData|undefined {
     if (isPacked) {

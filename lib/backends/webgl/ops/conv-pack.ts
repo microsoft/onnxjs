@@ -18,6 +18,8 @@ export class WebGLConvPacked extends Conv {
   protected artifacts: Artifact[];
   protected programInfo: ProgramInfo[];
 
+  protected fallbackConv: WebGLConv;
+
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     const programManager = inferenceHandler.session.programManager;
     const xshape = inputs[0].dims.slice();
@@ -25,16 +27,28 @@ export class WebGLConvPacked extends Conv {
         xshape.length !== 4 || xshape[0] !== 1 || this.group !== 1
         //|| (this.kernelShape[0] === 1 && this.kernelShape[1] === 1)) {
     ) {
-      const conv = new WebGLConv();
-      const attrs = new Attribute(undefined);
-      attrs.set('autoPad', 'string', this.autoPad);
-      attrs.set('dilation', 'ints', this.dilations);
-      attrs.set('group', 'int', this.group);
-      attrs.set('kernelShape', 'ints', this.kernelShape);
-      attrs.set('pads', 'ints', this.pads);
-      attrs.set('strides', 'ints', this.strides);
-      conv.initialize(attrs);
-      return conv.run(inferenceHandler, inputs);
+      // const conv = new WebGLConv();
+      // const attrs = new Attribute(undefined);
+      // attrs.set('autoPad', 'string', this.autoPad);
+      // attrs.set('dilation', 'ints', this.dilations);
+      // attrs.set('group', 'int', this.group);
+      // attrs.set('kernelShape', 'ints', this.kernelShape);
+      // attrs.set('pads', 'ints', this.pads);
+      // attrs.set('strides', 'ints', this.strides);
+      // conv.initialize(attrs);
+      // return conv.run(inferenceHandler, inputs);
+      if (!this.fallbackConv) {
+        this.fallbackConv = new WebGLConv();
+        const attrs = new Attribute(undefined);
+        attrs.set('autoPad', 'string', this.autoPad);
+        attrs.set('dilation', 'ints', this.dilations);
+        attrs.set('group', 'int', this.group);
+        attrs.set('kernelShape', 'ints', this.kernelShape);
+        attrs.set('pads', 'ints', this.pads);
+        attrs.set('strides', 'ints', this.strides);
+        this.fallbackConv.initialize(attrs);
+      }
+      return this.fallbackConv.run(inferenceHandler, inputs);
     }
 
     const kshape = inputs[1].dims.slice();

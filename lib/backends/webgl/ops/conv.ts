@@ -12,8 +12,14 @@ import {Artifact, ProgramInfo, RunData, TextureLayout, WebGLOperator} from '../t
 import {WebGLContext} from '../webgl-context';
 
 export class WebGLConv extends Conv {
-  unpackedGroupedConvImpl: WebGLUnpackedGroupedConv = new WebGLUnpackedGroupedConv();
-  unpackedConvImpl: WebGLUnpackedConv = new WebGLUnpackedConv();
+  unpackedGroupedConvImpl: WebGLUnpackedGroupedConv;
+  unpackedConvImpl: WebGLUnpackedConv;
+
+  constructor() {
+    super();
+    this.unpackedGroupedConvImpl = new WebGLUnpackedGroupedConv();
+    this.unpackedConvImpl = new WebGLUnpackedConv();
+  }
 
   initialize(attributes: Attribute): void {
     super.initialize(attributes);
@@ -52,9 +58,10 @@ export class WebGLUnpackedGroupedConv extends Conv implements WebGLOperator {
 
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
     const hasBias = inputs.length > 2;
-    const processBias = hasBias ? `value += getBias(d2);` : ``;
+    const processBias = hasBias ? `dotProd += getBias(output_channel);` : ``;
     const xShape = inputs[0].dims.slice();
     const wShape = inputs[1].dims.slice();
+    const outputChannelsPerGroup = wShape[0] / this.group;
     // if kernelShape is not specified in the attributes of this op, infer it from the weight tensor dims
     if (this.kernelShape.length === 0) {
       for (let i = 2; i < wShape.length; ++i) {
@@ -75,43 +82,43 @@ export class WebGLUnpackedGroupedConv extends Conv implements WebGLOperator {
     void main() {
       ivec4 coords = getOutputCoords();
       int batch = coords.x;
+      int output_channel = coords.y;
       ivec2 xRCCorner = coords.zw * strides - pads;
-      int d2 = coords.y;
-      int d1 = d2 / ${this.group};
-      int q = d2 - d1 * ${this.group};
+      int group_id = output_channel / ${outputChannelsPerGroup};
 
-      int xRCorner = xRCCorner.x;
-      int xCCorner = xRCCorner.y;
+      int xRCorner = xRCCorner.y;
+      int xCCorner = xRCCorner.x;
+      float dotProd = 0.0;
+      for (int wInChannel = 0; wInChannel < ${wShape[1]}; wInChannel++) {
+        int input_channel = group_id * ${wShape[1]} + wInChannel;
+        for (int wHeight = 0; wHeight < ${wShape[2]}; wHeight++) {
+          int xHeight = xRCorner + wHeight * ${this.dilations[0]};
 
-      for (int wR = 0; wR < ${wShape[0]}; wR++) {
-        int xR = xRCorner + wR * ${this.dilations[0]};
-
-        if (xR < 0 || xR >= ${xShape[0]}) {
-          continue;
-        }
-
-        for (int wC = 0; wC < ${wShape[1]}; wC++) {
-          int xC = xCCorner + wC * ${this.dilations[1]};
-
-          if (xC < 0 || xC >= ${xShape[1]}) {
+          if (xHeight < 0 || xHeight >= ${xShape[2]}) {
             continue;
           }
 
-          float xVal = getX(batch, d1, xR, xC);
-          float wVal = getW(wR, wC, d1, q);
-          dotProd += xVal * wVal;
+          for (int wWidth = 0; wWidth < ${wShape[3]}; wWidth++) {
+            int xWidth = xCCorner + wWidth * ${this.dilations[1]};
+
+            if (xWidth < 0 || xWidth >= ${xShape[3]}) {
+              continue;
+            }
+
+            float xVal = getX(batch, input_channel, xHeight, xWidth);
+            float wVal = getW(output_channel, wInChannel, wHeight, wWidth);
+            dotProd += xVal * wVal;
+          }
         }
       }
-
-      float value = dotProd;
       ${processBias}
-      return vec4(value, .0, .0, .0);
+      outputColor = vec4(dotProd, .0, .0, .0);
     }
 `;
     return {
       inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t)),
       outputLayout: handler.createTextureLayoutFromShape(outputShape),
-      samplers: hasBias ? ['X', 'W'] : ['X', 'W', 'Bias'],
+      samplers: hasBias ? ['X', 'W', 'Bias'] : ['X', 'W'],
       shaderSource,
       hasMain: true,
     };

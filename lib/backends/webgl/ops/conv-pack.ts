@@ -9,7 +9,7 @@ import {Tensor} from '../../../tensor';
 import {PoolConvUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {Artifact, ProgramInfo} from '../types';
-import {WebGLConv} from './conv';
+import {WebGLConv, WebGLUnpackedConv} from './conv';
 import {WebGLIm2ColPacked} from './im2col-pack';
 import {WebGLMatMulPacked} from './matmul-pack';
 import {WebGLReshapePacked} from './reshape-packed';
@@ -65,7 +65,7 @@ export class WebGLConvPacked extends Conv {
         `autpPad:${this.autoPad}, dilations:${this.dilations}, group:${this.group}, kernelShape:${
             this.kernelShape}, pads:${this.pads}, strides:${this.strides}`);
 
-    const outputShape = WebGLConv.calcOutputShape(xshape, kshape, this.dilations, this.pads, this.strides);
+    const outputShape = WebGLUnpackedConv.calcOutputShape(xshape, kshape, this.dilations, this.pads, this.strides);
     const im2col = new WebGLIm2ColPacked(outputShape, kshape, this.dilations, this.pads, this.strides);
     const matmul = new WebGLMatMulPacked();
     const reshape = new WebGLReshapePacked();

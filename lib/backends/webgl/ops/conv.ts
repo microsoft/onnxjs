@@ -29,7 +29,7 @@ export class WebGLConv extends Conv {
 
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     if (this.group > 1) {
-      return inferenceHandler.run(this.unpackedGroupedConvImpl, inputs);
+      return this.unpackedGroupedConvImpl.run(inferenceHandler, inputs);
     } else {
       return this.unpackedConvImpl.run(inferenceHandler, inputs);
     }
@@ -43,7 +43,7 @@ export class WebGLConv extends Conv {
     }
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo[], inputs: Tensor[]): RunData[] {
-    if (handler.session.pack && inputs[0].dims.length > 1) {
+    if (this.group > 1) {
       return [this.unpackedGroupedConvImpl.createRunData(handler, programInfo[0], inputs)];
     } else {
       return this.unpackedConvImpl.createRunDatas(handler, programInfo, inputs);
@@ -52,7 +52,6 @@ export class WebGLConv extends Conv {
 }
 export class WebGLUnpackedGroupedConv extends Conv implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    console.log('yes, it is.');
     return inferenceHandler.run(this, inputs);
   }
 

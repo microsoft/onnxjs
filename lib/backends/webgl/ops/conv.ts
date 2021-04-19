@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+// import {createArrayFromTexture} from '../../../../test/unittests/backends/webgl/test_utils';
 import {Attribute} from '../../../attribute';
 import {Logger} from '../../../instrument';
 import {Conv} from '../../../ops/conv';
@@ -28,11 +29,13 @@ export class WebGLConv extends Conv {
   }
 
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
+    let res;
     if (this.group > 1) {
-      return this.unpackedGroupedConvImpl.run(inferenceHandler, inputs);
+      res = this.unpackedGroupedConvImpl.run(inferenceHandler, inputs);
     } else {
-      return this.unpackedConvImpl.run(inferenceHandler, inputs);
+      res = this.unpackedConvImpl.run(inferenceHandler, inputs);
     }
+    return res;
   }
 
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo[] {
@@ -189,7 +192,24 @@ export class WebGLUnpackedConv extends Conv {
       inputTextureDatas: [inferenceHandler.getOrCreateTextureData(inputs[0])],
       outputTextureData: inferenceHandler.createTextureDataFromLayout(programInfos[0].outputLayout, inputs[0].type),
       uniformData: {}
-    };
+    }; /*
+     if (inputs[0].data[0] === 0.4599766135215759 && inputs[0].dims[1] === 216 && inputs[0].dims[2] === 6 &&
+         inputs[0].dims[3] === 10) {
+       const xTD = runtDataIm2Col.inputTextureDatas[0];
+       const gl = inferenceHandler.session.textureManager.glContext.gl;
+       const rawX = createArrayFromTexture(gl, xTD.texture, xTD.width, xTD.height);
+       // const cpuData: number[] = [];
+       // for (let i = 0; i < 216 * 6 * 10; i += 60) {
+       //   cpuData[i / 60] = inputs[0].floatData[i];
+       // }
+       // console.log('cpu_x[0, 0] at each channel: ', cpuData);
+       const gpuData: number[] = [];
+       for (let i = 0; i < 216 * 6 * 10 * 4; i += 60 * 4) {
+         gpuData[i / (60 * 4)] = rawX[i];
+       }
+       console.log('gpu_x[0, 0] at each channel: ', gpuData);
+     }*/
+
     const inputTDs = [runtDataIm2Col.outputTextureData, kTD];
     if (b) {
       inputTDs.push(inferenceHandler.getOrCreateTextureData(b));

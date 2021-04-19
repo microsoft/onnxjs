@@ -100,9 +100,25 @@ export class ExecutionPlan {
           if (!op.checkInputs(inputTensors)) {
             throw new Error(`invalid inputs detected; op: ${thisOp.node.name}`);
           }
-
           const result = op.run(inferenceHandler, inputTensors);
-
+          if (typeof (result as Promise<Tensor[]>).then !== 'function') {
+            if (thisOp.node.name === 'Conv_33') {
+              const res = result as Tensor[];
+              const input = inputTensors[0];
+              const res100 = [];
+              for (let i = 0; i < 100; i++) {
+                res100[i] = res[0].data[i];
+              }
+              console.log(`Runing op: `, thisOp.node.name);
+              console.log('input[0] shape:', input.dims[0], input.dims[1], input.dims[2], input.dims[3]);
+              console.log('result[0]-[100]:', res100);
+              // const inputData: number[] = [];
+              // for (let i = 0; i < 216 * 6 * 10; i += 60) {
+              //   inputData[i / 60] = input.floatData[i];
+              // }
+              // console.log('input_x[0, 0] at each channel: ', inputData);
+            }
+          }
           return result;
         });
 

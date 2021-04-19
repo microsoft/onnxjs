@@ -94,13 +94,13 @@ export class ExecutionPlan {
             'ExecPlan',
             `Runing op:${thisOp.node.name} (${
                 inputTensors.map((t, i) => `'${thisOp.node.inputs[i]}': ${t.type}[${t.dims.join(',')}]`).join(', ')})`);
+        console.log(`Runing op: `, thisOp.node.name);
 
         const outputList = await this.profiler.event('node', thisOp.node.name, async () => {
           const op = thisOp.op;
           if (!op.checkInputs(inputTensors)) {
             throw new Error(`invalid inputs detected; op: ${thisOp.node.name}`);
           }
-
           const result = op.run(inferenceHandler, inputTensors);
 
           return result;

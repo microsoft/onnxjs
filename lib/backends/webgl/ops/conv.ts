@@ -28,11 +28,16 @@ export class WebGLConv extends Conv {
   }
 
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
+    let res;
     if (this.group > 1) {
-      return this.unpackedGroupedConvImpl.run(inferenceHandler, inputs);
+      res = this.unpackedGroupedConvImpl.run(inferenceHandler, inputs);
     } else {
-      return this.unpackedConvImpl.run(inferenceHandler, inputs);
+      res = this.unpackedConvImpl.run(inferenceHandler, inputs);
     }
+    console.log(
+        'res[0]-[7]', res[0].data[0], res[0].data[1], res[0].data[2], res[0].data[3], res[0].data[4], res[0].data[5],
+        res[0].data[6], res[0].data[7]);
+    return res;
   }
 
   createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo[] {

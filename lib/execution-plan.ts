@@ -94,6 +94,7 @@ export class ExecutionPlan {
             'ExecPlan',
             `Runing op:${thisOp.node.name} (${
                 inputTensors.map((t, i) => `'${thisOp.node.inputs[i]}': ${t.type}[${t.dims.join(',')}]`).join(', ')})`);
+        console.log(`Runing op: `, thisOp.node.name);
 
         const outputList = await this.profiler.event('node', thisOp.node.name, async () => {
           const op = thisOp.op;

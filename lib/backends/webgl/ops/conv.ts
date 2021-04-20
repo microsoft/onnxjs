@@ -52,6 +52,7 @@ export class WebGLConv extends Conv {
 }
 export class WebGLUnpackedGroupedConv extends Conv implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
+    console.log('here we are.');
     return inferenceHandler.run(this, inputs);
   }
 
@@ -85,28 +86,25 @@ export class WebGLUnpackedGroupedConv extends Conv implements WebGLOperator {
       ivec2 xRCCorner = coords.zw * strides - pads;
       int group_id = output_channel / ${outputChannelsPerGroup};
 
-      int xRCorner = xRCCorner.y;
-      int xCCorner = xRCCorner.x;
       float dotProd = 0.0;
       for (int wInChannel = 0; wInChannel < ${wShape[1]}; wInChannel++) {
         int input_channel = group_id * ${wShape[1]} + wInChannel;
         for (int wHeight = 0; wHeight < ${wShape[2]}; wHeight++) {
-          int xHeight = xRCorner + wHeight * ${this.dilations[0]};
+          int xHeight = xRCCorner.x + wHeight * ${this.dilations[0]};
 
           if (xHeight < 0 || xHeight >= ${xShape[2]}) {
             continue;
           }
 
           for (int wWidth = 0; wWidth < ${wShape[3]}; wWidth++) {
-            int xWidth = xCCorner + wWidth * ${this.dilations[1]};
-
+            int xWidth = xRCCorner.y + wWidth * ${this.dilations[1]};
             if (xWidth < 0 || xWidth >= ${xShape[3]}) {
               continue;
             }
 
-            float xVal = getX(batch, input_channel, xHeight, xWidth);
-            float wVal = getW(output_channel, wInChannel, wHeight, wWidth);
-            dotProd += xVal * wVal;
+            float xVal = getX(batch, input_channel, xWidth, xHeight);
+            float wVal = getW(output_channel, wInChannel, wWidth, wHeight);
+            dotProd += xVal*wVal;
           }
         }
       }

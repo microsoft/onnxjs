@@ -94,7 +94,6 @@ export class ExecutionPlan {
             'ExecPlan',
             `Runing op:${thisOp.node.name} (${
                 inputTensors.map((t, i) => `'${thisOp.node.inputs[i]}': ${t.type}[${t.dims.join(',')}]`).join(', ')})`);
-        console.log(`Runing op: `, thisOp.node.name);
 
         const outputList = await this.profiler.event('node', thisOp.node.name, async () => {
           const op = thisOp.op;
@@ -102,7 +101,7 @@ export class ExecutionPlan {
             throw new Error(`invalid inputs detected; op: ${thisOp.node.name}`);
           }
           const result = op.run(inferenceHandler, inputTensors);
-          if (typeof (result as Promise<Tensor[]>).then !== 'function') {
+          /*if (typeof (result as Promise<Tensor[]>).then !== 'function') {
             if (thisOp.node.name === 'Conv_33') {
               const res = result as Tensor[];
               const input = inputTensors[0];
@@ -119,7 +118,7 @@ export class ExecutionPlan {
               // }
               // console.log('input_x[0, 0] at each channel: ', inputData);
             }
-          }
+          }*/
           return result;
         });
 

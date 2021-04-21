@@ -6,7 +6,7 @@ import {Tensor} from '../../../tensor';
 import {BroadcastUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
-// TODO: fix broadcasting
+
 export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     return inferenceHandler.run(this, inputs);
@@ -25,6 +25,7 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
     const aRank = aShape.length;
     const bRank = bShape.length;
     const sharedDim = aShape[aShape.length - 1];
+    // TODO:fix broadcasting
     const shaderSource = `
       vec4 process(int indices[${rank}]) {
           int a[${aRank}];
@@ -36,8 +37,8 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
           for (int k=0; k<((${sharedDim}+1)/2); ++k) {
               a[${aRank - 1}] = k;
               b[${bRank - 2}] = k;
-              value += _A_Pack(a).rrbb * _B_Pack(b).rgrg;
-              value += _A_Pack(a).ggaa * _B_Pack(b).baba;
+              value += ${getA(aRank)}.rrbb * ${getB(bRank)}.rgrg;
+              value += ${getA(aRank)}.ggaa * ${getB(bRank)}.baba;
           }
           ${processBias}
           return value;
@@ -61,4 +62,24 @@ export class WebGLMatMulPacked extends MatMul implements WebGLOperator {
       uniformData: {}
     };
   }
+}
+
+function getA(outputRank: number): string {
+  let res = 'getA(';
+  for (let i = 0; i < outputRank - 2; i++) {
+    res += `a[${i}], `;
+  }
+  res += `a[${outputRank - 2}]*2, ` +
+      'k*2)';
+  return res;
+}
+
+function getB(outputRank: number): string {
+  let res = 'getB(';
+  for (let i = 0; i < outputRank - 2; i++) {
+    res += `b[${i}], `;
+  }
+  res += 'k*2, ' +
+      `b[${outputRank - 1}]*2)`;
+  return res;
 }

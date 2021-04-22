@@ -49,6 +49,22 @@ export class WebGLConv extends Conv {
       return this.unpackedConvImpl.createRunDatas(handler, programInfo, inputs);
     }
   }
+
+  static calcOutputShape(
+      inputShape: number[], kernelShape: number[], dilations: number[], adjustPads: number[],
+      strides: number[]): number[] {
+    const batchSize = inputShape[0];
+    const inputSpatialShape = inputShape.slice(2);
+    const spatialRank = inputSpatialShape.length;
+    const outChannels = kernelShape[0];
+    const kernelSpatialShape = kernelShape.slice(2);
+    const dilatedKernelShape = kernelSpatialShape.map((v, i) => v + (v - 1) * (dilations[i] - 1));
+    const inputSpatialShapeWithPad = inputSpatialShape.map((v, i) => v + adjustPads[i] + adjustPads[i + spatialRank]);
+    const outputSpatialShape =
+        inputSpatialShapeWithPad.map((v, i) => Math.floor((v - dilatedKernelShape[i] + strides[i]) / strides[i]));
+    const outputShape = [batchSize, outChannels].concat(...outputSpatialShape);
+    return outputShape;
+  }
 }
 export class WebGLUnpackedGroupedConv extends Conv implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
@@ -74,7 +90,7 @@ export class WebGLUnpackedGroupedConv extends Conv implements WebGLOperator {
         'Conv',
         `autpPad:${this.autoPad}, dilations:${this.dilations}, group:${this.group}, kernelShape:${
             this.kernelShape}, pads:${this.pads}, strides:${this.strides}`);
-    const outputShape = WebGLUnpackedConv.calcOutputShape(xShape, wShape, this.dilations, this.pads, this.strides);
+    const outputShape = WebGLConv.calcOutputShape(xShape, wShape, this.dilations, this.pads, this.strides);
     const shaderSource = `
     const ivec2 strides = ivec2(${this.strides[0]}, ${this.strides[1]});
     const ivec2 pads = ivec2(${this.pads[0]}, ${this.pads[1]});
@@ -164,7 +180,7 @@ export class WebGLUnpackedConv extends Conv {
         'Conv',
         `autpPad:${this.autoPad}, dilations:${this.dilations}, group:${this.group}, kernelShape:${
             this.kernelShape}, pads:${this.pads}, strides:${this.strides}`);
-    const outputShape = WebGLUnpackedConv.calcOutputShape(xshape, kshape, this.dilations, this.pads, this.strides);
+    const outputShape = WebGLConv.calcOutputShape(xshape, kshape, this.dilations, this.pads, this.strides);
     const im2colProgramInfo = this.createIm2ColProgramInfo(inferenceHandler, inputs, outputShape);
     const dotProductProgramInfo =
         this.createDotProductProgramInfo(inferenceHandler, im2colProgramInfo.outputLayout, inputs, outputShape);
@@ -371,21 +387,7 @@ export class WebGLUnpackedConv extends Conv {
       Math.ceil(inputShape[1] * kernelShape[2] * kernelShape[3] / channels)
     ];
   }
-  static calcOutputShape(
-      inputShape: number[], kernelShape: number[], dilations: number[], adjustPads: number[],
-      strides: number[]): number[] {
-    const batchSize = inputShape[0];
-    const inputSpatialShape = inputShape.slice(2);
-    const spatialRank = inputSpatialShape.length;
-    const outChannels = kernelShape[0];
-    const kernelSpatialShape = kernelShape.slice(2);
-    const dilatedKernelShape = kernelSpatialShape.map((v, i) => v + (v - 1) * (dilations[i] - 1));
-    const inputSpatialShapeWithPad = inputSpatialShape.map((v, i) => v + adjustPads[i] + adjustPads[i + spatialRank]);
-    const outputSpatialShape =
-        inputSpatialShapeWithPad.map((v, i) => Math.floor((v - dilatedKernelShape[i] + strides[i]) / strides[i]));
-    const outputShape = [batchSize, outChannels].concat(...outputSpatialShape);
-    return outputShape;
-  }
+
   protected calcSharedDimReadSize(preferredBatchSize: number, sharedDim: number): number {
     if (preferredBatchSize <= 0 || sharedDim < preferredBatchSize || sharedDim % preferredBatchSize !== 0) {
       return sharedDim;

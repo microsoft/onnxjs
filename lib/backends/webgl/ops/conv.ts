@@ -10,8 +10,8 @@ import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {Artifact, ProgramInfo, RunData, TextureLayout, WebGLOperator} from '../types';
 import {WebGLContext} from '../webgl-context';
-import {WebGLConvPacked} from './conv-pack';
 
+import {WebGLConvPacked} from './conv-pack';
 import {glslRelu, glslSigmoid} from './unary-op';
 
 export class WebGLConv extends Conv {
@@ -347,7 +347,7 @@ export class WebGLUnpackedConv extends Conv {
         activationName = '';
         activationFunction = '';
     }
-    const applyActivation = this.activation.length === 0 ? '' : `sum = ${activationName}(sum);`;
+    const applyActivation = this.activation ? `sum = ${activationName}(sum);` : '';
 
     const glsl = getGlsl(inferenceHandler.session.backend.glContext.version);
     const shaderSource = `
@@ -422,6 +422,4 @@ export class WebGLUnpackedConv extends Conv {
   protected artifacts: Artifact[];
   protected readSize = 8;
   protected blockSize = 64;
-
-  protected activation: string;
 }

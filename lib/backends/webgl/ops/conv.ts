@@ -12,6 +12,8 @@ import {Artifact, ProgramInfo, RunData, TextureLayout, WebGLOperator} from '../t
 import {WebGLContext} from '../webgl-context';
 import {WebGLConvPacked} from './conv-pack';
 
+import {glslRelu, glslSigmoid} from './unary-op';
+
 export class WebGLConv extends Conv {
   unpackedGroupedConvImpl: WebGLUnpackedGroupedConv;
   unpackedConvImpl: WebGLUnpackedConv;
@@ -329,8 +331,27 @@ export class WebGLUnpackedConv extends Conv {
     if (inputs.length === 3) {
       samplers.push('B');
     }
+
+    let activationFunction = '';
+    let activationName = '';
+    switch (this.activation) {
+      case 'Relu':
+        activationName = glslRelu().name;
+        activationFunction = glslRelu().body;
+        break;
+      case 'Sigmoid':
+        activationName = glslSigmoid().name;
+        activationFunction = glslSigmoid().body;
+        break;
+      default:
+        activationName = '';
+        activationFunction = '';
+    }
+    const applyActivation = this.activation.length === 0 ? '' : `sum = ${activationName}(sum);`;
+
     const glsl = getGlsl(inferenceHandler.session.backend.glContext.version);
     const shaderSource = `
+    ${activationFunction}
     float process(int indices[${rank}]) {
       int b[1];
       b[0] = indices[1];
@@ -349,6 +370,7 @@ export class WebGLUnpackedConv extends Conv {
         ++im2colOffset;
         ++kernelOffset;
       }
+      ${applyActivation}
       return sum;
     }`;
     return {
@@ -400,4 +422,6 @@ export class WebGLUnpackedConv extends Conv {
   protected artifacts: Artifact[];
   protected readSize = 8;
   protected blockSize = 64;
+
+  protected activation: string;
 }

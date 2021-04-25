@@ -68,7 +68,6 @@ export class WebGLConv extends Conv {
 }
 export class WebGLUnpackedGroupedConv extends Conv implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    console.log('here we are.');
     return inferenceHandler.run(this, inputs);
   }
 

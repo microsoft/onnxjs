@@ -90,6 +90,8 @@ export class WebGLUnpackedGroupedConv extends Conv implements WebGLOperator {
         `autpPad:${this.autoPad}, dilations:${this.dilations}, group:${this.group}, kernelShape:${
             this.kernelShape}, pads:${this.pads}, strides:${this.strides}`);
     const outputShape = WebGLConv.calcOutputShape(xShape, wShape, this.dilations, this.pads, this.strides);
+    const glsl = getGlsl(handler.session.backend.glContext.version);
+
     const shaderSource = `
     const ivec2 strides = ivec2(${this.strides[0]}, ${this.strides[1]});
     const ivec2 pads = ivec2(${this.pads[0]}, ${this.pads[1]});
@@ -124,7 +126,7 @@ export class WebGLUnpackedGroupedConv extends Conv implements WebGLOperator {
         }
       }
       ${processBias}
-      outputColor = vec4(dotProd, .0, .0, .0);
+      ${glsl.output} = vec4(dotProd, .0, .0, .0);
     }
 `;
     return {

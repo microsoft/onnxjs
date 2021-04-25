@@ -192,7 +192,7 @@
     ]
   },
   {
-    "name": "conv - group - D",
+    "name": "conv - group - C",
     "operator": "Conv",
     "attributes": [
       { "name": "kernel_shape", "data": [2, 2], "type": "ints" },

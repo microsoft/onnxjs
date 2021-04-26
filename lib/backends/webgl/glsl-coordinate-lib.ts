@@ -639,7 +639,7 @@ export class CoordsGlslLib extends GlslLib {
         ${output}
       }
     `;
-    return new GlslLibRoutine(source);
+    return new GlslLibRoutine(source, ['coordinates.getOutputCoords']);
   }
 
   /**

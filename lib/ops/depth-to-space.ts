@@ -7,7 +7,7 @@ import {Operator} from '../operators';
 import {Tensor} from '../tensor';
 
 export abstract class DepthToSpace implements Operator {
-  constructor(protected opset: number) {}
+  constructor() {}
 
   abstract run(inferenceHandler: InferenceHandler, inputs: Tensor[]): Tensor[]|Promise<Tensor[]>;
 

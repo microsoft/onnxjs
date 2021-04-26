@@ -29,10 +29,10 @@ export class WebGLDepthToSpace extends DepthToSpace {
       int offset_w = imod(w, ${this.blocksize});
       int offset_d = (offset_h * ${this.blocksize} + offset_w) *
         ${outputShape[1]};
-      int in_d = d + offset_d;
+      int in_depth = d + offset_d;
 
-      float result = getX(b, in_d, in_h, in_w);
-      ${glsl.output} = result;
+      float result = getX(b, in_depth, in_h, in_w);
+      ${glsl.output} = vec4(result, 0, 0, 0);
     }
       `;
     return {

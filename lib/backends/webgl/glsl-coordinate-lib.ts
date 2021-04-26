@@ -477,7 +477,7 @@ export class CoordsGlslLib extends GlslLib {
 
     source = `
       ivec5 getOutputCoords() {
-          ivec2 resTexRC = ivec2(TexCoords.yx *
+          ivec2 resTexRC = ivec2(TexCoords.xy *
                                 vec2(${texShape[0]}, ${texShape[1]}));
           int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
           ${coordsFromIndexSnippet}
@@ -520,9 +520,9 @@ export class CoordsGlslLib extends GlslLib {
 
     source = `
      ivec6 getOutputCoords() {
-         ivec2 resTexRC = ivec2(TexCoords.yx *
+         ivec2 resTexRC = ivec2(TexCoords.xy *
                                vec2(${texShape[0]}, ${texShape[1]}));
-         int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
+         int index = resTexRC.y * ${texShape[0]} + resTexRC.x;
          ${coordsFromIndexSnippet}
          return ivec6(r, c, d, d2, d3, d4);
        }
@@ -1141,8 +1141,7 @@ export class CoordsGlslLib extends GlslLib {
           return sampleTexture(${name}, uv);
         }
       `;
-    return new GlslLibRoutine(
-        source, ['coordinates.uvFromFlat', 'coordinates.sampleTexture', 'coordinates.coordsToOffset']);
+    return new GlslLibRoutine(source, ['coordinates.uvFromFlat', 'coordinates.sampleTexture']);
   }
 
   /**

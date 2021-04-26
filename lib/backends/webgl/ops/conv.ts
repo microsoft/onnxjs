@@ -10,43 +10,35 @@ import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {Artifact, ProgramInfo, RunData, TextureLayout, WebGLOperator} from '../types';
 import {WebGLContext} from '../webgl-context';
+import {WebGLConvPacked} from './conv-pack';
 
 export class WebGLConv extends Conv {
   unpackedGroupedConvImpl: WebGLUnpackedGroupedConv;
   unpackedConvImpl: WebGLUnpackedConv;
+  packedConvImpl: WebGLConvPacked;
 
   constructor() {
     super();
     this.unpackedGroupedConvImpl = new WebGLUnpackedGroupedConv();
     this.unpackedConvImpl = new WebGLUnpackedConv();
+    this.packedConvImpl = new WebGLConvPacked();
   }
 
   initialize(attributes: Attribute): void {
     super.initialize(attributes);
     this.unpackedGroupedConvImpl.initialize(attributes);
     this.unpackedConvImpl.initialize(attributes);
+    this.packedConvImpl.initialize(attributes);
   }
 
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
+    const packMode = inferenceHandler.session.pack;
     if (this.group > 1) {
       return this.unpackedGroupedConvImpl.run(inferenceHandler, inputs);
+    } else if (packMode && inputs[0].dims.length === 4 && inputs[0].dims[0] === 1) {
+      return this.packedConvImpl.run(inferenceHandler, inputs);
     } else {
       return this.unpackedConvImpl.run(inferenceHandler, inputs);
-    }
-  }
-
-  createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo[] {
-    if (this.group > 1) {
-      return [this.unpackedGroupedConvImpl.createProgramInfo(handler, inputs)];
-    } else {
-      return this.unpackedConvImpl.createProgramInfos(handler, inputs);
-    }
-  }
-  createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo[], inputs: Tensor[]): RunData[] {
-    if (this.group > 1) {
-      return [this.unpackedGroupedConvImpl.createRunData(handler, programInfo[0], inputs)];
-    } else {
-      return this.unpackedConvImpl.createRunDatas(handler, programInfo, inputs);
     }
   }
 
@@ -66,6 +58,7 @@ export class WebGLConv extends Conv {
     return outputShape;
   }
 }
+
 export class WebGLUnpackedGroupedConv extends Conv implements WebGLOperator {
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
     return inferenceHandler.run(this, inputs);
@@ -153,19 +146,19 @@ export class WebGLUnpackedConv extends Conv {
     const programManager = inferenceHandler.session.programManager;
     if (!this.artifacts) {
       this.artifacts = [];
-      const programInfos = this.createProgramInfos(inferenceHandler, inputs);
+      const programInfos = this.createProgramInfo(inferenceHandler, inputs);
       for (let i = 0; i < programInfos.length; ++i) {
         const artifact = inferenceHandler.session.programManager.build(programInfos[i]);
         this.artifacts.push(artifact);
       }
     }
-    const runDatas = this.createRunDatas(inferenceHandler, this.artifacts.map(a => a.programInfo), inputs);
+    const runDatas = this.createRunData(inferenceHandler, this.artifacts.map(a => a.programInfo), inputs);
     inferenceHandler.checkAndUpdateTextureForm(this.artifacts[0], runDatas[0]);
     programManager.run(this.artifacts[0], runDatas[0]);
     programManager.run(this.artifacts[1], runDatas[1]);
     return [runDatas[1].outputTextureData.tensor];
   }
-  createProgramInfos(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo[] {
+  createProgramInfo(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo[] {
     const xshape = inputs[0].dims.slice();
     const kshape = inputs[1].dims.slice();
     // if kernelShape is not specified in the attributes of this op, infer it from the weight tensor dims
@@ -187,7 +180,7 @@ export class WebGLUnpackedConv extends Conv {
         this.createDotProductProgramInfo(inferenceHandler, im2colProgramInfo.outputLayout, inputs, outputShape);
     return [im2colProgramInfo, dotProductProgramInfo];
   }
-  createRunDatas(inferenceHandler: WebGLInferenceHandler, programInfos: ProgramInfo[], inputs: Tensor[]): RunData[] {
+  createRunData(inferenceHandler: WebGLInferenceHandler, programInfos: ProgramInfo[], inputs: Tensor[]): RunData[] {
     const k = inputs[1];
     const b = inputs.length >= 3 ? inputs[2] : undefined;
     let kTD = inferenceHandler.getTextureData(k.dataId);

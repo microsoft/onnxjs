@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-import {Attribute} from '../../../attribute';
 import {Logger} from '../../../instrument';
 import {Conv} from '../../../ops/conv';
 import {Tensor} from '../../../tensor';
@@ -14,30 +13,13 @@ import {WebGLMatMulPacked} from './matmul-pack';
 import {WebGLReshapePacked} from './reshape-packed';
 
 export class WebGLConvPacked extends Conv {
-  unpackedImpl: WebGLConv;
-  constructor() {
-    super();
-    this.unpackedImpl = new WebGLConv();
-  }
-
-  initialize(attributes: Attribute): void {
-    super.initialize(attributes);
-    this.unpackedImpl.initialize(attributes);
-  }
   protected artifacts: Artifact[];
   protected programInfo: ProgramInfo[];
 
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
+    console.log('packed conv...');
     const programManager = inferenceHandler.session.programManager;
     const xshape = inputs[0].dims.slice();
-    const fallback =
-        (xshape.length !== 4 || xshape[0] !== 1 || this.group !== 1 ||
-         (this.kernelShape[0] === 1 && this.kernelShape[1] === 1));
-
-    if (fallback || !inferenceHandler.session.pack) {
-      return this.unpackedImpl.run(inferenceHandler, inputs);
-    }
-
     const kshape = inputs[1].dims.slice();
     // if kernelShape is not specified in the attributes of this op, infer it from the weight tensor dims
     if (this.kernelShape.length === 0) {

@@ -4,7 +4,7 @@
 import {Logger} from '../../../instrument';
 import {Conv} from '../../../ops/conv';
 import {Tensor} from '../../../tensor';
-import {PoolConvUtil} from '../../../util';
+import {assert, PoolConvUtil} from '../../../util';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {Artifact, ProgramInfo} from '../types';
 import {WebGLConv} from './conv';
@@ -39,10 +39,8 @@ export class WebGLConvPacked extends Conv {
     const matmul = new WebGLMatMulPacked();
     const reshape = new WebGLReshapePacked();
     // shape for kernel reshape
-    const shape = new Tensor([2], 'int32');
-    shape.data[0] = kshape[0];
-    shape.data[1] = kshape[1] * kshape[2] * kshape[3];
-
+    const shape = new Tensor(
+        [2], 'int32', undefined, undefined, new Float32Array([kshape[0], kshape[1] * kshape[2] * kshape[3]]));
     if (!this.artifacts) {
       this.artifacts = [];
       this.programInfo = [];
@@ -67,6 +65,7 @@ export class WebGLConvPacked extends Conv {
 
     // run matmul
     const hasBias = (inputs.length === 3);
+    assert(this.artifacts.length > 1, () => 'expect at least 2 artifacts created');
     if (this.artifacts.length === 2) {
       this.programInfo[2] = matmul.createProgramInfo(
           inferenceHandler, hasBias ? [kernelReshaped, im2colOutput, inputs[2]] : [kernelReshaped, im2colOutput]);
@@ -85,7 +84,7 @@ export class WebGLConvPacked extends Conv {
     for (let i = 0; i < outputShape.length; i++) {
       outputShapeTensor.data[i] = outputShape[i];
     }
-
+    assert(this.artifacts.length > 1, () => 'expect at least 3 artifacts created');
     if (this.artifacts.length === 3) {
       this.programInfo[3] = reshape.createProgramInfo(inferenceHandler, [matmulOutput, outputShapeTensor]);
       this.artifacts[3] = programManager.build(this.programInfo[3]);

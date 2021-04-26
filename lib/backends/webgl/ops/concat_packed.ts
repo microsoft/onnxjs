@@ -110,8 +110,9 @@ export class WebGLPackedConcat extends Concat implements WebGLOperator {
       `;
 
     return {
-      inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t)),
-      outputLayout: handler.createTextureLayoutFromShape(outputShape),
+      inputLayouts: inputs.map(t => handler.getOrCreateTextureLayout(t, 4, true, t.dims, true)),
+      outputLayout:
+          handler.createTextureLayoutFromShape(outputShape, 4, inputs[0].dims, {isPacked: true, reverseWH: true}),
       samplers,
       shaderSource,
       hasMain: true,

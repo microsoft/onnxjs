@@ -43,6 +43,6 @@ export function reshape(
     unpackedShape: reshapedDims,
   };
 
-  const newTextureData = inferenceHandler.createSharedTextureData(newTextureLayout, input.type, inputTD.texture, {});
+  const newTextureData = inferenceHandler.createSharedTextureData(newTextureLayout, input.type, inputTD.texture);
   return newTextureData.tensor;
 }

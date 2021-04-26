@@ -146,7 +146,7 @@ describe('#UnitTest# - unpack - Tensor unpack', () => {
         texture: webglTexture!
       };
 
-      webglInferenceHandler.setTextureData(inputTensor.dataId, textureData);
+      webglInferenceHandler.setTextureData(inputTensor.dataId, textureData, true);
 
       // compile shader code
       const programInfo = op.createProgramInfo(inferenceHandler! as WebGLInferenceHandler, [inputTensor]);

@@ -414,13 +414,13 @@ export class TensorResultValidator {
     // compare output one-by-one
     for (let i = 0; i < actual.length; ++i) {
       const match = this.areEqual(actual[i], expected[i]);
-      // if (!match) {
-      //   Logger.error(
-      //       'TestRunner',
-      //       `Tensor mismatch: \nACTUAL: type=${actual[i].type}; dims=[${actual[i].dims}]; data=[${
-      //           actual[i].data}]\nEXPECT: type=${expected[i].type}; dims=[${expected[i].dims}]; data=[${
-      //           expected[i].data}]`);
-      // }
+      if (!match) {
+        Logger.error(
+            'TestRunner',
+            `Tensor mismatch: \nACTUAL: type=${actual[i].type}; dims=[${actual[i].dims}]; data=[${
+                actual[i].data}]\nEXPECT: type=${expected[i].type}; dims=[${expected[i].dims}]; data=[${
+                expected[i].data}]`);
+      }
       expect(match, 'tensor data should match').to.be.true;
     }
   }

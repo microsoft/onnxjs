@@ -80,6 +80,9 @@ export class WebGLInferenceHandler implements InferenceHandler {
       if (!layout) {
         layout = this.createTextureLayoutFromShape(tensor.dims.slice());
       }
+      // if we don't find the texture data with specific pack mode in the cache, try with the different
+      // pack mode to see if the tensor is cached using that pack mode. If succeed, we can return this
+      // tensor data and later apply a pack/unpack op on this texture, no need to create a new one here.
       td = this.getTextureData(tensor.dataId, !isPacked);
       if (!td) {
         if (isPacked) {

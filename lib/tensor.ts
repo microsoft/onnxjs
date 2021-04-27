@@ -38,8 +38,6 @@ export declare namespace Tensor {
 
 type TensorData = Tensor.DataTypeMap[Tensor.DataType];
 
-// type DataProvider = (id: Tensor.Id) => TensorData;
-// type AsyncDataProvider = (id: Tensor.Id) => Promise<TensorData>;
 type DataProvider = (id: number) => TensorData;
 type AsyncDataProvider = (id: number) => Promise<TensorData>;
 
@@ -170,7 +168,6 @@ export class Tensor {
       /**
        * get the data ID that used to map to a tensor data
        */
-      // public readonly dataId: Tensor.Id = {}) {
       public readonly dataId: number = globalId) {
     globalId += 1;
     this.size = ShapeUtil.validateDimsAndCalcSize(dims);

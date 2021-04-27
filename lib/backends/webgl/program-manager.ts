@@ -81,7 +81,7 @@ export class ProgramManager {
         return artifact;
 
       } catch (e) {
-        console.log(fragScript);
+        Logger.error('ProgramManager', fragScript);
         throw e;
       }
     });

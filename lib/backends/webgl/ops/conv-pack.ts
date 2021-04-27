@@ -38,8 +38,8 @@ export class WebGLConvPacked extends Conv {
     const matmul = new WebGLMatMulPacked();
     const reshape = new WebGLReshapePacked();
     // shape for kernel reshape
-    const shape = new Tensor(
-        [2], 'int32', undefined, undefined, new Float32Array([kshape[0], kshape[1] * kshape[2] * kshape[3]]));
+    const shape =
+        new Tensor([2], 'int32', undefined, undefined, new Int32Array([kshape[0], kshape[1] * kshape[2] * kshape[3]]));
     if (!this.artifacts) {
       this.artifacts = [];
       this.programInfo = [];
@@ -78,12 +78,11 @@ export class WebGLConvPacked extends Conv {
     const matmulOutput = runDataMatmul.outputTextureData.tensor;
 
     // reshape output
-    const outputShapeTensor = new Tensor([outputShape.length], 'int32');
+    const outputShapeTensor = new Tensor(
+        [outputShape.length], 'int32', undefined, undefined,
+        new Int32Array([outputShape[0], outputShape[1], outputShape[2], outputShape[3]]));
 
-    for (let i = 0; i < outputShape.length; i++) {
-      outputShapeTensor.data[i] = outputShape[i];
-    }
-    assert(this.artifacts.length > 1, () => 'expect at least 3 artifacts created');
+    assert(this.artifacts.length > 2, () => 'expect at least 3 artifacts created');
     if (this.artifacts.length === 3) {
       this.programInfo[3] = reshape.createProgramInfo(inferenceHandler, [matmulOutput, outputShapeTensor]);
       this.artifacts[3] = programManager.build(this.programInfo[3]);

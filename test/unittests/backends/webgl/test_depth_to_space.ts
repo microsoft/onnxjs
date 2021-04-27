@@ -56,8 +56,7 @@ describe('#UnitTest# - unpacked WebGLDepthToSpace - Tensor WebGLDepthToSpace', (
       const inputTensorShape = testData.inputShape;
       const inputTextureShape = testData.inputTextureShape;
 
-      // create input data and tensor. The input data will be used to verify if the output tensor contains the
-      // same value but possibly different order depending on our packing algorithm.
+      // create input data and tensor.
       const inputData = testData.rawInput ? testData.rawInput : createAscendingArray(elementCount);
       const inputTensorA = new Tensor(inputTensorShape, 'float32', undefined, undefined, inputData);
 

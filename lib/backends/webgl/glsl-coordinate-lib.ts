@@ -479,7 +479,7 @@ export class CoordsGlslLib extends GlslLib {
       ivec5 getOutputCoords() {
           ivec2 resTexRC = ivec2(TexCoords.xy *
                                 vec2(${texShape[0]}, ${texShape[1]}));
-          int index = resTexRC.y * ${texShape[1]} + resTexRC.x;
+          int index = resTexRC.y * ${texShape[0]} + resTexRC.x;
           ${coordsFromIndexSnippet}
           return ivec5(r, c, d, d2, d3);
         }

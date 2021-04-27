@@ -1,5 +1,4 @@
 // Karma configuration
-// Generated on Thu Nov 01 2018 14:03:26 GMT-0700 (Pacific Daylight Time)
 const path = require('path')
 function getMachineIpAddress() {
   var os = require('os');

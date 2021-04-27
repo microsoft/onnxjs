@@ -1,9 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {Guid} from 'guid-typescript';
 import Long from 'long';
 import {onnx} from 'onnx-proto';
+
 import {onnxruntime} from './ortSchema/ort_generated';
+
 import ortFbs = onnxruntime.experimental.fbs;
 
 import {ProtoUtil, ShapeUtil} from './util';
@@ -33,13 +36,13 @@ export declare namespace Tensor {
   export type FloatType = Tensor.DataTypeMap['float32']|Tensor.DataTypeMap['float64'];
   export type NumberType = BooleanType|IntegerType|FloatType;
 
-  export type Id = number;
+  export type Id = Guid;
 }
 
 type TensorData = Tensor.DataTypeMap[Tensor.DataType];
 
-type DataProvider = (id: number) => TensorData;
-type AsyncDataProvider = (id: number) => Promise<TensorData>;
+type DataProvider = (id: Guid) => TensorData;
+type AsyncDataProvider = (id: Guid) => Promise<TensorData>;
 
 export class Tensor {
   /**
@@ -168,8 +171,7 @@ export class Tensor {
       /**
        * get the data ID that used to map to a tensor data
        */
-      public readonly dataId: number = globalId) {
-    globalId += 1;
+      public readonly dataId: Guid = Guid.create()) {
     this.size = ShapeUtil.validateDimsAndCalcSize(dims);
     const size = this.size;
     const empty = (dataProvider === undefined && asyncDataProvider === undefined && cache === undefined);

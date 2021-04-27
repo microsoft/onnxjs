@@ -52,6 +52,7 @@
     "electron": "^9.2.0",
     "fs-extra": "^9.0.1",
     "globby": "^11.0.1",
+    "guid-typescript": "^1.0.9",
     "hard-source-webpack-plugin": "^0.13.1",
     "husky": "^4.2.5",
     "karma": "^5.1.1",

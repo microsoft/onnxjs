@@ -1190,14 +1190,6 @@ export class CoordsGlslLib extends GlslLib {
       result[funcName] = new GlslLibRoutine(
           this.getValueFromSingle(name, rank, layout.width, layout.height, true),
           [`shapeUtils.indicesToOffset${funcName}`, `coordinates.offsetToCoords`, `fragcolor.getColorAsFloat`]);
-      funcName = `_${name}_Pack`;
-      result[funcName] = new GlslLibRoutine(
-          this.getPackedValueFrom(name, rank, layout.width, layout.height, false),
-          [`shapeUtils.indicesToOffset_${name}`, `coordinates.offsetToCoords`, `fragcolor.getColorAsFloat`]);
-      funcName = funcName + '_T';
-      result[funcName] = new GlslLibRoutine(
-          this.getPackedValueFrom(name, rank, layout.width, layout.height, true),
-          [`shapeUtils.indicesToOffset_${name}_T`, `coordinates.offsetToCoords`, `fragcolor.getColorAsFloat`]);
     });
     return result;
   }

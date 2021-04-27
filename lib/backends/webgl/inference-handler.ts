@@ -292,7 +292,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
     // same packed texture shape. For example, for unpacked shape, both [2, 3] and
     // [2, 4] has the same packed shape [1, 2], but those two shapes should have different
     // unpack shaders.
-    // console.log('unpacking ...');
     const key = `${input.unpackedShape}`;
     let op = this.session.unpackOpCache.get(key);
     if (!op) {

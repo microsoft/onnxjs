@@ -9,5 +9,4 @@ export interface Environment {
    * a global flag to indicate whether to run ONNX.js in debug mode
    */
   debug: boolean;
-  packMode: boolean;
 }

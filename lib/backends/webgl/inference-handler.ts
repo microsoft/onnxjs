@@ -52,33 +52,7 @@ export class WebGLInferenceHandler implements InferenceHandler {
     }
   }
   runProgram(artifact: Artifact, runData: RunData) {
-    // pack/unpack inputs
-    // for (let i = 0; i < runData.inputTextureDatas.length; ++i) {
-    //   const input = runData.inputTextureDatas[i];
-    //   if (input.isPacked && !artifact.programInfo.expectPackedInputs) {
-    //     runData.inputTextureDatas[i] = this.unpack(input);
-    //   } else if (!input.isPacked && artifact.programInfo.expectPackedInputs) {
-    //     runData.inputTextureDatas[i] = this.pack(input);
-    //   }
-    // }
     this.checkAndUpdateTextureForm(artifact, runData);
-    // runData.inputTextureDatas.forEach(input => {
-    //   if (input.isPacked && !artifact.programInfo.expectPackedInputs) {
-    //     // unpack this input
-    //     const unpacked = this.unpack(input);
-    //     input.height = unpacked.height;
-    //     input.isPacked = unpacked.isPacked;
-    //     input.texture = unpacked.texture;
-    //     input.width = unpacked.width;
-    //   } else if (!input.isPacked && artifact.programInfo.expectPackedInputs) {
-    //     // pack this input
-    //     const packed = this.pack(input);
-    //     input.height = packed.height;
-    //     input.isPacked = packed.isPacked;
-    //     input.texture = packed.texture;
-    //     input.width = packed.width;
-    //   }
-    // });
 
     // output should match
     if (!!runData.outputTextureData.isPacked !== !!artifact.programInfo.expectPackedOutputs) {
@@ -106,10 +80,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
       if (!layout) {
         layout = this.createTextureLayoutFromShape(tensor.dims.slice());
       }
-      // graph inputs or initializers
-      // TODO: fix an unhalting loop here
-      // td = this.createTextureData(layout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly,
-      // isPacked);
       td = this.getTextureData(tensor.dataId, !isPacked);
       if (!td) {
         if (isPacked) {
@@ -122,14 +92,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
               layout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly, isPacked);
         }
       }
-      // if (isPacked) {
-      //   const unpackedTextureLayout = this.getOrCreateTextureLayout(tensor, 1, false, [], true);
-      //   const unpackedTextureData = this.createTextureData(
-      //       unpackedTextureLayout, tensor.type, tensor.numberData, tensor, Encoder.Usage.UploadOnly);
-      //   td = this.pack(unpackedTextureData);
-      //   // td = this.createTextureData(layout, tensor.type);
-      // } else {
-      // }
     } else {
       Logger.verbose('InferenceHandler', `Retrieving TextureData from cache: [${tensor.dims}]`);
     }
@@ -194,9 +156,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
                   undefined, undefined, tensorId),
       texture
     };
-    // if (textureData.tensor.data[0] === -2.892231) {
-    //   console.log('FOUND IT!!!!!!');
-    // }
     this.setTextureData(textureData.tensor.dataId, textureData, layout.isPacked);
     return textureData;
   }
@@ -304,12 +263,9 @@ export class WebGLInferenceHandler implements InferenceHandler {
     if (cachedId) {
       return this.packedTextureDataCache.get(cachedId)!;
     }
-    // console.log('packing... ');
     const key = `${input.shape}`;
-    // console.log('[PACK] trying to retrieve PACK of key', key);
     let op = this.session.packOpCache.get(key);
     if (!op) {
-      // console.log('[PACK] retrieve failed. Creating with key', key);
       op = new WebGLPack();
       this.session.packOpCache.set(key, op);
     }
@@ -340,7 +296,6 @@ export class WebGLInferenceHandler implements InferenceHandler {
     const key = `${input.unpackedShape}`;
     let op = this.session.unpackOpCache.get(key);
     if (!op) {
-      // console.log('[UNPACK] retrieve failed. Creating with key', key);
       op = new WebGLUnpack();
       this.session.unpackOpCache.set(key, op);
     }

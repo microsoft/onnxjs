@@ -690,7 +690,7 @@ export class CoordsGlslLib extends GlslLib {
           return ${texFuncSnippet}(${unpackedCoordsSnippet});
         }
       `;
-    return new GlslLibRoutine(source);
+    return new GlslLibRoutine(source, ['coordinates.getOutputCoords']);
   }
 
   /**
@@ -1213,6 +1213,29 @@ export class CoordsGlslLib extends GlslLib {
           vec2 coords = offsetToCoords(offset, ${width}, ${height});
           float value = getColorAsFloat(${glsl.texture2D}(${varName}, coords));
           return value;
+        }
+        `;
+  }
+
+  /**
+   * Produces a packed value getter function for the name and rank given
+   * If a transpose is set proper offsetToCoords mapping will be used
+   * @param name name of the function
+   * @param rank rank of the input
+   * @param transpose whether or not should generate a transpose variation
+   */
+  protected getPackedValueFrom(varName: string, rank: number, width: number, height: number, transpose: boolean):
+      string {
+    let name = `_${varName}_Pack`;
+    if (transpose) {
+      name = name + '_T';
+    }
+    const glsl = getGlsl(this.context.glContext.version);
+    return `
+        vec4 ${name}(int m[${rank}]) {
+          int offset = indicesToOffset_${varName}(m);
+          vec2 coords = offsetToCoords(offset, ${width}, ${height});
+          return ${glsl.texture2D}(${varName}, coords);
         }
         `;
   }

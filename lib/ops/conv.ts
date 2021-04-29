@@ -3,6 +3,7 @@
 
 import {Attribute} from '../attribute';
 import {InferenceHandler} from '../backend';
+import {glslRelu, glslSigmoid} from '../backends/webgl/ops/unary-op';
 import {Operator} from '../operators';
 import {Tensor} from '../tensor';
 
@@ -90,4 +91,26 @@ export abstract class Conv implements Operator {
   protected pads: number[];
   protected strides: number[];
   protected activation: string;
+}
+
+export function getActicationSnippet(activation: string) {
+  let activationFunction = '';
+  let activationName = '';
+  switch (activation) {
+    case 'Relu':
+      activationName = glslRelu().name;
+      activationFunction = glslRelu().body;
+      break;
+    case 'Sigmoid':
+      activationName = glslSigmoid().name;
+      activationFunction = glslSigmoid().body;
+      break;
+    default:
+      activationName = '';
+      activationFunction = '';
+  }
+  const applyActivation = activation ? `
+  value = ${activationName}(value);` :
+                                       '';
+  return {activationFunction, applyActivation};
 }

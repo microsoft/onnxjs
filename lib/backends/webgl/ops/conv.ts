@@ -3,7 +3,7 @@
 
 import {Attribute} from '../../../attribute';
 import {Logger} from '../../../instrument';
-import {Conv, getActicationSnippet} from '../../../ops/conv';
+import {Conv} from '../../../ops/conv';
 import {Tensor} from '../../../tensor';
 import {PoolConvUtil} from '../../../util';
 import {getGlsl} from '../glsl-source';
@@ -12,6 +12,7 @@ import {Artifact, ProgramInfo, RunData, TextureLayout, WebGLOperator} from '../t
 import {WebGLContext} from '../webgl-context';
 
 import {WebGLConvPacked} from './conv-pack';
+import {getActicationSnippet} from './fuse_utils';
 
 export class WebGLConv extends Conv {
   unpackedGroupedConvImpl: WebGLUnpackedGroupedConv;

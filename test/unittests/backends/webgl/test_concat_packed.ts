@@ -39,6 +39,7 @@ describe('#UnitTest# - packed concat - Tensor concat', () => {
     describe(`Test concat ${JSON.stringify(testData)}`, () => {});
     it(`Test packed concat kernel `, () => {
       const webglInferenceHandler = inferenceHandler as WebGLInferenceHandler;
+      // webglInferenceHandler.session.pack = false;
 
       // TODO support WebGl 1.0
       if (webglInferenceHandler.session.textureManager.glContext.version === 1) {
@@ -55,7 +56,6 @@ describe('#UnitTest# - packed concat - Tensor concat', () => {
       const elementCount = testData.elementCount;
       const inputTensorShape = testData.inputShape;
       const inputTextureShape = testData.inputTextureShape;
-      const outputTensorShape = testData.outputShape;
 
       // create input data and tensor. The input data will be used to verify if the output tensor contains the
       // same value but possibly different order depending on our packing algorithm.
@@ -65,6 +65,7 @@ describe('#UnitTest# - packed concat - Tensor concat', () => {
 
       // manually creat packed texture from inputTensor, and insert in cache
       const gl = webglInferenceHandler.session.textureManager.glContext.gl;
+
       webglInferenceHandler.session.textureManager.glContext.checkError();
       const webglTextureA = createTextureFromArray(
           webglInferenceHandler.session.textureManager.glContext, testData.rawInput ? testData.rawInput : inputData,
@@ -82,7 +83,7 @@ describe('#UnitTest# - packed concat - Tensor concat', () => {
         isPacked: true,
         shape: packedShape,
         strides: ShapeUtil.computeStrides(packedShape),
-        unpackedShape: outputTensorShape,
+        unpackedShape: inputTensorShape,
         tensor: inputTensorA,
         texture: webglTextureA!
       };
@@ -93,13 +94,13 @@ describe('#UnitTest# - packed concat - Tensor concat', () => {
         isPacked: true,
         shape: packedShape,
         strides: ShapeUtil.computeStrides(packedShape),
-        unpackedShape: outputTensorShape,
+        unpackedShape: inputTensorShape,
         tensor: inputTensorB,
         texture: webglTextureB!
       };
 
-      webglInferenceHandler.setTextureData(inputTensorA.dataId, textureDataA);
-      webglInferenceHandler.setTextureData(inputTensorB.dataId, textureDataB);
+      webglInferenceHandler.setTextureData(inputTensorA.dataId, textureDataA, true);
+      webglInferenceHandler.setTextureData(inputTensorB.dataId, textureDataB, true);
 
       // compile shader code
       const programInfo =
@@ -117,7 +118,6 @@ describe('#UnitTest# - packed concat - Tensor concat', () => {
       // verify result.
       const expectedOutput = testData.expectedOutput;
       expect(result).to.not.equal(null);
-
       expect(result).to.have.lengthOf(elementCount * 2);
 
       expect(result).to.deep.equal(expectedOutput);
@@ -167,24 +167,7 @@ function getTestData(): TestData[] {
       outputShape: [4, 4],
       inputTextureShape: [2, 1],
       outputTextureShape: [2, 2],
-      expectedOutput: new Float32Array([
-        1,
-        2,
-        5,
-        6,
-        3,
-        4,
-        7,
-        8,
-        1,
-        2,
-        5,
-        6,
-        3,
-        4,
-        7,
-        8,
-      ]),
+      expectedOutput: new Float32Array([1, 2, 5, 6, 3, 4, 7, 8, 1, 2, 5, 6, 3, 4, 7, 8]),
     },
     {
       elementCount: 8,
@@ -192,7 +175,7 @@ function getTestData(): TestData[] {
       inputShape: [2, 4],
       outputShape: [2, 8],
       inputTextureShape: [2, 1],
-      outputTextureShape: [2, 4],
+      outputTextureShape: [4, 2],
       expectedOutput: new Float32Array([
         1,
         2,
@@ -291,8 +274,8 @@ function getTestData(): TestData[] {
       outputTextureShape: [8, 4],
       expectedOutput: new Float32Array([
         1,  2,  5,  6,  3,  4,  7,  8,  9,  10, 13, 14, 11, 12, 15, 16, 1,  2,  5,  6,  3,  4,
-        7,  8,  9,  10, 13, 14, 11, 12, 15, 16, 25, 26, 29, 30, 27, 28, 31, 32, 25, 26, 29, 30,
-        27, 28, 31, 32, 25, 26, 29, 30, 27, 28, 31, 32, 25, 26, 29, 30, 27, 28, 31, 32
+        7,  8,  9,  10, 13, 14, 11, 12, 15, 16, 17, 18, 21, 22, 19, 20, 23, 24, 25, 26, 29, 30,
+        27, 28, 31, 32, 17, 18, 21, 22, 19, 20, 23, 24, 25, 26, 29, 30, 27, 28, 31, 32
       ])
     },
 
@@ -304,9 +287,9 @@ function getTestData(): TestData[] {
       inputTextureShape: [2, 4],
       outputTextureShape: [8, 4],
       expectedOutput: new Float32Array([
-        1,  2,  5,  6,  3,  4,  7,  8,  1,  2,  5,  6,  3,  4,  7,  8,  17, 18, 21, 22, 19, 20,
-        23, 24, 17, 18, 21, 22, 19, 20, 23, 24, 25, 26, 29, 30, 27, 28, 31, 32, 25, 26, 29, 30,
-        27, 28, 31, 32, 25, 26, 29, 30, 27, 28, 31, 32, 25, 26, 29, 30, 27, 28, 31, 32
+        1,  2,  5,  6,  3,  4,  7,  8,  1,  2,  5,  6,  3,  4,  7,  8,  9,  10, 13, 14, 11, 12,
+        15, 16, 9,  10, 13, 14, 11, 12, 15, 16, 17, 18, 21, 22, 19, 20, 23, 24, 17, 18, 21, 22,
+        19, 20, 23, 24, 25, 26, 29, 30, 27, 28, 31, 32, 25, 26, 29, 30, 27, 28, 31, 32
       ])
     },
     {
@@ -317,9 +300,9 @@ function getTestData(): TestData[] {
       inputTextureShape: [2, 4],
       outputTextureShape: [8, 4],
       expectedOutput: new Float32Array([
-        1,  2,  5,  6,  1,  2,  5,  6,  3,  4,  7,  8,  3,  4,  7,  8,  17, 18, 21, 22, 17, 18,
-        21, 22, 19, 20, 23, 24, 19, 20, 23, 24, 25, 26, 29, 30, 25, 26, 29, 30, 27, 28, 31, 32,
-        27, 28, 31, 32, 25, 26, 29, 30, 25, 26, 29, 30, 27, 28, 31, 32, 27, 28, 31, 32
+        1,  2,  5,  6,  1,  2,  5,  6,  3,  4,  7,  8,  3,  4,  7,  8,  9,  10, 13, 14, 9,  10,
+        13, 14, 11, 12, 15, 16, 11, 12, 15, 16, 17, 18, 21, 22, 17, 18, 21, 22, 19, 20, 23, 24,
+        19, 20, 23, 24, 25, 26, 29, 30, 25, 26, 29, 30, 27, 28, 31, 32, 27, 28, 31, 32
       ])
     },
   ];

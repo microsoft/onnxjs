@@ -6,7 +6,6 @@ import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
 import {ProgramInfo, RunData, WebGLOperator} from '../types';
 import {getCoordsDataType} from '../utils';
-
 import {getChannels, unpackFromChannel} from './packing_utils';
 
 export class WebGLUnpack implements WebGLOperator {
@@ -18,7 +17,7 @@ export class WebGLUnpack implements WebGLOperator {
       throw new Error(`Pack kernel should have input tensor count to 1.`);
     }
 
-    const inputTexture = handler.getTextureData(inputs[0].dataId);
+    const inputTexture = handler.getTextureData(inputs[0].dataId, true);
     if (!inputTexture) {
       throw new Error(`packed input texture must exist`);
     }
@@ -49,7 +48,7 @@ export class WebGLUnpack implements WebGLOperator {
       `;
 
     return {
-      inputLayouts: [handler.getOrCreateTextureLayout(inputs[0])],
+      inputLayouts: [handler.getOrCreateTextureLayout(inputs[0], 4, true, inputs[0].dims, true)],
       outputLayout,
       samplers: ['A'],
       shaderSource,
@@ -59,7 +58,7 @@ export class WebGLUnpack implements WebGLOperator {
     };
   }
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
-    const inputTDs = [handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0])];
+    const inputTDs = [handler.getOrCreateTextureData(inputs[0], programInfo.inputLayouts[0], true)];
     return {
       inputTextureDatas: inputTDs,
       outputTextureData: handler.createTextureDataFromLayout(programInfo.outputLayout, inputTDs[0].tensor.type),

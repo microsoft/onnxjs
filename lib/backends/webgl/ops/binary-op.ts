@@ -22,6 +22,10 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
     const inputLayouts = handler.session.pack ?
         inputs.map(t => handler.getOrCreateTextureLayout(t, 4, true, t.dims, true)) :
         inputs.map(t => handler.getOrCreateTextureLayout(t));
+    const ouputLayout = handler.session.pack ?
+        handler.createTextureLayoutFromShape(inputs[0].dims, 4, inputs[0].dims, {isPacked: true, reverseWH: true}) :
+        handler.createTextureLayoutFromShape(inputs[0].dims);
+
     const isBroadcast = !ShapeUtil.areEqual(inputs[0].dims, inputs[1].dims);
     if (isBroadcast) {
       const outputShape = BroadcastUtil.calcShape(inputs[0].dims, inputs[1].dims, false);
@@ -33,6 +37,8 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
       const bRank = inputs[1].dims.length !== 0 ? inputs[1].dims.length : 1;
       const aBcast = inputs[0].dims.length !== 0 ? `bcastIndices_A(indices, aindices);` : `aindices[0] = 0;`;
       const bBcast = inputs[1].dims.length !== 0 ? `bcastIndices_B(indices, bindices);` : `bindices[0] = 0;`;
+
+      // TODO: for packed tensors, we need to implement logic to caculate textCoords for broadcast tensor
       const shaderSource = `
       ${this.glslFunc.body}
       float process(int indices[${outputRank}]) {
@@ -51,6 +57,8 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
         outputLayout,
         samplers: ['A', 'B'],
         shaderSource,
+        expectPackedInputs: handler.session.pack,
+        expectPackedOutputs: handler.session.pack
       };
     }
     const glsl = getGlsl(handler.session.backend.glContext.version);
@@ -67,7 +75,7 @@ export class WebGLBinaryOp extends BinaryOp implements WebGLOperator {
       return {
         hasMain: true,
         inputLayouts,
-        outputLayout: handler.createTextureLayoutFromShape(inputs[0].dims),
+        outputLayout: ouputLayout,
         samplers: ['A', 'B'],
         shaderSource,
         expectPackedInputs: true,

@@ -89,7 +89,7 @@ export class CoordsGlslLib extends GlslLib {
    * Generates code for packed output sampler.
    */
   protected getPackedOutputSamplingSnippet(outputLayout: TextureLayout): {[name: string]: GlslLibRoutine;} {
-    const outShape = outputLayout.shape;
+    const outShape = outputLayout.unpackedShape;
     const outTexShape = [outputLayout.width, outputLayout.height];
     const result: {[name: string]: GlslLibRoutine} = {};
     const funcName = 'getOutputCoords';
@@ -231,7 +231,7 @@ export class CoordsGlslLib extends GlslLib {
 
     const packedTexShape = texShape;
     // texels needed to accommodate a logical row
-    const texelsInLogicalRow = shape[1];
+    const texelsInLogicalRow = Math.ceil(shape[1] / 2);
 
     /**
      * getOutputCoords
@@ -264,8 +264,9 @@ export class CoordsGlslLib extends GlslLib {
    */
   protected getOutputPacked3DCoords(shape: [number, number, number], texShape: [number, number]): GlslLibRoutine {
     const packedTexShape = [texShape[0], texShape[1]];
-    const texelsInLogicalRow = shape[2];
-    const texelsInBatch = texelsInLogicalRow * shape[1];
+    const texelsInLogicalRow = Math.ceil(shape[2] / 2);
+
+    const texelsInBatch = texelsInLogicalRow * Math.ceil(shape[1] / 2);
     const source = `
         ivec3 getOutputCoords() {
           ivec2 resTexRC = ivec2(TexCoords.xy *
@@ -291,8 +292,8 @@ export class CoordsGlslLib extends GlslLib {
   protected getOutputPackedNDCoords(shape: ReadonlyArray<number>, texShape: [number, number]): GlslLibRoutine {
     const packedTexShape = [texShape[0], texShape[1]];
 
-    const texelsInLogicalRow = shape[shape.length - 1];
-    const texelsInBatch = texelsInLogicalRow * shape[shape.length - 2];
+    const texelsInLogicalRow = Math.ceil(shape[shape.length - 1] / 2);
+    const texelsInBatch = texelsInLogicalRow * Math.ceil(shape[shape.length - 2] / 2);
     let texelsInBatchN = texelsInBatch;
     let batches = ``;
     let coords = 'b, r, c';
@@ -690,7 +691,7 @@ export class CoordsGlslLib extends GlslLib {
           return ${texFuncSnippet}(${unpackedCoordsSnippet});
         }
       `;
-    return new GlslLibRoutine(source);
+    return new GlslLibRoutine(source, ['coordinates.getOutputCoords']);
   }
 
   /**
@@ -1213,6 +1214,29 @@ export class CoordsGlslLib extends GlslLib {
           vec2 coords = offsetToCoords(offset, ${width}, ${height});
           float value = getColorAsFloat(${glsl.texture2D}(${varName}, coords));
           return value;
+        }
+        `;
+  }
+
+  /**
+   * Produces a packed value getter function for the name and rank given
+   * If a transpose is set proper offsetToCoords mapping will be used
+   * @param name name of the function
+   * @param rank rank of the input
+   * @param transpose whether or not should generate a transpose variation
+   */
+  protected getPackedValueFrom(varName: string, rank: number, width: number, height: number, transpose: boolean):
+      string {
+    let name = `_${varName}_Pack`;
+    if (transpose) {
+      name = name + '_T';
+    }
+    const glsl = getGlsl(this.context.glContext.version);
+    return `
+        vec4 ${name}(int m[${rank}]) {
+          int offset = indicesToOffset_${varName}(m);
+          vec2 coords = offsetToCoords(offset, ${width}, ${height});
+          return ${glsl.texture2D}(${varName}, coords);
         }
         `;
   }

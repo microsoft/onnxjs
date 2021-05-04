@@ -117,10 +117,17 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
   createRunData(handler: WebGLInferenceHandler, programInfo: ProgramInfo, inputs: Tensor[]): RunData {
     const inputTDs =
         [handler.getOrCreateTextureData(inputs[0], handler.getOrCreateTextureLayout(inputs[0], 1, false, [], false))];
+    let outputLayout = this.originalOutputLayout;
+    if (outputLayout === undefined) {
+      const originInputShape = inputs[0].dims;
+      const outputShape = ShapeUtil.calculateReshapedDims(originInputShape, inputs[1].integerData);
+      outputLayout =
+          handler.createTextureLayoutFromShape(outputShape, 4, outputShape, {isPacked: true, reverseWH: true});
+    }
     // return run data for reshape. Here, we use the original calculate outputLayout to create the real output layout.
     return {
       inputTextureDatas: inputTDs,
-      outputTextureData: handler.createTextureDataFromLayout(this.originalOutputLayout, inputTDs[0].tensor.type),
+      outputTextureData: handler.createTextureDataFromLayout(outputLayout, inputTDs[0].tensor.type),
       uniformData: {}
     };
   }

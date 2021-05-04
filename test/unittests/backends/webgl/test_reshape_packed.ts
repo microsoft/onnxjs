@@ -86,75 +86,80 @@ interface TestData {
 function getTestData(): TestData[] {
   return [
     // test 2D tensor
-    {
-      elementCount: 16,
-      inputShape: [4, 4],
-      outputShape: [2, 8],
-    },
-    {
-      elementCount: 16,
-      inputShape: [4, 4],
-      outputShape: [1, 16],
-    },
-    {
-      elementCount: 8,
-      inputShape: [2, 4],
-      outputShape: [4, 2],
-    },
-    {
-      elementCount: 8,
-      inputShape: [2, 4],
-      outputShape: [1, 8],
-    },
-    {
-      elementCount: 6,
-      inputShape: [2, 3],
-      outputShape: [1, 6],
-    },
-    {
-      elementCount: 6,
-      inputShape: [2, 3],
-      outputShape: [3, 2],
-    },
+    /*  {
+        elementCount: 16,
+        inputShape: [4, 4],
+        outputShape: [2, 8],
+      },
+      {
+        elementCount: 16,
+        inputShape: [4, 4],
+        outputShape: [1, 16],
+      },
+      {
+        elementCount: 8,
+        inputShape: [2, 4],
+        outputShape: [4, 2],
+      },
+      {
+        elementCount: 8,
+        inputShape: [2, 4],
+        outputShape: [1, 8],
+      },
+      {
+        elementCount: 6,
+        inputShape: [2, 3],
+        outputShape: [1, 6],
+      },
+      {
+        elementCount: 6,
+        inputShape: [2, 3],
+        outputShape: [3, 2],
+      },
 
-    // test 3d tensor
-    {
-      elementCount: 16,
-      inputShape: [2, 2, 4],
-      outputShape: [4, 2, 2],
-    },
-    {
-      elementCount: 16,
-      inputShape: [2, 2, 4],
-      outputShape: [2, 4, 2],
-    },
-    {
-      elementCount: 16,
-      inputShape: [2, 2, 4],
-      outputShape: [1, 1, 2, 8],
-    },
+      // test 3d tensor
+      {
+        elementCount: 16,
+        inputShape: [2, 2, 4],
+        outputShape: [4, 2, 2],
+      },
+      {
+        elementCount: 16,
+        inputShape: [2, 2, 4],
+        outputShape: [2, 4, 2],
+      },
+      {
+        elementCount: 16,
+        inputShape: [2, 2, 4],
+        outputShape: [1, 1, 2, 8],
+      },
 
-    // test 4d tensor
-    {
-      elementCount: 32,
-      inputShape: [2, 2, 2, 4],
-      outputShape: [4, 2, 2, 2],
-    },
-    {
-      elementCount: 32,
-      inputShape: [2, 2, 2, 4],
-      outputShape: [2, 4, 2, 2],
-    },
+      // test 4d tensor
+      {
+        elementCount: 32,
+        inputShape: [2, 2, 2, 4],
+        outputShape: [4, 2, 2, 2],
+      },
+      {
+        elementCount: 32,
+        inputShape: [2, 2, 2, 4],
+        outputShape: [2, 4, 2, 2],
+      },
 
+      {
+        elementCount: 32,
+        inputShape: [2, 2, 2, 4],
+        outputShape: [2, 2, 4, 2],
+      },
+      {
+        elementCount: 32,
+        inputShape: [2, 2, 2, 4],
+        outputShape: [2, 1, 4, 4],
+      },*/
     {
-      elementCount: 32,
-      inputShape: [2, 2, 2, 4],
-      outputShape: [2, 2, 4, 2],
-    },
-    {
-      elementCount: 32,
-      inputShape: [2, 2, 2, 4],
-      outputShape: [2, 1, 4, 4],
+      elementCount: 18432,
+      inputShape: [512, 36, 1, 1],
+      outputShape: [512, 36],
     },
   ];
 }

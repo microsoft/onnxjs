@@ -34,7 +34,7 @@ export class WasmSessionHandler implements SessionHandler {
   loadModel(model: Uint8Array) {
     const wasm = getInstance();
     if (!this.ortInit) {
-      wasm._OrtInit();
+      wasm._OrtInit(4, 0);
       this.ortInit = true;
     }
 

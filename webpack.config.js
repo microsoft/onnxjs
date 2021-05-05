@@ -12,8 +12,8 @@ module.exports = (env, argv) => {
     module: {rules: [{test: /\.tsx?$/, loader: 'ts-loader'}]},
     node: {fs: 'empty'},
     externals: {
-      '../dist/onnxruntime_wasm':'onnxWasmBindingJs',
-      '../dist/onnxruntime_wasm_threads':'onnxWasmBindingJs',
+      '../dist/ort-wasm':'onnxWasmBindingJs',
+      '../dist/ort-wasm-threaded':'onnxWasmBindingJs',
       'perf_hooks':'perf_hooks',
       'worker_threads':'worker_threads'
     }

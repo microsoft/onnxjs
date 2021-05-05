@@ -26,8 +26,8 @@ const TEST = path.join(ROOT, 'test');
 const TEST_DATA = path.join(TEST, 'data');
 const TEST_DATA_NODE = path.join(TEST_DATA, 'node');
 const OUT = path.join(ROOT, 'dist');
-const OUT_WASM_JS = path.join(OUT, 'onnxruntime_wasm.js');
-const OUT_WASM = path.join(OUT, 'onnxruntime_wasm.wasm');
+const OUT_WASM_JS = path.join(OUT, 'ort-wasm.js');
+const OUT_WASM = path.join(OUT, 'ort-wasm.wasm');
 
 npmlog.info('Build', 'Initialization completed. Start to build...');
 
@@ -111,7 +111,7 @@ if (!buildWasm) {
   }
 } else {
   if (!fs.existsSync(OUT_WASM)) {
-    npmlog.error('Build.Wasm', 'Please make sure onnxruntime_wasm.wasm is built and exists in /dist/');
+    npmlog.error('Build.Wasm', 'Please make sure ort-wasm.wasm is built and exists in /dist/');
     process.exit(1);
   }
 }

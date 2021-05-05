@@ -26,7 +26,7 @@ declare interface OnnxWasmBindingJs {
   lengthBytesUTF8(str: string): number;
   stringToUTF8(str: string, offset: number, maxBytes: number): void;
 
-  _OrtInit(): void;
+  _OrtInit(numThreads: number, loggingLevel: number): void;
 
   _OrtCreateSession(dataOffset: number, dataLength: number): number;
   _OrtReleaseSession(sessionHandle: number): void;
@@ -79,8 +79,8 @@ export interface PerformanceData {
 // an interface to load wasm into global window instance
 declare global {
   interface Window {
-    onnxWasmBindingJs?: OnnxWasmBindingJs;
-    onnxWasmThreadsBindingJs?: OnnxWasmBindingJs;
+    ortWasm?: OnnxWasmBindingJs;
+    ortWasmThreaded?: OnnxWasmBindingJs;
   }
 }
 
@@ -106,18 +106,18 @@ export function init(numWorkers: number): Promise<void> {
 
   return new Promise<void>((resolve, reject) => {
     if (typeof window !== 'undefined') {  // Browser
-      if (numWorkers > 0 && window.hasOwnProperty('onnxWasmThreadsBindingJs')) {
-        onnxWasmBindingJs = window.onnxWasmThreadsBindingJs as OnnxWasmBindingJs;
-      } else if (window.hasOwnProperty('onnxWasmBindingJs')) {
-        onnxWasmBindingJs = window.onnxWasmBindingJs as OnnxWasmBindingJs;
+      if (numWorkers > 0 && window.hasOwnProperty('ortWasmThreaded')) {
+        onnxWasmBindingJs = window.ortWasmThreaded as OnnxWasmBindingJs;
+      } else if (window.hasOwnProperty('ortWasm')) {
+        onnxWasmBindingJs = window.ortWasm as OnnxWasmBindingJs;
       }
     } else {  // Node
       if (numWorkers > 0) {
         // tslint:disable-next-line:no-require-imports
-        onnxWasmBindingJs = require('../dist/onnxruntime_wasm_threads') as OnnxWasmBindingJs;
+        onnxWasmBindingJs = require('../dist/ort-wasm-threaded') as OnnxWasmBindingJs;
       } else {
         // tslint:disable-next-line:no-require-imports
-        onnxWasmBindingJs = require('../dist/onnxruntime_wasm') as OnnxWasmBindingJs;
+        onnxWasmBindingJs = require('../dist/ort-wasm') as OnnxWasmBindingJs;
       }
     }
     if (typeof onnxWasmBindingJs === 'undefined') {

@@ -1,48 +1,61 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+import {Attribute} from '../../../attribute';
 import {DepthToSpace} from '../../../ops/depth-to-space';
 import {Tensor} from '../../../tensor';
-import {getGlsl} from '../glsl-source';
 import {WebGLInferenceHandler} from '../inference-handler';
-import {ProgramInfo, RunData} from '../types';
+import {Artifact, ProgramInfo, RunData} from '../types';
+
+import {reshape} from './reshape';
+import {WebGLTranspose} from './transpose';
 
 export class WebGLDepthToSpace extends DepthToSpace {
+  protected transposeProgramInfo: ProgramInfo;
+
+  protected transposeArtifact: Artifact;
+
   run(inferenceHandler: WebGLInferenceHandler, inputs: Tensor[]): Tensor[] {
-    return inferenceHandler.run(this, inputs);
-  }
-  createProgramInfo(handler: WebGLInferenceHandler, inputs: Tensor[]): ProgramInfo {
-    const inputLayout = handler.getOrCreateTextureLayout(inputs[0]);
-    const outputShape = this.getOutShape(inputs[0]);
-    const glsl = getGlsl(handler.session.backend.glContext.version);
-    const shaderSource = `
-    void main() {
-      ivec4 coords = getOutputCoords();
-      int b = coords[0];
-      int d = coords[1];
-      int h = coords[2];
-      int w = coords[3];
+    const programManager = inferenceHandler.session.programManager;
+    const transposePerm = this.mode === 'DCR' ? [0, 3, 4, 1, 5, 2] : [0, 1, 4, 2, 5, 3];
+    const firstReshapeShape = this.mode === 'DCR' ?
+        [
+          inputs[0].dims[0], this.blocksize, this.blocksize, inputs[0].dims[1] / this.blocksizeSqr, inputs[0].dims[2],
+          inputs[0].dims[3]
+        ] :
+        [
+          inputs[0].dims[0], inputs[0].dims[1] / this.blocksizeSqr, this.blocksize, this.blocksize, inputs[0].dims[2],
+          inputs[0].dims[3]
+        ];
 
-      int in_h = h / ${this.blocksize};
-      int offset_h = imod(h, ${this.blocksize});
-      int in_w = w / ${this.blocksize};
-      int offset_w = imod(w, ${this.blocksize});
-      int offset_d = (offset_h * ${this.blocksize} + offset_w) *
-        ${outputShape[1]};
-      int in_depth = d + offset_d;
+    const transpose = new WebGLTranspose();
+    const attributes = new Attribute(undefined);
+    attributes.set('perm', 'ints', transposePerm);
+    transpose.initialize(attributes);
 
-      float result = getX(b, in_depth, in_h, in_w);
-      ${glsl.output} = vec4(result, 0, 0, 0);
+    // First reshape
+
+    const firstReshapedTensor = reshape(inferenceHandler, inputs[0], firstReshapeShape);
+
+    // transpose
+    if (!this.transposeProgramInfo) {
+      this.transposeProgramInfo = transpose.createProgramInfo(inferenceHandler, [firstReshapedTensor]);
+      this.transposeArtifact = programManager.build(this.transposeProgramInfo);
     }
-      `;
-    return {
-      inputLayouts: [inputLayout],
-      outputLayout: handler.createTextureLayoutFromShape(outputShape),
-      samplers: ['X'],
-      shaderSource,
-      hasMain: true
-    };
+    const runDataTranspose =
+        transpose.createRunData(inferenceHandler, this.transposeProgramInfo, [firstReshapedTensor]);
+    inferenceHandler.checkAndUpdateTextureForm(this.transposeArtifact, runDataTranspose);
+    programManager.run(this.transposeArtifact, runDataTranspose);
+    const transposeOutput = runDataTranspose.outputTextureData.tensor;
+
+    // Second reshape
+    const result = reshape(inferenceHandler, transposeOutput, [
+      inputs[0].dims[0], inputs[0].dims[1] / this.blocksizeSqr, inputs[0].dims[2] * this.blocksize,
+      inputs[0].dims[3] * this.blocksize
+    ]);
+    return [result];
   }
+
   protected getOutShape(input: Tensor): number[] {
     const batchSize = input.dims[0];
     const inputDepth = input.dims[1];

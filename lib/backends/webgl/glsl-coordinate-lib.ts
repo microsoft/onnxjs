@@ -1275,7 +1275,7 @@ export class CoordsGlslLib extends GlslLib {
     const result: {[name: string]: GlslLibRoutine} = {};
     this.context.programInfo.samplers.forEach((name, i) => {
       const layout = programInfo.inputLayouts[i];
-      const shape = layout.shape;
+      const shape = layout.unpackedShape.length > 0 ? layout.unpackedShape : layout.shape;
       const rank = shape.length;
       let funcName = `_${name}`;
       result[funcName] = new GlslLibRoutine(

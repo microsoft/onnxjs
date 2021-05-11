@@ -10,6 +10,7 @@ if (typeof window !== 'undefined' && !onnx.backend.webgl.disabled) {
   require('./backends/webgl/test_concat_packed');
   require('./backends/webgl/test_depth_to_space');
   require('./backends/webgl/test_reshape_packed');
+  require('./backends/webgl/test_matmul_packed');
 }
 
 // require('./api/onnx');

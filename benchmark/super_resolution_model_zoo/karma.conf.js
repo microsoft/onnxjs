@@ -59,6 +59,7 @@ module.exports = function(config) {
       printMatches: false,
       // To enable pack, run 'PACK=1 npm run test'
       usePackedGlTexture: config.usePackedGlTexture==1 ? true : false,
+      runIteration: config.runIteration ? config.runIteration : 10,
       profile: config.profile
     },
     browsers: ['ChromeTest', 'ChromeDebug', 'Edge', 'Safari'],

@@ -99,9 +99,9 @@ async function runBenchmark(benchmarkData, backend, imageSize) {
     const imageLoader = new ImageLoader(imageSize, imageSize);
     const durations = [];
     for(const input of benchmarkData.inputs) {
-        console.log(`Running ${input.name}`)
+        console.log(`Running ${input.name} for ${runIteration} iterations.`)
         const imageData = await imageLoader.getImageData(input.url);
-        for(let i = 0 ; i < 10; i++) {
+        for(let i = 0 ; i < runIteration; i++) {
           const outputData = await impl.runModel(imageData.data);
           durations.push(impl.duration);
         }
@@ -125,6 +125,7 @@ class TensorFlowResnetBenchmark {
         this.imageSize = imageSize;
         tf.disposeVariables();
         tf.env().set('WEBGL_PACK', pack_texture);
+
         console.log(`Pack mode enabled: ${tf.env().getBool('WEBGL_PACK')}`);
         if(backend) {
             console.log(`Setting the backend to ${backend}`);
@@ -261,6 +262,7 @@ const results = [];
 const browser = __karma__.config.browser[0];
 const profile = __karma__.config.profile;
 const pack_texture = __karma__.config.usePackedGlTexture;
+const runIteration = __karma__.config.runIteration;
 
 console.log(`browser: ${browser}`)
 describe('super resolution Tests', ()=> {

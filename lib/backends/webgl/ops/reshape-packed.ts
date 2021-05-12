@@ -34,12 +34,16 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
     const originInputShape = inputs[0].dims;
     this.inputShape3D = processDims3D(inputs[0].dims);
     let inputLayout: TextureLayout;
-    if (originInputShape.length === 3) {
-      inputLayout = handler.getOrCreateTextureLayout(inputs[0], 4, true, originInputShape, true);
-    } else {
+    inputLayout = handler.getOrCreateTextureLayout(inputs[0], 4, true, originInputShape, true);
+    if (originInputShape.length !== 3) {
+      const originalInputLayout = inputLayout;
       // if originShape is not a 3D shape, create texture layout from the processed shape.
       inputLayout = handler.createTextureLayoutFromShape(
           this.inputShape3D, 4, this.inputShape3D, {isPacked: true, reverseWH: true});
+      // if the processed input shape produces texture layout differnt from the original
+      // one, the run data has to use the processed (3D) input shape later.
+      this.needSqueezeInputData =
+          (inputLayout.height !== originalInputLayout.height) || (inputLayout.width !== originalInputLayout.width);
     }
 
     this.outputShape = ShapeUtil.calculateReshapedDims(originInputShape, inputs[1].integerData);
@@ -118,11 +122,12 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
     let inputTDs: [TextureData];
     const originalInputLayout = handler.getOrCreateTextureLayout(inputs[0], 1, false, [], false);
     const originalInputTD = handler.getOrCreateTextureData(inputs[0], originalInputLayout, false);
-    if (inputs[0].dims.length !== 3) {
+
+    if (this.needSqueezeInputData) {
       const squeezedInputLayout: TextureLayout = {
         channels: 1,
-        height: originalInputTD.height,
-        width: originalInputTD.width,
+        height: originalInputLayout.height,
+        width: originalInputLayout.width,
         shape: this.inputShape3D,
         strides: ShapeUtil.computeStrides(this.inputShape3D),
         unpackedShape: this.inputShape3D,
@@ -130,6 +135,7 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
       const squeezedInputTD =
           handler.createSharedTextureData(squeezedInputLayout, inputs[0].type, originalInputTD.texture);
       inputTDs = [squeezedInputTD];
+
     } else {
       inputTDs = [originalInputTD];
     }
@@ -150,6 +156,7 @@ export class WebGLReshapePacked extends Reshape implements WebGLOperator {
   protected outputShape: ReadonlyArray<number>;
   private originalOutputLayout: TextureLayout;
   private inputShape3D: [number, number, number];
+  private needSqueezeInputData = false;
 }
 
 function processDims3D(shape: readonly number[]|ReadonlyArray<number>|Tensor.IntegerType): [number, number, number] {

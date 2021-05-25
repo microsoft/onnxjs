@@ -4,7 +4,7 @@ import {assert, ShapeUtil} from '../../../util';
 import {CpuInferenceHandler} from '../inference-handler';
 
 export class CpuTopK extends TopK {
-  run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[]|Promise<Tensor[]> {
+  run(inferenceHandler: CpuInferenceHandler, inputs: Tensor[]): Tensor[] {
     const output = tensorTopK(inputs[0], this.k, this.axis);
     return output;
   }
@@ -48,29 +48,35 @@ export function tensorTopK(x: Tensor, K: number, axis: number): Tensor[] {
   return [values, indices];
 }
 
-function listTopK(list: number[], K: number): Array<[number, number]> {
+export function listTopK(list: number[], K: number): Array<[number, number]> {
   const enumList: Array<[number, number]> = list.map((el, idx) => [el, idx]);
   let start = 0;
   let end = list.length;
 
   let iters = 0;
-  while (start !== K && iters < list.length) {
-    let curr = 0;
-    for (let i = 0; i < end; ++i) {
-      // compare with lower indices having preference in being topk
+  while (start !== K && iters <= list.length) {
+    let curr = start;
+    for (let i = start; i < end; ++i) {
       if (enumList[i][0] > enumList[end - 1][0] ||
           (enumList[i][0] === enumList[end - 1][0] && enumList[i][1] <= enumList[end - 1][1])) {
         [enumList[i], enumList[curr]] = [enumList[curr], enumList[i]];
         curr++;
       }
     }
+    // assert enumList[start:curr] >= enumList[curr:end]
 
     if (curr === K) {
+      // assert enumList[start:K] >= enumList[K:end]
       break;
     } else if (curr > K) {
+      // enumList[curr: end] is useless
+      // curr == K <-> curr-1 is the kth,
+      // but the kth is at a smalller index,
+      // so curr-1 is (k+1)th or worse and can
+      // be thrown
       end = curr - 1;
     } else {
-      start = curr + 1;
+      start = curr;
     }
     iters++;
   }

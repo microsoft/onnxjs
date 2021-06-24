@@ -1,6 +1,3 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
-
 import {LogSoftmax} from '../../../ops/log-softmax';
 import {Tensor} from '../../../tensor';
 import {ShapeUtil} from '../../../util';
@@ -20,9 +17,7 @@ export class WasmLogSoftmax extends LogSoftmax {
     return [y];
   }
 
-  // overriding the checkInputTypes() in the base class because Wasm backend has special type limitations
   checkInputTypes(inputs: Tensor[]): boolean {
-    // currently Wasm backend only supports 'float32' input type
     if (inputs[0].type !== 'float32') {
       return false;
     }

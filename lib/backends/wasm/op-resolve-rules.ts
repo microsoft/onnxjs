@@ -9,6 +9,7 @@ import {WasmClip} from './ops/clip';
 import {WasmConv} from './ops/conv';
 import {WasmGemm} from './ops/gemm';
 import {WasmInstanceNormalization} from './ops/instance-normalization';
+import {WasmLogSoftmax} from './ops/log-softmax';
 import {WasmMatMul} from './ops/matmul';
 import {WasmAveragePool, WasmGlobalAveragePool, WasmGlobalMaxPool, WasmMaxPool} from './ops/pool';
 import {WasmSoftmax} from './ops/softmax';
@@ -33,6 +34,7 @@ export const WASM_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Or', '', '7+', () => new WasmBinaryOp(['bool'], 'Or')],
   ['PRelu', '', '7+', () => new WasmBinaryOp(['float32'], 'PRelu')],
   ['Softmax', '', '1+', () => new WasmSoftmax()],
+  ['LogSoftmax', '', '1+', () => new WasmLogSoftmax()],
   ['Sub', '', '7+', () => new WasmBinaryOp(['float32', 'int32'], 'Sub')],
   ['Sum', '', '6+', () => new WasmSum()],  // TODO: support multidirectional broadcast for Sum-8
   ['Xor', '', '7+', () => new WasmBinaryOp(['bool'], 'Xor')],

@@ -17,6 +17,7 @@ import {WebGLGemm} from './ops/gemm';
 import {WebGLImageScaler} from './ops/image-scaler';
 import {WebGLInstanceNormalization} from './ops/instance-normalization';
 import {WebGLLeakyRelu} from './ops/leaky-relu';
+import {WebGLLogSoftmax} from './ops/log-softmax';
 import {WebGLMatMul} from './ops/matmul';
 import {WebGLPad} from './ops/pad';
 import {WebGLAveragePool, WebGLGlobalAveragePool, WebGLGlobalMaxPool, WebGLMaxPool} from './ops/pool';
@@ -92,6 +93,7 @@ export const WEBGL_OP_RESOLVE_RULES: ReadonlyArray<OpSet.ResolveRule> = [
   ['Slice', '', '10+', () => new WebGLSliceV10()],  // TODO: support 'steps' for Slice-10
   ['Slice', '', '1-9', () => new WebGLSlice()],
   ['Softmax', '', '1+', () => new WebGLSoftmax()],
+  ['LogSoftmax', '', '1+', () => new WebGLLogSoftmax()],
   // 'Split' operator has an optional attribute 'split'
   // this attribute determines how the specified axis of input data
   // is split. When the attribute is missing, we need the count of number of outputs

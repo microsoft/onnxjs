@@ -50,7 +50,7 @@ export interface InferenceSession {
   /**
    * end profiling for the session and flush data
    */
-  endProfiling(): void;
+  endProfiling(): string[];
 }
 
 export declare namespace InferenceSession {

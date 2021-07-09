@@ -38,7 +38,7 @@ export class Session {
   }
 
   endProfiling() {
-    this.profiler.stop();
+    return this.profiler.stop();
   }
 
   async loadModel(uri: string): Promise<void>;

@@ -290,9 +290,11 @@ export class Profiler {
   // stop profiling
   stop() {
     this._started = false;
+    const profileLogs = [];
     for (; this._flushPointer < this._timingEvents.length; this._flushPointer++) {
-      this.logOneEvent(this._timingEvents[this._flushPointer]);
+      profileLogs.push(this.logOneEvent(this._timingEvents[this._flushPointer]));
     }
+    return profileLogs;
   }
 
   // create an event scope for the specific function
@@ -380,9 +382,11 @@ export class Profiler {
   }
 
   private logOneEvent(event: EventRecord) {
-    Logger.verbose(
-        `Profiler.${event.category}`,
-        `${(event.endTime - event.startTime).toFixed(2)}ms on event '${event.name}' at ${event.endTime.toFixed(2)}`);
+    const str1 = `Profiler.${event.category}`;
+    const str2 =
+        `${(event.endTime - event.startTime).toFixed(2)}ms on event '${event.name}' at ${event.endTime.toFixed(2)}`;
+    Logger.verbose(str1, str2);
+    return str1 + ' : ' + str2;
   }
 
   private flush(currentTime: number) {

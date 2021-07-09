@@ -69,7 +69,7 @@ export class InferenceSession implements InferenceSessionInterface {
   startProfiling(): void {
     this.session.startProfiling();
   }
-  endProfiling(): void {
-    this.session.endProfiling();
+  endProfiling(): string[] {
+    return this.session.endProfiling();
   }
 }

@@ -6,6 +6,8 @@
 [![ONNX.js CI - Linux CPU (Node.js)](<https://dev.azure.com/onnxruntime/onnxjs/_apis/build/status/ONNX.js%20CI%20-%20Linux%20CPU%20(Node.js)?label=Linux+CPU+(Node.js)>)](https://dev.azure.com/onnxruntime/onnxjs/_build/latest?definitionId=5)
 [![ONNX.js CI - BrowserStack (Suite0)](<https://dev.azure.com/onnxruntime/onnxjs/_apis/build/status/ONNX.js%20CI%20-%20BrowserStack%20(Suite0)?label=BrowserStack+(Suite0)>)](https://dev.azure.com/onnxruntime/onnxjs/_build/latest?definitionId=17)
 
+## ONNX.js has been replaced by ONNX Runtime Web which offers enhanced user experience and improved performance. Please visit [ONNX Runtime Web](https://github.com/microsoft/onnxruntime/tree/master/js/web) to get more details
+
 # ONNX.js
 
 ONNX.js is a Javascript library for running ONNX models on browsers and on Node.js.

@@ -6,7 +6,13 @@
 [![ONNX.js CI - Linux CPU (Node.js)](<https://dev.azure.com/onnxruntime/onnxjs/_apis/build/status/ONNX.js%20CI%20-%20Linux%20CPU%20(Node.js)?label=Linux+CPU+(Node.js)>)](https://dev.azure.com/onnxruntime/onnxjs/_build/latest?definitionId=5)
 [![ONNX.js CI - BrowserStack (Suite0)](<https://dev.azure.com/onnxruntime/onnxjs/_apis/build/status/ONNX.js%20CI%20-%20BrowserStack%20(Suite0)?label=BrowserStack+(Suite0)>)](https://dev.azure.com/onnxruntime/onnxjs/_build/latest?definitionId=17)
 
-## ONNX.js has been replaced by ONNX Runtime Web which offers enhanced user experience and improved performance. Please visit [ONNX Runtime Web](https://github.com/microsoft/onnxruntime/tree/master/js/web) to get more details
+## ONNX.js has been replaced by ONNX Runtime Web which offers enhanced user experience and improved performance. Please visit the following links to get more information:
+
+- [**Migration ONNX.js to ONNX Runtime Web**](./docs/migration-to-ort-web.md)
+- [ONNX Runtime Web (README)](https://github.com/microsoft/onnxruntime/tree/master/js/web)
+- [Get started with ORT for JavaScript - onnxruntime.ai](https://natke.github.io/onnxruntime/docs/get-started/with-javascript.html)
+- [Tutorials / Deploy on web - onnxruntime.ai](https://natke.github.io/onnxruntime/docs/tutorials/web/)
+- [ONNX Runtime JavaScript API](https://onnxruntime.ai/docs/api/js/index.html)
 
 # ONNX.js
 

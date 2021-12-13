@@ -1,6 +1,6 @@
 ## Migration ONNX.js to ONNX Runtime Web
 
-This document demonstrates how to migrate your project that uses ONNX.js to use ONNX Runtime Web in a few simple steps. We assume that you are already using ONNX.js in your project. If you want to create a new web app, we strongly recommend to use ONNX Runtime Web (see also: [Get started](https://natke.github.io/onnxruntime/docs/get-started/with-javascript.html), [Tutorials](https://natke.github.io/onnxruntime/docs/tutorials/web/)).
+This document demonstrates how to migrate your project that uses ONNX.js to use ONNX Runtime Web in a few simple steps. We assume that you are already using ONNX.js in your project. If you want to create a new web app, we strongly recommend to use ONNX Runtime Web (see also: [Get started](https://onnxruntime.ai/docs/get-started/with-javascript.html), [Tutorials](https://onnxruntime.ai/docs/tutorials/web/)).
 
 ### STEP.1 - consume the NPM package for ONNX Runtime Web
 

@@ -10,8 +10,8 @@
 
 - [**Migration ONNX.js to ONNX Runtime Web**](./docs/migration-to-ort-web.md)
 - [ONNX Runtime Web (README)](https://github.com/microsoft/onnxruntime/tree/master/js/web)
-- [Get started with ORT for JavaScript - onnxruntime.ai](https://natke.github.io/onnxruntime/docs/get-started/with-javascript.html)
-- [Tutorials / Deploy on web - onnxruntime.ai](https://natke.github.io/onnxruntime/docs/tutorials/web/)
+- [Get started with ORT for JavaScript - onnxruntime.ai](https://onnxruntime.ai/docs/get-started/with-javascript.html)
+- [Tutorials / Deploy on web - onnxruntime.ai](https://onnxruntime.ai/docs/tutorials/web/)
 - [ONNX Runtime JavaScript API](https://onnxruntime.ai/docs/api/js/index.html)
 
 # ONNX.js

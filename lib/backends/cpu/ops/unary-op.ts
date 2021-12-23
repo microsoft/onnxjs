@@ -134,6 +134,23 @@ export function elu(input: Tensor.NumberType, output: Tensor.NumberType, attribu
   }
 }
 
+
+export function seluInitializer(attributes: Attribute) {
+  return {
+    alpha: attributes.getFloat('alpha', 1.67326319217681884765625),
+    gamma: attributes.getFloat('gamma', 1.05070102214813232421875)
+  };
+}
+
+export function selu(input: Tensor.NumberType, output: Tensor.NumberType, attributes: {alpha: number, gamma: number}) {
+  const alpha = attributes.alpha;
+  const gamma = attributes.gamma;
+  for (let i = 0; i < input.length; i++) {
+    const value = input[i];
+    output[i] = value >= 0 ? gamma * (alpha * Math.exp(value) - alpha) : gamma * value;
+  }
+}
+
 export function exp(input: Tensor.NumberType, output: Tensor.NumberType) {
   for (let i = 0; i < input.length; i++) {
     output[i] = Math.exp(input[i]);
